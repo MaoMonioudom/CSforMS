@@ -38,7 +38,7 @@ export const communityPosts = [{
     avatar: avatar("jules")
   },
   body: "First print off the new Bambu came out clean 🎉 Tiny articulated dragon for my niece. Took 4 tries last week on my old Ender — what a difference.",
-  image: "https://images.unsplash.com/photo-1631562543529-39d8c5b9bb2c?w=1200&q=80",
+  image: "https://images.unsplash.com/photo-1574482620811-1aa16ffe3c82?w=1200&q=80",
   tags: ["3d-printing", "show-and-tell"],
   likes: 128,
   comments: [{
@@ -130,6 +130,65 @@ export const communityPosts = [{
     postedAt: "2026-05-29T16:30:00Z"
   }],
   postedAt: "2026-05-29T15:00:00Z"
+}, {
+  id: "oscilloscope-tips",
+  category: "Technical",
+  author: { name: "Remy O.", handle: "@remy", avatar: avatar("remy") },
+  title: "Oscilloscope trigger modes — which one actually matters for beginners?",
+  body: "I just got a DS1054Z and I'm drowning in trigger options. Edge, pulse, slope, video… for day-to-day Arduino/ESP debugging, should I just live on Edge trigger forever? When do the others actually become useful?",
+  tags: ["oscilloscope", "electronics", "beginner"],
+  likes: 38,
+  comments: [{
+    id: "c1",
+    author: { name: "Moni Chen", avatar: avatar("moni") },
+    body: "Edge + Normal capture mode covers 90% of hobby debugging. Add Pulse trigger when you're hunting for a glitch that only happens sometimes.",
+    postedAt: "2026-06-05T09:00:00Z"
+  }],
+  postedAt: "2026-06-05T08:00:00Z"
+}, {
+  id: "laser-cutter-settings",
+  category: "Showcase",
+  author: { name: "Cam N.", handle: "@cam", avatar: avatar("cam") },
+  body: "Dialed in the perfect settings for 3mm birch ply on the 100W laser after way too many test burns. Sharing my cheat sheet so nobody else has to sacrifice as much wood 🪵",
+  image: "https://images.unsplash.com/photo-1596496181848-3091d4878b24?w=1200&q=80",
+  tags: ["laser-cutting", "settings", "cheat-sheet"],
+  likes: 74,
+  comments: [],
+  postedAt: "2026-06-04T14:00:00Z"
+}, {
+  id: "weekend-hackathon-team",
+  category: "Social",
+  author: { name: "Vibol H.", handle: "@vibol", avatar: avatar("vibol") },
+  body: "Forming a 4-person team for the weekend local hackathon (June 21–22). Theme is 'infrastructure for rural communities'. Got a hardware idea brewing. DM me if you're free and want in 🛠️",
+  tags: ["hackathon", "team", "hardware"],
+  likes: 31,
+  comments: [{
+    id: "c1",
+    author: { name: "Chan Pisey", avatar: avatar("chanpisey") },
+    body: "I'm in! Strong on mobile + backend. Sent you a DM.",
+    postedAt: "2026-06-04T18:00:00Z"
+  }],
+  postedAt: "2026-06-04T17:00:00Z"
+}, {
+  id: "3d-print-stringing",
+  category: "Question",
+  author: { name: "Jules W.", handle: "@jules", avatar: avatar("jules") },
+  title: "How do you kill stringing on PETG for good?",
+  body: "Tried every retraction combo I can find. 240°C, 6mm retraction at 45mm/s, combing enabled — still getting hair-thin strings between towers. Profile is Bambu X1C generic PETG. Anyone solved this completely?",
+  tags: ["3d-printing", "petg", "slicer"],
+  likes: 52,
+  comments: [{
+    id: "c1",
+    author: { name: "Devi K.", avatar: avatar("devi") },
+    body: "Drop to 235°C and enable 'wipe on loop'. PETG strings more from ooze than retraction distance.",
+    postedAt: "2026-06-05T10:20:00Z"
+  }, {
+    id: "c2",
+    author: { name: "Theo G.", avatar: avatar("theo") },
+    body: "Also dry your filament first. PETG is hygroscopic — wet filament strings no matter the settings.",
+    postedAt: "2026-06-05T11:05:00Z"
+  }],
+  postedAt: "2026-06-05T09:30:00Z"
 }];
 export const categoryEmoji = {
   Technical: "🔧",

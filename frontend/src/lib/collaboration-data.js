@@ -142,6 +142,78 @@ export const collabPosts = [{
     discord: "vibol#0007"
   },
   postedAt: "2026-05-22T20:00:00Z"
+}, {
+  id: "open-source-lms",
+  type: "recruiting",
+  projectTitle: "Open-Source LMS Plugin",
+  rolesNeeded: ["Backend Developer", "Technical Writer"],
+  category: "Open Source",
+  shortPitch: "Adding a peer-grading module to Moodle — good for portfolio and OSS contribution.",
+  description: "Contributing a peer-assessment plugin to the Moodle ecosystem. The core rubric engine is done; need a PHP/Laravel dev for the REST API layer and someone to write clear docs. No OSS experience required — great first contribution. Weekly async standups on Discord.",
+  skills: ["PHP", "Moodle", "REST API", "Markdown"],
+  teamSize: { current: 2, target: 4 },
+  author: {
+    name: "Thida Meas",
+    avatar: "https://i.pravatar.cc/150?img=56",
+    year: "Year 4",
+    major: "Computer Science"
+  },
+  contact: { email: "thida.meas@example.edu", discord: "thida#3301" },
+  postedAt: "2026-06-05T08:00:00Z"
+}, {
+  id: "data-viz-dashboard",
+  type: "looking-for-team",
+  projectTitle: "Campus Energy Dashboard",
+  rolesNeeded: ["Data Engineer", "UI Developer"],
+  category: "Research",
+  shortPitch: "Real-time energy monitoring dashboard for campus buildings — data is live, need builders.",
+  description: "Our sustainability office gave us API access to all building energy meters. I want to build a public-facing dashboard showing consumption, carbon estimates, and anomaly alerts in real time. I can handle the data pipeline; need someone for the frontend (React/D3) and someone to set up the ingestion (Kafka or MQTT → TimescaleDB).",
+  skills: ["React", "D3.js", "TimescaleDB", "Kafka"],
+  teamSize: { current: 1, target: 3 },
+  author: {
+    name: "Remy Osei",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    year: "Year 3",
+    major: "Environmental Engineering"
+  },
+  contact: { telegram: "@remyosei" },
+  postedAt: "2026-06-04T11:30:00Z"
+}, {
+  id: "boardgame-ai",
+  type: "recruiting",
+  projectTitle: "Board Game AI Research",
+  rolesNeeded: ["Reinforcement Learning Engineer"],
+  category: "Research",
+  shortPitch: "Training an RL agent to play a complex Khmer strategy board game — fun and novel.",
+  description: "We're formalizing Ouk Chaktrang (Khmer chess) as an RL environment and training agents using AlphaZero-style MCTS. One slot open for someone who knows PyTorch and can read RL papers. Monthly stipend available through the faculty grant. Game rules explained — no prior knowledge needed.",
+  skills: ["PyTorch", "Reinforcement Learning", "MCTS", "Python"],
+  teamSize: { current: 3, target: 4 },
+  author: {
+    name: "Vanna Ith",
+    avatar: "https://i.pravatar.cc/150?img=29",
+    year: "Year 4",
+    major: "Artificial Intelligence"
+  },
+  contact: { email: "vanna.ith@example.edu" },
+  postedAt: "2026-06-03T16:00:00Z"
+}, {
+  id: "mobile-health-app",
+  type: "looking-for-team",
+  projectTitle: "Community Health Tracker",
+  rolesNeeded: ["Mobile Developer", "Backend Developer", "UX Designer"],
+  category: "Social Impact",
+  shortPitch: "Offline-first health tracking app for rural clinics — NGO partnership secured.",
+  description: "Partnered with a local NGO to build a patient-tracking app for clinics with unreliable internet. Offline-first sync via CRDTs. I have the product spec and NGO buy-in; need a team to build it. Real users, real impact. Flutter for mobile, any backend you prefer. Volunteer project but strong portfolio piece.",
+  skills: ["Flutter", "Dart", "CRDTs", "Figma"],
+  teamSize: { current: 1, target: 4 },
+  author: {
+    name: "Chan Pisey",
+    avatar: "https://i.pravatar.cc/150?img=41",
+    year: "Year 3",
+    major: "Information Systems"
+  },
+  contact: { telegram: "@chanpisey", email: "chan.pisey@example.edu" },
+  postedAt: "2026-06-01T07:00:00Z"
 }];
 export function getCollabPostById(id) {
   return collabPosts.find(p => p.id === id);

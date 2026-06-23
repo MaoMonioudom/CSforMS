@@ -218,10 +218,16 @@ export default function CollaborationPage() {
 
   return (
     <SectionPage
-      tone="collaboration"
+      bulletin
       eyebrow="02 — Build together"
       title="Collaboration"
       description="Find teammates, recruit members, and connect with people who want to build alongside you."
+      ghostLetter="C"
+      tapeColor="rgba(52,211,153,0.72)"
+      stats={[
+        { value: collabPosts.length, label: "Open posts",       rotate: 2,    pinColor: "#6366f1" },
+        { value: 5,                  label: "New this week",    rotate: -1.5, pinColor: "#16a34a", plus: false },
+      ]}
     >
       <div className="mb-6 flex items-end justify-between gap-4">
         <h2 className="text-2xl font-semibold tracking-tight">Open posts</h2>

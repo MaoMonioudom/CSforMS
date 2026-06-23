@@ -2,13 +2,44 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { categoryEmoji, formatRelativeTime } from "@/lib/community-data";
 
+const tilts = [-0.8, 1, -1.3, 0.6, 1.2, -0.5, 0.9, -1.1];
 const paperShadow = "0 2px 4px rgba(0,0,0,0.07), 0 6px 20px rgba(0,0,0,0.09)";
+const paperShadowHover = "0 8px 12px rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.14)";
 
-export function CommunityPostCard({ post }) {
+function Pushpin() {
   return (
+    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none">
+      <div
+        className="w-5 h-5 rounded-full"
+        style={{
+          background: "radial-gradient(circle at 35% 30%, #ce93d8, #6a1b9a)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
+        }}
+      />
+      <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+    </div>
+  );
+}
+
+export function CommunityPostCard({ post, index = 0 }) {
+  const rotate = tilts[index % tilts.length];
+
+  return (
+    <div
+      className="relative pt-4"
+      style={{
+        transform: `rotate(${rotate}deg)`,
+        transition: "transform 0.3s cubic-bezier(0.34,1.2,0.64,1)",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "rotate(0deg) translateY(-6px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = `rotate(${rotate}deg)`; }}
+    >
+      <Pushpin />
     <article
-      className="group overflow-hidden rounded-2xl paper text-card-foreground"
-      style={{ boxShadow: paperShadow }}
+      className="group overflow-hidden rounded-none paper text-card-foreground"
+      style={{ boxShadow: paperShadow, transition: "box-shadow 0.3s ease" }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = paperShadowHover; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = paperShadow; }}
     >
       {/* Sticky-note header — colored band with category */}
       <div className="bg-community px-5 py-3 flex items-center gap-2 shrink-0">
@@ -82,5 +113,6 @@ export function CommunityPostCard({ post }) {
         </button>
       </div>
     </article>
+    </div>
   );
 }

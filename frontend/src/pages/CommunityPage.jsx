@@ -9,10 +9,16 @@ const filters = ["All", "Technical", "Showcase", "Question", "Social", "Announce
 export default function CommunityPage() {
   return (
     <SectionPage
-      tone="community"
+      bulletin
       eyebrow="03 — Hang out"
       title="Community"
       description="One feed for everything — technical questions, project showcases, casual chatter, and announcements from the makerspace."
+      ghostLetter="Co"
+      tapeColor="rgba(167,139,250,0.72)"
+      stats={[
+        { value: communityPosts.length, label: "Discussions",  rotate: 1.5,  pinColor: "#7c3aed" },
+        { value: 12,                    label: "Active today", rotate: -2,   pinColor: "#ec4899", plus: false },
+      ]}
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
         <div>
@@ -51,8 +57,8 @@ export default function CommunityPage() {
             ))}
           </div>
           <div className="space-y-5">
-            {communityPosts.map((post) => (
-              <CommunityPostCard key={post.id} post={post} />
+            {communityPosts.map((post, i) => (
+              <CommunityPostCard key={post.id} post={post} index={i} />
             ))}
           </div>
         </div>

@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { TopNav } from "./components/TopNav";
+import { Footer } from "./components/Footer";
+import { CursorEffect } from "./components/CursorEffect";
 import HomePage from "./pages/HomePage";
 import EventsPage from "./pages/EventsPage";
 import EventDetailPage from "./pages/EventDetailPage";
@@ -33,6 +35,7 @@ function NotFoundPage() {
 export default function App() {
   return (
     <BrowserRouter>
+      <CursorEffect />
       <TopNav />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -44,6 +47,7 @@ export default function App() {
         <Route path="/community/:postId" element={<CommunityDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   );
 }

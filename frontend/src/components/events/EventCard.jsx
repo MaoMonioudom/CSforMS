@@ -8,26 +8,44 @@ const tilts = [-1.5, 0.8, -0.6, 1.2, -1, 0.5, 1.5, -0.4];
 const paperShadow = "0 2px 4px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.11)";
 const paperShadowHover = "0 8px 12px rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.14)";
 
+function Pushpin() {
+  return (
+    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none">
+      <div
+        className="w-5 h-5 rounded-full shadow-md"
+        style={{
+          background: "radial-gradient(circle at 35% 30%, #ff8a80, #c62828)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
+        }}
+      />
+      <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+    </div>
+  );
+}
+
 export function EventCard({ event, index = 0 }) {
   const rotate = tilts[index % tilts.length];
 
   return (
-    <Link
-      to={`/events/${event.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl text-card-foreground paper"
+    <div
+      className="relative pt-4"
       style={{
         transform: `rotate(${rotate}deg)`,
+        transition: "transform 0.3s cubic-bezier(0.34,1.2,0.64,1)",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "rotate(0deg) translateY(-6px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = `rotate(${rotate}deg)`; }}
+    >
+      <Pushpin />
+    <Link
+      to={`/events/${event.id}`}
+      className="group relative flex flex-col overflow-hidden rounded-none text-card-foreground paper"
+      style={{
         boxShadow: paperShadow,
-        transition: "transform 0.3s cubic-bezier(0.34,1.2,0.64,1), box-shadow 0.3s ease",
+        transition: "box-shadow 0.3s ease",
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "rotate(0deg) translateY(-6px)";
-        e.currentTarget.style.boxShadow = paperShadowHover;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = `rotate(${rotate}deg)`;
-        e.currentTarget.style.boxShadow = paperShadow;
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = paperShadowHover; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = paperShadow; }}
     >
       {/* Colored header band — like a flyer's title strip */}
       <div className="h-2 bg-events w-full shrink-0" />
@@ -87,5 +105,6 @@ export function EventCard({ event, index = 0 }) {
         </div>
       </div>
     </Link>
+    </div>
   );
 }
