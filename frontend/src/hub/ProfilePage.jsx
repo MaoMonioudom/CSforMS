@@ -1,0 +1,167 @@
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Layers, LogOut, MessageSquare, BookOpen, Package, ArrowRight, Settings, User } from "lucide-react";
+import { useAuth } from "./AuthContext";
+
+const D = {
+  bg:     "#070d18",
+  card:   "#0d1624",
+  card2:  "#111e2e",
+  border: "rgba(99,102,241,0.15)",
+  muted:  "rgba(255,255,255,0.38)",
+  text:   "#c8d8f0",
+};
+
+const MODULES = [
+  { label: "Community", sub: "Bulletin Board",    color: "#c9a86c", icon: MessageSquare, to: "/community",  stat: "3 spaces"          },
+  { label: "Learning",  sub: "Digital Library",   color: "#c0392b", icon: BookOpen,      to: "/learning",   stat: "6 courses"         },
+  { label: "Inventory", sub: "Resource Manager",  color: "#0891b2", icon: Package,       to: "/inventory",  stat: "12 items tracked"  },
+];
+
+const ACTIVITY = [
+  { action: "Registered for",    target: "Intro to Electronics Workshop", time: "Just now",   color: "#c9a86c" },
+  { action: "Enrolled in",       target: "Python for Makers",             time: "2 days ago", color: "#c0392b" },
+  { action: "Requested",         target: "Arduino Uno R3 × 2",           time: "3 days ago", color: "#0891b2" },
+  { action: "Posted in",         target: "Community Space",               time: "5 days ago", color: "#c9a86c" },
+];
+
+function Avatar({ name, size = 56 }) {
+  const initials = name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-extrabold text-white shrink-0"
+      style={{ width: size, height: size, background: "linear-gradient(135deg,#6366f1,#a855f7)", fontSize: size * 0.34 }}>
+      {initials}
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) navigate("/hub/login");
+  }, [user, navigate]);
+
+  if (!user) return null;
+
+  const handleLogout = () => { logout(); navigate("/"); };
+
+  return (
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, #0a1628 100%)` }}>
+
+      <div aria-hidden className="fixed inset-0 pointer-events-none"
+        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.035) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+
+      {/* Top bar */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-8 h-16"
+        style={{ background: "rgba(7,13,24,0.9)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
+            <Layers size={14} color="white" strokeWidth={2.2} />
+          </div>
+          <span className="font-bold text-white">CADT <span style={{ color: "#818cf8" }}>Hub</span></span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <button onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all hover:opacity-80"
+            style={{ color: D.muted, border: "1px solid rgba(255,255,255,0.1)" }}>
+            <LogOut size={12} /> Sign out
+          </button>
+        </div>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 py-12">
+
+        {/* Profile hero */}
+        <div className="rounded-2xl p-8 mb-8 relative overflow-hidden"
+          style={{ background: D.card, border: `1px solid ${D.border}` }}>
+          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#6366f1,#a855f7,transparent)" }} />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <Avatar name={user.name} size={64} />
+            <div className="flex-1">
+              <h1 className="text-2xl font-extrabold text-white">{user.name}</h1>
+              <p className="text-sm mt-0.5" style={{ color: D.muted }}>{user.email}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {MODULES.map(m => (
+                  <span key={m.label} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: `${m.color}15`, color: m.color, border: `1px solid ${m.color}28` }}>
+                    {m.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Link to="/hub/settings"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-80"
+              style={{ color: D.muted, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}>
+              <Settings size={13} /> Settings
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-6">
+
+          {/* Module access */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Your Modules</p>
+            <div className="flex flex-col gap-3">
+              {MODULES.map(m => {
+                const Icon = m.icon;
+                return (
+                  <Link key={m.label} to={m.to}
+                    className="group flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-[1.01]"
+                    style={{ background: D.card, border: `1px solid rgba(255,255,255,0.07)` }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: `${m.color}15`, border: `1px solid ${m.color}28` }}>
+                      <Icon size={18} style={{ color: m.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-white">{m.label}</p>
+                      <p className="text-[11px]" style={{ color: D.muted }}>{m.sub} · {m.stat}</p>
+                    </div>
+                    <ArrowRight size={14} style={{ color: m.color }}
+                      className="shrink-0 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Recent activity */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
+            <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: "1px solid rgba(255,255,255,0.07)" }}>
+              {ACTIVITY.map((a, i) => (
+                <div key={i}
+                  className="flex items-start gap-3 px-4 py-3.5"
+                  style={{ borderBottom: i < ACTIVITY.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: a.color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-white/70"><span className="text-white/40">{a.action}</span> {a.target}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{a.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Stats strip */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {[
+                { v: "2",  l: "Events joined"   },
+                { v: "1",  l: "Course started"  },
+                { v: "3",  l: "Items requested" },
+              ].map(s => (
+                <div key={s.l} className="rounded-xl p-3 text-center" style={{ background: D.card, border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p className="text-xl font-extrabold text-white">{s.v}</p>
+                  <p className="text-[9px] mt-0.5 leading-tight" style={{ color: D.muted }}>{s.l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
