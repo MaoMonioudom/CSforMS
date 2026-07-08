@@ -10,9 +10,9 @@ const COLUMNS = [
     accent: "rgba(255,255,255,0.55)",
     links: [
       { label: "About",       to: "/hub/about"  },
-      { label: "Guidelines",  to: "/hub/about"  },
-      { label: "FAQ",         to: "/hub/about"  },
-      { label: "Contact",     to: "/hub/about"  },
+      { label: "Guidelines",  to: "/hub/about#guidelines" },
+      { label: "FAQ",         to: "/hub/about#faq" },
+      { label: "Contact",     to: "/hub/about#contact" },
     ],
   },
   {
@@ -20,9 +20,9 @@ const COLUMNS = [
     accent: "#c9a86c",
     links: [
       { label: "Home",           to: "/community"                  },
-      { label: "Event Space",    to: "/community/eventspace"       },
-      { label: "Collab Space",   to: "/community/collabspace"      },
-      { label: "Community Board",to: "/community/communityspace"   },
+      { label: "Events",         to: "/community/eventspace"       },
+      { label: "Find Team",      to: "/community/collabspace"      },
+      { label: "Connect",        to: "/community/communityspace"   },
     ],
   },
   {
@@ -114,7 +114,7 @@ export function AppFooter() {
               {user.name}
             </Link>
           ) : (
-            <Link to="/hub/login"
+            <Link to="/login"
               className="inline-flex items-center gap-1.5 text-[11px] font-bold transition-colors hover:text-white"
               style={{ color: "rgba(255,255,255,0.70)" }}>
               <LogIn size={11} />

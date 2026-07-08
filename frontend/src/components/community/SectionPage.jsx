@@ -1,4 +1,30 @@
-function PushPin({ color = "#ef4444", size = 14 }) {
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+
+function Breadcrumb({ items, light = false }) {
+  if (!items || items.length === 0) return null;
+  const linkColor = light ? "text-white/70 hover:text-white" : "text-muted-foreground hover:text-foreground";
+  const currentColor = light ? "text-white" : "text-foreground";
+  return (
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm flex-wrap mb-4">
+      {items.map((item, i) => {
+        const isLast = i === items.length - 1;
+        return (
+          <span key={item.label} className="flex items-center gap-1.5">
+            {i > 0 && <ChevronRight className={`size-3.5 shrink-0 opacity-50 ${light ? "text-white" : ""}`} />}
+            {isLast || !item.to ? (
+              <span className={`font-medium truncate max-w-[200px] sm:max-w-sm ${currentColor}`}>{item.label}</span>
+            ) : (
+              <Link to={item.to} className={`transition-colors ${linkColor}`}>{item.label}</Link>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function PushPin({ color = "#ef4444", size = 14 }) {
   return (
     <svg width={size} height={size * 2} viewBox="0 0 14 28" fill="none" aria-hidden>
       <circle cx="7" cy="7" r="6.5" fill={color} />
@@ -104,6 +130,8 @@ export function SectionPage({
   stats,
   ghostLetter,
   tapeColor = "rgba(255,230,120,0.85)",
+  breadcrumb,
+  banner,
 }) {
   if (bulletin) {
     return (
@@ -143,6 +171,7 @@ export function SectionPage({
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-10 sm:gap-16">
               <div className="flex-1">
+                <Breadcrumb items={breadcrumb} light />
                 <p className="text-xs uppercase tracking-[0.22em] text-white/55 font-bold mb-5">
                   {eyebrow}
                 </p>
@@ -163,6 +192,7 @@ export function SectionPage({
                     {title}
                   </h1>
                 </div>
+                {banner && <div className="mt-5">{banner}</div>}
                 <p className="mt-6 text-white/70 text-base max-w-lg leading-relaxed">
                   {description}
                 </p>
@@ -196,6 +226,7 @@ export function SectionPage({
     <>
       <section className={`${toneMap[tone]} ${children ? "" : "min-h-[calc(100vh-4rem)]"}`}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
+          <Breadcrumb items={breadcrumb} light />
           <p className="text-xs uppercase tracking-[0.2em] opacity-70 mb-6">{eyebrow}</p>
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-semibold tracking-tight leading-[1.02]">
             {title}

@@ -1,22 +1,33 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageSquare, BookOpen, Package, Target, Heart, Users, Lightbulb, Zap } from "lucide-react";
+import {
+  ArrowRight, MessageSquare, BookOpen, Package,
+  Compass, Target, ShieldCheck, Wrench, Users, MessageCircle,
+  MapPin, Mail, Clock, ChevronDown,
+} from "lucide-react";
 import { HubNav } from "./HubNav";
-import { HubFooter } from "./LandingPage";
+import { CurtainWallDecoration } from "./LandingPage";
+import { AppFooter } from "../components/AppFooter";
 
-// ── Bright Palette ────────────────────────────────────────────────────────────
+// ── Sky & Cloud palette — matches Landing / Login / Register / Profile ────────
 const T = {
-  bg:       "#ffffff",
-  bgAlt:    "#fafafa",
+  bg1:      "#f4f8fc",
+  bg2:      "#eaf2fa",
+  bg3:      "#e3edf7",
   bgCard:   "#ffffff",
-  bgSoft:   "#f9f9f9",
-  text:     "#1a1a2e",
-  muted:    "#5a5a72",
-  faint:    "#9898b0",
-  border:   "rgba(0,0,0,0.08)",
-  shadow:   "0 2px 16px rgba(0,0,0,0.06)",
-  shadowLg: "0 8px 40px rgba(0,0,0,0.09)",
+  text:     "#16324a",
+  muted:    "#4a6478",
+  faint:    "#7a93a8",
+  border:   "rgba(91,170,216,0.22)",
+  borderBr: "rgba(91,170,216,0.38)",
   accent:   "#6366f1",
+  shadow:   "0 2px 20px rgba(15,50,80,0.08)",
+  shadowLg: "0 8px 48px rgba(15,50,80,0.14)",
 };
+
+const GRADIENT = "linear-gradient(135deg,#6366f1,#a855f7)";
+const SKY_TOP  = "#5baad8";
+const SKY_BOT  = "#b8daf2";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,11 +35,8 @@ function SectionLabel({ number, children }) {
   return (
     <div className="flex items-center gap-3 mb-6">
       <span
-        className="text-[10px] font-black tracking-[0.22em] uppercase px-2.5 py-1 rounded"
-        style={{
-          background: "linear-gradient(135deg,#4f6ef7,#7c3aed)",
-          color: "white",
-        }}
+        className="text-[10px] font-black tracking-[0.22em] uppercase px-2.5 py-1 rounded font-mono"
+        style={{ background: GRADIENT, color: "white" }}
       >
         {number}
       </span>
@@ -43,292 +51,175 @@ function Divider() {
   return (
     <div className="flex items-center gap-4 my-2">
       <div className="flex-1 h-px" style={{ background: T.border }} />
-      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(99,138,196,0.4)" }} />
+      <div className="w-1.5 h-1.5 rounded-full" style={{ background: T.faint }} />
       <div className="flex-1 h-px" style={{ background: T.border }} />
     </div>
   );
 }
 
-// ── Module Card ───────────────────────────────────────────────────────────────
+// ── Ruled "notebook paper" card — used for Guidelines ─────────────────────────
+const RULE_H = 28;
 
-function WorldCard({ icon: Icon, accent, tag, roomNum, title, theme, description, capabilities, href }) {
+function RuledCard({ icon: Icon, title, body, accent = T.accent }) {
   return (
     <div
-      className="rounded-2xl overflow-hidden flex flex-col"
+      className="relative rounded-2xl overflow-hidden"
       style={{
-        background: T.bgCard,
+        background: "#fffdf7",
         border: `1px solid ${T.border}`,
-        borderTop: `4px solid ${accent}`,
         boxShadow: T.shadow,
+        backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${RULE_H - 1}px, rgba(37,99,235,0.35) ${RULE_H - 1}px, rgba(37,99,235,0.35) ${RULE_H}px)`,
+        backgroundPosition: "0 14px",
       }}
     >
-      <div className="px-6 pt-6 pb-4" style={{ borderBottom: `1px solid ${T.border}` }}>
-        <div className="flex items-center justify-between mb-4">
-          <span
-            className="text-[10px] font-black tracking-[0.14em] uppercase px-2 py-0.5 rounded"
-            style={{ background: `${accent}18`, color: accent, border: `1px solid ${accent}30` }}
-          >
-            Room {roomNum}
-          </span>
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: `${accent}14`, border: `1px solid ${accent}24` }}
-          >
-            <Icon size={18} style={{ color: accent }} />
-          </div>
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: accent }}>
-          {tag}
-        </p>
-        <h3 className="text-xl font-extrabold leading-tight" style={{ color: T.text }}>{title}</h3>
-        <span
-          className="inline-block text-[10px] font-semibold mt-1.5 px-2 py-0.5 rounded-full"
-          style={{ background: `${accent}10`, color: accent, border: `1px solid ${accent}22` }}
-        >
-          {theme}
-        </span>
-      </div>
+      <div className="absolute inset-y-0" style={{ left: 34, width: 1.5, background: `${accent}66` }} />
+      <div className="absolute rounded-full" style={{ left: 13, top: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
+      <div className="absolute rounded-full" style={{ left: 13, bottom: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
 
-      <div className="px-6 py-5 flex-1 flex flex-col">
-        <p className="text-sm leading-relaxed mb-5" style={{ color: T.muted }}>
-          {description}
-        </p>
-        <ul className="flex flex-col gap-2 mb-6 flex-1">
-          {capabilities.map((c) => (
-            <li key={c} className="flex items-start gap-2.5 text-sm" style={{ color: T.muted }}>
-              <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: accent }} />
-              {c}
-            </li>
-          ))}
-        </ul>
-        <a
-          href={href}
-          className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70"
-          style={{ color: accent }}
-        >
-          Visit Module <ArrowRight size={14} />
-        </a>
+      <div className="relative p-6 pl-12">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+          style={{ background: `${accent}14`, border: `1px solid ${accent}28` }}>
+          <Icon size={18} style={{ color: accent }} />
+        </div>
+        <h4 className="font-bold mb-2" style={{ color: T.text }}>{title}</h4>
+        <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{body}</p>
       </div>
     </div>
   );
 }
 
-// ── Value Card ────────────────────────────────────────────────────────────────
-
-function ValueCard({ icon: Icon, title, body, accent = T.accent }) {
+// ── FAQ accordion item ─────────────────────────────────────────────────────────
+function FaqItem({ q, a, open, onToggle }) {
   return (
-    <div
-      className="rounded-2xl p-6"
-      style={{
-        background: T.bgCard,
-        border: `1px solid ${T.border}`,
-        boxShadow: T.shadow,
-      }}
-    >
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-        style={{ background: `${accent}14`, border: `1px solid ${accent}28` }}
+    <div className="rounded-2xl overflow-hidden" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-4 p-5 text-left"
       >
-        <Icon size={18} style={{ color: accent }} />
-      </div>
-      <h4 className="font-bold mb-2" style={{ color: T.text }}>{title}</h4>
-      <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{body}</p>
+        <span className="font-bold" style={{ color: T.text }}>{q}</span>
+        <ChevronDown
+          size={18}
+          style={{ color: T.faint, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+          className="shrink-0"
+        />
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{a}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const WORLDS = [
-  {
-    icon:    MessageSquare,
-    accent:  "#e8a020",
-    tag:     "Community Module",
-    roomNum: "A01",
-    title:   "Bulletin Board",
-    theme:   "Cork board · Sticky notes",
-    description:
-      "The social heart of MakerClub. Post events, find collaborators for your next project, and stay connected with the CADT community — all on a lively digital noticeboard.",
-    capabilities: [
-      "Pin events as polaroid-style photo cards",
-      "Post collaboration requests as sticky notes",
-      "Start and join community discussions",
-      "Browse by category: events, projects, discussions",
-    ],
-    href: "/",
-  },
-  {
-    icon:    BookOpen,
-    accent:  "#e53e3e",
-    tag:     "Learning Module",
-    roomNum: "B02",
-    title:   "Digital Library",
-    theme:   "Book pages · Chapters",
-    description:
-      "Browse CADT courses laid out like a library shelf. Each course is a book, each topic a chapter — making learning feel structured, tangible, and genuinely rewarding.",
-    capabilities: [
-      "Browse courses as a library of books",
-      "Follow chapter-by-chapter progression",
-      "Track reading progress per course",
-      "Bookmark key sections for review",
-    ],
-    href: "#",
-  },
-  {
-    icon:    Package,
-    accent:  "#0891b2",
-    tag:     "Inventory Module",
-    roomNum: "C03",
-    title:   "Resource Manager",
-    theme:   "Minimal · Data-driven",
-    description:
-      "Need a device, a tool, or a lab material? The Resource Manager gives you a real-time view of what's available at CADT and lets you request it in seconds.",
-    capabilities: [
-      "Real-time stock levels and availability",
-      "Submit and track resource requests",
-      "Category and tag-based filtering",
-      "Approval workflow for administrators",
-    ],
-    href: "#",
-  },
+const GUIDELINES = [
+  { icon: ShieldCheck,   accent: T.accent,  title: "Membership & access", body: "You need an active CADT Makerspace membership to book equipment or workspace. Sign up once — it covers all three modules." },
+  { icon: Wrench,        accent: "#c9a86c", title: "Safety first",        body: "Some equipment (like the laser cutter) requires a certification workshop before solo use. Never operate tools you haven't been trained on." },
+  { icon: Package,       accent: "#0891b2", title: "Borrow & return",     body: "Return borrowed items by the due date shown in your request. Report damage or loss right away rather than staying quiet about it." },
+  { icon: Users,         accent: "#c0392b", title: "Respect the space",   body: "Clean up after yourself, put tools back where they belong, and flag anything broken so the next person isn't caught off guard." },
+  { icon: MessageCircle, accent: "#6366f1", title: "Code of conduct",     body: "Keep Community and Find Team posts respectful and on-topic. Harassment or spam isn't tolerated and may result in account action." },
+  { icon: Target,        accent: "#c9a86c", title: "Event registration", body: "Register ahead when you can, and cancel your spot if plans change — it frees the seat up for someone on the waitlist." },
 ];
 
-const VALUES = [
-  { icon: Target,    accent: T.accent,  title: "Purpose-Built",  body: "Every module solves one specific problem well, rather than being a generic catch-all that does nothing great." },
-  { icon: Heart,     accent: "#e8a020", title: "Student-First",  body: "Every layout, label, and flow was designed with CADT students as the primary user — because this platform exists for them." },
-  { icon: Users,     accent: "#0891b2", title: "Collaborative",  body: "MakerClub was built by student interns working as a team — the platform itself embodies the values it promotes." },
-  { icon: Lightbulb, accent: "#e53e3e", title: "Built to Grow",  body: "New modules can be added as CADT evolves. The architecture is open and extensible by design." },
+const FAQS = [
+  { q: "Who can use the CADT Makerspace?", a: "Any active CADT student with a MakerClub account. Create an account with your CADT email to get started." },
+  { q: "Is MakerClub free to use?", a: "Yes — it's free for all CADT students. Create an account and you'll have access to Community, Learning, and Inventory from day one." },
+  { q: "How do I borrow tools or equipment?", a: "Head to the Inventory module (Resource Manager), find the item you need, and submit a request. An admin reviews and approves it before it's checked out to you." },
+  { q: "What if I damage or lose something I borrowed?", a: "Report it as soon as possible rather than waiting — either through the app or directly to Makerspace staff. Being upfront keeps the whole system working for everyone." },
+  { q: "How do I find teammates for a project?", a: "Post on Find Team in the Community module — describe your project and the roles you're looking for. Interested students reach out to you directly." },
+  { q: "How do I register for an event or workshop?", a: "Browse Events in the Community module and click register. Some sessions (like equipment certifications) are prerequisites for using certain tools solo." },
 ];
 
 // ── About Page ────────────────────────────────────────────────────────────────
 
 export default function AboutPage() {
+  const [openFaq, setOpenFaq] = useState(0);
+
   return (
-    <div style={{ backgroundColor: T.bg, color: T.text, minHeight: "100vh" }}>
+    <div style={{ backgroundColor: T.bg1, color: T.text, minHeight: "100vh" }}>
       <HubNav light />
 
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      {/* ── HERO — same sky-glass scene as the landing page welcome ───────── */}
       <section
         className="relative pt-40 pb-28 overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #f5f0ff 0%, #faf8ff 60%, #ffffff 100%)" }}
+        style={{ background: `linear-gradient(180deg, ${SKY_TOP} 0%, ${SKY_BOT} 100%)` }}
       >
-        {/* Subtle dot grid */}
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle, rgba(79,110,247,0.12) 1px, transparent 1px)`,
-            backgroundSize: "28px 28px",
-          }}
-        />
+        <CurtainWallDecoration />
 
-        {/* Soft colour blobs */}
         <div aria-hidden style={{
-          position: "absolute", top: "10%", right: "8%",
-          width: 340, height: 340, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div aria-hidden style={{
-          position: "absolute", bottom: "0%", left: "5%",
-          width: 280, height: 280, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)",
-          pointerEvents: "none",
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(91,170,216,0.45) 100%)",
         }} />
 
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          {/* Badge */}
           <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-bold uppercase tracking-[0.18em]"
-            style={{
-              background: "#fff",
-              border: `1px solid ${T.border}`,
-              color: T.faint,
-              boxShadow: T.shadow,
-            }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-bold uppercase tracking-[0.2em]"
+            style={{ background: "rgba(255,255,255,0.28)", border: "1px solid rgba(74,88,112,0.22)", color: "#1a3350", backdropFilter: "blur(8px)" }}
           >
-            <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg,#4f6ef7,#7c3aed)" }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: GRADIENT }} />
             CADT MakerClub — Hub
           </div>
 
-          <h1
-            className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight"
-            style={{ color: T.text }}
-          >
+          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight" style={{ color: "#0f2033" }}>
             One hub for every
             <br />
-            <span
-              style={{
-                background: "linear-gradient(135deg,#4f6ef7,#7c3aed)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               CADT student.
             </span>
           </h1>
 
-          <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: T.muted }}>
+          <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(15,32,51,0.65)" }}>
             MakerClub is the official platform of the CADT Makerspace — a single place where students connect with the community, access courses, and manage shared resources. Three modules, one home.
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center mt-10">
-            <Link
-              to="/hub/register"
+            <Link to="/register"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-85"
-              style={{ background: "linear-gradient(135deg,#4f6ef7,#7c3aed)" }}
-            >
+              style={{ background: GRADIENT }}>
               Join MakerClub <ArrowRight size={14} />
             </Link>
-            <Link
-              to="/hub"
+            <Link to="/hub"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-opacity hover:opacity-70"
-              style={{ color: T.muted, border: `1px solid ${T.border}`, background: "#fff" }}
-            >
+              style={{ color: "#1a3350", background: "rgba(255,255,255,0.30)", border: "1px solid rgba(74,88,112,0.22)", backdropFilter: "blur(8px)" }}>
               Explore the Hub
             </Link>
           </div>
         </div>
+
+        <div aria-hidden style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
+          background: `linear-gradient(to bottom, transparent, ${T.bg1})`,
+          pointerEvents: "none",
+        }} />
       </section>
 
-      {/* ── WHAT IS THIS? ────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bgAlt, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
+      {/* ── § 01 WHAT IS THE MAKERSPACE ─────────────────────────────────── */}
+      <section className="py-24" style={{ background: T.bg1 }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-16 items-center">
-
           <div>
-            <SectionLabel number="§ 01">What Is MakerClub?</SectionLabel>
+            <SectionLabel number="§ 01">What Is the Makerspace?</SectionLabel>
             <h2 className="text-4xl font-extrabold mb-6 leading-tight" style={{ color: T.text }}>
-              Your campus life,{" "}
-              <span
-                style={{
-                  background: "linear-gradient(135deg,#4f6ef7,#7c3aed)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                all in one place.
+              A real, physical space —{" "}
+              <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                not just an app.
               </span>
             </h2>
             <p className="text-base leading-relaxed mb-4" style={{ color: T.muted }}>
-              MakerClub is CADT's unified student platform — built by interns, for students. It brings together the three things you need most on campus: a community space to connect and collaborate, a library to learn from, and a tool to manage shared resources.
+              The CADT Makerspace is a hands-on workshop on campus — electronics benches, 3D printers, a laser cutter, and a wood + metal shop — where students build things instead of just reading about them.
             </p>
             <p className="text-base leading-relaxed mb-6" style={{ color: T.muted }}>
-              Instead of juggling separate apps and links, everything lives here. Create one account and step into three distinct digital worlds, each designed around a single job done really well.
+              MakerClub is the digital front door to that space: discover workshops and events, request the tools and materials you need, and find people to build with — all from one account.
             </p>
 
-            {/* Quick facts */}
             <div className="grid grid-cols-3 gap-4 mt-8">
               {[
-                { label: "Modules",    value: "3",       accent: T.accent },
-                { label: "Built by",   value: "Interns", accent: "#e8a020" },
-                { label: "For",        value: "CADT",    accent: "#e53e3e" },
+                { label: "Modules",  value: "3",       accent: T.accent },
+                { label: "Access",   value: "CADT",     accent: "#c9a86c" },
+                { label: "Cost",     value: "Free",     accent: "#c0392b" },
               ].map((f) => (
-                <div key={f.label}
-                  className="rounded-xl p-4 text-center"
-                  style={{ background: "#fff", border: `1px solid ${T.border}`, boxShadow: T.shadow }}
-                >
+                <div key={f.label} className="rounded-xl p-4 text-center" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                   <div className="text-2xl font-extrabold mb-1" style={{ color: f.accent }}>{f.value}</div>
                   <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: T.faint }}>{f.label}</div>
                 </div>
@@ -338,199 +229,160 @@ export default function AboutPage() {
 
           {/* Visual: connected orbs */}
           <div className="relative flex items-center justify-center h-64 lg:h-72">
-            <div
-              className="absolute w-20 h-20 rounded-2xl flex items-center justify-center z-10"
-              style={{
-                background: "linear-gradient(135deg,#4f6ef7,#7c3aed)",
-                boxShadow: "0 0 40px rgba(79,110,247,0.35)",
-              }}
-            >
+            <svg className="absolute inset-0 w-full h-full" aria-hidden>
+              <line x1="50%" y1="50%" x2="25%" y2="20%" stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
+              <line x1="50%" y1="50%" x2="75%" y2="20%" stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
+              <line x1="50%" y1="50%" x2="50%" y2="82%" stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
+            </svg>
+            <div className="absolute w-20 h-20 rounded-2xl flex items-center justify-center z-10"
+              style={{ background: GRADIENT, boxShadow: "0 0 40px rgba(99,102,241,0.35)" }}>
               <span className="text-white font-extrabold text-base">Hub</span>
             </div>
             {[
-              { Icon: MessageSquare, color: "#e8a020", style: { top: "8%",    left: "16%" } },
-              { Icon: BookOpen,      color: "#e53e3e", style: { top: "8%",    right: "16%" } },
+              { Icon: MessageSquare, color: "#c9a86c", style: { top: "8%",    left: "16%" } },
+              { Icon: BookOpen,      color: "#c0392b", style: { top: "8%",    right: "16%" } },
               { Icon: Package,       color: "#0891b2", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)" } },
             ].map(({ Icon, color, style }, i) => (
-              <div
-                key={i}
-                className="absolute w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: `${color}18`,
-                  border: `2px solid ${color}40`,
-                  boxShadow: `0 0 20px ${color}25`,
-                  ...style,
-                }}
-              >
+              <div key={i} className="absolute w-14 h-14 rounded-2xl flex items-center justify-center"
+                style={{ background: `${color}14`, border: `2px solid ${color}40`, boxShadow: `0 0 24px ${color}20`, ...style }}>
                 <Icon size={20} style={{ color }} />
               </div>
             ))}
-            <svg className="absolute inset-0 w-full h-full" aria-hidden>
-              <line x1="50%" y1="50%" x2="25%"  y2="20%"  stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
-              <line x1="50%" y1="50%" x2="75%"  y2="20%"  stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
-              <line x1="50%" y1="50%" x2="50%"  y2="82%"  stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
-            </svg>
           </div>
         </div>
       </section>
 
-      {/* ── THREE MODULES ────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bg }}>
+      {/* ── § 02 VISION & MISSION ───────────────────────────────────────── */}
+      <section className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
-            <SectionLabel number="§ 02">The Three Modules</SectionLabel>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>
-                Each one built<br />with intention.
-              </h2>
-              <p className="text-base max-w-sm leading-relaxed" style={{ color: T.muted }}>
-                Rather than one app that does everything poorly, we built three apps that each do one thing exceptionally well — each with its own unique look and feel.
+            <SectionLabel number="§ 02">Vision &amp; Mission</SectionLabel>
+            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Why this exists.</h2>
+            <Divider />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="rounded-2xl p-8" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                style={{ background: `${T.accent}14`, border: `1px solid ${T.accent}28` }}>
+                <Compass size={20} style={{ color: T.accent }} />
+              </div>
+              <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Vision</h3>
+              <p className="text-base leading-relaxed" style={{ color: T.muted }}>
+                A campus where every CADT student has the tools, space, and community to turn ideas into things — not just in theory, but with their own hands.
               </p>
             </div>
-            <Divider />
-          </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {WORLDS.map((w) => <WorldCard key={w.tag} {...w} />)}
+            <div className="rounded-2xl p-8" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                style={{ background: "rgba(192,57,43,0.14)", border: "1px solid rgba(192,57,43,0.28)" }}>
+                <Target size={20} style={{ color: "#c0392b" }} />
+              </div>
+              <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Mission</h3>
+              <p className="text-base leading-relaxed" style={{ color: T.muted }}>
+                To give CADT students one connected platform for the physical Makerspace: discover workshops and events, request the tools and materials you need, and find people to build with.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bgAlt, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
+      {/* ── § 03 GUIDELINES ─────────────────────────────────────────────── */}
+      <section id="guidelines" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
-            <SectionLabel number="§ 03">How It Works</SectionLabel>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Simple to get started.</h2>
+            <SectionLabel number="§ 03">Guidelines</SectionLabel>
+            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>How the space works.</h2>
             <Divider />
           </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {GUIDELINES.map((g) => <RuledCard key={g.title} {...g} />)}
+          </div>
+        </div>
+      </section>
 
-          <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              { step: "01", title: "Create your account", body: "Sign up once with your CADT email. Your account gives you access to all three modules from day one.", accent: T.accent, icon: Zap },
-              { step: "02", title: "Choose your module", body: "Head to the Bulletin Board to connect, the Digital Library to learn, or the Resource Manager to find what you need.", accent: "#e8a020", icon: Layers },
-              { step: "03", title: "Start doing things", body: "Post a collaboration request, enrol in a course, or request lab equipment — all from one unified platform.", accent: "#e53e3e", icon: ArrowRight },
-            ].map(({ step, title, body, accent, icon: Icon }) => (
-              <div key={step}
-                className="rounded-2xl p-8"
-                style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="text-3xl font-black" style={{ color: accent, opacity: 0.18, lineHeight: 1 }}>{step}</span>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: `${accent}14`, border: `1px solid ${accent}28` }}>
-                    <Icon size={17} style={{ color: accent }} />
-                  </div>
-                </div>
-                <h4 className="font-bold text-lg mb-2" style={{ color: T.text }}>{title}</h4>
-                <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{body}</p>
-              </div>
+      {/* ── § 04 FAQ ─────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, scrollMarginTop: 80 }}>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-14">
+            <SectionLabel number="§ 04">FAQ</SectionLabel>
+            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Common questions.</h2>
+            <Divider />
+          </div>
+          <div className="flex flex-col gap-3">
+            {FAQS.map((f, i) => (
+              <FaqItem key={f.q} q={f.q} a={f.a} open={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? -1 : i)} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── VALUES ───────────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bg }}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-14">
-            <SectionLabel number="§ 04">What Drives Us</SectionLabel>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>
-              Our principles.
-            </h2>
-            <Divider />
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {VALUES.map((v) => <ValueCard key={v.title} {...v} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TEAM ─────────────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bgAlt, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-14">
-            <SectionLabel number="§ 05">The Team</SectionLabel>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>
-                CADT Intern 1<br />Cohort.
-              </h2>
-              <p className="text-base max-w-sm leading-relaxed" style={{ color: T.muted }}>
-                MakerClub was designed and built entirely by student interns — three teams, three modules, one shared goal.
-              </p>
+      {/* ── § 05 CONTACT ─────────────────────────────────────────────────── */}
+      <section id="contact" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-14 text-center">
+            <div className="flex justify-center">
+              <SectionLabel number="§ 05">Contact</SectionLabel>
             </div>
-            <Divider />
+            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Find us.</h2>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-5">
-            {[
-              { label: "Community Team",  desc: "Bulletin Board — events, collabs, threads",   count: "3 members", accent: "#e8a020", room: "A01" },
-              { label: "Learning Team",   desc: "Digital Library — courses, chapters, progress", count: "3 members", accent: "#e53e3e", room: "B02" },
-              { label: "Inventory Team",  desc: "Resource Manager — stock, requests, approvals", count: "3 members", accent: "#0891b2", room: "C03" },
-            ].map((t) => (
-              <div
-                key={t.label}
-                className="rounded-2xl p-7"
-                style={{
-                  background: T.bgCard,
-                  border: `1px solid ${T.border}`,
-                  borderTop: `4px solid ${t.accent}`,
-                  boxShadow: T.shadow,
-                }}
-              >
-                <div
-                  className="text-[10px] font-black tracking-[0.16em] uppercase mb-4 px-2 py-0.5 rounded inline-block"
-                  style={{ background: `${t.accent}14`, color: t.accent, border: `1px solid ${t.accent}28` }}
-                >
-                  Room {t.room}
+          <div className="rounded-2xl p-8 sm:p-10" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+            <div className="grid sm:grid-cols-3 gap-8">
+              <div>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: `${T.accent}14`, border: `1px solid ${T.accent}28` }}>
+                  <MapPin size={18} style={{ color: T.accent }} />
                 </div>
-                <div className="font-bold text-lg mb-1" style={{ color: T.text }}>{t.label}</div>
-                <div className="text-xs mb-3 leading-relaxed" style={{ color: T.faint }}>{t.desc}</div>
-                <div className="text-sm font-semibold" style={{ color: t.accent }}>{t.count}</div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Address</p>
+                <p className="text-sm leading-relaxed" style={{ color: T.text }}>
+                  CADT, IDRI Building, Bridge 2,
+                  Prek Leap, Chroy Changva
+                  Phnom Penh, Cambodia
+                </p>
               </div>
-            ))}
+
+              <div>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: "rgba(201,168,108,0.14)", border: "1px solid rgba(201,168,108,0.28)" }}>
+                  <Mail size={18} style={{ color: "#c9a86c" }} />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Email</p>
+                <p className="text-sm leading-relaxed" style={{ color: T.faint }}>Makerspace@cadt.edu.kh</p>
+              </div>
+
+              <div>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: "rgba(8,145,178,0.14)", border: "1px solid rgba(8,145,178,0.28)" }}>
+                  <Clock size={18} style={{ color: "#0891b2" }} />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Hours</p>
+                <p className="text-sm leading-relaxed" style={{ color: T.faint }}>9:00 AM - 5:00 PM</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: T.bg }}>
+      <section className="py-24" style={{ background: T.bg3 }}>
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div
-            className="rounded-3xl p-12 sm:p-16 text-center relative overflow-hidden"
-            style={{
-              background: "linear-gradient(135deg, #f5f0ff 0%, #fdf8ff 100%)",
-              border: `1px solid rgba(99,102,241,0.12)`,
-              boxShadow: T.shadowLg,
-            }}
-          >
-            {/* Top accent bar */}
+          <div className="rounded-3xl p-12 sm:p-16 text-center relative overflow-hidden"
+            style={{ background: T.bgCard, border: `1px solid ${T.borderBr}`, boxShadow: T.shadowLg }}>
             <div style={{
               position: "absolute", top: 0, left: "20%", right: "20%", height: 3,
-              background: "linear-gradient(90deg, transparent, #4f6ef7, #7c3aed, transparent)",
+              background: "linear-gradient(90deg, transparent, #6366f1, #a855f7, transparent)",
             }} />
 
             <div className="relative z-10">
-              <div
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.18em] mb-6"
-                style={{ background: "#4f6ef714", color: T.accent, border: "1px solid rgba(79,110,247,0.25)" }}
-              >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.18em] mb-6"
+                style={{ background: "#6366f114", color: T.accent, border: "1px solid rgba(99,102,241,0.25)" }}>
                 Free for CADT Students
               </div>
-              <h2
-                className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight"
-                style={{ color: T.text }}
-              >
+              <h2 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight" style={{ color: T.text }}>
                 Ready to join the
                 <br />
-                <span
-                  style={{
-                    background: "linear-gradient(135deg,#4f6ef7,#7c3aed)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
+                <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                   MakerClub?
                 </span>
               </h2>
@@ -538,18 +390,14 @@ export default function AboutPage() {
                 Create your free account and unlock the Community, Learning, and Inventory modules — all in one place.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link
-                  to="/hub/register"
+                <Link to="/register"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-85"
-                  style={{ background: "linear-gradient(135deg,#4f6ef7,#7c3aed)" }}
-                >
+                  style={{ background: GRADIENT }}>
                   Create Free Account <ArrowRight size={15} />
                 </Link>
-                <Link
-                  to="/hub"
+                <Link to="/hub"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-70"
-                  style={{ color: T.muted, border: `1px solid ${T.border}`, background: "#fff" }}
-                >
+                  style={{ color: T.muted, border: `1px solid ${T.border}`, background: "none" }}>
                   Back to Home
                 </Link>
               </div>
@@ -558,19 +406,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <HubFooter />
+      <AppFooter />
     </div>
-  );
-}
-
-// silence unused-import lint for Layers used in step card
-function Layers({ size, style }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={style}>
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
   );
 }

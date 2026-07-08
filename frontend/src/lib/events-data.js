@@ -2,12 +2,13 @@ export const events = [{
   id: "maker-fair-2026",
   image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop",
   title: "Maker Fair 2026",
-  date: "2026-07-12T10:00:00Z",
+  date: "2026-07-04T10:00:00Z",
+  endDate: "2026-07-08T18:00:00Z",
   location: "Main Hall, Building A",
   participants: 128,
   capacity: 250,
-  shortDescription: "A full-day celebration of makers, builders, and tinkerers from across the community.",
-  description: "Maker Fair 2026 brings together hundreds of makers for a day of demos, hands-on workshops, lightning talks, and a community marketplace. Whether you build robots, sew costumes, weld furniture, or compose generative music — there is a space for you. Expect interactive booths, mentor office hours, a kids' zone, and an evening showcase.",
+  shortDescription: "A multi-day celebration of makers, builders, and tinkerers from across the community.",
+  description: "Maker Fair 2026 brings together hundreds of makers for five days of demos, hands-on workshops, lightning talks, and a community marketplace. Whether you build robots, sew costumes, weld furniture, or compose generative music — there is a space for you. Expect interactive booths, mentor office hours, a kids' zone, and an evening showcase.",
   tags: ["festival", "showcase", "all-ages"],
   author: { name: "Amelia Chen", role: "Community Lead", avatar: "https://i.pravatar.cc/120?img=47" }
 }, {
@@ -148,6 +149,16 @@ export function getEventById(id) {
   return events.find(e => e.id === id);
 }
 
+// Derived purely from the clock — "ongoing" means we're between the event's
+// start and its end (events without an endDate are treated as instantaneous).
+export function getEventStatus(event, now = new Date()) {
+  const start = new Date(event.date);
+  const end = event.endDate ? new Date(event.endDate) : start;
+  if (now < start) return "upcoming";
+  if (now > end) return "ended";
+  return "ongoing";
+}
+
 export function formatEventDate(iso) {
   return new Date(iso).toLocaleString("en-US", {
     weekday: "short",
@@ -158,5 +169,16 @@ export function formatEventDate(iso) {
     minute: "2-digit",
     timeZone: "UTC",
     timeZoneName: "short"
+  });
+}
+
+// Compact "Jul 12, 2026" form for card badges — full date without the noise
+// of weekday/time/timezone.
+export function formatEventDateShort(iso) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
   });
 }

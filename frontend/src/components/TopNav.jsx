@@ -1,12 +1,13 @@
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Menu, X, ArrowUpRight, MessageSquare,
-  BookOpen, Package, ChevronRight, LogIn, UserPlus, LogOut, User, Search,
+  BookOpen, Package, ChevronRight, ChevronDown, LogIn, UserPlus, LogOut, User, Search, Bell,
 } from "lucide-react";
 import logo    from "../assets/ms_wbg_logo.png";
 import bbg_logo from "../assets/ms_bbg_logo.png";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hub/AuthContext";
+import { SignOutConfirmDialog } from "./SignOutConfirmDialog";
 
 // ── Module config ─────────────────────────────────────────────────────────────
 const MODULE_CFG = {
@@ -39,10 +40,10 @@ function useModule() {
 
 // ── Nav data ─────────────────────────────────────────────────────────────────
 const COMMUNITY_LINKS = [
-  { label: "Community Home",  to: "/community",                 featured: true, desc: "Announcements & activity feed" },
-  { label: "Event Space",     to: "/community/eventspace"     },
-  { label: "Collab Space",    to: "/community/collabspace"    },
-  { label: "Community Board", to: "/community/communityspace" },
+  { label: "Community Home", to: "/community",                 featured: true, desc: "Announcements & activity feed" },
+  { label: "Events",         to: "/community/eventspace"     },
+  { label: "Find Team",      to: "/community/collabspace"    },
+  { label: "Connect",        to: "/community/communityspace" },
 ];
 
 const LEARNING_LINKS = [
@@ -64,7 +65,7 @@ const INVENTORY_LINKS = [
 // ── Cluster label ─────────────────────────────────────────────────────────────
 function ClusterLabel({ number, label, accent, icon: Icon }) {
   return (
-    <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+    <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.14)" }}>
       {Icon && (
         <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
           style={{ background: `${accent}22`, border: `1px solid ${accent}32` }}>
@@ -72,8 +73,8 @@ function ClusterLabel({ number, label, accent, icon: Icon }) {
         </div>
       )}
       <div className="flex items-baseline gap-1.5">
-        {number && <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>{number}</span>}
-        <span className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.65)" }}>{label}</span>
+        {number && <span className="text-[9px] font-black uppercase tracking-widest text-white">{number}</span>}
+        <span className="text-xs font-bold text-white">{label}</span>
       </div>
     </div>
   );
@@ -93,14 +94,13 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
       >
         <div>
           <p className="font-extrabold text-white text-sm">{featured.label}</p>
-          {featured.desc && <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.38)" }}>{featured.desc}</p>}
+          {featured.desc && <p className="text-[10px] mt-0.5 text-white">{featured.desc}</p>}
         </div>
         <ArrowUpRight size={14} style={{ color: accent }} className="shrink-0 mt-0.5 opacity-60 group-hover:opacity-100 transition-opacity" />
       </Link>
       {rest.map(l => (
         <Link key={l.label} to={l.to} onClick={onClose}
-          className="group flex items-center gap-2 py-2 px-1 text-sm transition-colors hover:text-white"
-          style={{ color: "rgba(255,255,255,0.50)" }}>
+          className="group flex items-center gap-2 py-2 px-1 text-sm text-white transition-colors">
           <ChevronRight size={11} style={{ color: `${accent}bb` }} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
           {l.label}
         </Link>
@@ -111,11 +111,9 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
 
 // ── Profile cluster ───────────────────────────────────────────────────────────
 function ProfileCluster({ onClose }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
-
-  const handleLogout = () => { logout(); onClose(); navigate("/"); };
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -123,7 +121,8 @@ function ProfileCluster({ onClose }) {
 
       {user ? (
         <div className="flex flex-col gap-1 pt-1">
-          <div className="flex items-center gap-3 p-3 rounded-xl mb-3"
+          <Link to="/profile" onClick={onClose}
+            className="flex items-center gap-3 p-3 rounded-xl mb-3 transition-all hover:scale-[1.02]"
             style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.20)" }}>
             <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm text-white shrink-0"
               style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
@@ -131,44 +130,34 @@ function ProfileCluster({ onClose }) {
             </div>
             <div className="min-w-0">
               <p className="text-white font-bold text-sm truncate">{user.name}</p>
-              <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.38)" }}>{user.email}</p>
+              <p className="text-[10px] truncate text-white">{user.email}</p>
             </div>
-          </div>
+          </Link>
 
-          {[
-            { label: "My Profile", to: "/profile" },
-            { label: "Settings",   to: "/hub/settings" },
-          ].map(l => (
-            <Link key={l.label} to={l.to} onClick={onClose}
-              className="group flex items-center gap-2 py-2 px-1 text-sm transition-colors hover:text-white"
-              style={{ color: "rgba(255,255,255,0.50)" }}>
-              <ChevronRight size={11} style={{ color: "rgba(129,140,248,0.75)" }} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              {l.label}
-            </Link>
-          ))}
+          <div className="my-1" style={{ borderTop: "1px solid rgba(255,255,255,0.14)" }} />
 
-          <div className="my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-
-          <button onClick={handleLogout}
-            className="flex items-center gap-2 py-2 px-1 text-sm w-full text-left transition-colors hover:text-red-400"
-            style={{ color: "rgba(255,255,255,0.35)" }}>
+          <button onClick={() => setConfirmOpen(true)}
+            className="flex items-center gap-2 py-2 px-1 text-sm w-full text-left transition-colors"
+            style={{ color: "#f87171" }}>
             <LogOut size={12} className="shrink-0" />
             Sign Out
           </button>
+
+          <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} onSignedOut={onClose} />
         </div>
       ) : (
         <div className="flex flex-col gap-3 pt-1">
-          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.38)" }}>
+          <p className="text-xs leading-relaxed text-white">
             Sign in to track your progress across all three modules.
           </p>
-          <Link to="/hub/login" onClick={onClose}
+          <Link to="/login" onClick={onClose}
             className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white text-sm transition-opacity hover:opacity-85"
             style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
             <LogIn size={14} /> Sign In
           </Link>
-          <Link to="/hub/register" onClick={onClose}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all hover:border-white/30 hover:text-white"
-            style={{ color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.13)" }}>
+          <Link to="/register" onClick={onClose}
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:border-white/50"
+            style={{ border: "1px solid rgba(255,255,255,0.22)" }}>
             <UserPlus size={14} /> Create Account
           </Link>
         </div>
@@ -198,6 +187,33 @@ function OverlayDoodles() {
   );
 }
 
+// ── Notification bell ─────────────────────────────────────────────────────────
+const NOTIF_COUNT = 3; // mock unread count — mirrors NotificationsPage's mock data
+
+function NotifBell({ dark }) {
+  return (
+    <Link
+      to="/notifications"
+      aria-label="Notifications"
+      className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+      style={{
+        color: dark ? "white" : "#1a1a2e",
+        background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+      }}
+    >
+      <Bell size={17} />
+      {NOTIF_COUNT > 0 && (
+        <span
+          className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+          style={{ background: "#ef4444", border: "1.5px solid" , borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
+        >
+          {NOTIF_COUNT > 9 ? "9+" : NOTIF_COUNT}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 // ── Module box ────────────────────────────────────────────────────────────────
 const MOD_ICONS = { community: MessageSquare, learning: BookOpen, inventory: Package };
 
@@ -214,9 +230,7 @@ function ModuleBox({ mod, cfg, dark }) {
       }}
     >
       <Icon size={13} strokeWidth={2.2} />
-      {/* Full label on sm+, initial-only on mobile */}
-      <span className="text-[11px] font-extrabold tracking-wide hidden sm:block">{label}</span>
-      <span className="text-[11px] font-extrabold sm:hidden">{label[0]}</span>
+      <span className="text-[11px] font-extrabold tracking-wide">{label}</span>
     </div>
   );
 }
@@ -277,9 +291,9 @@ function MobileSearch({ cfg }) {
     navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
   };
   return (
-    <form onSubmit={handleSubmit} className="px-5 pt-16 pb-0" onClick={e => e.stopPropagation()}>
+    <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
       <div className="relative">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.30)" }} />
+        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-white" />
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
@@ -300,13 +314,104 @@ function MobileSearch({ cfg }) {
   );
 }
 
+// ── Mobile quick-menu — expandable module accordions (full sub-page access) ──
+const MOBILE_MODULES = [
+  { key: "community", icon: MessageSquare, label: "Community", desc: "Bulletin board & events",      accent: "#f59e0b", links: COMMUNITY_LINKS },
+  { key: "learning",  icon: BookOpen,      label: "Learning",  desc: "Courses & digital library",     accent: "#c0392b", links: LEARNING_LINKS  },
+  { key: "inventory", icon: Package,       label: "Inventory", desc: "Resources & requests",           accent: "#0891b2", links: INVENTORY_LINKS },
+];
+
+function MobileModuleAccordion({ modKey, icon: Icon, label, desc, accent, links, expanded, onToggle, onClose }) {
+  return (
+    <div onClick={(e) => e.stopPropagation()}
+      className="rounded-2xl overflow-hidden transition-all" style={{ background: `${accent}18`, border: `1px solid ${accent}35` }}>
+      <button type="button" onClick={() => onToggle(modKey)}
+        className="w-full flex items-center gap-3 p-3 text-left">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accent}28` }}>
+          <Icon size={18} style={{ color: accent }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-extrabold text-white text-[14px] leading-tight">{label}</p>
+          <p className="text-white text-[11px] leading-tight truncate">{desc}</p>
+        </div>
+        <ChevronDown size={16} color="white" className="shrink-0 transition-transform duration-200"
+          style={{ transform: expanded ? "rotate(180deg)" : "none" }} />
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 flex flex-col gap-0.5">
+          {links.map(l => (
+            <Link key={l.label} to={l.to} onClick={onClose}
+              className="flex items-center gap-2 py-2.5 px-2.5 rounded-lg text-sm text-white transition-colors"
+              style={{ background: l.featured ? "rgba(255,255,255,0.14)" : "transparent" }}>
+              <ChevronRight size={12} className="shrink-0" style={{ color: accent }} />
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileProfileRow({ onClose }) {
+  const { user } = useAuth();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
+
+  if (user) {
+    return (
+      <div onClick={(e) => e.stopPropagation()}
+        className="flex items-center gap-2 rounded-2xl p-2.5"
+        style={{ background: "rgba(99,102,241,0.16)", border: "1px solid rgba(99,102,241,0.32)" }}>
+        <Link to="/profile" onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white text-sm shrink-0"
+            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-white font-extrabold text-[14px] truncate">{user.name}</p>
+            <p className="text-white text-[11px] truncate">View Profile</p>
+          </div>
+        </Link>
+        <button onClick={() => setConfirmOpen(true)} aria-label="Sign out"
+          className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(239,68,68,0.18)" }}>
+          <LogOut size={15} style={{ color: "#f87171" }} />
+        </button>
+        <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} onSignedOut={onClose} />
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="flex gap-2">
+      <Link to="/login" onClick={onClose}
+        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-white text-sm"
+        style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
+        <LogIn size={14} /> Sign In
+      </Link>
+      <Link to="/register" onClick={onClose}
+        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-semibold text-white text-sm"
+        style={{ border: "1px solid rgba(255,255,255,0.22)" }}>
+        <UserPlus size={14} /> Sign Up
+      </Link>
+    </div>
+  );
+}
+
 // ── TopNav ────────────────────────────────────────────────────────────────────
 export function TopNav() {
   const [open, setOpen] = useState(false);
+  const [expandedMod, setExpandedMod] = useState(null);
   const close = () => setOpen(false);
+  const toggleMod = (key) => setExpandedMod(prev => prev === key ? null : key);
   const mod = useModule();
   const cfg = MODULE_CFG[mod];
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (!open) setExpandedMod(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -329,7 +434,7 @@ export function TopNav() {
 
   // Header background: dark modules get dark header; community gets warm paper tint
   const headerBg = open
-    ? "rgba(7,8,18,0.97)"
+    ? "rgba(12,16,30,0.75)"
     : cfg.dark
       ? "rgba(7,10,20,0.92)"
       : undefined; // undefined → use className (bg-background/80)
@@ -365,7 +470,7 @@ export function TopNav() {
             <img
               src={logoLight ? bbg_logo : logo}
               alt="Makerspace"
-              className="h-8 w-40 object-contain object-left"
+              className="h-6 w-auto sm:h-8 sm:w-40 object-contain object-left"
             />
           </Link>
 
@@ -375,10 +480,29 @@ export function TopNav() {
           {/* Mobile spacer (search is hidden on mobile) */}
           <div className="flex-1 sm:hidden" />
 
-          {/* 3 · Module box */}
-          <ModuleBox mod={mod} cfg={cfg} dark={cfg.dark || open} />
+          {/* Mobile search icon — opens the menu overlay, which hosts the search field */}
+          <button
+            type="button"
+            aria-label="Search"
+            onClick={() => setOpen(true)}
+            className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+            style={{
+              color: cfg.dark || open ? "white" : "#1a1a2e",
+              background: cfg.dark || open ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+            }}
+          >
+            <Search size={16} />
+          </button>
 
-          {/* 4 · Menu button */}
+          {/* 3 · Notifications */}
+          <NotifBell dark={cfg.dark || open} />
+
+          {/* 4 · Module box — desktop/tablet only, no room for it on mobile */}
+          <div className="hidden sm:block">
+            <ModuleBox mod={mod} cfg={cfg} dark={cfg.dark || open} />
+          </div>
+
+          {/* 5 · Menu button */}
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -397,7 +521,11 @@ export function TopNav() {
       {open && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto"
-          style={{ background: "oklch(0.10 0.04 260 / 0.97)" }}
+          style={{
+            background: "rgba(12,16,30,0.72)",
+            backdropFilter: "blur(22px)",
+            WebkitBackdropFilter: "blur(22px)",
+          }}
           role="dialog"
           aria-modal="true"
           onClick={close}
@@ -405,26 +533,45 @@ export function TopNav() {
           <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
           <OverlayDoodles />
 
-          {/* Mobile search inside overlay */}
-          <div className="sm:hidden">
+          {/* Mobile — expandable module accordions, full sub-page access.
+              Note: no stopPropagation here — tapping the gaps between boxes
+              should close the menu, same as clicking outside cards on desktop. */}
+          <div
+            className="sm:hidden flex flex-col gap-3 px-5 pt-20 pb-6"
+            style={{ minHeight: "100vh" }}
+          >
             <MobileSearch cfg={cfg} />
+
+            <p className="text-center text-white text-[10px] uppercase tracking-[0.22em] font-bold">
+              Where to?
+            </p>
+
+            <div className="flex flex-col gap-2.5">
+              {MOBILE_MODULES.map((m) => (
+                <MobileModuleAccordion key={m.key} modKey={m.key} icon={m.icon} label={m.label} desc={m.desc}
+                  accent={m.accent} links={m.links} expanded={expandedMod === m.key} onToggle={toggleMod} onClose={close} />
+              ))}
+            </div>
+
+            <MobileProfileRow onClose={close} />
           </div>
 
-          <div className="min-h-screen flex flex-col justify-center px-4 py-6 pt-6 sm:pt-12">
-            <p className="text-center text-white/30 text-[10px] uppercase tracking-[0.25em] font-bold mb-5">
+          {/* Desktop / tablet — full menu with sub-links */}
+          <div className="hidden sm:flex min-h-screen flex-col justify-center px-4 py-6 sm:pt-12">
+            <p className="text-center text-white text-[10px] uppercase tracking-[0.25em] font-bold mb-5">
               Where do you want to go?
             </p>
 
             {/* 4-cluster grid */}
-            <div className="mx-auto w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+            <div className="mx-auto w-full max-w-5xl grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
               <ModuleCluster number="01" label="Community" accent="#f59e0b" icon={MessageSquare} links={COMMUNITY_LINKS} onClose={close} />
               <ModuleCluster number="02" label="Learning"  accent="#c0392b" icon={BookOpen} links={LEARNING_LINKS}  onClose={close} />
               <ModuleCluster number="03" label="Inventory" accent="#0891b2" icon={Package}  links={INVENTORY_LINKS} onClose={close} />
               <ProfileCluster onClose={close} />
             </div>
 
-            <p className="text-center text-white/20 text-[10px] mt-6">
-              Press <kbd className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>Esc</kbd> or click outside to close
+            <p className="text-center text-white text-[10px] mt-6">
+              Press <kbd className="px-1.5 py-0.5 rounded text-[9px] font-mono text-white" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.16)" }}>Esc</kbd> or click outside to close
             </p>
           </div>
         </div>

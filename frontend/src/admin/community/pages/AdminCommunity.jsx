@@ -1,16 +1,26 @@
-import { Eye, Pencil, Trash2, Plus } from "lucide-react";
-import { communityPosts } from "@/lib/community-data";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Eye, Trash2 } from "lucide-react";
+import { communityPosts as initialCommunityPosts } from "@/lib/community-data";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "@/components/community/ui/alert-dialog";
 
-function Actions() {
+// User-authored posts — admins moderate (view, remove) rather than edit
+// someone else's content under their name. No Edit action here, unlike
+// Events which are admin-owned.
+function Actions({ post, onDelete }) {
   return (
     <div className="flex items-center gap-1">
-      <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="View">
+      <Link
+        to={`/community/communityspace/${post.id}`} target="_blank" rel="noreferrer"
+        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="View"
+      >
         <Eye className="h-3.5 w-3.5" />
-      </button>
-      <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Edit">
-        <Pencil className="h-3.5 w-3.5" />
-      </button>
-      <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+      </Link>
+      <button onClick={() => onDelete(post)}
+        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
         <Trash2 className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -26,16 +36,21 @@ const categoryColors = {
 };
 
 export default function AdminCommunity() {
+  const [list, setList] = useState(initialCommunityPosts);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const confirmDelete = () => {
+    setList(prev => prev.filter(p => p.id !== deleteTarget.id));
+    setDeleteTarget(null);
+  };
+
   return (
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Community</h1>
-          <p className="mt-1 text-sm text-gray-500">{communityPosts.length} posts</p>
+          <p className="mt-1 text-sm text-gray-500">{list.length} posts</p>
         </div>
-        <button className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-          <Plus className="h-4 w-4" /> Add Post
-        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -52,7 +67,7 @@ export default function AdminCommunity() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {communityPosts.map(post => (
+              {list.map(post => (
                 <tr key={post.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-medium text-gray-900 truncate max-w-[220px]">
@@ -92,7 +107,7 @@ export default function AdminCommunity() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex justify-end">
-                      <Actions />
+                      <Actions post={post} onDelete={setDeleteTarget} />
                     </div>
                   </td>
                 </tr>
@@ -101,6 +116,23 @@ export default function AdminCommunity() {
           </table>
         </div>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deleteTarget?.title ?? deleteTarget?.body?.slice(0, 60)}" will be removed from Community. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

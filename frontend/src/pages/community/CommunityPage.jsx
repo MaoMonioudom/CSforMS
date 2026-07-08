@@ -10,8 +10,9 @@ export default function CommunityPage() {
   return (
     <SectionPage
       bulletin
+      breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Connect" }]}
       eyebrow="03 — Hang out"
-      title="Community"
+      title="Connect"
       description="One feed for everything — technical questions, project showcases, casual chatter, and announcements from the makerspace."
       ghostLetter="Co"
       tapeColor="rgba(167,139,250,0.72)"
@@ -81,7 +82,7 @@ export default function CommunityPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Be kind, share generously, credit sources. Looking for teammates? Try{" "}
               <Link to="/community/collabspace" className="text-community underline-offset-2 hover:underline">
-                Collaboration
+                Find Team
               </Link>
               .
             </p>

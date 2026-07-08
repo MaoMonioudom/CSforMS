@@ -1,8 +1,11 @@
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, Calendar, Users, MessageSquare, MapPin } from "lucide-react";
-import { events, formatEventDate } from "@/lib/events-data";
+import { events, formatEventDateShort } from "@/lib/events-data";
 import { communityPosts, formatRelativeTime } from "@/lib/community-data";
 import { collabPosts } from "@/lib/collaboration-data";
+import { searchCommunity, suggestRelated, resultKey } from "@/lib/search";
+import { SearchResultsFeed } from "@/components/community/SearchResultsFeed";
 
 // ── Push Pin ──────────────────────────────────────────────────────────────────
 function PushPin({ color = "#ef4444", size = 16 }) {
@@ -87,13 +90,16 @@ function EventPolaroid({ event, rotate }) {
             </div>
           )}
           <span className="absolute top-2 left-2 bg-events text-events-foreground text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5">
-            {formatEventDate(event.date).split(",")[0]}
+            {formatEventDateShort(event.date)}
           </span>
         </div>
         <div className="mt-3 px-1">
           <p className="text-base font-bold leading-snug text-foreground line-clamp-2">{event.title}</p>
           <p className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
             <MapPin className="h-2.5 w-2.5 shrink-0" /> {event.location}
+          </p>
+          <p className="mt-1.5 text-[10px] text-muted-foreground flex items-center gap-1 font-semibold">
+            <Users className="h-2.5 w-2.5 shrink-0" /> {event.participants}/{event.capacity} registered
           </p>
         </div>
       </Link>
@@ -194,6 +200,16 @@ function StatPin({ value, label, color, rotate, pinColor }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get("q")?.trim() ?? "";
+  const searchResults = useMemo(() => (query ? searchCommunity(query) : []), [query]);
+  // Strict title matches can be sparse — fill the grid with broader
+  // (tag/body/skill) matches when there are too few to avoid an empty-looking page.
+  const suggestions = useMemo(() => {
+    if (!query || searchResults.length >= 6) return [];
+    return suggestRelated(query, searchResults.map(resultKey), 8);
+  }, [query, searchResults]);
+
   const featuredEvents  = events.slice(0, 4);
   const featuredCollab  = collabPosts.slice(0, 4);
   const featuredCommunity = communityPosts.slice(0, 5);
@@ -242,8 +258,33 @@ export default function HomePage() {
         </svg>
       </div>
 
+      {/* Extra paper grain — just a touch more tooth on top of the cork-board bg */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+          opacity: 0.12,
+          mixBlendMode: "multiply",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundSize: "220px 220px",
+        }}
+      />
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
 
+        {query ? (
+          <div className="pt-10 pb-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-white/70 font-bold mb-6">
+              <Link to="/" className="hover:text-white transition-colors">Home</Link>
+              <span className="mx-1.5 opacity-60">&rsaquo;</span>
+              <Link to="/community" className="hover:text-white transition-colors">Community</Link>
+              <span className="mx-1.5 opacity-60">&rsaquo;</span>
+              <span className="text-white">Search</span>
+            </p>
+            <SearchResultsFeed results={searchResults} query={query} suggestions={suggestions} />
+          </div>
+        ) : (
+        <>
         {/* ── Welcome poster ─────────────────────────────────── */}
         <div className="pt-10 pb-16 flex flex-col lg:flex-row gap-10 items-start">
 
@@ -253,7 +294,9 @@ export default function HomePage() {
               <Tape color="rgba(255,210,100,0.8)" rotate={-42} className="w-12 right-5 top-3" />
               <Tape color="rgba(180,220,255,0.7)" rotate={38} className="w-10 left-4 bottom-4" />
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground font-bold mb-2">
-                Home &rsaquo; Community
+                <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+                <span className="mx-1.5 opacity-50">&rsaquo;</span>
+                <span className="text-foreground">Community</span>
               </p>
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[0.95]">
                 Community<br />
@@ -263,18 +306,20 @@ export default function HomePage() {
                 A bulletin board for makers, builders &amp; curious minds at CADT —
                 find events, team up, and share what you're building.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap gap-x-8 gap-y-3">
                 <Link
                   to="/community/eventspace"
-                  className="inline-flex items-center gap-2 bg-foreground text-background px-5 py-2.5 text-sm font-extrabold rounded-full hover:-translate-y-0.5 transition-transform shadow-md"
+                  className="group inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold text-foreground underline decoration-2 decoration-events/40 underline-offset-4 hover:decoration-events transition-colors"
                 >
-                  Browse Events <ArrowRight className="h-4 w-4" />
+                  Browse Events
+                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-events transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   to="/community/collabspace"
-                  className="inline-flex items-center gap-2 border-2 border-border bg-white px-5 py-2.5 text-sm font-extrabold rounded-full hover:-translate-y-0.5 transition-transform"
+                  className="group inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold text-foreground underline decoration-2 decoration-events/40 underline-offset-4 hover:decoration-events transition-colors"
                 >
-                  Find Teammates <Users className="h-4 w-4" />
+                  Find Team
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-events transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
             </div>
@@ -397,6 +442,8 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+        </>
+        )}
 
       </div>
     </main>

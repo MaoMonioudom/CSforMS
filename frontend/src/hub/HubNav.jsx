@@ -1,6 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, Layers } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { useAuth } from "./AuthContext";
+import msWbgLogo from "../assets/ms_wbg_logo.png";
+import msBbgLogo from "../assets/ms_bbg_logo.png";
 
 const NAV_LINKS = [
   { label: "Home",  to: "/" },
@@ -8,9 +11,9 @@ const NAV_LINKS = [
 ];
 
 const MODULE_CHIPS = [
-  { label: "Community", href: "/community", color: "#c9a86c" },
-  { label: "Learning",  href: "/learning",  color: "#c0392b" },
-  { label: "Inventory", href: "/inventory", color: "#0891b2" },
+  { label: "Connect", href: "/community", color: "#c9a86c" },
+  { label: "Learn",  href: "/learning",  color: "#c0392b" },
+  { label: "Build", href: "/inventory", color: "#0891b2" },
 ];
 
 // light = true  → warm frosted nav for light-background pages
@@ -19,6 +22,8 @@ export function HubNav({ light = true }) {
   const [open,    setOpen]    = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
+  const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -33,25 +38,24 @@ export function HubNav({ light = true }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  /* ── Colour tokens ──────────────────────────────────────────────────────── */
+  /* ── Colour tokens — Sky & Cloud palette, matches Landing / About ─────────── */
   const bg = light
-    ? scrolled ? "rgba(240,228,204,0.94)" : "rgba(240,228,204,0.80)"
+    ? scrolled ? "rgba(244,248,252,0.94)" : "rgba(244,248,252,0.78)"
     : scrolled ? "rgba(8,8,14,0.92)"      : "transparent";
 
   const blur        = scrolled || light ? "blur(16px)" : "none";
   const border      = light
-    ? "1px solid rgba(160,120,60,0.18)"
+    ? "1px solid rgba(91,170,216,0.22)"
     : scrolled ? "1px solid rgba(255,255,255,0.06)" : "none";
 
-  const logoText    = light ? "#3d2200" : "white";
-  const linkActive  = light ? "#3d2200" : "#fff";
-  const linkMuted   = light ? "rgba(80,50,20,0.55)" : "rgba(255,255,255,0.48)";
-  const divider     = light ? "rgba(160,100,40,0.25)" : "rgba(255,255,255,0.12)";
-  const signInColor = light ? "rgba(80,50,20,0.6)"  : "rgba(255,255,255,0.5)";
-  const mobileToggleBg   = light ? "rgba(160,100,40,0.12)" : "rgba(255,255,255,0.07)";
-  const mobileToggleCol  = light ? "rgba(80,50,20,0.7)"    : "rgba(255,255,255,0.7)";
-  const drawerBg    = light ? "rgba(240,228,204,0.98)" : "rgba(8,8,14,0.98)";
-  const drawerBorder = light ? "rgba(160,100,40,0.18)" : "rgba(255,255,255,0.06)";
+  const linkActive  = light ? "#16324a" : "#fff";
+  const linkMuted   = light ? "rgba(22,50,74,0.55)" : "rgba(255,255,255,0.48)";
+  const divider     = light ? "rgba(91,170,216,0.35)" : "rgba(255,255,255,0.12)";
+  const signInColor = light ? "rgba(22,50,74,0.6)"  : "rgba(255,255,255,0.5)";
+  const mobileToggleBg   = light ? "rgba(91,170,216,0.14)" : "rgba(255,255,255,0.07)";
+  const mobileToggleCol  = light ? "rgba(22,50,74,0.7)"    : "rgba(255,255,255,0.7)";
+  const drawerBg    = light ? "rgba(244,248,252,0.98)" : "rgba(8,8,14,0.98)";
+  const drawerBorder = light ? "rgba(91,170,216,0.22)" : "rgba(255,255,255,0.06)";
 
   return (
     <header
@@ -67,16 +71,13 @@ export function HubNav({ light = true }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0" onClick={() => setOpen(false)}>
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
-          >
-            <Layers size={15} color="white" strokeWidth={2.2} />
-          </div>
-          <span className="font-bold text-lg tracking-tight leading-none" style={{ color: logoText }}>
-            CADT<span style={{ color: "#6366f1" }}> Hub</span>
-          </span>
+        <Link to="/" className="flex items-center shrink-0" onClick={() => setOpen(false)}>
+          <img
+            src={light ? msWbgLogo : msBbgLogo}
+            alt="CADT Makerspace"
+            className="h-8 w-auto object-contain"
+            style={{ maxWidth: 160 }}
+          />
         </Link>
 
         {/* Desktop nav */}
@@ -112,20 +113,38 @@ export function HubNav({ light = true }) {
 
         {/* Auth — desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/hub/login"
-            className="text-sm font-medium transition-colors hover:opacity-70"
-            style={{ color: signInColor }}
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/hub/register"
-            className="text-sm font-semibold px-4 py-2 rounded-full text-white transition-opacity hover:opacity-85"
-            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
-          >
-            Get Started
-          </Link>
+          {user ? (
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ color: linkActive }}
+            >
+              <span
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold shrink-0"
+                style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+              >
+                {initials}
+              </span>
+              {user.name}
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-sm font-medium transition-colors hover:opacity-70"
+                style={{ color: signInColor }}
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-semibold px-4 py-2 rounded-full text-white transition-opacity hover:opacity-85"
+                style={{ background: "linear-gradient(135deg,#033e8a,#0078b7)" }}
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -176,25 +195,44 @@ export function HubNav({ light = true }) {
             className="flex gap-2 pt-2"
             style={{ borderTop: `1px solid ${drawerBorder}` }}
           >
-            <Link
-              to="/hub/login"
-              className="flex-1 text-center py-2 text-sm rounded-full"
-              style={{
-                color: signInColor,
-                border: light ? "1px solid rgba(160,100,40,0.3)" : "1px solid rgba(255,255,255,0.2)",
-              }}
-              onClick={() => setOpen(false)}
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/hub/register"
-              className="flex-1 text-center py-2 text-sm font-semibold rounded-full text-white"
-              style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
-              onClick={() => setOpen(false)}
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <Link
+                to="/profile"
+                className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-full text-white"
+                style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+                onClick={() => setOpen(false)}
+              >
+                <span
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold shrink-0"
+                  style={{ background: "rgba(255,255,255,0.25)" }}
+                >
+                  {initials}
+                </span>
+                {user.name}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="flex-1 text-center py-2 text-sm rounded-full"
+                  style={{
+                    color: signInColor,
+                    border: light ? "1px solid rgba(160,100,40,0.3)" : "1px solid rgba(255,255,255,0.2)",
+                  }}
+                  onClick={() => setOpen(false)}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex-1 text-center py-2 text-sm font-semibold rounded-full text-white"
+                  style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+                  onClick={() => setOpen(false)}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

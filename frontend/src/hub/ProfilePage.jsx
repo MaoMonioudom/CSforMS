@@ -1,15 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layers, LogOut, MessageSquare, BookOpen, Package, ArrowRight, Settings, User } from "lucide-react";
+import {
+  LogOut, MessageSquare, BookOpen, Package, ArrowRight, Settings,
+  Award, GraduationCap, Flame, Lock, Sparkles, Users,
+} from "lucide-react";
 import { useAuth } from "./AuthContext";
+import { SignOutConfirmDialog } from "../components/SignOutConfirmDialog";
+import { SubpageHeader } from "./SubpageHeader";
 
 const D = {
-  bg:     "#070d18",
-  card:   "#0d1624",
-  card2:  "#111e2e",
-  border: "rgba(99,102,241,0.15)",
-  muted:  "rgba(255,255,255,0.38)",
-  text:   "#c8d8f0",
+  bg:     "#eef5fc",
+  bg2:    "#dceafa",
+  card:   "#ffffff",
+  card2:  "#f3f8fd",
+  border: "rgba(91,170,216,0.22)",
+  muted:  "#5b7286",
+  faint:  "#8aa0b2",
+  text:   "#16324a",
 };
 
 const MODULES = [
@@ -25,6 +32,15 @@ const ACTIVITY = [
   { action: "Posted in",         target: "Community Space",               time: "5 days ago", color: "#c9a86c" },
 ];
 
+const BADGES = [
+  { id: "workshop-1", title: "Workshop Rookie",  desc: "Joined your first workshop",        icon: Users,          color: "#c9a86c", earned: true,  date: "Jun 12" },
+  { id: "course-1",   title: "Course Finisher",  desc: "Completed a full course",            icon: GraduationCap,  color: "#c0392b", earned: true,  date: "Jun 20" },
+  { id: "collector",  title: "Resourceful",      desc: "Requested 5 items from Inventory",   icon: Package,        color: "#0891b2", earned: true,  date: "Jun 25" },
+  { id: "streak",     title: "On a Roll",        desc: "7-day activity streak",              icon: Flame,          color: "#f59e0b", earned: true,  date: "Jul 1"  },
+  { id: "quest-1",    title: "Quest Master",     desc: "Complete 5 quests",                  icon: Sparkles,       color: "#6366f1", earned: false },
+  { id: "social",     title: "Community Voice",  desc: "Post 10 times in Community",         icon: MessageSquare,  color: "#c9a86c", earned: false },
+];
+
 function Avatar({ name, size = 56 }) {
   const initials = name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
   return (
@@ -37,52 +53,36 @@ function Avatar({ name, size = 56 }) {
 }
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) navigate("/hub/login");
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
   if (!user) return null;
 
-  const handleLogout = () => { logout(); navigate("/"); };
+  const earnedCount = BADGES.filter(b => b.earned).length;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, #0a1628 100%)` }}>
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
 
       <div aria-hidden className="fixed inset-0 pointer-events-none"
-        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.035) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-8 h-16"
-        style={{ background: "rgba(7,13,24,0.9)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
-            <Layers size={14} color="white" strokeWidth={2.2} />
-          </div>
-          <span className="font-bold text-white">CADT <span style={{ color: "#818cf8" }}>Hub</span></span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <button onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all hover:opacity-80"
-            style={{ color: D.muted, border: "1px solid rgba(255,255,255,0.1)" }}>
-            <LogOut size={12} /> Sign out
-          </button>
-        </div>
-      </header>
+      <SubpageHeader backLabel="Back" />
 
       <main className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 py-12">
 
         {/* Profile hero */}
-        <div className="rounded-2xl p-8 mb-8 relative overflow-hidden"
-          style={{ background: D.card, border: `1px solid ${D.border}` }}>
+        <div className="rounded-2xl p-8 mb-4 relative overflow-hidden"
+          style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
           <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#6366f1,#a855f7,transparent)" }} />
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <Avatar name={user.name} size={64} />
             <div className="flex-1">
-              <h1 className="text-2xl font-extrabold text-white">{user.name}</h1>
+              <h1 className="text-2xl font-extrabold" style={{ color: D.text }}>{user.name}</h1>
               <p className="text-sm mt-0.5" style={{ color: D.muted }}>{user.email}</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {MODULES.map(m => (
@@ -93,11 +93,60 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
-            <Link to="/hub/settings"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-80"
-              style={{ color: D.muted, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}>
-              <Settings size={13} /> Settings
-            </Link>
+          </div>
+        </div>
+
+        {/* Edit profile / sign out */}
+        <div className="flex gap-3 mb-8">
+          <Link to="/hub/settings"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+            style={{ color: D.text, border: `1px solid ${D.border}`, background: D.card }}>
+            <Settings size={14} /> Edit Profile
+          </Link>
+          <button onClick={() => setConfirmOpen(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+            style={{ color: "#dc2626", border: "1px solid rgba(239,68,68,0.28)", background: "rgba(239,68,68,0.06)" }}>
+            <LogOut size={14} /> Sign Out
+          </button>
+        </div>
+
+        <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} />
+
+        {/* Badges & Achievements */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5" style={{ color: D.muted }}>
+              <Award size={12} /> Badges &amp; Achievements
+            </p>
+            <span className="text-[11px] font-semibold" style={{ color: D.muted }}>{earnedCount}/{BADGES.length} earned</span>
+          </div>
+          <div className="rounded-2xl p-6" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+              {BADGES.map(b => {
+                const Icon = b.icon;
+                return (
+                  <div key={b.id} className="flex flex-col items-center text-center gap-2"
+                    title={b.earned ? `${b.title} — earned ${b.date}` : `${b.title} — locked`}>
+                    <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={b.earned
+                        ? { background: `${b.color}15`, border: `1.5px solid ${b.color}40` }
+                        : { background: "rgba(15,50,80,0.04)", border: "1.5px dashed rgba(15,50,80,0.18)" }}>
+                      <Icon size={20} style={{ color: b.earned ? b.color : D.faint }} />
+                      {!b.earned && (
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: D.card, border: `1px solid ${D.border}` }}>
+                          <Lock size={9} style={{ color: D.faint }} />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold leading-tight" style={{ color: b.earned ? D.text : D.faint }}>{b.title}</p>
+                      <p className="text-[9px] mt-0.5 leading-tight" style={{ color: D.faint }}>{b.earned ? b.date : "Locked"}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -112,13 +161,13 @@ export default function ProfilePage() {
                 return (
                   <Link key={m.label} to={m.to}
                     className="group flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-[1.01]"
-                    style={{ background: D.card, border: `1px solid rgba(255,255,255,0.07)` }}>
+                    style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       style={{ background: `${m.color}15`, border: `1px solid ${m.color}28` }}>
                       <Icon size={18} style={{ color: m.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-white">{m.label}</p>
+                      <p className="font-bold text-sm" style={{ color: D.text }}>{m.label}</p>
                       <p className="text-[11px]" style={{ color: D.muted }}>{m.sub} · {m.stat}</p>
                     </div>
                     <ArrowRight size={14} style={{ color: m.color }}
@@ -132,14 +181,14 @@ export default function ProfilePage() {
           {/* Recent activity */}
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
-            <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
               {ACTIVITY.map((a, i) => (
                 <div key={i}
                   className="flex items-start gap-3 px-4 py-3.5"
-                  style={{ borderBottom: i < ACTIVITY.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                  style={{ borderBottom: i < ACTIVITY.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
                   <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: a.color }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white/70"><span className="text-white/40">{a.action}</span> {a.target}</p>
+                    <p className="text-xs" style={{ color: D.text }}><span style={{ color: D.muted }}>{a.action}</span> {a.target}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{a.time}</p>
                   </div>
                 </div>
@@ -153,8 +202,8 @@ export default function ProfilePage() {
                 { v: "1",  l: "Course started"  },
                 { v: "3",  l: "Items requested" },
               ].map(s => (
-                <div key={s.l} className="rounded-xl p-3 text-center" style={{ background: D.card, border: "1px solid rgba(255,255,255,0.07)" }}>
-                  <p className="text-xl font-extrabold text-white">{s.v}</p>
+                <div key={s.l} className="rounded-xl p-3 text-center" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+                  <p className="text-xl font-extrabold" style={{ color: D.text }}>{s.v}</p>
                   <p className="text-[9px] mt-0.5 leading-tight" style={{ color: D.muted }}>{s.l}</p>
                 </div>
               ))}

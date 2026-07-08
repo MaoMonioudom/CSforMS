@@ -18,9 +18,9 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
 import HubAboutPage from "./hub/AboutPage";
-import LoginPage from "./hub/LoginPage";
-import RegisterPage from "./hub/RegisterPage";
+import AuthPage from "./hub/AuthPage";
 import ProfilePage from "./hub/ProfilePage";
+import NotificationsPage from "./hub/NotificationsPage";
 import LearningLandingPage from "./pages/learning/LandingPage";
 import InventoryLandingPage from "./pages/inventory/LandingPage";
 import { AuthProvider } from "./hub/AuthContext";
@@ -67,9 +67,10 @@ export default function App() {
         {/* Hub landing — default root, standalone (no TopNav/Footer) */}
         <Route path="/" element={<HubLandingPage />} />
         <Route path="/hub/about" element={<HubAboutPage />} />
-        <Route path="/hub/login" element={<LoginPage />} />
-        <Route path="/hub/register" element={<RegisterPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/learning" element={<LearningLandingPage />} />
         <Route path="/inventory" element={<InventoryLandingPage />} />
 

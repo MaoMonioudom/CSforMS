@@ -1,9 +1,35 @@
 import { useState } from "react";
-import { SectionPage } from "@/components/community/SectionPage";
+import { Link } from "react-router-dom";
+import { SectionPage, PushPin } from "@/components/community/SectionPage";
 import { EventCard } from "@/components/community/EventCard";
-import { events } from "@/lib/events-data";
+import { events, getEventStatus, formatEventDateShort } from "@/lib/events-data";
 
 const VISIBLE = 6;
+
+function OngoingBanner({ event }) {
+  return (
+    <div className="relative inline-block mb-6" style={{ transform: "rotate(-2deg)" }}>
+      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 drop-shadow">
+        <PushPin color="#dc2626" size={12} />
+      </div>
+      <Link
+        to={`/community/eventspace/${event.id}`}
+        className="block bg-white px-4 py-3 min-w-[200px] transition-transform hover:scale-[1.03]"
+        style={{ boxShadow: "3px 4px 14px rgba(0,0,0,0.24)" }}
+      >
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+          </span>
+          <span className="text-[9px] font-black uppercase tracking-wider text-red-600">Happening now</span>
+        </div>
+        <p className="text-sm font-bold text-foreground leading-snug">{event.title}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">Ends {formatEventDateShort(event.endDate)}</p>
+      </Link>
+    </div>
+  );
+}
 
 function MoreStack({ count, onClick }) {
   return (
@@ -52,15 +78,18 @@ export default function EventsPage() {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? events : events.slice(0, VISIBLE);
   const hidden = events.length - VISIBLE;
+  const ongoing = events.find(e => getEventStatus(e) === "ongoing");
 
   return (
     <SectionPage
       bulletin
+      breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Events" }]}
       eyebrow="01 — Community"
       title="Events"
       description="Discover, register for, and participate in makerspace activities, workshops, competitions, and community events."
       ghostLetter="E"
       tapeColor="rgba(249,115,22,0.78)"
+      banner={ongoing ? <OngoingBanner event={ongoing} /> : null}
       stats={[
         { value: events.length, label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
         { value: 3,             label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },

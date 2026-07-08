@@ -13,7 +13,7 @@ const SCR_SPD = 0.50;
 const PROX    = 82;
 
 const STATIONS = [
-  { id: "community", worldX: -480, label: "Community", color: "#f59e0b", to: "/community/communityspace", isRoom: false },
+  { id: "community", worldX: -480, label: "Community", color: "#f59e0b", to: "/community", isRoom: false },
   { id: "learning",  worldX:  100, label: "Library",   color: "#3b82f6", to: "/learning",  isRoom: true, sign: "Library",  interior: "#deeeff" },
   { id: "inventory", worldX:  560, label: "Storage",   color: "#10b981", to: "/inventory", isRoom: true, sign: "Storage",  interior: "#d8f5ec" },
 ];

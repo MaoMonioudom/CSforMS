@@ -27,11 +27,12 @@ export default function EventDetailPage() {
 
   return (
     <main className="bg-background">
-      {/* Hero image — breadcrumb floats over the top of the image */}
+      {/* Hero image — sits entirely behind/above the content, never overlaps it.
+          Breadcrumb floats over the top of the image only. */}
       <div className="relative h-[40vh] min-h-[240px] w-full overflow-hidden">
         <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
-        {/* Bottom fade to page background */}
-        <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
+        {/* Soft fade at the bottom edge of the image itself (purely decorative, no content sits on it) */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background to-transparent" />
         {/* Top dark veil so breadcrumb text stays readable over any image */}
         <div className="absolute inset-0 bg-linear-to-b from-black/50 via-transparent to-transparent" />
         {/* Breadcrumb overlaid on top of image */}
@@ -41,13 +42,15 @@ export default function EventDetailPage() {
         >
           <Link to="/" className="hover:text-white transition-colors">Home</Link>
           <ChevronRight className="size-3.5 shrink-0 opacity-50" />
+          <Link to="/community" className="hover:text-white transition-colors">Community</Link>
+          <ChevronRight className="size-3.5 shrink-0 opacity-50" />
           <Link to="/community/eventspace" className="hover:text-white transition-colors">Events</Link>
           <ChevronRight className="size-3.5 shrink-0 opacity-50" />
           <span className="text-white font-medium truncate max-w-[200px] sm:max-w-sm">{event.title}</span>
         </nav>
       </div>
 
-      <div className="mx-auto -mt-20 max-w-6xl px-4 sm:px-6 lg:px-8 pb-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-24">
         <div className="mt-6 grid gap-10 lg:grid-cols-3">
           <article className="lg:col-span-2">
             <div className="flex flex-wrap gap-2">

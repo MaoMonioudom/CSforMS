@@ -51,7 +51,7 @@ function CreateCollabDialog({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Collaboration Post</DialogTitle>
+          <DialogTitle>Create Team Post</DialogTitle>
           <DialogDescription>
             Fill in all the details to post your project or find teammates.
           </DialogDescription>
@@ -219,8 +219,9 @@ export default function CollaborationPage() {
   return (
     <SectionPage
       bulletin
+      breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Find Team" }]}
       eyebrow="02 — Build together"
-      title="Collaboration"
+      title="Find Team"
       description="Find teammates, recruit members, and connect with people who want to build alongside you."
       ghostLetter="C"
       tapeColor="rgba(52,211,153,0.72)"

@@ -27,7 +27,9 @@ export default function CommunityDetailPage() {
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap mb-6">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
           <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-          <Link to="/community/communityspace" className="hover:text-foreground transition-colors">Community</Link>
+          <Link to="/community" className="hover:text-foreground transition-colors">Community</Link>
+          <ChevronRight className="size-3.5 shrink-0 opacity-40" />
+          <Link to="/community/communityspace" className="hover:text-foreground transition-colors">Connect</Link>
           <ChevronRight className="size-3.5 shrink-0 opacity-40" />
           <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm">
             {post.title ?? post.body.slice(0, 40) + "…"}
