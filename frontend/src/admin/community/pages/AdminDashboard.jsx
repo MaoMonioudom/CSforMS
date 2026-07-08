@@ -406,10 +406,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/events" />
-        <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/collaboration" />
-        <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community" />
-        <StatCard label="Users"           value={MOCK_USERS}            icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/users" />
+        <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/community/events" />
+        <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/community/collaboration" />
+        <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community/posts" />
+        <StatCard label="Users"           value={MOCK_USERS}            icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/community/users" />
       </div>
 
       <div className="mb-6">

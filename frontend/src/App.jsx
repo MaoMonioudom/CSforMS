@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Outlet, Navigate } from "react-router-dom";
 import { TopNav } from "./components/TopNav";
 import { CursorEffect } from "./components/community/CursorEffect";
 import HomePage from "./pages/community/HomePage";
@@ -8,12 +8,14 @@ import CollaborationPage from "./pages/community/CollaborationPage";
 import CollabDetailPage from "./pages/community/CollabDetailPage";
 import CommunityPage from "./pages/community/CommunityPage";
 import CommunityDetailPage from "./pages/community/CommunityDetailPage";
-import AdminLayout from "./admin/community/layouts/AdminLayout";
-import AdminDashboard from "./admin/community/pages/AdminDashboard";
+import AdminLayout from "./admin/layouts/AdminLayout";
+import AdminCommunityDashboard from "./admin/community/pages/AdminDashboard";
 import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
 import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
+import AdminInventoryDashboard from "./admin/inventory/pages/AdminDashboard";
+import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
@@ -86,13 +88,25 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* Admin layout: sidebar only, no TopNav/Footer */}
+        {/* Admin layout: shared sidebar across community, inventory, and learning */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="events" element={<AdminEvents />} />
-          <Route path="collaboration" element={<AdminCollaboration />} />
-          <Route path="community" element={<AdminCommunity />} />
-          <Route path="users" element={<AdminUsers />} />
+          <Route index element={<Navigate to="/admin/community" replace />} />
+
+          <Route path="community">
+            <Route index element={<AdminCommunityDashboard />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="collaboration" element={<AdminCollaboration />} />
+            <Route path="posts" element={<AdminCommunity />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
+
+          <Route path="inventory">
+            <Route index element={<AdminInventoryDashboard />} />
+          </Route>
+
+          <Route path="learning">
+            <Route index element={<AdminLearningDashboard />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
