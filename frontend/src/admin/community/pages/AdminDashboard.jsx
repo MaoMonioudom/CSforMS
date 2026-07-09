@@ -409,7 +409,7 @@ export default function AdminDashboard() {
         <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/community/events" />
         <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/community/collaboration" />
         <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community/posts" />
-        <StatCard label="Users"           value={MOCK_USERS}            icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/community/users" />
+        <StatCard label="Users"           value={MOCK_USERS}            icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/users" />
       </div>
 
       <div className="mb-6">

@@ -1,13 +1,14 @@
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
-  Menu, X, ArrowUpRight, MessageSquare,
-  BookOpen, Package, ChevronRight, ChevronDown, LogIn, UserPlus, LogOut, User, Search, Bell,
+  Menu, X, ArrowUpRight, ArrowLeft, MessageSquare,
+  BookOpen, Package, ChevronRight, ChevronDown, LogIn, UserPlus, LogOut, User, Search, Bell, Coins, Armchair,
 } from "lucide-react";
 import logo    from "../assets/ms_wbg_logo.png";
 import bbg_logo from "../assets/ms_bbg_logo.png";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hub/AuthContext";
 import { SignOutConfirmDialog } from "./SignOutConfirmDialog";
+import { MembershipPromoDialog } from "./MembershipPromoDialog";
 
 // ── Module config ─────────────────────────────────────────────────────────────
 const MODULE_CFG = {
@@ -29,14 +30,45 @@ const MODULE_CFG = {
     root:        "/inventory",
     dark:        true,
   },
+  // Account pages (Profile, Notifications, ...) aren't tied to a module —
+  // no search bar, and the info box shows the page name instead of a module.
+  hub: {
+    accent:      "#6366f1",
+    placeholder: "",
+    root:        "/",
+    dark:        false,
+  },
 };
 
 function useModule() {
   const { pathname } = useLocation();
   if (pathname.startsWith("/learning"))  return "learning";
   if (pathname.startsWith("/inventory")) return "inventory";
+  if (["/profile", "/notifications", "/membership", "/credits", "/workspace"].includes(pathname)) return "hub";
   return "community";
 }
+
+const LAST_SPACE_KEY = "cadt_last_space";
+const SPACE_ROOTS = { community: "/community", learning: "/learning", inventory: "/inventory" };
+
+// Remembers whichever of the 3 module spaces was last visited, so the logo
+// and back button on account pages (Profile, Notifications, ...) can return
+// to that space's homepage instead of a generic hub root.
+function useLastSpace(mod) {
+  useEffect(() => {
+    if (SPACE_ROOTS[mod]) sessionStorage.setItem(LAST_SPACE_KEY, SPACE_ROOTS[mod]);
+  }, [mod]);
+  return sessionStorage.getItem(LAST_SPACE_KEY) || "/community";
+}
+
+// Hub (account) pages get their own labeled box in place of the module box.
+const HUB_PAGES = {
+  "/notifications": { label: "Notifications", icon: Bell },
+  "/profile":        { label: "Profile",       icon: User },
+  "/membership":     { label: "Membership",    icon: Coins },
+  "/credits":        { label: "Credits",       icon: Coins },
+  "/workspace":      { label: "Workspace",     icon: Armchair },
+};
 
 // ── Nav data ─────────────────────────────────────────────────────────────────
 const COMMUNITY_LINKS = [
@@ -113,6 +145,7 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
 function ProfileCluster({ onClose }) {
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
 
   return (
@@ -134,6 +167,48 @@ function ProfileCluster({ onClose }) {
             </div>
           </Link>
 
+          {user.isMember ? (
+            <>
+              <Link to="/credits" onClick={onClose}
+                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-2 transition-all hover:scale-[1.02]"
+                style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.24)" }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,0.16)" }}>
+                  <Coins size={13} style={{ color: "#10b981" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-xs">{user.credits ?? 0} credits</p>
+                  <p className="text-[10px] text-white/70">Earn, buy &amp; redeem</p>
+                </div>
+                <ChevronRight size={13} style={{ color: "#10b981" }} className="shrink-0" />
+              </Link>
+              <Link to="/workspace" onClick={onClose}
+                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-2 transition-all hover:scale-[1.02]"
+                style={{ background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.24)" }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.16)" }}>
+                  <Armchair size={13} style={{ color: "#6366f1" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-xs">Workspace</p>
+                  <p className="text-[10px] text-white/70">Request a desk or bench</p>
+                </div>
+                <ChevronRight size={13} style={{ color: "#6366f1" }} className="shrink-0" />
+              </Link>
+            </>
+          ) : (
+            <button onClick={() => setPromoOpen(true)}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl mb-2 w-full text-left transition-all hover:scale-[1.02]"
+              style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.24)" }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,0.16)" }}>
+                <Coins size={13} style={{ color: "#10b981" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-xs">Become a Member</p>
+                <p className="text-[10px] text-white/70">$20/year — credits &amp; workspace</p>
+              </div>
+              <ChevronRight size={13} style={{ color: "#10b981" }} className="shrink-0" />
+            </button>
+          )}
+
           <div className="my-1" style={{ borderTop: "1px solid rgba(255,255,255,0.14)" }} />
 
           <button onClick={() => setConfirmOpen(true)}
@@ -144,6 +219,7 @@ function ProfileCluster({ onClose }) {
           </button>
 
           <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} onSignedOut={onClose} />
+          <MembershipPromoDialog open={promoOpen} onOpenChange={setPromoOpen} />
         </div>
       ) : (
         <div className="flex flex-col gap-3 pt-1">
@@ -191,46 +267,82 @@ function OverlayDoodles() {
 const NOTIF_COUNT = 3; // mock unread count — mirrors NotificationsPage's mock data
 
 function NotifBell({ dark }) {
-  return (
-    <Link
-      to="/notifications"
-      aria-label="Notifications"
-      className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
-      style={{
-        color: dark ? "white" : "#1a1a2e",
-        background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
-      }}
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const onNotifications = pathname === "/notifications";
+
+  const badge = NOTIF_COUNT > 0 && (
+    <span
+      className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+      style={{ background: "#ef4444", border: "1.5px solid" , borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
     >
+      {NOTIF_COUNT > 9 ? "9+" : NOTIF_COUNT}
+    </span>
+  );
+
+  const className = "relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200";
+  const style = {
+    color: dark ? "white" : "#1a1a2e",
+    background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+  };
+
+  // Already on Notifications — clicking the bell again closes it (goes back)
+  // rather than re-navigating to the same page.
+  if (onNotifications) {
+    return (
+      <button type="button" aria-label="Close notifications" onClick={() => navigate(-1)} className={className} style={style}>
+        <Bell size={17} />
+        {badge}
+      </button>
+    );
+  }
+
+  return (
+    <Link to="/notifications" aria-label="Notifications" className={className} style={style}>
       <Bell size={17} />
-      {NOTIF_COUNT > 0 && (
-        <span
-          className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-          style={{ background: "#ef4444", border: "1.5px solid" , borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
-        >
-          {NOTIF_COUNT > 9 ? "9+" : NOTIF_COUNT}
-        </span>
-      )}
+      {badge}
     </Link>
   );
 }
 
-// ── Module box ────────────────────────────────────────────────────────────────
+// ── Info box (module box / hub-page box share this) ───────────────────────────
 const MOD_ICONS = { community: MessageSquare, learning: BookOpen, inventory: Package };
 
-function ModuleBox({ mod, cfg, dark }) {
-  const Icon = MOD_ICONS[mod];
-  const label = mod.charAt(0).toUpperCase() + mod.slice(1);
+function InfoBox({ icon: Icon, label, color, dark }) {
   return (
     <div
       className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
       style={{
-        background: dark ? `${cfg.accent}1a` : `${cfg.accent}14`,
-        border:     `1.5px solid ${cfg.accent}${dark ? "40" : "28"}`,
-        color:      cfg.accent,
+        background: dark ? `${color}1a` : `${color}14`,
+        border:     `1.5px solid ${color}${dark ? "40" : "28"}`,
+        color,
       }}
     >
       <Icon size={13} strokeWidth={2.2} />
       <span className="text-[11px] font-extrabold tracking-wide">{label}</span>
+    </div>
+  );
+}
+
+function ModuleBox({ mod, cfg, dark }) {
+  const label = mod.charAt(0).toUpperCase() + mod.slice(1);
+  return <InfoBox icon={MOD_ICONS[mod]} label={label} color={cfg.accent} dark={dark} />;
+}
+
+// ── Credit box ────────────────────────────────────────────────────────────────
+function CreditBox({ credits, dark }) {
+  return (
+    <div
+      className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
+      style={{
+        background: dark ? "rgba(16,185,129,0.16)" : "rgba(16,185,129,0.10)",
+        border:     `1.5px solid rgba(16,185,129,${dark ? 0.4 : 0.28})`,
+        color:      "#10b981",
+      }}
+      title="Credits"
+    >
+      <Coins size={13} strokeWidth={2.2} />
+      <span className="text-[11px] font-extrabold tracking-wide">{credits ?? 0}</span>
     </div>
   );
 }
@@ -280,7 +392,7 @@ function NavSearch({ cfg, dark }) {
 }
 
 // ── Mobile search (inside overlay) ───────────────────────────────────────────
-function MobileSearch({ cfg }) {
+function MobileSearch({ cfg, onClose }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [q, setQ] = useState(params.get("q") || "");
@@ -289,6 +401,7 @@ function MobileSearch({ cfg }) {
     e.preventDefault();
     const trimmed = q.trim();
     navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+    onClose?.();
   };
   return (
     <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
@@ -309,6 +422,51 @@ function MobileSearch({ cfg }) {
             outline: "none",
           }}
         />
+      </div>
+    </form>
+  );
+}
+
+// ── Mobile search takeover — tapping the search icon turns the header itself
+// into a focused input (YouTube-style), instead of opening the full menu.
+function MobileSearchTakeover({ cfg, dark, onClose }) {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [q, setQ] = useState(params.get("q") || "");
+  const inputRef = useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = q.trim();
+    navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+    onClose();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-1 items-center gap-2">
+      <button type="button" aria-label="Cancel search" onClick={onClose}
+        className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200"
+        style={{ color: dark ? "white" : "#1a1a2e" }}
+      >
+        <ArrowLeft size={18} />
+      </button>
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none text-muted-foreground" />
+        <input
+          ref={inputRef}
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          placeholder={cfg.placeholder}
+          className="w-full rounded-full border border-border bg-secondary/60 py-2 pl-9 pr-9 text-sm outline-none transition focus:border-foreground/40 focus:bg-background"
+        />
+        {q && (
+          <button type="button" aria-label="Clear search" onClick={() => setQ("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+            <X size={14} />
+          </button>
+        )}
       </div>
     </form>
   );
@@ -356,29 +514,74 @@ function MobileModuleAccordion({ modKey, icon: Icon, label, desc, accent, links,
 function MobileProfileRow({ onClose }) {
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
 
   if (user) {
     return (
-      <div onClick={(e) => e.stopPropagation()}
-        className="flex items-center gap-2 rounded-2xl p-2.5"
-        style={{ background: "rgba(99,102,241,0.16)", border: "1px solid rgba(99,102,241,0.32)" }}>
-        <Link to="/profile" onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white text-sm shrink-0"
-            style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="text-white font-extrabold text-[14px] truncate">{user.name}</p>
-            <p className="text-white text-[11px] truncate">View Profile</p>
-          </div>
-        </Link>
-        <button onClick={() => setConfirmOpen(true)} aria-label="Sign out"
-          className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(239,68,68,0.18)" }}>
-          <LogOut size={15} style={{ color: "#f87171" }} />
-        </button>
-        <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} onSignedOut={onClose} />
+      <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 rounded-2xl p-2.5"
+          style={{ background: "rgba(99,102,241,0.16)", border: "1px solid rgba(99,102,241,0.32)" }}>
+          <Link to="/profile" onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white text-sm shrink-0"
+              style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-extrabold text-[14px] truncate">{user.name}</p>
+              <p className="text-white text-[11px] truncate">View Profile</p>
+            </div>
+          </Link>
+          <button onClick={() => setConfirmOpen(true)} aria-label="Sign out"
+            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(239,68,68,0.18)" }}>
+            <LogOut size={15} style={{ color: "#f87171" }} />
+          </button>
+          <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} onSignedOut={onClose} />
+        </div>
+
+        {user.isMember ? (
+          <>
+            <Link to="/credits" onClick={onClose}
+              className="flex items-center gap-2.5 rounded-2xl p-2.5"
+              style={{ background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.30)" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,0.20)" }}>
+                <Coins size={15} style={{ color: "#10b981" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-extrabold text-[14px]">{user.credits ?? 0} credits</p>
+                <p className="text-white text-[11px] truncate">Earn, buy &amp; redeem</p>
+              </div>
+              <ChevronRight size={14} style={{ color: "#10b981" }} className="shrink-0" />
+            </Link>
+            <Link to="/workspace" onClick={onClose}
+              className="flex items-center gap-2.5 rounded-2xl p-2.5"
+              style={{ background: "rgba(99,102,241,0.14)", border: "1px solid rgba(99,102,241,0.30)" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.20)" }}>
+                <Armchair size={15} style={{ color: "#6366f1" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-extrabold text-[14px]">Workspace</p>
+                <p className="text-white text-[11px] truncate">Request a desk or bench</p>
+              </div>
+              <ChevronRight size={14} style={{ color: "#6366f1" }} className="shrink-0" />
+            </Link>
+          </>
+        ) : (
+          <button onClick={() => setPromoOpen(true)}
+            className="flex items-center gap-2.5 rounded-2xl p-2.5 w-full text-left"
+            style={{ background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.30)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,0.20)" }}>
+              <Coins size={15} style={{ color: "#10b981" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-extrabold text-[14px]">Become a Member</p>
+              <p className="text-white text-[11px] truncate">$20/year — credits &amp; workspace</p>
+            </div>
+            <ChevronRight size={14} style={{ color: "#10b981" }} className="shrink-0" />
+          </button>
+        )}
+        <MembershipPromoDialog open={promoOpen} onOpenChange={setPromoOpen} />
       </div>
     );
   }
@@ -402,16 +605,29 @@ function MobileProfileRow({ onClose }) {
 // ── TopNav ────────────────────────────────────────────────────────────────────
 export function TopNav() {
   const [open, setOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [expandedMod, setExpandedMod] = useState(null);
   const close = () => setOpen(false);
   const toggleMod = (key) => setExpandedMod(prev => prev === key ? null : key);
   const mod = useModule();
   const cfg = MODULE_CFG[mod];
+  const isHub = mod === "hub";
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const lastSpace = useLastSpace(mod);
+  const logoTo = isHub ? lastSpace : cfg.root;
+  const hubPage = HUB_PAGES[pathname];
 
   useEffect(() => {
     if (!open) setExpandedMod(null);
   }, [open]);
+
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    const onKey = (e) => e.key === "Escape" && setMobileSearchOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -454,66 +670,86 @@ export function TopNav() {
       {/* Sticky header */}
       <header className={headerClass} style={headerBg ? { backgroundColor: headerBg } : undefined}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+          {mobileSearchOpen ? (
+            <MobileSearchTakeover cfg={cfg} dark={cfg.dark || open} onClose={() => setMobileSearchOpen(false)} />
+          ) : (
+            <>
+              {/* 1 · Logo — on account pages, returns to whichever space was last visited */}
+              <Link
+                to={logoTo}
+                className="shrink-0"
+                onClick={(e) => {
+                  if (open) setOpen(false);
+                  if (pathname === logoTo) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              >
+                <img
+                  src={logoLight ? bbg_logo : logo}
+                  alt="Makerspace"
+                  className="h-6 w-auto sm:h-8 sm:w-40 object-contain object-left"
+                />
+              </Link>
 
-          {/* 1 · Logo */}
-          <Link
-            to={cfg.root}
-            className="shrink-0"
-            onClick={(e) => {
-              if (open) setOpen(false);
-              if (pathname === cfg.root) {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+              {/* 2 · Search bar — expands to fill center on sm+ (hidden on account pages) */}
+              {isHub
+                ? <div className="hidden sm:flex flex-1" />
+                : <NavSearch cfg={cfg} dark={cfg.dark || open} />
               }
-            }}
-          >
-            <img
-              src={logoLight ? bbg_logo : logo}
-              alt="Makerspace"
-              className="h-6 w-auto sm:h-8 sm:w-40 object-contain object-left"
-            />
-          </Link>
 
-          {/* 2 · Search bar — expands to fill center on sm+ */}
-          <NavSearch cfg={cfg} dark={cfg.dark || open} />
+              {/* Mobile spacer (search is hidden on mobile) */}
+              <div className="flex-1 sm:hidden" />
 
-          {/* Mobile spacer (search is hidden on mobile) */}
-          <div className="flex-1 sm:hidden" />
+              {/* Mobile search icon — turns the header into a focused search field, YouTube-style */}
+              {!isHub && (
+                <button
+                  type="button"
+                  aria-label="Search"
+                  onClick={() => setMobileSearchOpen(true)}
+                  className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+                  style={{
+                    color: cfg.dark || open ? "white" : "#1a1a2e",
+                    background: cfg.dark || open ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <Search size={16} />
+                </button>
+              )}
 
-          {/* Mobile search icon — opens the menu overlay, which hosts the search field */}
-          <button
-            type="button"
-            aria-label="Search"
-            onClick={() => setOpen(true)}
-            className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
-            style={{
-              color: cfg.dark || open ? "white" : "#1a1a2e",
-              background: cfg.dark || open ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
-            }}
-          >
-            <Search size={16} />
-          </button>
+              {/* 3 · Module box / account-page box — desktop/tablet only, no room on mobile */}
+              <div className="hidden sm:block">
+                {isHub
+                  ? hubPage && <InfoBox icon={hubPage.icon} label={hubPage.label} color={cfg.accent} dark={cfg.dark || open} />
+                  : <ModuleBox mod={mod} cfg={cfg} dark={cfg.dark || open} />
+                }
+              </div>
 
-          {/* 3 · Notifications */}
-          <NotifBell dark={cfg.dark || open} />
+              {/* 4 · Notifications */}
+              <NotifBell dark={cfg.dark || open} />
 
-          {/* 4 · Module box — desktop/tablet only, no room for it on mobile */}
-          <div className="hidden sm:block">
-            <ModuleBox mod={mod} cfg={cfg} dark={cfg.dark || open} />
-          </div>
+              {/* 5 · Credits — members only, desktop/tablet only */}
+              {user?.isMember && (
+                <div className="hidden sm:block">
+                  <CreditBox credits={user.credits} dark={cfg.dark || open} />
+                </div>
+              )}
 
-          {/* 5 · Menu button */}
-          <button
-            type="button"
-            aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen(v => !v)}
-            className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
-              open ? "bg-white/10 text-white hover:bg-white/20" : "bg-primary text-primary-foreground hover:opacity-90"
-            }`}
-          >
-            {!open && <span className="absolute inset-0 rounded-full bg-primary animate-pulse-ring" />}
-            {open ? <X className="h-5 w-5 relative z-10" /> : <Menu className="h-5 w-5 relative z-10" />}
-          </button>
+              {/* 6 · Menu button */}
+              <button
+                type="button"
+                aria-label={open ? "Close menu" : "Open menu"}
+                onClick={() => setOpen(v => !v)}
+                className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                  open ? "bg-white/10 text-white hover:bg-white/20" : "bg-primary text-primary-foreground hover:opacity-90"
+                }`}
+              >
+                {!open && <span className="absolute inset-0 rounded-full bg-primary animate-pulse-ring" />}
+                {open ? <X className="h-5 w-5 relative z-10" /> : <Menu className="h-5 w-5 relative z-10" />}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -540,7 +776,7 @@ export function TopNav() {
             className="sm:hidden flex flex-col gap-3 px-5 pt-20 pb-6"
             style={{ minHeight: "100vh" }}
           >
-            <MobileSearch cfg={cfg} />
+            <MobileSearch cfg={cfg} onClose={close} />
 
             <p className="text-center text-white text-[10px] uppercase tracking-[0.22em] font-bold">
               Where to?

@@ -14,6 +14,7 @@ import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
 import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
+import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
 import AdminInventoryDashboard from "./admin/inventory/pages/AdminDashboard";
 import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -23,6 +24,9 @@ import HubAboutPage from "./hub/AboutPage";
 import AuthPage from "./hub/AuthPage";
 import ProfilePage from "./hub/ProfilePage";
 import NotificationsPage from "./hub/NotificationsPage";
+import MembershipPage from "./hub/MembershipPage";
+import CreditsPage from "./hub/CreditsPage";
+import WorkspacePage from "./hub/WorkspacePage";
 import LearningLandingPage from "./pages/learning/LandingPage";
 import InventoryLandingPage from "./pages/inventory/LandingPage";
 import { AuthProvider } from "./hub/AuthContext";
@@ -73,6 +77,9 @@ export default function App() {
         <Route path="/register" element={<AuthPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/membership" element={<MembershipPage />} />
+        <Route path="/credits" element={<CreditsPage />} />
+        <Route path="/workspace" element={<WorkspacePage />} />
         <Route path="/learning" element={<LearningLandingPage />} />
         <Route path="/inventory" element={<InventoryLandingPage />} />
 
@@ -97,7 +104,6 @@ export default function App() {
             <Route path="events" element={<AdminEvents />} />
             <Route path="collaboration" element={<AdminCollaboration />} />
             <Route path="posts" element={<AdminCommunity />} />
-            <Route path="users" element={<AdminUsers />} />
           </Route>
 
           <Route path="inventory">
@@ -107,6 +113,10 @@ export default function App() {
           <Route path="learning">
             <Route index element={<AdminLearningDashboard />} />
           </Route>
+
+          {/* Cross-module — not scoped to a single space */}
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="workspace" element={<AdminWorkspace />} />
         </Route>
       </Routes>
     </BrowserRouter>
