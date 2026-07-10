@@ -5,6 +5,12 @@ import {
   UserCog, ArrowLeft, FolderOpen, Folder, ChevronDown,
   Package, GraduationCap, Armchair,
 } from "lucide-react";
+import { useAuth } from "../../hub/AuthContext";
+
+const ROLE_BADGE = {
+  Admin: "bg-red-50 text-red-600",
+  Staff: "bg-violet-50 text-violet-600",
+};
 
 const spaces = [
   {
@@ -76,6 +82,7 @@ function NavItem({ to, icon: Icon, label, end }) {
 
 export function AdminSidebar({ width = 256 }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [openKey, setOpenKey] = useState(
     () => spaces.find((s) => pathname.startsWith(`/admin/${s.key}`))?.key ?? "community"
   );
@@ -86,11 +93,16 @@ export function AdminSidebar({ width = 256 }) {
       style={{ width }}
     >
       {/* Brand */}
-      <div className="h-16 flex items-center px-5 border-b border-gray-100 shrink-0">
+      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
         <div>
           <p className="text-sm font-bold text-gray-900 leading-tight">Admin Panel</p>
           <p className="text-[10px] text-gray-400 font-medium">CADT Community</p>
         </div>
+        {user?.role && (
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${ROLE_BADGE[user.role] ?? "bg-gray-100 text-gray-500"}`}>
+            {user.role}
+          </span>
+        )}
       </div>
 
       {/* Nav */}

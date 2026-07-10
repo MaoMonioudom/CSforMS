@@ -9,6 +9,7 @@ import CollabDetailPage from "./pages/community/CollabDetailPage";
 import CommunityPage from "./pages/community/CommunityPage";
 import CommunityDetailPage from "./pages/community/CommunityDetailPage";
 import AdminLayout from "./admin/layouts/AdminLayout";
+import AdminGuard from "./admin/components/AdminGuard";
 import AdminCommunityDashboard from "./admin/community/pages/AdminDashboard";
 import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
@@ -95,28 +96,30 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* Admin layout: shared sidebar across community, inventory, and learning */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/community" replace />} />
+        {/* Admin: guard checks Admin/Staff role first, layout is just the shell */}
+        <Route path="/admin" element={<AdminGuard />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/community" replace />} />
 
-          <Route path="community">
-            <Route index element={<AdminCommunityDashboard />} />
-            <Route path="events" element={<AdminEvents />} />
-            <Route path="collaboration" element={<AdminCollaboration />} />
-            <Route path="posts" element={<AdminCommunity />} />
+            <Route path="community">
+              <Route index element={<AdminCommunityDashboard />} />
+              <Route path="events" element={<AdminEvents />} />
+              <Route path="collaboration" element={<AdminCollaboration />} />
+              <Route path="posts" element={<AdminCommunity />} />
+            </Route>
+
+            <Route path="inventory">
+              <Route index element={<AdminInventoryDashboard />} />
+            </Route>
+
+            <Route path="learning">
+              <Route index element={<AdminLearningDashboard />} />
+            </Route>
+
+            {/* Cross-module — not scoped to a single space */}
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="workspace" element={<AdminWorkspace />} />
           </Route>
-
-          <Route path="inventory">
-            <Route index element={<AdminInventoryDashboard />} />
-          </Route>
-
-          <Route path="learning">
-            <Route index element={<AdminLearningDashboard />} />
-          </Route>
-
-          {/* Cross-module — not scoped to a single space */}
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="workspace" element={<AdminWorkspace />} />
         </Route>
       </Routes>
     </BrowserRouter>

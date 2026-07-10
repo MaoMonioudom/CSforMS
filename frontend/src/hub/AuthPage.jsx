@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Layers, Mail, Lock, User, LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
-import { useAuth } from "./AuthContext";
+import { useAuth, inferRole } from "./AuthContext";
 import msBbgLogo from "../assets/ms_bbg_logo.png";
 import { HubNav } from "./HubNav";
 import { AppFooter } from "../components/AppFooter";
@@ -76,6 +76,10 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
       <h1 className="text-2xl font-extrabold mb-1" style={{ color: D.text }}>Welcome back</h1>
       <p className="text-sm" style={{ color: D.muted }}>Sign in to your CADT Hub account.</p>
       <ErrorBox message={error} />
+
+      <div className="px-3 py-2 rounded-lg text-[11px] leading-relaxed" style={{ background: "rgba(99,102,241,0.08)", color: D.muted }}>
+        <strong style={{ color: D.text }}>Demo:</strong> use an email containing "admin" or "staff" (e.g. admin@test.com) to test those roles in the admin panel — anything else signs in as a regular User.
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
@@ -163,12 +167,17 @@ export default function AuthPage() {
 
   useEffect(() => { setError(""); setLoading(false); }, [isRegister]);
 
+  // Admin/Staff land in the admin panel directly; everyone else goes to
+  // their profile — same destination logic used both right after signing
+  // in and for the already-signed-in guard below.
+  const destinationFor = (role) => (role === "Admin" || role === "Staff") ? "/admin" : "/profile";
+
   // Already signed in but landed on /login or /register anyway (e.g. via a
-  // bookmark, or the "back" button after a previous sign-in) — bounce to
-  // Profile instead of showing a stale auth form. Uses replace so it doesn't
-  // add yet another entry for "back" to trip over.
+  // bookmark, or the "back" button after a previous sign-in) — bounce away
+  // instead of showing a stale auth form. Uses replace so it doesn't add
+  // yet another entry for "back" to trip over.
   useEffect(() => {
-    if (user) navigate("/profile", { replace: true });
+    if (user) navigate(destinationFor(user.role), { replace: true });
   }, [user, navigate]);
 
   const switchTo = (mode) => navigate(mode === "register" ? "/register" : "/login");
@@ -181,7 +190,7 @@ export default function AuthPage() {
     setTimeout(() => {
       const name = loginForm.email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
       login({ name, email: loginForm.email });
-      navigate("/profile", { replace: true });
+      navigate(destinationFor(inferRole(loginForm.email)), { replace: true });
     }, 700);
   };
 
@@ -194,7 +203,7 @@ export default function AuthPage() {
     setLoading(true);
     setTimeout(() => {
       login({ name: regForm.name, email: regForm.email });
-      navigate("/profile", { replace: true });
+      navigate(destinationFor(inferRole(regForm.email)), { replace: true });
     }, 800);
   };
 

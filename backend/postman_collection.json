@@ -1,0 +1,320 @@
+{
+  "info": {
+    "name": "CADT Community Backend",
+    "description": "Manual test requests for the backend API. Run 'Login' once and authToken auto-fills for everything else via a test script.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "authToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "eventId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/health" }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Demo User\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          }
+        },
+        {
+          "name": "Signup (duplicate email — expect 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Demo User\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.collectionVariables.set('authToken', data.token);",
+                  "pm.test('got a token', () => pm.expect(data.token).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login (wrong password — expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"wrong-password\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Session (with token)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": "{{baseUrl}}/api/auth/session"
+          }
+        },
+        {
+          "name": "Session (no token — expect 401)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/session" }
+        },
+        {
+          "name": "Session (bad token — expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer not-a-real-token" }],
+            "url": "{{baseUrl}}/api/auth/session"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        },
+        {
+          "name": "List users (no token — expect 401)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/users" }
+        },
+        {
+          "name": "List users (as plain user — expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Signup admin account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Admin Demo\",\n  \"email\": \"admin.demo@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          }
+        },
+        {
+          "name": "Login admin (run AFTER promoting role='admin' in Supabase)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.collectionVariables.set('adminToken', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin.demo@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "List users (as admin — expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "item": [
+        {
+          "name": "List events",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/community/events" }
+        },
+        {
+          "name": "Create event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.data && data.data.event_id) pm.collectionVariables.set('eventId', data.data.event_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Maker Night\",\n  \"description\": \"Open build session\",\n  \"location\": \"Makerspace Lab\",\n  \"start_date\": \"2026-08-01T18:00:00Z\",\n  \"end_date\": \"2026-08-01T21:00:00Z\",\n  \"max_participants\": 20,\n  \"credit_reward\": 5\n}"
+            },
+            "url": "{{baseUrl}}/api/community/events"
+          }
+        },
+        {
+          "name": "Get created event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/community/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "Update created event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Maker Night (Updated)\"\n}" },
+            "url": "{{baseUrl}}/api/community/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "Delete created event",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": "{{baseUrl}}/api/community/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "List posts",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/community/posts" }
+        },
+        {
+          "name": "Create post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Anyone free this weekend?\",\n  \"content\": \"Looking to prototype a PCB together.\",\n  \"category\": \"general\"\n}"
+            },
+            "url": "{{baseUrl}}/api/community/posts"
+          }
+        },
+        {
+          "name": "List collaborations",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/community/collaborations" }
+        },
+        {
+          "name": "Create collaboration",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_title\": \"Campus Delivery Robot\",\n  \"category\": \"Robotics\",\n  \"short_pitch\": \"Need a firmware dev\",\n  \"post_type\": \"recruiting\",\n  \"team_size_current\": 2,\n  \"team_size_target\": 4,\n  \"contact_email\": \"demo@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/community/collaborations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "List items",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/items" }
+        },
+        {
+          "name": "Create item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_name\": \"Soldering Iron\",\n  \"description\": \"60W adjustable temp\",\n  \"current_stock\": 5,\n  \"unit_credit\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/inventory/items"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Learning",
+      "item": [
+        {
+          "name": "List courses",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/learning/courses" }
+        },
+        {
+          "name": "Create course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Intro to 3D Printing\",\n  \"description\": \"Basics of FDM printing\",\n  \"category\": \"Fabrication\",\n  \"level\": \"Beginner\"\n}"
+            },
+            "url": "{{baseUrl}}/api/learning/courses"
+          }
+        }
+      ]
+    }
+  ]
+}

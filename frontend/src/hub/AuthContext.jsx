@@ -2,6 +2,17 @@ import { createContext, useContext, useState } from "react";
 
 const AuthCtx = createContext(null);
 
+// Mock-only role convention until real Supabase auth/profiles exist: an
+// email containing "admin" or "staff" logs in as that role, so the admin
+// guard and permissions can be tested without a real backend. Exported so
+// AuthPage can decide where to redirect right after login, without
+// duplicating this rule.
+export function inferRole(email = "") {
+  if (/admin/i.test(email)) return "Admin";
+  if (/staff/i.test(email)) return "Staff";
+  return "User";
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("cadt_hub_user") || "null"); }
@@ -9,7 +20,7 @@ export function AuthProvider({ children }) {
   });
 
   const login  = (u) => {
-    const data = { avatar: null, isMember: false, credits: 0, ...u };
+    const data = { avatar: null, isMember: false, credits: 0, role: inferRole(u.email), ...u };
     setUser(data);
     localStorage.setItem("cadt_hub_user", JSON.stringify(data));
   };

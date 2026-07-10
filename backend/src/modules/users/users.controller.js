@@ -1,21 +1,16 @@
-import { supabasePublic, assertSupabaseConfigured } from "../../config/supabaseClient.js";
+import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
+import { toPublicUser } from "../../shared/sanitizeUser.js";
 
-export async function getMe(req, res, next) {
-  try {
-    const { data, error } = await req.supabase.from("profiles").select("*").eq("id", req.user.id).single();
-    if (error) throw error;
-    res.json({ data: { ...req.user, profile: data } });
-  } catch (err) {
-    next(err);
-  }
+export async function getMe(req, res) {
+  res.json({ data: req.user });
 }
 
 export async function listUsers(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const { data, error } = await supabasePublic.from("profiles").select("*");
+    const { data, error } = await supabaseAdmin.from("users").select("*");
     if (error) throw error;
-    res.json({ data });
+    res.json({ data: data.map(toPublicUser) });
   } catch (err) {
     next(err);
   }
