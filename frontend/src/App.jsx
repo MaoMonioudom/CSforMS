@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Outlet, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
 import { TopNav } from "./components/TopNav";
 import { CursorEffect } from "./components/community/CursorEffect";
 import HomePage from "./pages/community/HomePage";
@@ -10,13 +10,14 @@ import CommunityPage from "./pages/community/CommunityPage";
 import CommunityDetailPage from "./pages/community/CommunityDetailPage";
 import AdminLayout from "./admin/layouts/AdminLayout";
 import AdminGuard from "./admin/components/AdminGuard";
-import AdminCommunityDashboard from "./admin/community/pages/AdminDashboard";
+import InventoryAdminArea from "./admin/inventory/InventoryAdminArea";
+import { InventoryProvider } from "./lib/inventory/InventoryContext";
+import AdminDashboard from "./admin/community/pages/AdminDashboard";
 import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
 import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
 import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
-import AdminInventoryDashboard from "./admin/inventory/pages/AdminDashboard";
 import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
@@ -29,7 +30,7 @@ import MembershipPage from "./hub/MembershipPage";
 import CreditsPage from "./hub/CreditsPage";
 import WorkspacePage from "./hub/WorkspacePage";
 import LearningLandingPage from "./pages/learning/LandingPage";
-import InventoryLandingPage from "./pages/inventory/LandingPage";
+import InventoryApp from "./pages/inventory/InventoryApp";
 import { AuthProvider } from "./hub/AuthContext";
 
 function NotFoundPage() {
@@ -68,6 +69,7 @@ function UserLayout() {
 export default function App() {
   return (
     <AuthProvider>
+    <InventoryProvider>
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
@@ -82,7 +84,8 @@ export default function App() {
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/workspace" element={<WorkspacePage />} />
         <Route path="/learning" element={<LearningLandingPage />} />
-        <Route path="/inventory" element={<InventoryLandingPage />} />
+        {/* Inventory module (MakerVault) — self-contained app with its own auth */}
+        <Route path="/inventory/*" element={<InventoryApp />} />
 
         {/* Community spaces — TopNav + Footer */}
         <Route element={<UserLayout />}>
@@ -96,33 +99,22 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* Admin: guard checks Admin/Staff role first, layout is just the shell */}
+        {/* Admin: guard checks Admin/Staff role first, layout is the shared shell */}
         <Route path="/admin" element={<AdminGuard />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/community" replace />} />
-
-            <Route path="community">
-              <Route index element={<AdminCommunityDashboard />} />
-              <Route path="events" element={<AdminEvents />} />
-              <Route path="collaboration" element={<AdminCollaboration />} />
-              <Route path="posts" element={<AdminCommunity />} />
-            </Route>
-
-            <Route path="inventory">
-              <Route index element={<AdminInventoryDashboard />} />
-            </Route>
-
-            <Route path="learning">
-              <Route index element={<AdminLearningDashboard />} />
-            </Route>
-
-            {/* Cross-module — not scoped to a single space */}
+            <Route index element={<AdminDashboard />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="collaboration" element={<AdminCollaboration />} />
+            <Route path="community" element={<AdminCommunity />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="workspace" element={<AdminWorkspace />} />
+            <Route path="learning" element={<AdminLearningDashboard />} />
+            <Route path="inventory/*" element={<InventoryAdminArea />} />
           </Route>
         </Route>
       </Routes>
     </BrowserRouter>
+    </InventoryProvider>
     </AuthProvider>
   );
 }

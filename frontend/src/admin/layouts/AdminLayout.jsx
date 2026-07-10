@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { AdminSidebar } from "../components/AdminSidebar";
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
-const DEFAULT_WIDTH = 256;
+const DEFAULT_WIDTH = 224;
 const STORAGE_KEY = "cadt_admin_sidebar_width";
 
 export default function AdminLayout() {
@@ -37,6 +37,10 @@ export default function AdminLayout() {
     localStorage.setItem(STORAGE_KEY, String(width));
   }, [width]);
 
+  // Inventory pages render their own full-width top bar right of the sidebar,
+  // so they get the raw area; other modules keep the padded, centered main.
+  const fullBleed = useLocation().pathname.startsWith("/admin/inventory");
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar width={width} />
@@ -48,9 +52,13 @@ export default function AdminLayout() {
       />
 
       <div className="flex-1 min-w-0 overflow-auto">
-        <main className="p-6 lg:p-8 max-w-7xl mx-auto">
+        {fullBleed ? (
           <Outlet />
-        </main>
+        ) : (
+          <main className="p-6 lg:p-8 max-w-7xl mx-auto">
+            <Outlet />
+          </main>
+        )}
       </div>
     </div>
   );

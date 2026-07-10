@@ -158,6 +158,9 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = location.pathname === "/register";
+  // Where to send the user after signing in — wherever they were trying to
+  // reach (e.g. /inventory) takes priority over the generic role destination.
+  const from = location.state?.from;
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [regForm, setRegForm]     = useState({ name: "", email: "", password: "", confirm: "" });
@@ -177,8 +180,8 @@ export default function AuthPage() {
   // instead of showing a stale auth form. Uses replace so it doesn't add
   // yet another entry for "back" to trip over.
   useEffect(() => {
-    if (user) navigate(destinationFor(user.role), { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(from || destinationFor(user.role), { replace: true });
+  }, [user, navigate, from]);
 
   const switchTo = (mode) => navigate(mode === "register" ? "/register" : "/login");
 
@@ -190,7 +193,7 @@ export default function AuthPage() {
     setTimeout(() => {
       const name = loginForm.email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
       login({ name, email: loginForm.email });
-      navigate(destinationFor(inferRole(loginForm.email)), { replace: true });
+      navigate(from || destinationFor(inferRole(loginForm.email)), { replace: true });
     }, 700);
   };
 
@@ -203,7 +206,7 @@ export default function AuthPage() {
     setLoading(true);
     setTimeout(() => {
       login({ name: regForm.name, email: regForm.email });
-      navigate(destinationFor(inferRole(regForm.email)), { replace: true });
+      navigate(from || destinationFor(inferRole(regForm.email)), { replace: true });
     }, 800);
   };
 
