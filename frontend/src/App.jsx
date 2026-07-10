@@ -8,7 +8,9 @@ import CollaborationPage from "./pages/community/CollaborationPage";
 import CollabDetailPage from "./pages/community/CollabDetailPage";
 import CommunityPage from "./pages/community/CommunityPage";
 import CommunityDetailPage from "./pages/community/CommunityDetailPage";
-import AdminLayout from "./admin/community/layouts/AdminLayout";
+import AdminLayout from "./admin/layouts/AdminLayout";
+import InventoryAdminArea from "./admin/inventory/InventoryAdminArea";
+import { InventoryProvider } from "./lib/inventory/InventoryContext";
 import AdminDashboard from "./admin/community/pages/AdminDashboard";
 import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
@@ -22,7 +24,7 @@ import AuthPage from "./hub/AuthPage";
 import ProfilePage from "./hub/ProfilePage";
 import NotificationsPage from "./hub/NotificationsPage";
 import LearningLandingPage from "./pages/learning/LandingPage";
-import InventoryLandingPage from "./pages/inventory/LandingPage";
+import InventoryApp from "./pages/inventory/InventoryApp";
 import { AuthProvider } from "./hub/AuthContext";
 
 function NotFoundPage() {
@@ -61,6 +63,7 @@ function UserLayout() {
 export default function App() {
   return (
     <AuthProvider>
+    <InventoryProvider>
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
@@ -72,7 +75,8 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/learning" element={<LearningLandingPage />} />
-        <Route path="/inventory" element={<InventoryLandingPage />} />
+        {/* Inventory module (MakerVault) — self-contained app with its own auth */}
+        <Route path="/inventory/*" element={<InventoryApp />} />
 
         {/* Community spaces — TopNav + Footer */}
         <Route element={<UserLayout />}>
@@ -86,16 +90,18 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* Admin layout: sidebar only, no TopNav/Footer */}
+        {/* Admin layout: shared sidebar shell across all 3 modules */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="events" element={<AdminEvents />} />
           <Route path="collaboration" element={<AdminCollaboration />} />
           <Route path="community" element={<AdminCommunity />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="inventory/*" element={<InventoryAdminArea />} />
         </Route>
       </Routes>
     </BrowserRouter>
+    </InventoryProvider>
     </AuthProvider>
   );
 }
