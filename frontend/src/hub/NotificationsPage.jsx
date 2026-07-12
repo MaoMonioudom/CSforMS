@@ -5,7 +5,8 @@ import {
   MessageSquare, BookOpen, Package, Award, GraduationCap,
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
-import { SubpageHeader } from "./SubpageHeader";
+import { TopNav } from "../components/TopNav";
+import { BackBar } from "../components/BackBar";
 
 const D = {
   bg:     "#eef5fc",
@@ -101,7 +102,8 @@ export default function NotificationsPage() {
       <div aria-hidden className="fixed inset-0 pointer-events-none"
         style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
-      <SubpageHeader backLabel="Back" />
+      <TopNav />
+      <BackBar />
 
       <main className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 py-12">
 

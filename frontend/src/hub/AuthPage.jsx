@@ -150,7 +150,7 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = location.pathname === "/register";
@@ -163,6 +163,14 @@ export default function AuthPage() {
 
   useEffect(() => { setError(""); setLoading(false); }, [isRegister]);
 
+  // Already signed in but landed on /login or /register anyway (e.g. via a
+  // bookmark, or the "back" button after a previous sign-in) — bounce to
+  // Profile instead of showing a stale auth form. Uses replace so it doesn't
+  // add yet another entry for "back" to trip over.
+  useEffect(() => {
+    if (user) navigate("/profile", { replace: true });
+  }, [user, navigate]);
+
   const switchTo = (mode) => navigate(mode === "register" ? "/register" : "/login");
 
   const handleLogin = (e) => {
@@ -173,7 +181,7 @@ export default function AuthPage() {
     setTimeout(() => {
       const name = loginForm.email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
       login({ name, email: loginForm.email });
-      navigate("/profile");
+      navigate("/profile", { replace: true });
     }, 700);
   };
 
@@ -186,7 +194,7 @@ export default function AuthPage() {
     setLoading(true);
     setTimeout(() => {
       login({ name: regForm.name, email: regForm.email });
-      navigate("/profile");
+      navigate("/profile", { replace: true });
     }, 800);
   };
 
