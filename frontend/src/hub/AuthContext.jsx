@@ -1,44 +1,72 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { api, setToken, getToken } from "../lib/api/client";
 
 const AuthCtx = createContext(null);
 
-// Mock-only role convention until real Supabase auth/profiles exist: an
-// email containing "admin" or "staff" logs in as that role, so the admin
-// guard and permissions can be tested without a real backend. Exported so
-// AuthPage can decide where to redirect right after login, without
-// duplicating this rule.
-export function inferRole(email = "") {
-  if (/admin/i.test(email)) return "Admin";
-  if (/staff/i.test(email)) return "Staff";
-  return "User";
+// Backend roles are lowercase ('admin'/'staff'/'user'); the rest of the
+// frontend (AdminGuard, AdminSidebar's role badge, etc.) was built around
+// capitalized roles ('Admin'/'Staff'/'User') — map at the boundary so
+// nothing downstream has to care which convention the API uses.
+const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User" };
+
+// isMember/credits aren't backed by a real membership/credits table yet —
+// keep them as client-only fields until that exists, same as before.
+function toFrontendUser(row) {
+  return {
+    id: row.user_id,
+    name: row.full_name,
+    email: row.email,
+    role: ROLE_MAP[row.role] || "User",
+    avatar: row.profile_img_url || null,
+    isMember: false,
+    credits: 0,
+  };
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("cadt_hub_user") || "null"); }
-    catch { return null; }
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login  = (u) => {
-    const data = { avatar: null, isMember: false, credits: 0, role: inferRole(u.email), ...u };
-    setUser(data);
-    localStorage.setItem("cadt_hub_user", JSON.stringify(data));
+  // On mount, if a token is already stored (from a previous visit), confirm
+  // it's still valid and restore the session — otherwise every page refresh
+  // would silently sign the user out.
+  useEffect(() => {
+    if (!getToken()) { setLoading(false); return; }
+    api.get("/api/auth/session")
+      .then(({ user: row }) => setUser(toFrontendUser(row)))
+      .catch(() => setToken(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = async (email, password) => {
+    const { token, user: row } = await api.post("/api/auth/login", { email, password });
+    setToken(token);
+    const mapped = toFrontendUser(row);
+    setUser(mapped);
+    return mapped;
   };
-  const logout = ()  => { setUser(null); localStorage.removeItem("cadt_hub_user"); };
+
+  const signup = async ({ name, email, password }) => {
+    const { token, user: row } = await api.post("/api/auth/signup", { full_name: name, email, password });
+    setToken(token);
+    const mapped = toFrontendUser(row);
+    setUser(mapped);
+    return mapped;
+  };
+
+  const logout = () => { setUser(null); setToken(null); };
 
   // Patches fields on the current user (e.g. joining membership, spending
-  // credits) and keeps localStorage in sync — mock persistence until this
-  // is backed by real Supabase profile/credits data.
+  // credits) — client-only until membership/credits have a real endpoint.
   const updateUser = (patch) => {
-    setUser(prev => {
-      if (!prev) return prev;
-      const next = { ...prev, ...patch };
-      localStorage.setItem("cadt_hub_user", JSON.stringify(next));
-      return next;
-    });
+    setUser(prev => (prev ? { ...prev, ...patch } : prev));
   };
 
-  return <AuthCtx.Provider value={{ user, login, logout, updateUser }}>{children}</AuthCtx.Provider>;
+  return (
+    <AuthCtx.Provider value={{ user, loading, login, signup, logout, updateUser }}>
+      {children}
+    </AuthCtx.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthCtx);

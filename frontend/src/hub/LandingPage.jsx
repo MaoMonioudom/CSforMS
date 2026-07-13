@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { HubScene } from "./HubScene";
 import { useAuth } from "./AuthContext";
@@ -75,7 +75,17 @@ const SCENE_SCROLL_HEIGHT = (CAM_MAX - CAM_MIN) * 2; // 2480 px — smooth feel
 export default function HubLandingPage() {
   const sceneWrapRef  = useRef(null); // tall sticky wrapper
   const setCamXRef    = useRef(null); // populated by HubScene
-  const { user }      = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // An already-signed-in admin/staff account opening the hub root (e.g. a
+  // restored session on revisit) goes straight to the admin panel instead
+  // of seeing the public landing page.
+  useEffect(() => {
+    if (!loading && user && (user.role === "Admin" || user.role === "Staff")) {
+      navigate("/admin", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   // Drive HubScene camera from page scroll position.
   useEffect(() => {
@@ -96,6 +106,10 @@ export default function HubLandingPage() {
 
   const scrollToScene = () =>
     sceneWrapRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  // Skip rendering the public landing page for the one frame before the
+  // redirect above fires.
+  if (!loading && user && (user.role === "Admin" || user.role === "Staff")) return null;
 
   return (
     <div style={{ width: "100vw", background: D.bg1 }}>

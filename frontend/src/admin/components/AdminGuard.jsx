@@ -7,8 +7,11 @@ const ALLOWED_ROLES = ["Admin", "Staff"];
 // awareness — it renders the sidebar/shell unconditionally for whoever
 // reaches it — so this has to sit above it in the route tree, not inside it.
 export default function AdminGuard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
+  // Still checking a stored token against the backend — render nothing
+  // rather than bounce to /login before we actually know.
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (!ALLOWED_ROLES.includes(user.role)) return <Navigate to="/" replace />;
 

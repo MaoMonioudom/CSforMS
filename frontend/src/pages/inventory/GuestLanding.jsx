@@ -3,9 +3,8 @@ import {
   Settings, MapPin, DoorOpen, ShoppingCart,
   LogIn, UserPlus, ArrowRight, Drill, ChevronRight,
   Package, Users, TrendingUp, Clock, Printer, CheckCircle2,
-  RotateCcw, ShoppingBag, Compass, BookOpen, Search,
+  RotateCcw, ShoppingBag, Compass, BookOpen,
 } from "lucide-react";
-import { useState } from "react";
 import { T as THEME } from "../../lib/inventory/theme";
 import { LOGO_IMAGE, BROWSE_LANDING_IMAGE, PRINT_SERVICES, MEMBERSHIP_PLAN, CREDIT_RATE, CREDIT_TIERS } from "../../lib/inventory/data.js";
 
