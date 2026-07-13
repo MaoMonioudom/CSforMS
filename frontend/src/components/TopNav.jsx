@@ -774,18 +774,15 @@ export function TopNav() {
                 <CartButton dark={cfg.dark || open} count={inv.cart.length} onClick={() => inv.setCartOpen(true)} />
               )}
 
-              {/* 5 · Credits — members only, desktop/tablet only */}
-              {isInventory
-                ? inv?.user && (
-                    <div className="hidden sm:block">
-                      <CreditBox credits={inv.user.credits} dark={cfg.dark || open} />
-                    </div>
-                  )
-                : user?.isMember && (
-                    <div className="hidden sm:block">
-                      <CreditBox credits={user.credits} dark={cfg.dark || open} />
-                    </div>
-                  )}
+              {/* 5 · Credits — members only, desktop/tablet only. Always the real
+                  (database) balance from useAuth, even on Inventory pages —
+                  Inventory's own borrow/purchase math still uses its local
+                  copy for now, this is just the display. */}
+              {(isInventory ? inv?.user : user?.isMember) && (
+                <div className="hidden sm:block">
+                  <CreditBox credits={user?.credits} dark={cfg.dark || open} />
+                </div>
+              )}
 
               {/* 6 · Menu button */}
               <button

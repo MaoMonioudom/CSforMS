@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Coins, GraduationCap, Users, MessageSquare, Package, Undo2,
+  Coins, GraduationCap, Users, MessageSquare, Package,
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
@@ -43,7 +43,7 @@ function SectionLabel({ children }) {
 }
 
 export default function CreditsPage() {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,11 +52,6 @@ export default function CreditsPage() {
   }, [user, navigate]);
 
   if (!user || !user.isMember) return null;
-
-  const leaveMembership = () => {
-    updateUser({ isMember: false });
-    navigate("/membership");
-  };
 
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
@@ -140,13 +135,6 @@ export default function CreditsPage() {
             ))}
           </div>
         </div>
-
-        {/* Demo control — remove once real membership state is backed by Supabase */}
-        <button onClick={leaveMembership}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full transition-opacity hover:opacity-70"
-          style={{ color: D.muted, border: "1px solid rgba(15,50,80,0.14)" }}>
-          <Undo2 size={12} /> Demo: leave membership (test the non-member state)
-        </button>
       </main>
     </div>
   );

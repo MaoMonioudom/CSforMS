@@ -5,6 +5,7 @@ import usersRoutes from "./modules/users/users.routes.js";
 import communityRoutes from "./modules/community/community.routes.js";
 import inventoryRoutes from "./modules/inventory/inventory.routes.js";
 import learningRoutes from "./modules/learning/learning.routes.js";
+import membershipRoutes from "./modules/membership/membership.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -24,6 +25,7 @@ export function createApp() {
   app.use("/api/community", communityRoutes);
   app.use("/api/inventory", inventoryRoutes);
   app.use("/api/learning", learningRoutes);
+  app.use("/api/membership", membershipRoutes);
 
   app.use((req, res) => res.status(404).json({ error: "Not found" }));
   app.use(errorHandler);

@@ -25,7 +25,7 @@ const PERKS = [
 ];
 
 export default function MembershipPage() {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,11 +33,6 @@ export default function MembershipPage() {
   }, [user, navigate]);
 
   if (!user) return null;
-
-  const join = () => {
-    updateUser({ isMember: true });
-    navigate("/credits");
-  };
 
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
@@ -78,16 +73,13 @@ export default function MembershipPage() {
             </Link>
           </div>
         ) : (
-          <>
-            <button onClick={join}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white text-sm transition-opacity hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}>
-              <Coins size={16} /> Join Membership — {MEMBERSHIP_PRICE}
-            </button>
-            <p className="text-[11px] text-center mt-2 mb-6" style={{ color: D.faint }}>
-              Billing isn't live yet — this activates membership instantly for testing.
+          <div className="rounded-2xl p-6 mb-6 text-center"
+            style={{ background: D.card, border: `1px solid ${D.border}` }}>
+            <p className="text-sm font-bold" style={{ color: D.text }}>Not a member yet</p>
+            <p className="text-xs mt-1.5 max-w-sm mx-auto" style={{ color: D.muted }}>
+              Visit the front desk to pay {MEMBERSHIP_PRICE} and staff will activate your membership right away.
             </p>
-          </>
+          </div>
         )}
 
         {/* Perks */}

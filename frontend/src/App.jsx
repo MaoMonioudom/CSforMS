@@ -17,6 +17,7 @@ import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
 import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
+import AdminMembership from "./admin/community/pages/AdminMembership";
 import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
 import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import AdminCourses from "./admin/learning/adminSide/AdminCourses";
@@ -137,6 +138,7 @@ export default function App() {
             <Route path="collaboration" element={<AdminCollaboration />} />
             <Route path="community" element={<AdminCommunity />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="membership" element={<AdminMembership />} />
             <Route path="workspace" element={<AdminWorkspace />} />
             <Route path="learning" element={<AdminLearningDashboard />} />
             <Route path="learning/courses" element={<AdminCourses />} />

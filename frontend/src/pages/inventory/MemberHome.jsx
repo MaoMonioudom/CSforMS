@@ -8,6 +8,7 @@ import { T as THEME } from '../../lib/inventory/theme'
 import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inventory/data'
 import PageBreadcrumb from '../../components/inventory/layout/PageBreadcrumb'
 import CreditInfoModal from '../../components/inventory/ui/CreditInfoModal'
+import { useAuth } from '../../hub/AuthContext'
 
 const NAVY   = '#0e7490' // teal-700 — primary accent (kept name to avoid touching every usage)
 const TEAL   = '#0891b2'
@@ -34,7 +35,14 @@ function StatPill({ value, label, color = THEME.charcoal }) {
   )
 }
 
-export default function UserHome({ user, items, borrows, notifications, setPage, filaments = [], setRequests, showToast }) {
+export default function UserHome({ user: invUser, items, borrows, notifications, setPage, filaments = [], setRequests, showToast }) {
+  // Credits/membership now come from the real database (useAuth), not the
+  // Inventory module's own local copy — everything else about this "user"
+  // (id, name, matching borrow/request records) still comes from Inventory's
+  // local state, since borrow/purchase logic isn't wired to the real backend yet.
+  const { user: hubUser } = useAuth()
+  const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
+
   const [activeCat, setActiveCat]   = useState('all')
   const [printModal, setPrintModal] = useState(null)
   const [pages,      setPages]      = useState('')

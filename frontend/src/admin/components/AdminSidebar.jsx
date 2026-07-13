@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Calendar, Users, MessageSquare,
   UserCog, ArrowLeft, FolderOpen, Folder, ChevronDown,
   Boxes, Printer, RotateCcw, Inbox, CreditCard, Compass, Armchair,
-  BookOpen, GraduationCap, LogOut,
+  BookOpen, GraduationCap, LogOut, Coins,
 } from "lucide-react";
 import { useAuth } from "../../hub/AuthContext";
 
@@ -69,8 +69,9 @@ const FOLDERS = [
 // Cross-module concerns — not scoped to a single space, so they sit outside
 // the module folders as a flat list.
 const generalItems = [
-  { label: "Users",     to: "/admin/users",     icon: UserCog },
-  { label: "Workspace", to: "/admin/workspace", icon: Armchair },
+  { label: "Users",              to: "/admin/users",      icon: UserCog },
+  { label: "Membership & Credits", to: "/admin/membership", icon: Coins },
+  { label: "Workspace",           to: "/admin/workspace",  icon: Armchair },
 ];
 
 function SectionLabel({ children }) {
