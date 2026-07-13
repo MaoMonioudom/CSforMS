@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../hub/AuthContext";
 
-const ALLOWED_ROLES = ["Admin", "Staff"];
+const ALLOWED_ROLES = ["Admin", "Staff", "Lecturer"];
 
 // Gates the entire /admin route tree. AdminLayout itself has no auth
 // awareness — it renders the sidebar/shell unconditionally for whoever

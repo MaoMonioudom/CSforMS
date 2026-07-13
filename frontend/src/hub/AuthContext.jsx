@@ -7,7 +7,7 @@ const AuthCtx = createContext(null);
 // frontend (AdminGuard, AdminSidebar's role badge, etc.) was built around
 // capitalized roles ('Admin'/'Staff'/'User') — map at the boundary so
 // nothing downstream has to care which convention the API uses.
-const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User" };
+const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User", lecturer: "Lecturer" };
 
 // isMember/credits aren't backed by a real membership/credits table yet —
 // keep them as client-only fields until that exists, same as before.

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, Outlet } from "react-router-dom";
 import { TopNav } from "./components/TopNav";
 import { CursorEffect } from "./components/community/CursorEffect";
 import HomePage from "./pages/community/HomePage";
@@ -22,6 +22,9 @@ import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import AdminCourses from "./admin/learning/adminSide/AdminCourses";
 import AdminCourseEditor from "./admin/learning/adminSide/AdminCourseEditor";
 import AdminLecturers from "./admin/learning/adminSide/AdminLecturers";
+import LecturerLayout from "./admin/layouts/LecturerLayout";
+import LecturerDashboard from "./admin/learning/lecturersSide/LecturerDashboard";
+import LecturerCourseEditor from "./admin/learning/lecturersSide/LecturerCourseEditor";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
@@ -143,6 +146,16 @@ export default function App() {
             <Route path="learning/courses/:id/edit" element={<AdminCourseEditor />} />
             <Route path="learning/lecturers" element={<AdminLecturers />} />
             <Route path="inventory/*" element={<InventoryAdminArea />} />
+          </Route>
+        </Route>
+
+        {/* Lecturer: same guard as /admin (Admin/Staff/Lecturer), own sidebar + layout */}
+        <Route path="/lecturer" element={<AdminGuard />}>
+          <Route element={<LecturerLayout />}>
+            <Route index element={<Navigate to="learning/courses" replace />} />
+            <Route path="learning/courses" element={<LecturerDashboard />} />
+            <Route path="learning/courses/new" element={<LecturerCourseEditor />} />
+            <Route path="learning/courses/:id/edit" element={<LecturerCourseEditor />} />
           </Route>
         </Route>
       </Routes>
