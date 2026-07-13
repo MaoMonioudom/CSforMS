@@ -83,7 +83,7 @@ export default function App() {
           <Route path="/learning/courses" element={<CoursesPage />} />
           <Route path="/learning/course/:id" element={<CourseDetail />} />
           <Route path="/learning/:id/lessons/:lessonId" element={<LessonDetail />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/learning/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -103,9 +103,9 @@ export default function App() {
             <Route index element={<AdminInventoryDashboard />} />
           </Route>
 
-          {/* <Route path="learning">
+          <Route path="learning">
             <Route index element={<AdminLearningDashboard />} />
-          </Route> */}
+          </Route>
 
           {/* Cross-module — not scoped to a single space */}
           <Route path="users" element={<AdminUsers />} />

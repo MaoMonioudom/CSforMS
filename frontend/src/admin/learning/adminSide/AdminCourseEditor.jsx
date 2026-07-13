@@ -6,9 +6,9 @@ import { getLecturers } from "../../data/userStore";
 import NotFound from "../NotFound";
 
 const LINKS = [
-  { to: "/admin", label: "Overview", end: true },
-  { to: "/admin/courses", label: "Courses" },
-  { to: "/admin/lecturers", label: "Lecturers" },
+  { to: "/admin/learning", label: "Overview", end: true },
+  { to: "/admin/learning/courses", label: "Courses" },
+  { to: "/admin/learning/lecturers", label: "Lecturers" },
 ];
 
 export default function AdminCourseEditor() {

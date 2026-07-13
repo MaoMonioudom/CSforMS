@@ -4,9 +4,9 @@ import { useCourses } from "../../hooks/useCourses";
 import { getLecturers, createLecturer, setUserActive } from "../../data/userStore";
 
 const LINKS = [
-  { to: "/admin", label: "Overview", end: true },
-  { to: "/admin/courses", label: "Courses" },
-  { to: "/admin/lecturers", label: "Lecturers" },
+  { to: "/admin/learning", label: "Overview", end: true },
+  { to: "/admin/learning/courses", label: "Courses" },
+  { to: "/admin/learning/lecturers", label: "Lecturers" },
 ];
 
 const EMPTY_FORM = { name: "", email: "", password: "" };

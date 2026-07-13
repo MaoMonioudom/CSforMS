@@ -3,9 +3,9 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { useCourses } from "../../hooks/useCourses";
 
 const LINKS = [
-  { to: "/admin", label: "Overview", end: true },
-  { to: "/admin/courses", label: "Courses" },
-  { to: "/admin/lecturers", label: "Lecturers" },
+  { to: "/admin/learning", label: "Overview", end: true },
+  { to: "/admin/learning/courses", label: "Courses" },
+  { to: "/admin/learning/lecturers", label: "Lecturers" },
 ];
 
 export default function AdminCourses() {

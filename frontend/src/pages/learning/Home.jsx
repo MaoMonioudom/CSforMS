@@ -55,7 +55,7 @@ export default function Home() {
               <br />technology.
             </h1>
             <p className="mb-8 max-w-[480px] text-[1.05rem] leading-[1.8] text-ink-soft">
-              A curated collection of programming, robotics, and AI courses —
+              A curated collection of programming, robotics, and AI courses,
               presented as books in a library. Open one and start your journey.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -66,7 +66,7 @@ export default function Home() {
                 Browse the Library
               </Link>
               <Link
-                to="/about"
+                to="/learning/about"
                 className={`${BTN} border border-ink/35 bg-transparent text-ink hover:border-oxblood hover:text-oxblood`}
               >
                 Our Story

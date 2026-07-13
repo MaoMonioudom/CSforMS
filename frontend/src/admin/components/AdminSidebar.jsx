@@ -32,6 +32,7 @@ const spaces = [
     icon: GraduationCap,
     items: [
       { label: "Dashboard", to: "/admin/learning", icon: LayoutDashboard, end: true },
+      { lable: "Lectures",  to: "/admin/learning/lectures", icon: Users},
     ],
   },
 ];

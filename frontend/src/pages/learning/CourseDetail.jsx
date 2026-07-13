@@ -5,6 +5,7 @@ import LessonBookCard from "../../components/learning/ui/LessonBookCard";
 import PathSelector from "../../components/learning/ui/PathSelector";
 import CheckoutModal from "../../components/learning/ui/Checkout/CheckoutModal";
 import { useUnlockedPaths } from "../../hooks/learning/useUnlockedPaths";
+import { useAuth } from "../../hub/AuthContext";
 import NotFound from "../NotFound";
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
@@ -12,6 +13,7 @@ const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const course = getCourseById(id);
   const { isUnlocked, unlock } = useUnlockedPaths();
 
@@ -25,6 +27,11 @@ export default function CourseDetail() {
 
   const selectPath = (pathId) => {
     if (pathId === "interactive" && !interactiveUnlocked) {
+      // Must be signed in before we let them into the checkout flow
+      if (!user) {
+        navigate("/login", { state: { redirectTo: `/learning/${course.id}` } });
+        return;
+      }
       setShowCheckout(true);
       return;
     }
@@ -97,7 +104,7 @@ export default function CourseDetail() {
         )}
       </div>
 
-      {showCheckout && (
+      {showCheckout && user && (
         <CheckoutModal
           course={course}
           price={course.interactivePrice}
