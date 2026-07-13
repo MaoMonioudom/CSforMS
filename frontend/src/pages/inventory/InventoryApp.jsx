@@ -11,6 +11,7 @@ import { useInventory } from '../../lib/inventory/InventoryContext'
 import Toast from '../../components/inventory/ui/Toast'
 import AuthPage from './AuthPage'
 import TopNav from '../../components/inventory/layout/TopNav'
+import { AppFooter } from '../../components/AppFooter'
 
 import HomePage from './HomePage'
 import NotificationsPage from './NotificationsPage'
@@ -56,11 +57,30 @@ export default function InventoryApp() {
     return (
       <Routes>
         <Route index element={
-          <HomePage user={null} items={items} users={users} borrows={borrows}
-            onEnter={() => navigate(`${BASE}/auth`)} onBrowse={() => navigate(`${BASE}/browse`)} />
+          <>
+            <HomePage user={null} items={items} users={users} borrows={borrows}
+              onEnter={() => navigate(`${BASE}/auth`)} onBrowse={() => navigate(`${BASE}/browse`)} />
+            <AppFooter />
+          </>
         } />
         <Route path="auth" element={
-          <div className="inv-root"><AuthPage onLogin={handleLogin} onSignup={handleSignup} users={users} /></div>
+          <div className="inv-root min-h-screen bg-cream">
+            {/* Minimal bar so a guest who clicked Login/Join Membership isn't
+                stranded here — they can always get back to Inventory or the
+                CADT Makerspace home page. */}
+            <header className="sticky top-0 z-[100] border-b border-border bg-white">
+              <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-6">
+                <button onClick={() => navigate(BASE)} className="flex items-center gap-2 border-none bg-transparent p-0">
+                  <ArrowLeft size={15} className="text-inv-muted" />
+                  <img src={LOGO_IMAGE} alt="MakerVault" className="h-5 w-auto object-contain sm:h-[22px]" />
+                </button>
+                <button onClick={() => navigate('/')} className="border-none bg-transparent p-0 text-xs font-semibold text-inv-muted hover:text-charcoal">
+                  Back to CADT Makerspace
+                </button>
+              </div>
+            </header>
+            <AuthPage onLogin={handleLogin} onSignup={handleSignup} users={users} />
+          </div>
         } />
         <Route path="browse" element={
           <div className="inv-root min-h-screen bg-cream">
@@ -68,6 +88,7 @@ export default function InventoryApp() {
             <main>
               <Catalog items={items} user={null} cart={cart} setCart={setCart} showToast={showToast} onRequireAuth={() => navigate(`${BASE}/auth`)} />
             </main>
+            <AppFooter />
             {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
           </div>
         } />
@@ -106,6 +127,7 @@ export default function InventoryApp() {
           <CartPanel cart={cart} setCart={setCart} user={user} setUser={setUser} setBorrows={setBorrows} setRequests={setRequests} showToast={showToast} onClose={() => setCartOpen(false)} />
         )}
       </div>
+      <AppFooter />
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )

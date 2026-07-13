@@ -1,21 +1,61 @@
-import { useState } from 'react'
-import { CheckCircle2, XCircle, Clock, CreditCard, Package2, Printer, Box } from 'lucide-react'
-import Badge from '../../../components/inventory/ui/Badge'
+import { useState, useMemo } from 'react'
+import {
+  Search, ChevronLeft, ChevronRight, X, Check, Ban, User, Package,
+  FileText, History, CheckCircle2, XCircle, AlertCircle, Eye, Tag,
+  CreditCard, Printer, Box, Package2,
+} from 'lucide-react'
 import { T } from '../../../lib/inventory/theme'
-import { CREDIT_RATE, PRINT_SERVICES } from '../../../lib/inventory/data'
+import { CREDIT_RATE, PRINT_SERVICES, CATEGORIES } from '../../../lib/inventory/data'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
+const PAGE_SIZE = 10
+
+const STATUS_STYLE = {
+  Pending:  { bg: T.amberLight, fg: T.amber, icon: AlertCircle },
+  Approved: { bg: T.greenLight, fg: T.green, icon: CheckCircle2 },
+  Declined: { bg: T.redLight,   fg: T.red,   icon: XCircle },
+}
+
+function StatusPill({ status }) {
+  const s = STATUS_STYLE[status]
+  const Icon = s.icon
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: s.bg, color: s.fg }}>
+      <Icon size={11} /> {status}
+    </span>
+  )
+}
+
+function SectionLabel({ icon: Icon, text }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: T.faint }}>
+      <Icon size={12} /> {text}
+    </div>
+  )
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10.5, color: T.faint, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontWeight: 600, color: T.charcoal }}>{value}</div>
+    </div>
+  )
+}
 
 // ── Requests Manager (staff/admin approve) — handles borrow requests, credit
 // top-ups, document printing, and 3D print jobs (which need a weight entered
 // by staff before they can be charged) in one queue ───────────────────────────
 export default function RequestsManager({ requests, setRequests, borrows, setBorrows, items, setItems, users, setUsers, user, setNotifications, setPayments, showToast, filaments = [], setFilaments }) {
   const [gramsInput, setGramsInput] = useState({})
-  const pending = requests.filter(r => r.status === 'pending' || r.status === 'awaiting_weight')
-  const handled = requests.filter(r => r.status === 'approved' || r.status === 'denied')
-  const getName = (id) => users.find(u => u.id === id)?.name || `User #${id}`
-  // Student name + ID label for request rows.
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [page, setPage] = useState(1)
+  const [detail, setDetail] = useState(null)
+
   const getLabel = (id) => { const u = users.find(x => x.id === id); return u ? u.name + (u.studentId ? ` (${u.studentId})` : '') : `User #${id}` }
+  const getUser  = (id) => users.find(u => u.id === id)
+  const getCategory = (itemId) => { const p = items.find(i => i.id === itemId); return p ? CATEGORIES.find(c => c.id === p.category)?.label : null }
   const today = () => new Date().toISOString().split('T')[0]
 
   const approveBorrow = (req) => {
@@ -34,10 +74,10 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
   const approveGroup = (group) => {
     group.forEach(approveBorrow)
     const d = today()
-    const items = group.map(r => r.itemName).join(', ')
+    const itemsLabel = group.map(r => r.itemName).join(', ')
     setNotifications(p => [{ id: Date.now(), type: 'approved', message: group.length === 1
       ? `Your borrowing request has been approved — ${group[0].itemName}, due back ${group[0].dueDate}.`
-      : `Your borrowing request has been approved — ${items}.`, read: false, date: d, userId: group[0].userId }, ...p])
+      : `Your borrowing request has been approved — ${itemsLabel}.`, read: false, date: d, userId: group[0].userId }, ...p])
     showToast(group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
   }
 
@@ -51,7 +91,7 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
   const approveTopUp = (req) => {
     const d = today()
     const creditsToAdd = Math.round(req.amountUSD * CREDIT_RATE)
-    const student = users.find(u => u.id === req.userId)
+    const student = getUser(req.userId)
     setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id } : r))
     setUsers(p => p.map(u => u.id === req.userId ? { ...u, credits: u.credits + creditsToAdd } : u))
     setPayments?.(prev => [{
@@ -65,7 +105,7 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
 
   const approvePrinting = (req) => {
     const d = today()
-    const student = users.find(u => u.id === req.userId)
+    const student = getUser(req.userId)
     if (!student || student.credits < req.credits) { showToast('Student has insufficient credits for this print job.', 'error'); return }
     setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id } : r))
     setUsers(p => p.map(u => u.id === req.userId ? { ...u, credits: u.credits - req.credits } : u))
@@ -85,7 +125,7 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
     const filament = filaments.find(f => f.id === req.filamentId)
     const rate = filament?.rate ?? 4
     const credits = Math.round(grams * rate)
-    const student = users.find(u => u.id === req.userId)
+    const student = getUser(req.userId)
     if (!student || student.credits < credits) { showToast(`Student needs ${credits} cr but only has ${student?.credits ?? 0}.`, 'error'); return }
     const d = today()
     setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id, grams, credits } : r))
@@ -117,20 +157,20 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
   }
 
   const rowMeta = (req) => {
-    if (req.type === 'credit_topup') return { icon: <CreditCard size={14} color={T.amber} />, bg: T.amberLight, title: `Credit Top-Up — $${req.amountUSD} (${Math.round(req.amountUSD * CREDIT_RATE)} cr)` }
-    if (req.type === 'printing') return { icon: <Printer size={14} color={T.blue} />, bg: T.blueLight, title: `Document Printing — ${req.pages} page${req.pages === 1 ? '' : 's'} (${req.credits} cr)` }
-    if (req.type === '3d_printing') return { icon: <Box size={14} color={T.purple} />, bg: T.purpleLight, title: `3D Print Job — ${req.filamentName || 'filament TBD'}` }
-    return { icon: <Package2 size={14} color={T.blue} />, bg: T.blueLight, title: req.itemName }
+    if (req.type === 'credit_topup') return { icon: <CreditCard size={14} color={T.amber} />, title: `Credit Top-Up — $${req.amountUSD} (${Math.round(req.amountUSD * CREDIT_RATE)} cr)`, category: 'Credit Top-Up' }
+    if (req.type === 'printing') return { icon: <Printer size={14} color={T.blue} />, title: `Document Printing — ${req.pages} page${req.pages === 1 ? '' : 's'} (${req.credits} cr)`, category: 'Lab Service' }
+    if (req.type === '3d_printing') return { icon: <Box size={14} color={T.purple} />, title: `3D Print Job — ${req.filamentName || 'filament TBD'}`, category: 'Lab Service' }
+    return { icon: <Package2 size={14} color={T.blue} />, title: req.itemName, category: getCategory(req.itemId) }
   }
 
-  // Group pending borrow requests sharing an orderId into one transaction entry;
-  // credit top-up / printing / 3D print requests stay as individual entries since
-  // each is already a single, self-contained item.
-  const pendingEntries = (() => {
+  // Group every borrow request sharing an orderId into one transaction entry
+  // (pending AND handled, so the same grouping applies everywhere); credit
+  // top-up / printing / 3D print requests stay as individual entries.
+  const entries = useMemo(() => {
     const groups = []
     const index = new Map()
     const others = []
-    pending.forEach(req => {
+    requests.forEach(req => {
       if (req.type === 'borrow') {
         const key = req.orderId || `single-${req.id}`
         if (index.has(key)) { groups[index.get(key)].group.push(req); return }
@@ -141,111 +181,294 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
       }
     })
     return [...groups, ...others].sort((a, b) => new Date(b.date) - new Date(a.date))
-  })()
+  }, [requests])
+
+  const statusLabel = (raw) => raw === 'approved' ? 'Approved' : raw === 'denied' ? 'Declined' : 'Pending'
+
+  const withMeta = entries.map(entry => {
+    const isBorrow = entry.kind === 'borrow'
+    const first = isBorrow ? entry.group[0] : entry.req
+    const student = getUser(first.userId)
+    const status = statusLabel(first.status)
+    const itemsList = isBorrow
+      ? entry.group.map(r => ({ id: r.id, name: r.itemName, qty: r.qty || 1, category: getCategory(r.itemId) }))
+      : [{ id: first.id, name: rowMeta(first).title, qty: first.qty || 1, category: rowMeta(first).category }]
+    const totalQty = itemsList.reduce((s, it) => s + it.qty, 0)
+    return { ...entry, isBorrow, first, student, status, itemsList, totalQty }
+  })
+
+  const filtered = withMeta.filter(e =>
+    (statusFilter === 'All' || e.status === statusFilter) &&
+    (!query ||
+      (e.student?.name || '').toLowerCase().includes(query.toLowerCase()) ||
+      (e.student?.studentId || '').toLowerCase().includes(query.toLowerCase()) ||
+      e.itemsList.some(it => it.name.toLowerCase().includes(query.toLowerCase())))
+  )
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const buildHistory = (e) => {
+    const h = [{ action: 'Request submitted', by: e.student?.name || `User #${e.first.userId}`, date: e.first.date }]
+    if (e.status === 'Approved') h.push({ action: 'Approved', by: `Staff — ${user.name}`, date: e.first.date })
+    if (e.status === 'Declined') h.push({ action: 'Declined', by: `Staff — ${user.name}`, date: e.first.date })
+    return h
+  }
+
+  const inp = { flex: 1, minWidth: 140, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, outline: 'none' }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'auto', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Clock size={15} color={T.amber} />
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.charcoal }}>Pending Approval ({pendingEntries.length})</h3>
-        </div>
+    <div className="p-4 sm:p-8">
+      <style>{`
+        .req-row { transition: background .12s; }
+        .req-row:hover { background: ${T.cream}; }
+        .req-btn { display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; border:none; cursor:pointer; transition:opacity .12s, transform .1s; }
+        .req-btn:hover { transform:translateY(-1px); }
+        .req-btn-approve { background:${T.green}; color:#fff; }
+        .req-btn-decline { background:#fff; color:${T.red}; border:1.5px solid ${T.red}33; }
+        .req-btn-view { background:#fff; color:${T.charcoal}; border:1.5px solid ${T.border}; }
+        .req-chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${T.border}; background:#fff; color:${T.muted}; cursor:pointer; transition:all .15s; }
+        .req-chip.active { background:${T.charcoal}; color:#fff; border-color:transparent; }
+        .req-grid { grid-template-columns: 1.4fr 1.8fr 0.5fr 1.2fr 0.9fr 1.4fr; }
+        .req-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .req-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:#0891b2; background:#0891b214; padding:4px 10px; border-radius:20px; }
 
-        <div style={{ minWidth: 920 }}>
-        {/* Same table shape as the Borrow Tracker */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 2fr 0.9fr 0.9fr 0.7fr 1.6fr', gap: 10, padding: '10px 16px', background: T.cream, borderBottom: `1px solid ${T.stone}` }}>
-          {['Student', 'Items', 'Borrow Date', 'Return Date', 'Status', 'Actions'].map((h, i) => (
-            <span key={h} style={{ color: T.faint, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: i === 5 ? 'right' : 'left' }}>{h}</span>
+        .req-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
+
+        @media (max-width: 1180px) and (min-width: 701px) {
+          .req-grid { grid-template-columns: 1.2fr 1.6fr 0.4fr 1fr 0.8fr 0.85fr; column-gap: 8px; }
+          .req-table-row, .req-table-head { padding-left: 16px !important; padding-right: 16px !important; }
+          .req-btn { padding: 7px 8px !important; font-size: 11px !important; }
+          .req-btn .req-btn-label { display: none; }
+        }
+        @media (max-width: 700px) {
+          .req-table-head, .req-table-row { display: none !important; }
+          .req-cards { display: flex !important; }
+          .req-cards .req-btn .req-btn-label { display: none; }
+          .req-cards .req-actions { flex-wrap: nowrap; }
+        }
+      `}</style>
+
+      <div className="mb-2">
+        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Borrow Request Management</h1>
+        <p className="m-0 mt-0.5 text-sm text-faint">Review and approve student requests — borrow items, credit top-ups, and print jobs.</p>
+      </div>
+
+      {/* toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, margin: '18px 0', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['All', 'Pending', 'Approved', 'Declined'].map(s => (
+            <button key={s} className={`req-chip ${statusFilter === s ? 'active' : ''}`} onClick={() => { setStatusFilter(s); setPage(1) }}>
+              {s}
+            </button>
           ))}
         </div>
-        {pendingEntries.length === 0
-          ? <p style={{ color: T.faint, textAlign: 'center', padding: '2rem', margin: 0 }}>No pending requests.</p>
-          : pendingEntries.map(entry => {
-            const isBorrow = entry.kind === 'borrow'
-            const first = isBorrow ? entry.group[0] : entry.req
-            const u = users.find(x => x.id === first.userId)
-            const itemsLabel = isBorrow
-              ? entry.group.map(r => r.itemName + (r.qty > 1 ? ` ×${r.qty}` : '')).join(', ')
-              : rowMeta(entry.req).title
-            const needsWeight = !isBorrow && entry.req.type === '3d_printing'
-            return (
-              <div key={entry.key} style={{ borderBottom: `1px solid ${T.stone}` }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 2fr 0.9fr 0.9fr 0.7fr 1.6fr', gap: 10, padding: '12px 16px', alignItems: 'center' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, color: T.ink, fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u?.name || `User #${first.userId}`}</p>
-                    {u?.studentId && <p style={{ margin: 0, color: T.faint, fontSize: 10 }}>{u.studentId}</p>}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, color: T.charcoal, fontWeight: 500, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemsLabel}</p>
-                    {first.note && <p style={{ margin: 0, color: T.faint, fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>"{first.note}"</p>}
-                  </div>
-                  <span style={{ color: T.muted, fontSize: 12 }}>{first.date}</span>
-                  <span style={{ color: T.muted, fontSize: 12 }}>{first.dueDate || '—'}</span>
-                  <div><Badge status="pending" small /></div>
-                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                    {!needsWeight ? (
-                      <>
-                        <button onClick={() => isBorrow ? denyGroup(entry.group) : deny(entry.req)}
-                          style={{ padding: '6px 12px', background: T.redLight, border: 'none', borderRadius: 8, color: T.red, fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <XCircle size={12} /> Decline
-                        </button>
-                        <button onClick={() => isBorrow ? approveGroup(entry.group) : approve(entry.req)}
-                          style={{ padding: '6px 12px', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                          <CheckCircle2 size={12} /> Approve
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 11, color: T.faint }}>Enter weight below</span>
-                    )}
-                  </div>
+        <div style={{ position: 'relative' }}>
+          <Search size={13} style={{ position: 'absolute', left: 12, top: 11, color: T.faint }} />
+          <input
+            value={query}
+            onChange={e => { setQuery(e.target.value); setPage(1) }}
+            placeholder="Search student, ID, or item…"
+            style={{ padding: '9px 14px 9px 32px', borderRadius: 20, border: `1px solid ${T.border}`, fontSize: 12.5, outline: 'none', width: 240, background: '#fff' }}
+          />
+        </div>
+      </div>
+
+      {/* table */}
+      <div style={{ background: T.white, borderRadius: 16, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
+        <div className="req-table-head req-grid" style={{
+          display: 'grid', padding: '12px 20px', fontSize: 10.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase',
+          color: T.faint, background: T.cream, borderBottom: `1px solid ${T.stone}`,
+        }}>
+          <span>Student</span>
+          <span>Items</span>
+          <span>Qty</span>
+          <span>Dates</span>
+          <span>Status</span>
+          <span style={{ textAlign: 'right' }}>Actions</span>
+        </div>
+
+        {paged.length === 0 ? (
+          <div style={{ padding: '50px 0', textAlign: 'center', color: T.faint }}>
+            <Package size={26} style={{ opacity: 0.4, marginBottom: 8 }} />
+            <p style={{ fontSize: 13 }}>No requests match your filters.</p>
+          </div>
+        ) : paged.map(e => {
+          const needsWeight = !e.isBorrow && e.first.type === '3d_printing' && e.status === 'Pending'
+          return (
+            <div key={e.key}>
+              <div className="req-row req-table-row req-grid" style={{ display: 'grid', padding: '16px 20px', alignItems: 'center', borderBottom: `1px solid ${T.stone}`, cursor: 'pointer' }}
+                onClick={() => setDetail(e)}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="req-truncate" style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>{e.student?.name || `User #${e.first.userId}`}</div>
+                  <div className="req-truncate" style={{ fontSize: 11, color: T.faint }}>{e.student?.studentId || ''}</div>
                 </div>
-
-                {/* 3D print jobs — weigh the finished print, then charge */}
-                {needsWeight && (
-                  <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <input type="number" min="0" step="0.1" placeholder="Weight in grams" value={gramsInput[entry.req.id] || ''}
-                      onChange={e => setGramsInput(p => ({ ...p, [entry.req.id]: e.target.value }))}
-                      style={{ width: 140, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, outline: 'none' }} />
-                    {gramsInput[entry.req.id] > 0 && (() => {
-                      const rate = filaments.find(f => f.id === entry.req.filamentId)?.rate ?? 4
-                      return <span style={{ fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[entry.req.id] * rate)} cr</strong> at {rate}cr/g</span>
-                    })()}
-                    <button onClick={() => deny(entry.req)} style={{ padding: '6px 12px', background: T.redLight, border: 'none', borderRadius: 8, color: T.red, fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                      <XCircle size={12} /> Decline
-                    </button>
-                    <button onClick={() => confirm3DWeight(entry.req)} style={{ padding: '6px 12px', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                      <CheckCircle2 size={12} /> Confirm Weight & Charge
-                    </button>
-                  </div>
-                )}
+                <div>
+                  <span className="req-items-pill" title={e.itemsList.map(it => `${it.name} (${it.qty})`).join(', ')}>
+                    <Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'}
+                  </span>
+                </div>
+                <span style={{ fontSize: 12, color: T.muted }}>{e.totalQty}</span>
+                <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5 }}>
+                  <div className="req-truncate">{e.first.date}</div>
+                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {e.first.dueDate}</div>}
+                </div>
+                <div><StatusPill status={e.status} /></div>
+                <div className="req-actions" onClick={ev => ev.stopPropagation()}>
+                  {e.status === 'Pending' && !needsWeight && (
+                    <>
+                      <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                      <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                    </>
+                  )}
+                  <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
+                </div>
               </div>
-            )
-          })
-        }
-        </div>
-      </div>
 
-      <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.charcoal }}>Handled Requests</h3>
-        </div>
-        {handled.length === 0
-          ? <p style={{ color: T.faint, textAlign: 'center', padding: '2rem', margin: 0 }}>None yet.</p>
-          : handled.map(req => {
-            const meta = rowMeta(req)
-            return (
-            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0.9rem 1.5rem', borderBottom: `1px solid ${T.stone}` }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontWeight: 500, color: T.ink, fontSize: 14 }}>
-                  {meta.title}{req.type === '3d_printing' && req.grams ? ` — ${req.grams}g, ${req.credits} cr` : ''}
-                </p>
-                <p style={{ margin: '2px 0 0', color: T.faint, fontSize: 12 }}>{getName(req.userId)} · {req.date}</p>
-              </div>
-              <Badge status={req.status === 'approved' ? 'approved' : 'denied'} small />
+              {/* 3D print jobs — weigh the finished print, then charge */}
+              {needsWeight && (
+                <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', borderBottom: `1px solid ${T.stone}` }}>
+                  <input type="number" min="0" step="0.1" placeholder="Weight in grams" value={gramsInput[e.first.id] || ''}
+                    onChange={ev => setGramsInput(p => ({ ...p, [e.first.id]: ev.target.value }))}
+                    style={{ width: 140, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, outline: 'none' }} />
+                  {gramsInput[e.first.id] > 0 && (() => {
+                    const rate = filaments.find(f => f.id === e.first.filamentId)?.rate ?? 4
+                    return <span style={{ fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[e.first.id] * rate)} cr</strong> at {rate}cr/g</span>
+                  })()}
+                  <button className="req-btn req-btn-decline" onClick={() => deny(e.first)}><Ban size={12} /> Decline</button>
+                  <button className="req-btn req-btn-approve" onClick={() => confirm3DWeight(e.first)}><Check size={12} /> Confirm Weight &amp; Charge</button>
+                </div>
+              )}
             </div>
-          )})
-        }
+          )
+        })}
+
+        {/* mobile cards */}
+        <div className="req-cards" style={{ display: 'none', flexDirection: 'column' }}>
+          {paged.map(e => (
+            <div key={e.key} style={{ padding: '16px 20px', borderBottom: `1px solid ${T.stone}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>{e.student?.name || `User #${e.first.userId}`}</div>
+                  <div style={{ fontSize: 11, color: T.faint }}>{e.student?.studentId}</div>
+                </div>
+                <StatusPill status={e.status} />
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <span className="req-items-pill"><Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'} · Qty {e.totalQty}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{e.first.date}{e.first.dueDate ? ` → ${e.first.dueDate}` : ''}</div>
+              <div className="req-actions">
+                {e.status === 'Pending' && !(!e.isBorrow && e.first.type === '3d_printing') && (
+                  <>
+                    <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                    <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                  </>
+                )}
+                <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* pagination */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+        <span style={{ fontSize: 12, color: T.faint }}>
+          Showing {paged.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{(page - 1) * PAGE_SIZE + paged.length} of {filtered.length}
+        </span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="req-btn req-btn-view" disabled={page === 1} style={{ opacity: page === 1 ? 0.4 : 1 }} onClick={() => setPage(p => Math.max(1, p - 1))}>
+            <ChevronLeft size={13} />
+          </button>
+          <span style={{ fontSize: 12, fontWeight: 700, padding: '7px 4px' }}>{page} / {totalPages}</span>
+          <button className="req-btn req-btn-view" disabled={page === totalPages} style={{ opacity: page === totalPages ? 0.4 : 1 }} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+            <ChevronRight size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* Detail modal */}
+      {detail && (
+        <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: T.white, borderRadius: 16, maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,.28)' }}>
+            <div style={{ padding: '22px 24px', borderBottom: `1px solid ${T.border}`, position: 'relative' }}>
+              <button onClick={() => setDetail(null)} style={{ position: 'absolute', top: 16, right: 16, background: T.cream, border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer' }}>
+                <X size={16} />
+              </button>
+              <span style={{ fontSize: 11, color: T.faint }}>{detail.isBorrow ? detail.key : `REQ-${detail.first.id}`}</span>
+              <h2 style={{ fontSize: 20, fontWeight: 700, marginTop: 2, marginBottom: 8, color: T.charcoal }}>{detail.student?.name || `User #${detail.first.userId}`}</h2>
+              <StatusPill status={detail.status} />
+            </div>
+
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <SectionLabel icon={User} text="Student Information" />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5 }}>
+                  <InfoRow label="Name" value={detail.student?.name || `User #${detail.first.userId}`} />
+                  <InfoRow label="Student ID" value={detail.student?.studentId || '—'} />
+                  <InfoRow label="Request Date" value={detail.first.date} />
+                  <InfoRow label="Return Date" value={detail.first.dueDate || '—'} />
+                </div>
+              </div>
+
+              <div>
+                <SectionLabel icon={Package} text="Items Requested" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {detail.itemsList.map((it) => (
+                    <div key={it.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: T.cream, borderRadius: 8, fontSize: 12.5, gap: 10 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 3, color: T.charcoal }}>{it.name}</div>
+                        {it.category && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: T.charcoal, background: '#fff', border: `1px solid ${T.border}`, padding: '2px 8px', borderRadius: 20 }}>
+                            <Tag size={9} /> {it.category}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ color: T.faint, flexShrink: 0, fontWeight: 600 }}>Qty: {it.qty}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <SectionLabel icon={FileText} text="Borrow Notes" />
+                <p style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, background: T.cream, borderRadius: 8, padding: '10px 12px', margin: 0 }}>
+                  {detail.first.note || 'No notes provided.'}
+                </p>
+              </div>
+
+              <div>
+                <SectionLabel icon={History} text="Approval History" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {buildHistory(detail).map((h, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0891b2', marginTop: 5, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: T.charcoal }}>{h.action}</div>
+                        <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {h.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {detail.status === 'Pending' && !(!detail.isBorrow && detail.first.type === '3d_printing') && (
+                <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
+                  <button className="req-btn req-btn-approve" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
+                    onClick={() => { (detail.isBorrow ? approveGroup(detail.group) : approve(detail.first)); setDetail(null) }}>
+                    <Check size={13} /> Approve
+                  </button>
+                  <button className="req-btn req-btn-decline" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
+                    onClick={() => { (detail.isBorrow ? denyGroup(detail.group) : deny(detail.first)); setDetail(null) }}>
+                    <Ban size={13} /> Decline
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

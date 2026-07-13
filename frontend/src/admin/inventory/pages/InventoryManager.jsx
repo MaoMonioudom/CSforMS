@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Plus, Edit2, Trash2, AlertTriangle, ChevronDown, Box } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, AlertTriangle, ChevronDown, Box, Wrench, X, User, Calendar, FileText } from 'lucide-react'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
@@ -10,7 +10,6 @@ const FIL_BLANK = { name: 'PLA', color: '', hex: '#94A3B8', stockGrams: 0, rate:
 const ROOMS = ['Makerspace Room', 'Mechanic Room', 'Fabrication Lab', 'Digital Lab', 'Storage Room']
 const STATUS_FILTERS = ['All', 'Available', 'Borrowed', 'Maintenance', 'Low Stock', 'Unavailable']
 const PAGE_SIZE = 10
-
 export default function InventoryManager({ items, setItems, user, filaments = [], setFilaments }) {
   const [search,  setSearch]  = useState('')
   const [cat,     setCat]     = useState('all')

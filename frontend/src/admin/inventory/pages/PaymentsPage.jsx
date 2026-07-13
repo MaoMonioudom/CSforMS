@@ -3,6 +3,7 @@ import { Search, Receipt, ChevronDown, Trash2 } from 'lucide-react'
 import GradientStatCard from '../../../components/inventory/ui/GradientStatCard'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
+import { CATEGORIES } from '../../../lib/inventory/data'
 
 const PAGE_SIZE = 10
 const AVATAR_COLORS = [T.accent, T.teal, T.amber, T.purple, T.blue, T.red]
@@ -10,7 +11,7 @@ const avatarColor = (name) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.l
 
 const METHOD_FILTERS = ['All', 'Cash', 'QR', 'Credit', 'Borrow']
 
-export default function PaymentsPage({ payments, setPayments }) {
+export default function PaymentsPage({ payments, setPayments, items = [] }) {
   const [search,     setSearch]     = useState('')
   const [methodTab,  setMethodTab]  = useState('All')
   const [dateFilter, setDateFilter] = useState('')
@@ -93,6 +94,13 @@ export default function PaymentsPage({ payments, setPayments }) {
           </div>
         ) : visible.map((p) => {
           const isOpen = expanded === p.id
+          const isBorrow = p.method === 'Loan'
+          const product = items.find(i => i.id === p.itemId || i.name === p.itemName)
+          const category = product ? CATEGORIES.find(c => c.id === product.category)?.label : (isBorrow ? 'Borrow' : (p.type || null))
+          // Borrowing is never charged — only purchases and credit services show real credit values.
+          const unit = isBorrow ? 0 : p.amount
+          const total = isBorrow ? 0 : p.amount
+          const currency = p.currency === 'USD' ? '$' : ' cr'
           return (
             <div key={p.id} className="border-b border-stone last:border-b-0">
               <button onClick={() => setExpanded(isOpen ? null : p.id)}
@@ -106,7 +114,7 @@ export default function PaymentsPage({ payments, setPayments }) {
                   <p className="m-0 mt-0.5 truncate text-[11px] text-faint sm:text-xs">{p.type} · {p.date}</p>
                 </div>
                 <span className="hidden flex-shrink-0 text-sm font-bold text-charcoal sm:block">
-                  {p.currency === 'USD' ? `$${p.amount}` : `${p.amount} cr`}
+                  {isBorrow ? '0 cr' : (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} cr`)}
                 </span>
                 <div className="flex-shrink-0"><Badge status={p.status === 'Completed' ? 'pay_completed' : p.status === 'Pending' ? 'pay_pending' : 'pay_failed'} small /></div>
                 <ChevronDown size={14} className={`flex-shrink-0 text-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -114,16 +122,30 @@ export default function PaymentsPage({ payments, setPayments }) {
 
               <div className={`grid overflow-hidden transition-all duration-200 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                 <div className="overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-3 px-4 pb-4 sm:px-6">
-                    <div className="grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-4">
-                      {[['Transaction ID', `#TXN${String(p.id).slice(-6)}`], ['Item', p.itemName], ['Amount', p.currency === 'USD' ? `$${p.amount}` : `${p.amount} cr`], ['Method', p.method], ['Order ID', p.orderId]].filter(([, v]) => v).map(([k, v]) => (
+                  <div className="px-4 pb-4 sm:px-6">
+                    <div className="mb-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                      {[['Transaction ID', `#TXN${String(p.id).slice(-6)}`], ['Method', p.method], ['Order ID', p.orderId]].filter(([, v]) => v).map(([k, v]) => (
                         <div key={k} className="rounded-md p-2" style={{ background: T.cream }}>
                           <p className="m-0 text-[10px] uppercase tracking-wide text-faint">{k}</p>
                           <p className="m-0 mt-0.5 truncate text-[12px] font-semibold text-charcoal">{v}</p>
                         </div>
                       ))}
                     </div>
-                    <div className="flex flex-shrink-0 gap-2">
+
+                    <div className="overflow-hidden rounded-lg border border-stone">
+                      <div className="grid gap-2 bg-cream px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-faint" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
+                        <span>Item</span><span>Category</span><span>Qty</span><span>Unit Credit</span><span>Total</span>
+                      </div>
+                      <div className="grid gap-2 px-3 py-2.5 text-[12px]" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
+                        <span className="truncate font-semibold text-charcoal">{p.itemName || p.type}</span>
+                        <span className="truncate text-inv-muted">{category || '—'}</span>
+                        <span className="text-inv-muted">1</span>
+                        <span className="font-semibold text-charcoal">{currency === '$' ? `${currency}${unit}` : `${unit}${currency}`}</span>
+                        <span className="font-bold text-charcoal">{currency === '$' ? `${currency}${total}` : `${total}${currency}`}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex justify-end">
                       <button onClick={() => remove(p.id)} className="flex items-center gap-1 rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-red hover:bg-red-light">
                         <Trash2 size={12} /> Delete
                       </button>

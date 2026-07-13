@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShoppingCart, Bell, CreditCard, LogOut, Home, Compass,
   Menu, X, ChevronRight, ArrowUpRight, Search, Package,
-  Layers, Bookmark,
+  Layers, Bookmark, MessageSquare, BookOpen,
 } from 'lucide-react'
 import { LOGO_IMAGE } from '../../../lib/inventory/data'
 import CreditInfoModal from '../ui/CreditInfoModal'
@@ -48,9 +48,9 @@ function NavSearch({ onNavigate }) {
 // ── Page module chip ──────────────────────────────────────────────────────────
 function ModuleChip({ activePage }) {
   const map = {
-    '/home':          { label: 'Home',       Icon: Home    },
-    '/catalog':       { label: 'Catalog',    Icon: Compass },
-    '/notifications': { label: 'Alerts',     Icon: Bell    },
+    '/home':          { label: 'Inventory Home', Icon: Home    },
+    '/catalog':       { label: 'Browse Items',   Icon: Compass },
+    '/notifications': { label: 'Notifications',  Icon: Bell    },
   }
   const entry = map[activePage] || { label: 'MakerVault', Icon: Layers }
   const Icon  = entry.Icon
@@ -249,40 +249,96 @@ export default function TopNav({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24, marginBottom: 48 }}>
 
-              {/* Pages cluster */}
+              {/* 01 · Community */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,168,108,0.2)', border: '1px solid rgba(201,168,108,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageSquare size={12} style={{ color: '#c9a86c' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>01 · Community</span>
+                </div>
+                <button onClick={() => { navigate('/community'); close() }} style={{
+                  width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                  gap: 8, padding: '14px 16px', borderRadius: 14, marginBottom: 10, cursor: 'pointer', border: 'none',
+                  background: 'rgba(201,168,108,0.14)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(201,168,108,0.28)', textAlign: 'left',
+                }}>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>Community Home</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>Announcements &amp; activity feed</p>
+                  </div>
+                  <ArrowUpRight size={14} style={{ color: '#c9a86c', flexShrink: 0, marginTop: 2 }} />
+                </button>
+                {[
+                  ['Events',    '/community/eventspace'],
+                  ['Find Team', '/community/collabspace'],
+                  ['Connect',   '/community/communityspace'],
+                ].map(([label, to]) => (
+                  <button key={label} onClick={() => { navigate(to); close() }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}>
+                    <ChevronRight size={11} style={{ color: '#c9a86cbb', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#fff' }}>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* 02 · Learning */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(192,57,43,0.2)', border: '1px solid rgba(192,57,43,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <BookOpen size={12} style={{ color: '#e07060' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>02 · Learning</span>
+                </div>
+                <button onClick={() => { navigate('/learning'); close() }} style={{
+                  width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                  gap: 8, padding: '14px 16px', borderRadius: 14, marginBottom: 10, cursor: 'pointer', border: 'none',
+                  background: 'rgba(192,57,43,0.14)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(192,57,43,0.28)', textAlign: 'left',
+                }}>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>Library</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>Browse all courses</p>
+                  </div>
+                  <ArrowUpRight size={14} style={{ color: '#e07060', flexShrink: 0, marginTop: 2 }} />
+                </button>
+                {['My Courses', 'Progress', 'Bookmarks', 'Announcements'].map((label) => (
+                  <button key={label} onClick={() => { navigate('/learning'); close() }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}>
+                    <ChevronRight size={11} style={{ color: '#e07060bb', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#fff' }}>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* 03 · Inventory — the module you're already in; 5 entry points
+                  that all resolve to the 3 real pages (Home / Catalog / Notifications). */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                   <div style={{ width: 24, height: 24, borderRadius: 6, background: `${TEAL}22`, border: `1px solid ${TEAL}32`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Package size={12} style={{ color: CYAN }} />
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>01 · Pages</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>03 · Inventory</span>
                 </div>
 
                 {/* Featured */}
                 <button onClick={() => go('/home')} style={{
                   width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-                  gap: 8, padding: '14px 16px', borderRadius: 14, marginBottom: 12, cursor: 'pointer', border: 'none',
+                  gap: 8, padding: '14px 16px', borderRadius: 14, marginBottom: 10, cursor: 'pointer', border: 'none',
                   background: `${TEAL}14`, borderWidth: 1, borderStyle: 'solid', borderColor: `${TEAL}28`, textAlign: 'left',
                 }}>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>Home</p>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: 0 }}>Inventory Home</p>
                     <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>Your makerspace overview</p>
                   </div>
                   <ArrowUpRight size={14} style={{ color: TEAL, flexShrink: 0, marginTop: 2 }} />
                 </button>
 
                 {[
-                  { key: '/catalog', label: 'Browse Equipment', desc: 'Borrow or purchase items' },
-                ].map(l => (
-                  <button key={l.key} onClick={() => go(l.key)} style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px',
-                    cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left', borderRadius: 8,
-                  }}>
-                    <ChevronRight size={12} style={{ color: `${TEAL}bb`, flexShrink: 0 }} />
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)', margin: 0 }}>{l.label}</p>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '2px 0 0' }}>{l.desc}</p>
-                    </div>
+                  ['Browse Items',   '/catalog'],
+                  ['Borrow Items',   '/catalog'],
+                  ['Purchase Items', '/catalog'],
+                  ['My Requests',    '/notifications'],
+                ].map(([label, key]) => (
+                  <button key={label} onClick={() => go(key)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}>
+                    <ChevronRight size={11} style={{ color: `${TEAL}bb`, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#fff' }}>{label}</span>
                   </button>
                 ))}
               </div>
@@ -293,7 +349,7 @@ export default function TopNav({
                   <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: 11, fontWeight: 800, color: '#818cf8' }}>{user.name[0]}</span>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>02 · Account</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '.04em' }}>Account</span>
                 </div>
 
                 {/* User card */}

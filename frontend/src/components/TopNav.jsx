@@ -86,12 +86,13 @@ const LEARNING_LINKS = [
   { label: "Announcements",  to: "/learning"  },
 ];
 
+// Inventory only has three real pages — Home, Browse (Catalog), and
+// Notifications — everything else lives inside those (e.g. requests are
+// submitted from the item detail on Browse, not a separate page).
 const INVENTORY_LINKS = [
-  { label: "Browse Resources", to: "/inventory", featured: true, desc: "All makerspace items" },
-  { label: "My Requests",      to: "/inventory" },
-  { label: "Categories",       to: "/inventory" },
-  { label: "Reserve an Item",  to: "/inventory" },
-  { label: "Return Tracker",   to: "/inventory" },
+  { label: "Browse Resources", to: "/inventory/browse",       featured: true, desc: "All makerspace items" },
+  { label: "Home",             to: "/inventory"               },
+  { label: "Notifications",    to: "/inventory/notifications" },
 ];
 
 // ── Cluster label ─────────────────────────────────────────────────────────────

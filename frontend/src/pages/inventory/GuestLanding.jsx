@@ -4,8 +4,10 @@ import {
   LogIn, UserPlus, ArrowRight, Drill, ChevronRight,
   Package, Users, TrendingUp, Clock, Printer, CheckCircle2,
   RotateCcw, ShoppingBag, Compass, BookOpen, Search,
+  Menu, X, ArrowUpRight, MessageSquare, Bell, Home as HomeIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { T as THEME } from "../../lib/inventory/theme";
 import { LOGO_IMAGE, BROWSE_LANDING_IMAGE, PRINT_SERVICES, MEMBERSHIP_PLAN, CREDIT_RATE, CREDIT_TIERS } from "../../lib/inventory/data.js";
 
@@ -111,10 +113,21 @@ function Eyebrow({ label, light = false }) {
 
 /* ── page ────────────────────────────────────────────────────────────────── */
 export default function LandingPage({ onEnter, onBrowse, items = [], users = [], borrows = [] }) {
+  const navigate = useNavigate();
   const go     = () => onEnter?.();
   const browse = () => (onBrowse ? onBrowse() : onEnter?.());
   const [navQuery, setNavQuery] = useState("");
   const submitSearch = (e) => { e.preventDefault(); browse(); };
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [menuOpen]);
 
   const liveStats = [
     { value: String(items.length),                                                                    label: "Items",        icon: Package    },
@@ -186,6 +199,17 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
           />
         </form>
 
+        {/* Module indicator — same "which space am I in" chip pattern the
+            Community/Learning navbar uses, so it reads consistently across
+            the whole site even though Inventory keeps its own header. */}
+        <div className="hidden sm:flex" style={{
+          alignItems: "center", gap: 6, flexShrink: 0, padding: "5px 12px", borderRadius: 8,
+          background: `${TEAL}10`, border: `1.5px solid ${TEAL}28`, color: TEAL,
+        }}>
+          <Compass size={13} strokeWidth={2.2} />
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".04em" }}>Inventory</span>
+        </div>
+
         <div className="gap-1.5 sm:gap-2.5" style={{ display: "flex", flexShrink: 0 }}>
           <button onClick={go} className="gap-1 px-2.5 py-1.5 text-[11px] sm:gap-2 sm:px-[18px] sm:py-2 sm:text-xs" style={{ display: "inline-flex", alignItems: "center", borderRadius: 10, background: "transparent", color: "#475569", fontWeight: 600, border: "1.5px solid #e2e8f0", cursor: "pointer" }}>
             <LogIn size={14} /> <span className="hidden sm:inline">Login</span>
@@ -193,8 +217,170 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
           <button className="mv-btn-teal gap-1 px-2.5 py-1.5 text-[11px] sm:gap-2 sm:px-[18px] sm:py-2 sm:text-xs" onClick={go}>
             <UserPlus size={14} /> <span className="hidden sm:inline">Join Membership</span>
           </button>
+          {/* Modules switcher — lets a visitor jump to Community/Learning
+              without needing an inventory account first. */}
+          <button onClick={() => setMenuOpen(true)} aria-label="Open menu"
+            className="h-9 w-9 sm:h-10 sm:w-10" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              borderRadius: "50%", cursor: "pointer", border: "none", flexShrink: 0,
+              background: TEAL, color: "#fff",
+            }}>
+            <Menu size={17} />
+          </button>
         </div>
       </nav>
+
+      {/* ── Modules overlay — same visual language as the Community/Learning
+          navbar's "Where do you want to go?" menu, adapted to keep
+          Inventory's own Login/Join Membership (separate auth system). ── */}
+      {menuOpen && (
+        <div onClick={closeMenu} style={{
+          position: "fixed", inset: 0, zIndex: 200, overflowY: "auto",
+          background: "rgba(7,8,18,0.97)", backdropFilter: "blur(16px)",
+        }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px 32px", position: "relative" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
+              <img src={LOGO_IMAGE} alt="MakerVault" style={{ height: 24, filter: "brightness(0) invert(1)" }} />
+              <button onClick={closeMenu} aria-label="Close menu" style={{
+                width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", color: "#fff",
+              }}><X size={16} /></button>
+            </div>
+
+            <p style={{ textAlign: "center", fontSize: 10, fontWeight: 800, letterSpacing: ".25em", textTransform: "uppercase", color: "rgba(255,255,255,.22)", marginBottom: 32 }}>
+              Where do you want to go?
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 }}>
+
+              {/* 01 · Community */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: ".04em" }}>01 · Community</span>
+                </div>
+                <button onClick={() => { navigate("/community"); closeMenu(); }} style={{
+                  width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+                  gap: 8, padding: "14px 16px", borderRadius: 14, marginBottom: 10, cursor: "pointer", border: "1px solid rgba(201,168,108,0.28)",
+                  background: "rgba(201,168,108,0.14)", textAlign: "left",
+                }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <MessageSquare size={15} style={{ color: "#c9a86c" }} />
+                    <span>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>Community Home</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "3px 0 0" }}>Announcements &amp; activity feed</p>
+                    </span>
+                  </span>
+                  <ArrowUpRight size={14} style={{ color: "#c9a86c", flexShrink: 0, marginTop: 2 }} />
+                </button>
+                {[
+                  ["Events",    "/community/eventspace"],
+                  ["Find Team", "/community/collabspace"],
+                  ["Connect",   "/community/communityspace"],
+                ].map(([label, to]) => (
+                  <button key={label} onClick={() => { navigate(to); closeMenu(); }} style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 4px", cursor: "pointer",
+                    background: "none", border: "none", textAlign: "left",
+                  }}>
+                    <ChevronRight size={12} style={{ color: "#c9a86cbb" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* 02 · Learning */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: ".04em" }}>02 · Learning</span>
+                </div>
+                <button onClick={() => { navigate("/learning"); closeMenu(); }} style={{
+                  width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+                  gap: 8, padding: "14px 16px", borderRadius: 14, marginBottom: 10, cursor: "pointer", border: "1px solid rgba(192,57,43,0.28)",
+                  background: "rgba(192,57,43,0.14)", textAlign: "left",
+                }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <BookOpen size={15} style={{ color: "#e07060" }} />
+                    <span>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>Library</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "3px 0 0" }}>Browse all courses</p>
+                    </span>
+                  </span>
+                  <ArrowUpRight size={14} style={{ color: "#e07060", flexShrink: 0, marginTop: 2 }} />
+                </button>
+                {["My Courses", "Progress", "Bookmarks", "Announcements"].map((label) => (
+                  <button key={label} onClick={() => { navigate("/learning"); closeMenu(); }} style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 4px", cursor: "pointer",
+                    background: "none", border: "none", textAlign: "left",
+                  }}>
+                    <ChevronRight size={12} style={{ color: "#e07060bb" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* 03 · Inventory — 5 entry points, but they all resolve to the
+                  same 3 real pages (Home / Catalog / Notifications) since
+                  that's genuinely all Inventory has. */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: ".04em" }}>03 · Inventory</span>
+                </div>
+                <button onClick={() => { go(); closeMenu(); }} style={{
+                  width: "100%", display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+                  gap: 8, padding: "14px 16px", borderRadius: 14, marginBottom: 10, cursor: "pointer", border: `1px solid ${TEAL}44`,
+                  background: `${TEAL}1f`, textAlign: "left",
+                }}>
+                  <span>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>Inventory Home</p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "3px 0 0" }}>Your makerspace overview</p>
+                  </span>
+                  <ArrowUpRight size={14} style={{ color: "#67e8f9", flexShrink: 0, marginTop: 2 }} />
+                </button>
+                {[
+                  ["Browse Items",   browse],
+                  ["Borrow Items",   browse],
+                  ["Purchase Items", browse],
+                  ["My Requests",    go],
+                ].map(([label, action]) => (
+                  <button key={label} onClick={() => { action(); closeMenu(); }} style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 4px", cursor: "pointer",
+                    background: "none", border: "none", textAlign: "left",
+                  }}>
+                    <ChevronRight size={12} style={{ color: "#67e8f9bb" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                    {label === "My Requests" && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>(sign in)</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Account — mirrors the shared navbar's logged-out Account
+                  cluster, but Sign In/Create Account go to Inventory's own
+                  auth (separate account system), not the hub's /login. */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: ".04em" }}>Account</span>
+                </div>
+                <p style={{ fontSize: 13, lineHeight: 1.6, color: "rgba(255,255,255,0.75)", marginBottom: 16 }}>
+                  Sign in to borrow tools, buy consumables, and track your credits.
+                </p>
+                <button onClick={() => { go(); closeMenu(); }} className="mv-btn-teal" style={{ width: "100%", justifyContent: "center", marginBottom: 10 }}>
+                  <LogIn size={14} /> Login
+                </button>
+                <button onClick={() => { go(); closeMenu(); }} style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "11px 22px", borderRadius: 10, background: "transparent", color: "#fff",
+                  fontSize: 13, fontWeight: 600, border: "1.5px solid rgba(255,255,255,.3)", cursor: "pointer",
+                }}>
+                  <UserPlus size={14} /> Join Membership
+                </button>
+              </div>
+            </div>
+
+            <p style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.18)", marginTop: 32 }}>
+              Press <kbd style={{ padding: "2px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", fontFamily: "monospace", fontSize: 9 }}>Esc</kbd> or click outside to close
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section style={{ position: "relative", overflow: "hidden", background: "linear-gradient(145deg,#0c4a6e 0%,#0e7490 55%,#0891b2 100%)" }}>
@@ -572,36 +758,6 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
           </div>
         </div>
       </section>
-
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="px-4 pb-9 pt-10 sm:px-8 sm:pt-12 lg:px-12" style={{ background: "#020d12" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <div className="grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-10" style={{ display: "grid", marginBottom: 40 }}>
-            <div className="col-span-2 sm:col-span-1">
-              <img src={LOGO_IMAGE} alt="MakerVault" style={{ height: 26, marginBottom: 16, filter: "brightness(0) invert(1)", opacity: .8 }} />
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,.38)", lineHeight: 1.65, maxWidth: 280 }}>
-                CADT Makerspace inventory system — borrow equipment, purchase materials, and track your projects.
-              </p>
-            </div>
-            {[
-              { heading: "Platform",  links: ["Catalog", "Zones", "Membership", "Notifications"]     },
-              { heading: "Resources", links: ["How It Works", "Equipment Guide", "Credit System", "FAQ"] },
-              { heading: "CADT",      links: ["About", "Makerspace", "Contact Us", "Open Hours"]     },
-            ].map(({ heading, links }) => (
-              <div key={heading}>
-                <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 16 }}>
-                  {heading}
-                </p>
-                {links.map(l => <a key={l} className="mv-footer-link" onClick={go}>{l}</a>)}
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)" }}>© 2025 CADT Makerspace. All rights reserved.</p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)" }}>Built at CADT · Phnom Penh, Cambodia</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
