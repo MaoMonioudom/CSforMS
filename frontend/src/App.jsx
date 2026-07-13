@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Outlet, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { TopNav } from "./components/TopNav";
 import { CursorEffect } from "./components/community/CursorEffect";
 import HomePage from "./pages/community/HomePage";
@@ -16,7 +16,7 @@ import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
 import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
 import AdminInventoryDashboard from "./admin/inventory/pages/AdminDashboard";
-import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
+//import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
@@ -27,31 +27,15 @@ import NotificationsPage from "./hub/NotificationsPage";
 import MembershipPage from "./hub/MembershipPage";
 import CreditsPage from "./hub/CreditsPage";
 import WorkspacePage from "./hub/WorkspacePage";
-import LearningLandingPage from "./pages/learning/LandingPage";
 import InventoryLandingPage from "./pages/inventory/LandingPage";
 import { AuthProvider } from "./hub/AuthContext";
-
-function NotFoundPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
+import LearningHomePage from "./pages/learning/Home";
+import CoursesPage from "./pages/learning/CoursesPage";
+import CourseDetail from "./pages/learning/CourseDetail";
+import LessonDetail from "./pages/learning/LessonDetail";
+import About from "./pages/learning/About";
+import Contact from "./pages/learning/Contact";
+import NotFound from "./pages/NotFound";
 
 function UserLayout() {
   return (
@@ -80,7 +64,6 @@ export default function App() {
         <Route path="/membership" element={<MembershipPage />} />
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/workspace" element={<WorkspacePage />} />
-        <Route path="/learning" element={<LearningLandingPage />} />
         <Route path="/inventory" element={<InventoryLandingPage />} />
 
         {/* Community spaces — TopNav + Footer */}
@@ -92,7 +75,17 @@ export default function App() {
           <Route path="/community/collabspace/:postId" element={<CollabDetailPage />} />
           <Route path="/community/communityspace" element={<CommunityPage />} />
           <Route path="/community/communityspace/:postId" element={<CommunityDetailPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        {/* Learning — TopNav + Footer */}
+        <Route element={<UserLayout />}>
+          <Route path="/learning" element={<LearningHomePage />} />
+          <Route path="/learning/courses" element={<CoursesPage />} />
+          <Route path="/learning/course/:id" element={<CourseDetail />} />
+          <Route path="/learning/:id/lessons/:lessonId" element={<LessonDetail />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* Admin layout: shared sidebar across community, inventory, and learning */}
@@ -110,9 +103,9 @@ export default function App() {
             <Route index element={<AdminInventoryDashboard />} />
           </Route>
 
-          <Route path="learning">
+          {/* <Route path="learning">
             <Route index element={<AdminLearningDashboard />} />
-          </Route>
+          </Route> */}
 
           {/* Cross-module — not scoped to a single space */}
           <Route path="users" element={<AdminUsers />} />

@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -72,6 +73,45 @@
   --color-social-foreground: var(--social-foreground);
   --color-community: var(--community);
   --color-community-foreground: var(--community-foreground);
+}
+
+/*
+ * Learning "library" theme.
+ * Tokens for the /learning section — a parchment/navy/gold "books in a
+ * library" look. Generates utilities like bg-paper, text-ink, font-display.
+ */
+@theme {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Dark library surfaces */
+  --color-navy: #1B2A3B;
+  --color-navy-deep: #0F1A26;
+  --color-navy-muted: #8A9BB0;
+
+  /* Parchment / paper surfaces */
+  --color-parchment: #F5EDD6;
+  --color-parchment-alt: #EDE0C0;
+  --color-parchment-mid: #F0E8D0;
+  --color-paper: #F4E8CB;
+  --color-paper-deep: #EAD9AC;
+
+  /* Accents */
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C96A;
+  --color-gold-dark: #8B6914;
+  --color-oxblood: #7C2A22;
+  --color-oxblood-deep: #591C17;
+  --color-sage: #7A9E7E;
+
+  /* Ink (text on paper) */
+  --color-ink: #241608;
+  --color-ink-soft: #5B4630;
+
+  /* Shadows */
+  --shadow-book: 4px 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-card-soft: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --shadow-open: 0 20px 80px rgba(0, 0, 0, 0.7);
 }
 
 :root {
