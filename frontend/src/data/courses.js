@@ -1,0 +1,377 @@
+/**
+ * Course data — each lesson has body HTML and key takeaway points
+ * so the BookReader can render a full page per lesson.
+ */
+export const courses = [
+  {
+    id: 1,
+    title: "Python Fundamentals",
+    subtitle: "From Zero to Pythonista",
+    category: "Programming",
+    coverColor: "#2D6A4F",
+    spineColor: "#1B4332",
+    level: "Beginner",
+    duration: "12 weeks",
+    students: 1240,
+    rating: 4.8,
+    paths: ["basic", "stepByStep", "interactive"],
+    interactivePrice: 24.99,
+    description:
+      "Master Python programming through hands-on projects. From variables and control flow to file handling — you'll write real scripts by week two.",
+    instructor: "Dr. Sarah Chen",
+    instructorId: "lect-1",
+    tags: ["Python", "Scripting", "Beginner"],
+    lessons: [
+      {
+        id: 1, title: "Introduction to Python", duration: "45 min", type: "video",
+        body: "<p>Python is one of the most readable languages in the world. In this lesson we install Python, set up VS Code, and write our first script.</p><ul><li>Why Python? Industry uses and career paths</li><li>Installing Python 3 and setting up the editor</li><li>Running your first <code>hello.py</code></li><li>Interpreter vs compiler explained</li></ul>",
+        points: ["Python runs line-by-line via an interpreter", "Scripts end in .py", "print() outputs text to the terminal"],
+      },
+      {
+        id: 2, title: "Variables & Data Types", duration: "60 min", type: "reading",
+        body: "<p>Variables are containers for data. Python is dynamically typed — you don't declare a type upfront.</p><ul><li>Strings, integers, floats, booleans</li><li>Type checking with type()</li><li>String formatting with f-strings</li><li>Mutable vs immutable types</li></ul>",
+        points: ["x = 5 creates an integer", "Use str(), int() to convert types", "F-strings: f'Hello {name}'"],
+      },
+      {
+        id: 3, title: "Control Flow", duration: "55 min", type: "video",
+        body: "<p>Programs make decisions. Control flow lets your code branch and repeat based on conditions.</p><ul><li>if, elif, else branching</li><li>for loops over ranges and lists</li><li>while loops with break and continue</li><li>Nested conditions and loop patterns</li></ul>",
+        points: ["Indentation defines code blocks", "range(5) produces 0 to 4", "break exits a loop immediately"],
+      },
+      {
+        id: 4, title: "Functions & Scope", duration: "70 min", type: "lab",
+        body: "<p>Functions are reusable blocks of code. Scope tells you where a variable can be accessed from.</p><ul><li>Defining with def keyword</li><li>Parameters and return values</li><li>Default and keyword arguments</li><li>Local vs global scope</li></ul>",
+        points: ["def my_func(): defines a function", "Variables inside functions are local by default", "return sends a value back to the caller"],
+      },
+      {
+        id: 5, title: "Lists & Dictionaries", duration: "65 min", type: "reading",
+        body: "<p>Lists and dicts are Python's most-used data structures. Lists are ordered; dicts map keys to values.</p><ul><li>Creating and slicing lists</li><li>List methods: append, pop, sort, reverse</li><li>Dict creation, access, and iteration</li><li>List comprehensions</li></ul>",
+        points: ["List index starts at 0", "dict['key'] retrieves a value", "Comprehension: [x*2 for x in nums]"],
+      },
+      {
+        id: 6, title: "File Handling", duration: "50 min", type: "lab",
+        body: "<p>Reading and writing files is essential for any real program. Python's open() function makes it simple.</p><ul><li>Reading text files with open()</li><li>Writing and appending to files</li><li>Using with statements safely</li><li>Working with CSV files</li></ul>",
+        points: ["Always use with open() to auto-close", "Mode 'r' reads, 'w' writes, 'a' appends", "readlines() returns a list of lines"],
+      },
+      {
+        id: 7, title: "Error Handling", duration: "45 min", type: "video",
+        body: "<p>Errors happen. Good programs handle them gracefully using try/except blocks instead of crashing.</p><ul><li>Syntax vs runtime vs logic errors</li><li>try, except, finally blocks</li><li>Raising custom exceptions</li><li>Debugging with print and the debugger</li></ul>",
+        points: ["try/except catches runtime errors", "finally always runs, even after an error", "raise ValueError('msg') throws a custom error"],
+      },
+      {
+        id: 8, title: "Final Project", duration: "120 min", type: "project",
+        body: "<p>Build a command-line task manager that saves tasks to a file, supports add/list/complete, and handles errors gracefully.</p><ul><li>Design your data structure (list of dicts)</li><li>Implement CRUD operations</li><li>Persist data to a JSON file</li><li>Add input validation and error handling</li></ul>",
+        points: ["Combine everything you have learned", "Start simple, then add features", "Test with edge cases: empty input, missing file"],
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: "Robotics with ROS",
+    subtitle: "Building Intelligent Machines",
+    category: "Robotics",
+    coverColor: "#7B2D8B",
+    spineColor: "#4A1A56",
+    level: "Intermediate",
+    duration: "16 weeks",
+    students: 870,
+    rating: 4.9,
+    paths: ["basic", "interactive"],
+    interactivePrice: 29.99,
+    description:
+      "Dive into ROS and learn to program autonomous robots. Sensor integration, path planning, and real hardware deployment from day one.",
+    instructor: "Prof. Marcus Webb",
+    instructorId: "lect-2",
+    tags: ["ROS", "Python", "Hardware"],
+    lessons: [
+      {
+        id: 1, title: "What is ROS?", duration: "40 min", type: "video",
+        body: "<p>ROS is open-source middleware that lets robot components communicate. It runs on Linux as a framework, not a true OS.</p><ul><li>History and ecosystem of ROS</li><li>ROS 1 vs ROS 2 key differences</li><li>Installing ROS on Ubuntu</li><li>The catkin build system</li></ul>",
+        points: ["ROS uses a publish/subscribe message model", "Nodes are independent communicating processes", "roscore starts the ROS master"],
+      },
+      {
+        id: 2, title: "Nodes & Topics", duration: "70 min", type: "reading",
+        body: "<p>ROS nodes are processes that communicate by publishing and subscribing to named topic channels.</p><ul><li>Creating your first publisher node</li><li>Writing a subscriber node in Python</li><li>ROS message types and custom messages</li><li>Debugging with rostopic echo</li></ul>",
+        points: ["One topic can have many subscribers and publishers", "rospy is the Python ROS client library", "Message types define the data structure on a topic"],
+      },
+      {
+        id: 3, title: "Sensors & Actuators", duration: "80 min", type: "lab",
+        body: "<p>Robots perceive through sensors and act through actuators. This lesson connects real hardware to ROS topics.</p><ul><li>Reading from a LIDAR sensor</li><li>Interpreting camera image topics</li><li>Publishing velocity commands to motors</li><li>IMU data and sensor fusion basics</li></ul>",
+        points: ["Sensor data flows in as topic messages", "Actuators receive command messages", "Always check sensor coordinate frames (TF)"],
+      },
+      {
+        id: 4, title: "URDF & Simulation", duration: "90 min", type: "lab",
+        body: "<p>URDF defines a robot's physical structure in XML. Gazebo simulates physics so you can test without hardware.</p><ul><li>Writing a URDF file for a simple robot</li><li>Launching Gazebo with your robot model</li><li>Simulating sensor data in Gazebo</li><li>RViz for 3D visualisation</li></ul>",
+        points: ["URDF uses XML to describe links and joints", "Gazebo plugins simulate sensors realistically", "RViz visualises data but does not simulate physics"],
+      },
+      {
+        id: 5, title: "Path Planning", duration: "75 min", type: "video",
+        body: "<p>Path planning computes a route from A to B while avoiding obstacles. ROS provides the Navigation Stack.</p><ul><li>Global vs local planners</li><li>The costmap concept explained</li><li>A* and Dijkstra algorithms overview</li><li>Configuring move_base in ROS</li></ul>",
+        points: ["Global planner finds the overall route", "Local planner handles real-time obstacle avoidance", "Costmaps are 2D grids marking obstacle proximity"],
+      },
+      {
+        id: 6, title: "Computer Vision", duration: "85 min", type: "lab",
+        body: "<p>Robots use cameras and CV to understand their environment. OpenCV integrates with ROS via cv_bridge.</p><ul><li>Subscribing to a camera topic</li><li>Converting ROS images to OpenCV with cv_bridge</li><li>Object detection with colour thresholding</li><li>Publishing processed image topics</li></ul>",
+        points: ["cv_bridge converts between ROS and OpenCV formats", "HSV colour space is more robust than RGB for detection", "Always release camera resources properly"],
+      },
+      {
+        id: 7, title: "Autonomous Navigation", duration: "95 min", type: "project",
+        body: "<p>Combine everything: build a robot that maps a room and navigates to a goal autonomously using SLAM.</p><ul><li>Setting up gmapping for SLAM</li><li>Running the Navigation Stack end-to-end</li><li>Sending navigation goals via code</li><li>Tuning parameters for reliable behaviour</li></ul>",
+        points: ["SLAM = Simultaneous Localisation and Mapping", "AMCL handles localisation on a known map", "Always test in simulation before real hardware"],
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: "Web Development",
+    subtitle: "HTML · CSS · JavaScript",
+    category: "Programming",
+    coverColor: "#C9600A",
+    spineColor: "#7A3A06",
+    level: "Beginner",
+    duration: "10 weeks",
+    students: 2100,
+    rating: 4.7,
+    paths: ["basic", "stepByStep", "interactive"],
+    interactivePrice: 19.99,
+    description:
+      "Build responsive websites from the ground up. Learn HTML, CSS, and JavaScript — then tie it all together in a portfolio project.",
+    instructor: "Lena Müller",
+    instructorId: "lect-3",
+    tags: ["HTML", "CSS", "JavaScript"],
+    lessons: [
+      {
+        id: 1, title: "HTML Structure", duration: "50 min", type: "reading",
+        body: "<p>HTML is the skeleton of every web page. It defines what content exists and what role each piece plays.</p><ul><li>Document structure: html, head, body</li><li>Semantic elements: article, section, nav, aside</li><li>Forms, inputs, and accessible labels</li><li>ARIA basics for screen readers</li></ul>",
+        points: ["Semantic HTML improves SEO and accessibility", "Every page needs a single h1", "Always add alt text to images"],
+      },
+      {
+        id: 2, title: "CSS Styling", duration: "60 min", type: "video",
+        body: "<p>CSS controls how HTML looks. Select elements and apply properties — colours, fonts, spacing, and layout rules.</p><ul><li>Selectors: element, class, ID, pseudo-class</li><li>The box model: margin, border, padding, content</li><li>Colours, fonts, and units (px, rem, %)</li><li>The cascade and specificity rules</li></ul>",
+        points: ["Specificity: ID wins over class wins over element", "rem units scale with the root font size", "The box model defines how element space is calculated"],
+      },
+      {
+        id: 3, title: "Flexbox & Grid", duration: "65 min", type: "lab",
+        body: "<p>Flexbox and Grid are modern CSS layout systems. Together they handle almost every layout pattern you will encounter.</p><ul><li>Flexbox: main axis, cross axis, and alignment</li><li>Responsive navigation bar with flexbox</li><li>Grid: columns, rows, and named areas</li><li>Combining flex and grid in real layouts</li></ul>",
+        points: ["display:flex activates flexbox on a container", "Grid areas let you name layout zones", "Use gap instead of margin for grid spacing"],
+      },
+      {
+        id: 4, title: "JavaScript Basics", duration: "80 min", type: "video",
+        body: "<p>JavaScript makes pages interactive. It is the only language that runs natively in every browser.</p><ul><li>Variables with let and const</li><li>Functions and arrow functions</li><li>Arrays, objects, and destructuring</li><li>Events: click, input, submit</li></ul>",
+        points: ["Use const by default, let only when reassigning", "Arrow functions: const add = (a,b) => a+b", "addEventListener attaches behaviour to any element"],
+      },
+      {
+        id: 5, title: "DOM Manipulation", duration: "70 min", type: "lab",
+        body: "<p>The DOM is JavaScript's live view of the HTML page. You can read and change any element, attribute, or style at runtime.</p><ul><li>querySelector and querySelectorAll</li><li>Changing text with textContent</li><li>Adding and removing CSS classes</li><li>Creating and removing elements dynamically</li></ul>",
+        points: ["document.querySelector('.btn') selects an element", "classList.toggle() flips a class on or off", "createElement + appendChild builds new elements"],
+      },
+      {
+        id: 6, title: "Fetch API & JSON", duration: "55 min", type: "reading",
+        body: "<p>Modern web apps talk to servers to get data. The Fetch API is the browser-native way to make HTTP requests asynchronously.</p><ul><li>What JSON is and why it is used everywhere</li><li>Making GET requests with fetch()</li><li>Handling promises with async/await</li><li>Displaying API data on the page</li></ul>",
+        points: ["fetch(url) returns a Promise", "response.json() parses the JSON body", "Always handle errors with try/catch around await"],
+      },
+      {
+        id: 7, title: "Final Portfolio", duration: "180 min", type: "project",
+        body: "<p>Build a personal portfolio: multiple sections, responsive layout, a contact form, and data fetched from a public API.</p><ul><li>Plan your sections and content first</li><li>Build the HTML skeleton before styling</li><li>Style with CSS custom properties for easy theming</li><li>Add scroll animations and a fetch-powered projects section</li></ul>",
+        points: ["Mobile-first: style small screens first", "Custom properties make theming painless", "Aim for Lighthouse score above 90 in all categories"],
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: "Machine Learning A–Z",
+    subtitle: "Data to Decisions",
+    category: "AI & ML",
+    coverColor: "#1A5276",
+    spineColor: "#0D2B3E",
+    level: "Advanced",
+    duration: "20 weeks",
+    students: 680,
+    rating: 4.9,
+    paths: ["basic", "stepByStep", "interactive"],
+    interactivePrice: 34.99,
+    description:
+      "A comprehensive journey through ML algorithms, from linear regression to deep neural networks, with practical Python and scikit-learn projects.",
+    instructor: "Dr. Aiko Tanaka",
+    instructorId: "lect-4",
+    tags: ["Python", "scikit-learn", "TensorFlow"],
+    lessons: [
+      {
+        id: 1, title: "What is ML?", duration: "35 min", type: "video",
+        body: "<p>Machine learning lets computers learn from data rather than being explicitly programmed. This lesson sets the conceptual foundation.</p><ul><li>Supervised, unsupervised, and reinforcement learning</li><li>The ML workflow: data, model, train, evaluate</li><li>Real-world applications across industries</li></ul>",
+        points: ["ML finds patterns in data automatically", "Training = adjusting a model to fit data", "Overfitting means the model memorises instead of learning"],
+      },
+      {
+        id: 2, title: "Data Preprocessing", duration: "75 min", type: "lab",
+        body: "<p>Garbage in, garbage out. Clean, well-structured data is the foundation of every successful ML project.</p><ul><li>Handling missing values: drop vs impute</li><li>Encoding categorical variables</li><li>Feature scaling: normalisation vs standardisation</li><li>Train/test split and data leakage risks</li></ul>",
+        points: ["Always split data before any preprocessing", "StandardScaler centres data around zero", "One-hot encoding avoids ordinal assumptions"],
+      },
+      {
+        id: 3, title: "Linear Regression", duration: "65 min", type: "reading",
+        body: "<p>Linear regression is the simplest supervised learning model. It draws the best straight line through your data to predict continuous values.</p><ul><li>The hypothesis function and cost function</li><li>Gradient descent explained intuitively</li><li>Evaluating with MSE and R² score</li><li>Multiple regression with several features</li></ul>",
+        points: ["Minimising cost = finding the best fit line", "R² of 1.0 means a perfect fit", "More features can lead to overfitting"],
+      },
+      {
+        id: 4, title: "Classification", duration: "80 min", type: "video",
+        body: "<p>Classification predicts which category an input belongs to. From spam detection to medical diagnosis — it powers countless real applications.</p><ul><li>Logistic regression for binary classification</li><li>Decision trees and random forests</li><li>Evaluation: accuracy, precision, recall, F1</li><li>Confusion matrices explained</li></ul>",
+        points: ["Classification output is a category, not a number", "Precision = correct positive predictions / all positive predictions", "Random forests reduce overfitting via ensemble voting"],
+      },
+      {
+        id: 5, title: "Neural Networks", duration: "120 min", type: "lab",
+        body: "<p>Neural networks are loosely inspired by the brain. Layers of connected neurons learn hierarchical representations of data.</p><ul><li>Perceptrons and activation functions</li><li>Backpropagation and weight updates</li><li>Building a network with TensorFlow/Keras</li><li>Choosing layers, units, and learning rate</li></ul>",
+        points: ["ReLU is the most common activation function", "More layers = deeper representations", "Dropout layers help prevent overfitting"],
+      },
+      {
+        id: 6, title: "Model Evaluation", duration: "60 min", type: "reading",
+        body: "<p>A model is only as good as your ability to measure it. Rigorous evaluation separates real performance from lucky training results.</p><ul><li>Cross-validation strategies</li><li>Bias-variance tradeoff visualised</li><li>Hyperparameter tuning with GridSearchCV</li><li>Saving and loading models with joblib</li></ul>",
+        points: ["k-Fold CV gives a more reliable accuracy estimate", "High bias = underfitting, high variance = overfitting", "Always evaluate on data the model has never seen"],
+      },
+    ],
+  },
+  {
+    id: 5,
+    title: "Arduino & Electronics",
+    subtitle: "Circuits Come Alive",
+    category: "Robotics",
+    coverColor: "#7D6608",
+    spineColor: "#4A3C05",
+    level: "Beginner",
+    duration: "8 weeks",
+    students: 950,
+    rating: 4.6,
+    paths: ["basic"],
+    description:
+      "Start your hardware journey with Arduino. Learn electronics basics, read sensors, control motors, and build your first robot with no prior experience.",
+    instructor: "Thomas Bright",
+    instructorId: "lect-5",
+    tags: ["Arduino", "C++", "Hardware"],
+    lessons: [
+      {
+        id: 1, title: "Intro to Arduino", duration: "40 min", type: "video",
+        body: "<p>Arduino is an open-source electronics platform combining a microcontroller board with an easy programming environment.</p><ul><li>What a microcontroller is and what it does</li><li>Tour of the Arduino Uno board</li><li>Installing the Arduino IDE</li><li>Uploading your first Blink sketch</li></ul>",
+        points: ["Arduino runs one program called a sketch", "setup() runs once, loop() runs forever", "Digital pin 13 has a built-in LED on the Uno"],
+      },
+      {
+        id: 2, title: "LED & Resistors", duration: "45 min", type: "lab",
+        body: "<p>LEDs and resistors are the building blocks of electronics. Understanding them unlocks everything that comes next.</p><ul><li>How LEDs work: polarity and forward voltage</li><li>Ohm's Law: V = IR in practice</li><li>Calculating the right resistor value</li><li>Breadboard wiring best practices</li></ul>",
+        points: ["Always use a resistor in series with an LED", "Ohm's Law: V = I × R", "The longer LED leg is positive (anode)"],
+      },
+      {
+        id: 3, title: "Sensors", duration: "60 min", type: "reading",
+        body: "<p>Sensors let your Arduino perceive the world — temperature, distance, light, and motion. This lesson covers the most useful ones.</p><ul><li>Analog vs digital sensor signals</li><li>Reading a temperature sensor (DHT11)</li><li>Ultrasonic distance with HC-SR04</li><li>analogRead() and mapping values</li></ul>",
+        points: ["analogRead() returns 0–1023 on a 10-bit ADC", "map() scales values between ranges", "Pull-up resistors prevent floating input pins"],
+      },
+      {
+        id: 4, title: "Motor Control", duration: "70 min", type: "lab",
+        body: "<p>Motors turn electrical energy into motion. Controlling them requires understanding PWM signals and motor driver ICs.</p><ul><li>DC motors vs servo motors vs stepper motors</li><li>PWM signals and analogWrite()</li><li>Using the L298N motor driver</li><li>Controlling direction and speed</li></ul>",
+        points: ["PWM = Pulse Width Modulation for speed control", "Motor drivers handle the high current motors need", "Servo motors take a position angle, not speed"],
+      },
+      {
+        id: 5, title: "Mini Robot Build", duration: "150 min", type: "project",
+        body: "<p>Put it all together: build a two-wheeled robot that drives forward, detects obstacles with an ultrasonic sensor, and turns to avoid them.</p><ul><li>Assembling the chassis and wiring motors</li><li>Mounting and wiring the ultrasonic sensor</li><li>Writing the obstacle-avoidance sketch</li><li>Calibrating turn timing and speed</li></ul>",
+        points: ["Test each component individually before combining", "Cable management matters — loose wires cause bugs", "Tune the stop distance threshold for your floor surface"],
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: "React & Modern JS",
+    subtitle: "Building Interactive UIs",
+    category: "Programming",
+    coverColor: "#1B6B5A",
+    spineColor: "#0E3D33",
+    level: "Intermediate",
+    duration: "14 weeks",
+    students: 1560,
+    rating: 4.8,
+    paths: ["basic", "stepByStep"],
+    description:
+      "Master React and the modern JavaScript ecosystem. Build fast, scalable web applications using hooks, state management, and component-driven architecture.",
+    instructor: "Priya Nair",
+    instructorId: "lect-6",
+    tags: ["React", "JavaScript", "Hooks"],
+    lessons: [
+      {
+        id: 1, title: "ES6+ Refresher", duration: "55 min", type: "reading",
+        body: "<p>Modern React depends heavily on ES6+ syntax. This lesson ensures you are fluent in the features React uses most.</p><ul><li>Destructuring arrays and objects</li><li>Spread and rest operators</li><li>Arrow functions and implicit returns</li><li>Modules: import and export</li></ul>",
+        points: ["Destructuring: const { name } = user", "Spread copies arrays/objects without mutation", "import/export is the standard module system"],
+      },
+      {
+        id: 2, title: "React Components", duration: "65 min", type: "video",
+        body: "<p>Components are the building blocks of React apps. Every piece of UI is a component — a function that returns JSX.</p><ul><li>Function components and JSX syntax</li><li>Props: passing data into components</li><li>Children and component composition</li><li>Thinking in components: breaking down a UI</li></ul>",
+        points: ["Components must start with a capital letter", "Props flow one-way: parent to child", "JSX is not HTML — it compiles to React.createElement()"],
+      },
+      {
+        id: 3, title: "Hooks Deep Dive", duration: "85 min", type: "lab",
+        body: "<p>Hooks let function components use state and lifecycle features. They replaced class components entirely in modern React.</p><ul><li>useState for local component state</li><li>useEffect for side effects and cleanup</li><li>useRef for DOM access and persistent values</li><li>Rules of hooks: only call at the top level</li></ul>",
+        points: ["useState returns [value, setter] as a pair", "useEffect with [] runs only on mount", "Never call hooks inside loops or conditions"],
+      },
+      {
+        id: 4, title: "State Management", duration: "80 min", type: "video",
+        body: "<p>As apps grow, lifting state up and prop drilling become painful. This lesson covers practical state management patterns.</p><ul><li>Lifting state to the nearest common ancestor</li><li>useContext for app-wide state without prop drilling</li><li>useReducer for complex state logic</li><li>When to reach for an external library</li></ul>",
+        points: ["Context avoids prop drilling through many layers", "useReducer works like a mini Redux", "Avoid over-engineering — useState is often enough"],
+      },
+      {
+        id: 5, title: "Routing", duration: "60 min", type: "lab",
+        body: "<p>React Router lets you build multi-page experiences inside a single-page app without full page reloads.</p><ul><li>Setting up React Router v6</li><li>Route, Link, and NavLink components</li><li>URL parameters with useParams</li><li>Nested routes and layout routes</li></ul>",
+        points: ["Routes render the first matching path", "useParams reads dynamic URL segments", "Outlet renders nested child routes"],
+      },
+      {
+        id: 6, title: "Capstone App", duration: "200 min", type: "project",
+        body: "<p>Build a complete single-page application from scratch: multiple routes, shared state via context, API data, and a polished UI.</p><ul><li>Plan your component tree and routes</li><li>Set up context for auth/theme state</li><li>Fetch and display data from a public API</li><li>Deploy to Vercel or Netlify</li></ul>",
+        points: ["Plan the component tree before writing code", "Custom hooks keep components lean", "Deploy early so you catch environment issues sooner"],
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: "3D Printing",
+    subtitle: "From Digital Model to Physical Object",
+    category: "Robotics",
+    coverColor: "#bbcc39",
+    spineColor: "#56890f",
+    level: "Beginner",
+    duration: "8 weeks",
+    students: 540,
+    rating: 4.6,
+    paths: ["basic", "stepByStep"],
+    description:
+      "Learn the full 3D printing workflow — from designing models in CAD to slicing and printing on an FDM printer. No prior design experience required.",
+    instructor: "Marco Villanueva",
+    instructorId: "lect-7",
+    tags: ["3D Printing", "CAD", "Hardware"],
+    lessons: [
+      {
+        id: 1, title: "How 3D Printing Works", duration: "35 min", type: "video",
+        body: "<p>3D printing builds objects layer by layer from a digital model. This lesson covers the core technology and the machines you'll use.</p><ul><li>FDM vs resin (SLA) printing compared</li><li>Anatomy of an FDM printer: nozzle, bed, extruder</li><li>Common filament types: PLA, PETG, ABS</li><li>Safety basics: heat, fumes, and ventilation</li></ul>",
+        points: ["FDM melts and extrudes filament layer by layer", "PLA is the easiest filament to start with", "Always print in a ventilated space"],
+      },
+      {
+        id: 2, title: "Designing in CAD", duration: "75 min", type: "lab",
+        body: "<p>Before you can print anything, you need a 3D model. This lesson introduces beginner-friendly CAD tools and core modeling concepts.</p><ul><li>Getting started with Tinkercad / Fusion 360</li><li>Primitive shapes and boolean operations</li><li>Measuring and setting real-world dimensions</li><li>Exporting a model as an STL file</li></ul>",
+        points: ["STL is the standard file format for 3D printing", "Boolean union/subtract combines and cuts shapes", "Always design with real millimeter measurements"],
+      },
+      {
+        id: 3, title: "Slicing Your Model", duration: "55 min", type: "reading",
+        body: "<p>A slicer converts your 3D model into instructions (G-code) the printer can follow, layer by layer.</p><ul><li>Importing an STL into a slicer (Cura / PrusaSlicer)</li><li>Layer height, infill, and print speed settings</li><li>When and how to add supports</li><li>Exporting G-code to the printer</li></ul>",
+        points: ["Slicers turn 3D models into printer instructions", "Higher infill = stronger but slower prints", "Supports are needed for steep overhangs"],
+      },
+      {
+        id: 4, title: "Printer Calibration", duration: "60 min", type: "lab",
+        body: "<p>A well-calibrated printer is the difference between a clean print and a failed one. This lesson walks through the essential setup steps.</p><ul><li>Bed leveling, manual and automatic</li><li>Setting nozzle and bed temperature</li><li>First-layer calibration and adhesion</li><li>Diagnosing warping and stringing</li></ul>",
+        points: ["An unlevel bed is the #1 cause of failed prints", "First layer adhesion sets up the whole print", "Stringing usually means retraction needs tuning"],
+      },
+      {
+        id: 5, title: "Materials & Post-Processing", duration: "50 min", type: "reading",
+        body: "<p>Once a print finishes, there's still work to do. This lesson covers choosing the right material and finishing your part.</p><ul><li>Choosing filament by strength, flexibility, heat resistance</li><li>Removing supports cleanly</li><li>Sanding, painting, and gluing printed parts</li><li>Troubleshooting common print defects</li></ul>",
+        points: ["PETG resists heat better than PLA", "Sand in stages from coarse to fine grit", "Layer lines can be smoothed with light sanding or acetone (ABS only)"],
+      },
+      {
+        id: 6, title: "Final Build", duration: "150 min", type: "project",
+        body: "<p>Design, slice, and print a functional object of your choosing — a phone stand, enclosure, or tool holder — from scratch.</p><ul><li>Sketch and plan your design requirements</li><li>Model the part in CAD with correct tolerances</li><li>Slice with settings suited to your part's purpose</li><li>Print, post-process, and evaluate the result</li></ul>",
+        points: ["Design for the printer's limitations, not just the ideal shape", "Test-fit small features before printing the full part", "Iterate — the first print rarely matches the plan exactly"],
+      },
+    ],
+  },
+];
+
+export const COURSE_CATEGORIES = ["All", "Programming", "Robotics", "AI & ML"];

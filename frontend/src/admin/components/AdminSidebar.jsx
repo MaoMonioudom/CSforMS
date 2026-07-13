@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { NavLink, Link, useLocation } from "react-router-dom";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, Users, MessageSquare,
   UserCog, ArrowLeft, FolderOpen, Folder, ChevronDown,
   Boxes, Printer, RotateCcw, Inbox, CreditCard, Compass, Armchair,
+  BookOpen, GraduationCap, LogOut,
 } from "lucide-react";
 import { useAuth } from "../../hub/AuthContext";
 
@@ -59,6 +60,8 @@ const FOLDERS = [
     match: (p) => p.startsWith("/admin/learning"),
     items: [
       { label: "Dashboard", to: "/admin/learning", icon: LayoutDashboard, end: true },
+      { label: "Courses", to: "/admin/learning/courses", icon: BookOpen },
+      { label: "Lecturers", to: "/admin/learning/lecturers", icon: GraduationCap },
     ],
   },
 ];
@@ -88,7 +91,13 @@ function NavItem({ label, to, icon: Icon, end }) {
 
 export function AdminSidebar({ width = 224 }) {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
   const [open, setOpen] = useState(() => {
     const active = FOLDERS.find(f => f.match(pathname));
     return { community: false, inventory: false, learning: false, [active ? active.id : "community"]: true };
@@ -177,8 +186,8 @@ export function AdminSidebar({ width = 224 }) {
         })}
       </nav>
 
-      {/* Back to site */}
-      <div className="p-3 border-t border-gray-100 shrink-0">
+      {/* Back to site / log out */}
+      <div className="p-3 border-t border-gray-100 shrink-0 space-y-0.5">
         <Link
           to="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
@@ -186,6 +195,13 @@ export function AdminSidebar({ width = 224 }) {
           <ArrowLeft className="h-4 w-4 shrink-0" />
           Back to site
         </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          Log out
+        </button>
       </div>
     </aside>
   );
