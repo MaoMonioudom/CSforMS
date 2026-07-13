@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
 @import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
@@ -301,3 +302,149 @@
 .animate-fade-up-delay-1 { animation: fade-up 0.5s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .animate-fade-up-delay-2 { animation: fade-up 0.5s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .animate-fade-up-delay-3 { animation: fade-up 0.5s 0.24s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Inventory module (MakerVault) — tokens + scoped styles.
+   All color tokens are namespaced (inv-*) where they would collide with the
+   hub design system; unique names (cream, charcoal, ink, faint…) are global.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --color-cream: #F8FAFC;
+  --color-stone: #EEF2F6;
+  --color-charcoal: #0F172A;
+  --color-ink: #1E293B;
+  --color-faint: #94A3B8;
+  --color-inv-muted: #64748B;
+  --color-inv-accent: #4F46E5;
+  --color-inv-accent-light: #EEF2FF;
+  --color-red: #E11D48;
+  --color-red-light: #FEE2E6;
+  --color-red-mid: #FB7185;
+  --color-green: #16A34A;
+  --color-green-light: #DCFCE7;
+  --color-amber: #D97706;
+  --color-amber-light: #FEF3C7;
+  --color-blue: #2563EB;
+  --color-blue-light: #DBEAFE;
+  --color-purple: #7C3AED;
+  --color-purple-light: #EDE9FE;
+  --color-teal: #0D9488;
+  --color-teal-light: #CCFBF1;
+  --color-border-dark: #CBD5E1;
+  --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-display: 'CADTMonoDisplay', 'Poppins', 'Inter', system-ui, sans-serif;
+  --shadow-card: 0 8px 28px rgba(15, 23, 42, 0.08);
+}
+
+@font-face {
+  font-family: 'CADTMonoDisplay';
+  src: url('./assets/fonts/CADTMonoDisplay-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Module root — everything inside the inventory module is Poppins, overriding
+   the hub's global Source Code Pro (including the base-layer heading rule). */
+.inv-root,
+.inv-root h1, .inv-root h2, .inv-root h3, .inv-root h4, .inv-root h5, .inv-root h6,
+.inv-root button, .inv-root input, .inv-root select, .inv-root textarea {
+  font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* CADTMonoDisplay is reserved for hero headings only. */
+.inv-root .font-hero-display {
+  font-family: 'CADTMonoDisplay', 'Poppins', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Section headers ("Browse by Category", "What We Offer", …) use Inter,
+   sized up on tablet/desktop. Overrides the .inv-root heading rule. */
+.inv-root .inv-sec-h {
+  font-family: 'Inter', 'Poppins', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Status badge pill (inventory Badge component) */
+.inv-root .badge, .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Admin table row + sidebar link hovers */
+.inv-root .trow:hover { background: #F8FAFC !important; }
+.inv-root .sidebar-btn:hover { background: #F8FAFC !important; }
+.inv-root .sidebar-btn.active { background: #EEF2FF !important; }
+
+/* Input focus ring — scoped so hub forms keep their own style */
+.inv-root input:focus, .inv-root select:focus, .inv-root textarea:focus {
+  outline: 2px solid #0891b2;
+  outline-offset: 0;
+}
+
+/* Horizontal scroll rows (Telegram-folder style tabs) — hide the scrollbar */
+.inv-hscroll { scrollbar-width: none; -ms-overflow-style: none; }
+.inv-hscroll::-webkit-scrollbar { display: none; }
+
+/* Category tiles on phones: borderless Telegram-tab look (inline styles set the
+   desktop border, so this needs !important to win below the sm breakpoint). */
+@media (max-width: 639px) {
+  .inv-root .inv-tile { border: none !important; box-shadow: none !important; }
+}
+
+/* Cart drawer slide-in */
+@keyframes inv-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Learning module — parchment/navy/gold "books in a library" tokens.
+   navy/parchment/paper/gold/oxblood/sage are new names, safe to register
+   globally. --color-ink and --font-display already exist (hub/inventory use
+   them with different values), so those two are overridden only inside
+   .learning-scope rather than redefined at the theme root.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --color-navy: #1B2A3B;
+  --color-navy-deep: #0F1A26;
+  --color-navy-muted: #8A9BB0;
+
+  --color-parchment: #F5EDD6;
+  --color-parchment-alt: #EDE0C0;
+  --color-parchment-mid: #F0E8D0;
+  --color-paper: #F4E8CB;
+  --color-paper-deep: #EAD9AC;
+
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C96A;
+  --color-gold-dark: #8B6914;
+  --color-oxblood: #7C2A22;
+  --color-oxblood-deep: #591C17;
+  --color-sage: #7A9E7E;
+
+  --color-ink-soft: #5B4630;
+
+  --shadow-book: 4px 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-card-soft: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --shadow-open: 0 20px 80px rgba(0, 0, 0, 0.7);
+}
+
+/* Scoped overrides for the two colliding token names — applied to the
+   /learning route wrapper only, so hub/inventory keep their own ink + display
+   font everywhere else. */
+.learning-scope {
+  --color-ink: #241608;
+  --font-display: 'Playfair Display', Georgia, serif;
+}

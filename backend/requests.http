@@ -1,0 +1,219 @@
+### Community backend — manual test requests
+### Requires the "REST Client" VS Code extension (publisher: humao.rest-client).
+### Once installed, a "Send Request" link appears above every block below —
+### click it to fire that request. Run them roughly top to bottom the first
+### time; @authToken and @adminToken auto-fill from earlier responses.
+
+@baseUrl = http://localhost:4000
+
+### 1. Health check — server is up
+GET {{baseUrl}}/api/health
+
+
+### 2. Sign up a normal user
+# @name signup
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "full_name": "Demo User",
+  "email": "demo@example.com",
+  "password": "secret123"
+}
+
+### Signing up the same email again should fail with 409
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "full_name": "Demo User",
+  "email": "demo@example.com",
+  "password": "secret123"
+}
+
+
+### 3. Log in as that user
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "secret123"
+}
+
+### Wrong password should fail with 401
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "wrong-password"
+}
+
+@authToken = {{login.response.body.$.token}}
+
+
+### 4. Confirm the token works — returns the current user row
+GET {{baseUrl}}/api/auth/session
+Authorization: Bearer {{authToken}}
+
+### Same thing via /api/users/me
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{authToken}}
+
+### No token at all should fail with 401
+GET {{baseUrl}}/api/auth/session
+
+### A garbage token should fail with 401
+GET {{baseUrl}}/api/auth/session
+Authorization: Bearer not-a-real-token
+
+
+### 5. Full user list is admin/staff only — as a plain "user" this should 403
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{authToken}}
+
+### As no token at all it should 401
+GET {{baseUrl}}/api/users
+
+
+### 6. To test the admin-only list, sign up + log in a second account, then
+### manually promote its role to 'admin' in Supabase (Table Editor > users),
+### then log in again to get a token with the new role baked into the JWT.
+# @name signupAdmin
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "full_name": "Admin Demo",
+  "email": "admin.demo@example.com",
+  "password": "secret123"
+}
+
+### After promoting admin.demo@example.com to role='admin' in Supabase, log in again:
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.demo@example.com",
+  "password": "secret123"
+}
+
+@adminToken = {{loginAdmin.response.body.$.token}}
+
+### Should now return 200 with the full user list
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{adminToken}}
+
+
+### =====================================================
+### Community module (pk: event_id / post_id / collab_id)
+### =====================================================
+
+### List events (public, no auth)
+GET {{baseUrl}}/api/community/events
+
+### Create an event (auth required — created_by is auto-set from your token)
+# @name createEvent
+POST {{baseUrl}}/api/community/events
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Maker Night",
+  "description": "Open build session",
+  "location": "Makerspace Lab",
+  "start_date": "2026-08-01T18:00:00Z",
+  "end_date": "2026-08-01T21:00:00Z",
+  "max_participants": 20,
+  "credit_reward": 5
+}
+
+### Get the event you just created
+GET {{baseUrl}}/api/community/events/{{createEvent.response.body.$.data.event_id}}
+
+### Update it
+PUT {{baseUrl}}/api/community/events/{{createEvent.response.body.$.data.event_id}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Maker Night (Updated)"
+}
+
+### Delete it
+DELETE {{baseUrl}}/api/community/events/{{createEvent.response.body.$.data.event_id}}
+Authorization: Bearer {{authToken}}
+
+
+### List community posts
+GET {{baseUrl}}/api/community/posts
+
+### Create a post (user_id is auto-set from your token)
+POST {{baseUrl}}/api/community/posts
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Anyone free this weekend?",
+  "content": "Looking to prototype a PCB together.",
+  "category": "general"
+}
+
+
+### List collaboration ("find team") posts
+GET {{baseUrl}}/api/community/collaborations
+
+### Create one (user_id is auto-set from your token)
+POST {{baseUrl}}/api/community/collaborations
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "project_title": "Campus Delivery Robot",
+  "category": "Robotics",
+  "short_pitch": "Need a firmware dev",
+  "post_type": "recruiting",
+  "team_size_current": 2,
+  "team_size_target": 4,
+  "contact_email": "demo@example.com"
+}
+
+
+### =====================================================
+### Inventory module (pk: item_id)
+### =====================================================
+
+GET {{baseUrl}}/api/inventory/items
+
+### Create requires auth; category_id/location_id are optional FKs
+POST {{baseUrl}}/api/inventory/items
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "item_name": "Soldering Iron",
+  "description": "60W adjustable temp",
+  "current_stock": 5,
+  "unit_credit": 2
+}
+
+
+### =====================================================
+### Learning module (pk: id — this table came from the first migration)
+### =====================================================
+
+GET {{baseUrl}}/api/learning/courses
+
+POST {{baseUrl}}/api/learning/courses
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Intro to 3D Printing",
+  "description": "Basics of FDM printing",
+  "category": "Fabrication",
+  "level": "Beginner"
+}

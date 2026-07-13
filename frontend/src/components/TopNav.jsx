@@ -2,11 +2,13 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router-do
 import {
   Menu, X, ArrowUpRight, ArrowLeft, MessageSquare,
   BookOpen, Package, ChevronRight, ChevronDown, LogIn, UserPlus, LogOut, User, Search, Bell, Coins, Armchair,
+  ShoppingCart,
 } from "lucide-react";
 import logo    from "../assets/ms_wbg_logo.png";
 import bbg_logo from "../assets/ms_bbg_logo.png";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hub/AuthContext";
+import { useInventory } from "../lib/inventory/InventoryContext";
 import { SignOutConfirmDialog } from "./SignOutConfirmDialog";
 import { MembershipPromoDialog } from "./MembershipPromoDialog";
 
@@ -146,6 +148,7 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
 // ── Profile cluster ───────────────────────────────────────────────────────────
 function ProfileCluster({ onClose }) {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
@@ -228,12 +231,12 @@ function ProfileCluster({ onClose }) {
           <p className="text-xs leading-relaxed text-white">
             Sign in to track your progress across all three modules.
           </p>
-          <Link to="/login" onClick={onClose}
+          <Link to="/login" state={{ from: pathname }} onClick={onClose}
             className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white text-sm transition-opacity hover:opacity-85"
             style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
             <LogIn size={14} /> Sign In
           </Link>
-          <Link to="/register" onClick={onClose}
+          <Link to="/register" state={{ from: pathname }} onClick={onClose}
             className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:border-white/50"
             style={{ border: "1px solid rgba(255,255,255,0.22)" }}>
             <UserPlus size={14} /> Create Account
@@ -266,19 +269,19 @@ function OverlayDoodles() {
 }
 
 // ── Notification bell ─────────────────────────────────────────────────────────
-const NOTIF_COUNT = 3; // mock unread count — mirrors NotificationsPage's mock data
+const NOTIF_COUNT = 3; // mock unread count for hub pages — mirrors NotificationsPage's mock data
 
-function NotifBell({ dark }) {
+function NotifBell({ dark, to = "/notifications", count = NOTIF_COUNT }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const onNotifications = pathname === "/notifications";
+  const onNotifications = pathname === to;
 
-  const badge = NOTIF_COUNT > 0 && (
+  const badge = count > 0 && (
     <span
       className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
       style={{ background: "#ef4444", border: "1.5px solid" , borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
     >
-      {NOTIF_COUNT > 9 ? "9+" : NOTIF_COUNT}
+      {count > 9 ? "9+" : count}
     </span>
   );
 
@@ -300,10 +303,36 @@ function NotifBell({ dark }) {
   }
 
   return (
-    <Link to="/notifications" aria-label="Notifications" className={className} style={style}>
+    <Link to={to} aria-label="Notifications" className={className} style={style}>
       <Bell size={17} />
       {badge}
     </Link>
+  );
+}
+
+// ── Cart button (inventory module only) ───────────────────────────────────────
+function CartButton({ dark, count, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-label="Cart"
+      onClick={onClick}
+      className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+      style={{
+        color: dark ? "white" : "#1a1a2e",
+        background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+      }}
+    >
+      <ShoppingCart size={17} />
+      {count > 0 && (
+        <span
+          className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+          style={{ background: "#ef4444", border: "1.5px solid", borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
+        >
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -515,6 +544,7 @@ function MobileModuleAccordion({ modKey, icon: Icon, label, desc, accent, links,
 
 function MobileProfileRow({ onClose }) {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
@@ -590,12 +620,12 @@ function MobileProfileRow({ onClose }) {
 
   return (
     <div onClick={(e) => e.stopPropagation()} className="flex gap-2">
-      <Link to="/login" onClick={onClose}
+      <Link to="/login" state={{ from: pathname }} onClick={onClose}
         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-white text-sm"
         style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}>
         <LogIn size={14} /> Sign In
       </Link>
-      <Link to="/register" onClick={onClose}
+      <Link to="/register" state={{ from: pathname }} onClick={onClose}
         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-semibold text-white text-sm"
         style={{ border: "1px solid rgba(255,255,255,0.22)" }}>
         <UserPlus size={14} /> Sign Up
@@ -614,8 +644,13 @@ export function TopNav() {
   const mod = useModule();
   const cfg = MODULE_CFG[mod];
   const isHub = mod === "hub";
+  const isInventory = mod === "inventory";
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const inv = useInventory();
+  const invUnread = isInventory && inv
+    ? inv.notifications.filter(n => !n.read && (n.forRoles?.includes(inv.user?.role) || n.userId === inv.user?.id)).length
+    : 0;
   const lastSpace = useLastSpace(mod);
   const logoTo = isHub ? lastSpace : cfg.root;
   const hubPage = HUB_PAGES[pathname];
@@ -729,14 +764,29 @@ export function TopNav() {
               </div>
 
               {/* 4 · Notifications */}
-              <NotifBell dark={cfg.dark || open} />
+              <NotifBell
+                dark={cfg.dark || open}
+                to={isInventory ? "/inventory/notifications" : "/notifications"}
+                count={isInventory ? invUnread : undefined}
+              />
+
+              {/* 4b · Cart — inventory module, members only (guests have no checkout panel) */}
+              {isInventory && inv?.user && (
+                <CartButton dark={cfg.dark || open} count={inv.cart.length} onClick={() => inv.setCartOpen(true)} />
+              )}
 
               {/* 5 · Credits — members only, desktop/tablet only */}
-              {user?.isMember && (
-                <div className="hidden sm:block">
-                  <CreditBox credits={user.credits} dark={cfg.dark || open} />
-                </div>
-              )}
+              {isInventory
+                ? inv?.user && (
+                    <div className="hidden sm:block">
+                      <CreditBox credits={inv.user.credits} dark={cfg.dark || open} />
+                    </div>
+                  )
+                : user?.isMember && (
+                    <div className="hidden sm:block">
+                      <CreditBox credits={user.credits} dark={cfg.dark || open} />
+                    </div>
+                  )}
 
               {/* 6 · Menu button */}
               <button

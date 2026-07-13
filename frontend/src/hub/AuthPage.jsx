@@ -150,10 +150,13 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
-  const { user, login } = useAuth();
+  const { user, login, signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = location.pathname === "/register";
+  // Where to send the user after signing in — wherever they were trying to
+  // reach (e.g. /inventory) takes priority over the generic role destination.
+  const from = location.state?.from;
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [regForm, setRegForm]     = useState({ name: "", email: "", password: "", confirm: "" });
@@ -163,39 +166,51 @@ export default function AuthPage() {
 
   useEffect(() => { setError(""); setLoading(false); }, [isRegister]);
 
+  // Admin/Staff always land in the admin panel — regardless of what page
+  // they clicked "Sign In" from, they're here to manage things, not to
+  // resume browsing. Everyone else returns to wherever they came from
+  // (`from`), or their profile if there's nowhere to return to.
+  const destinationFor = (role, from) =>
+    (role === "Admin" || role === "Staff") ? "/admin" : (from || "/profile");
+
   // Already signed in but landed on /login or /register anyway (e.g. via a
-  // bookmark, or the "back" button after a previous sign-in) — bounce to
-  // Profile instead of showing a stale auth form. Uses replace so it doesn't
-  // add yet another entry for "back" to trip over.
+  // bookmark, or the "back" button after a previous sign-in) — bounce away
+  // instead of showing a stale auth form. Uses replace so it doesn't add
+  // yet another entry for "back" to trip over.
   useEffect(() => {
-    if (user) navigate("/profile", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(destinationFor(user.role, from), { replace: true });
+  }, [user, navigate, from]);
 
   const switchTo = (mode) => navigate(mode === "register" ? "/register" : "/login");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     if (!loginForm.email || !loginForm.password) { setError("Please fill in all fields."); return; }
     setLoading(true);
-    setTimeout(() => {
-      const name = loginForm.email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-      login({ name, email: loginForm.email });
-      navigate("/profile", { replace: true });
-    }, 700);
+    try {
+      const loggedInUser = await login(loginForm.email, loginForm.password);
+      navigate(destinationFor(loggedInUser.role, from), { replace: true });
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     if (!regForm.name || !regForm.email || !regForm.password) { setError("Please fill in all fields."); return; }
     if (regForm.password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (regForm.password !== regForm.confirm) { setError("Passwords don't match."); return; }
     setLoading(true);
-    setTimeout(() => {
-      login({ name: regForm.name, email: regForm.email });
-      navigate("/profile", { replace: true });
-    }, 800);
+    try {
+      const newUser = await signup({ name: regForm.name, email: regForm.email, password: regForm.password });
+      navigate(destinationFor(newUser.role, from), { replace: true });
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (

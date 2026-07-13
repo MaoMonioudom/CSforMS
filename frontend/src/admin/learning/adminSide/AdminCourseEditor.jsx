@@ -10,7 +10,6 @@ const LINKS = [
   { to: "/admin/learning/courses", label: "Courses" },
   { to: "/admin/learning/lecturers", label: "Lecturers" },
 ];
-
 export default function AdminCourseEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -24,18 +23,24 @@ export default function AdminCourseEditor() {
   const handleSubmit = (courseData) => {
     if (isNew) createCourse(courseData);
     else saveCourse(courseData);
-    navigate("/admin/courses");
+    navigate("/admin/learning/courses");
   };
 
   return (
-    <DashboardLayout title={isNew ? "New Course" : `Edit: ${course.title}`} links={LINKS}>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{isNew ? "New Course" : `Edit: ${course.title}`}</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          {isNew ? "Add a new course to the Learning platform." : "Update course details and lessons."}
+        </p>
+      </div>
+
       <CourseEditorForm
         initialCourse={course}
-        mode="admin"
         lecturers={lecturers}
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/admin/courses")}
+        onCancel={() => navigate("/admin/learning/courses")}
       />
-    </DashboardLayout>
+    </div>
   );
 }
