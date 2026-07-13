@@ -1,12 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import { useCourses } from "../../hooks/useCourses";
-
-const LINKS = [
-  { to: "/admin/learning", label: "Overview", end: true },
-  { to: "/admin/learning/courses", label: "Courses" },
-  { to: "/admin/learning/lecturers", label: "Lecturers" },
-];
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useCourses } from "../../../hooks/learning/useCourses";
 
 export default function AdminCourses() {
   const { courses, deleteCourse } = useCourses();

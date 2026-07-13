@@ -100,12 +100,22 @@ export default function App() {
         {/* Learning — TopNav + Footer */}
         <Route element={<UserLayout />}>
           <Route path="/learning" element={<LearningHomePage />} />
-          <Route path="/learning/courses" element={<CoursesPage />} />
-          <Route path="/learning/course/:id" element={<CourseDetail />} />
-          <Route path="/learning/:id/lessons/:lessonId" element={<LessonDetail />} />
-          <Route path="/learning/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/learning/courses" element={<LearningCoursesPage />} />
+          <Route path="/learning/course/:id" element={<LearningCourseDetail />} />
+          <Route path="/learning/:id/lessons/:lessonId" element={<LearningLessonDetail />} />
+          <Route path="/learning/about" element={<LearningAbout />} />
+          <Route path="/contact" element={<LearningContact />} />
           <Route path="*" element={<NotFound />} />
+        </Route>
+
+        {/* Learning spaces — TopNav + Footer, scoped to the library theme */}
+        <Route element={<LearningLayout />}>
+          <Route path="/learning" element={<LearningHomePage />} />
+          <Route path="/learning/courses" element={<LearningCoursesPage />} />
+          <Route path="/learning/course/:id" element={<LearningCourseDetail />} />
+          <Route path="/learning/:id/lessons/:lessonId" element={<LearningLessonDetail />} />
+          <Route path="/learning/about" element={<LearningAbout />} />
+          <Route path="/learning/contact" element={<LearningContact />} />
         </Route>
 
         {/* Learning spaces — TopNav + Footer, scoped to the library theme */}

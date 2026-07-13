@@ -1,15 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import CourseEditorForm from "../../components/course-editor/CourseEditorForm";
-import { getCourseById, saveCourse, createCourse } from "../../data/courseStore";
-import { getLecturers } from "../../data/userStore";
-import NotFound from "../NotFound";
+import CourseEditorForm from "./CourseEditorForm";
+import { getCourseById, saveCourse, createCourse } from "../../../data/courseStore";
+import { getLecturers } from "../../../data/userStore";
+import NotFound from "../../../pages/NotFound";
 
-const LINKS = [
-  { to: "/admin/learning", label: "Overview", end: true },
-  { to: "/admin/learning/courses", label: "Courses" },
-  { to: "/admin/learning/lecturers", label: "Lecturers" },
-];
 export default function AdminCourseEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
