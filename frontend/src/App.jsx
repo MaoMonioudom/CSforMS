@@ -40,12 +40,6 @@ import LearningAbout from "./pages/learning/About";
 import LearningContact from "./pages/learning/Contact";
 import InventoryApp from "./pages/inventory/InventoryApp";
 import { AuthProvider } from "./hub/AuthContext";
-import LearningHomePage from "./pages/learning/Home";
-import CoursesPage from "./pages/learning/CoursesPage";
-import CourseDetail from "./pages/learning/CourseDetail";
-import LessonDetail from "./pages/learning/LessonDetail";
-import About from "./pages/learning/About";
-import Contact from "./pages/learning/Contact";
 import NotFound from "./pages/NotFound";
 
 function UserLayout() {

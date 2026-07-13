@@ -4,9 +4,9 @@ import { useCourses } from "../../hooks/useCourses";
 import { getLecturers } from "../../data/userStore";
 
 const LINKS = [
-  { to: "/admin/learning", label: "Overview", end: true },
-  { to: "/admin/learning/courses", label: "Courses" },
-  { to: "/admin/learning/lecturers", label: "Lecturers" },
+  { to: "/admin", label: "Overview", end: true },
+  { to: "/admin/courses", label: "Courses" },
+  { to: "/admin/lecturers", label: "Lecturers" },
 ];
 
 export default function AdminDashboard() {
