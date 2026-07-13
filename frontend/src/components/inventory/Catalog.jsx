@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar } from 'lucide-react'
+import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar, MapPin } from 'lucide-react'
 import Badge from './ui/Badge'
 import PageBreadcrumb from './layout/PageBreadcrumb'
 import { T } from '../../lib/inventory/theme'
@@ -73,21 +73,27 @@ function CategoryTiles({ items, filterCat, setFilterCat }) {
   )
 }
 
-// ── Item Card — compact horizontal-leaning clean card ────────────────────────
+// ── Item Card — larger, modern card with image, name, category, stock, location ──
 export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMode, staffStudent, onStaffAdd }) {
   const cat   = CATEGORIES.find(c => c.id === item.category)
   const isLow = item.stock <= item.minStock && item.stock > 0
 
   return (
     <div onClick={() => onView(item)}
-      className="flex cursor-pointer flex-col overflow-hidden rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md"
-      style={{ background: '#fff', border: '1.5px solid #e2e8f0' }}>
+      className="flex cursor-pointer flex-col overflow-hidden rounded-2xl transition-all hover:-translate-y-1"
+      style={{ background: '#fff', border: '1.5px solid #e2e8f0', boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,23,42,0.10)'}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'}>
 
       {/* Image */}
-      <div className="relative h-24 flex-shrink-0 sm:h-32 lg:h-36">
-        <ItemImage item={item} cat={cat} size={36} className="h-full w-full" />
-        <div className="absolute left-2 top-2"><Badge status={item.status} small /></div>
-        <div className="absolute bottom-2 right-2 rounded-md px-1.5 py-0.5 text-[11px] font-bold shadow-sm"
+      <div className="relative h-36 flex-shrink-0 sm:h-44 lg:h-48">
+        <ItemImage item={item} cat={cat} size={52} className="h-full w-full" />
+        <div className="absolute left-3 top-3"><Badge status={item.status} small /></div>
+        <div className="absolute right-3 top-3 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+          style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
+          {item.type === 'Returnable' ? 'Returnable' : 'Consumable'}
+        </div>
+        <div className="absolute bottom-3 right-3 rounded-lg px-2 py-1 text-[13px] font-bold shadow-sm"
           style={item.credits > 0
             ? { background: '#fff', color: TEAL, border: `1.5px solid ${TEAL}33` }
             : { background: '#dcfce7', color: '#16a34a' }}>
@@ -96,39 +102,34 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col gap-1 p-2.5 sm:gap-1.5 sm:p-3">
-        {/* Category + type badges */}
-        <div className="flex items-center gap-1 flex-wrap">
-          {cat && (
-            <span className="hidden items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex"
-              style={{ background: '#f1f5f9', color: '#64748b' }}>
-              <cat.Icon size={9} color={cat.iconColor} />
-              {cat.label}
-            </span>
-          )}
-          <span className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-            style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a' }}>
-            {item.type === 'Returnable' ? 'Borrow' : 'Purchase'}
+      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
+        {cat && (
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold"
+            style={{ background: '#f1f5f9', color: '#64748b' }}>
+            <cat.Icon size={11} color={cat.iconColor} />
+            {cat.label}
           </span>
-        </div>
+        )}
 
-        <h3 className="m-0 truncate text-[13px] font-semibold leading-snug sm:text-[14px]" style={{ color: '#0f172a' }}>{item.name}</h3>
+        <h3 className="m-0 truncate text-[16px] font-bold leading-snug sm:text-[17px]" style={{ color: '#0f172a' }}>{item.name}</h3>
 
-        <div className="flex items-center justify-between">
-          <span className="truncate text-[10px] font-medium" style={{ color: '#94a3b8' }}>{item.room}</span>
-          <span className="flex flex-shrink-0 items-center gap-1 text-[10px] font-medium" style={{ color: isLow ? '#f59e0b' : '#94a3b8' }}>
-            {isLow && <AlertTriangle size={9} />}{item.stock} left
+        <div className="flex items-center justify-between text-[12px]">
+          <span className="flex items-center gap-1 truncate font-medium" style={{ color: '#64748b' }}>
+            <MapPin size={11} style={{ flexShrink: 0, color: '#94a3b8' }} /> {item.room}{item.zone ? ` · Zone ${item.zone}` : ''}
+          </span>
+          <span className="flex flex-shrink-0 items-center gap-1 font-semibold" style={{ color: isLow ? '#f59e0b' : '#16a34a' }}>
+            {isLow && <AlertTriangle size={10} />}{item.stock} in stock
           </span>
         </div>
 
         {/* Action button — equal height across all cards/breakpoints */}
-        <div className="mt-1">
+        <div className="mt-2">
           {staffMode && (() => {
             const enabled = !!staffStudent && item.status === 'available' && item.stock > 0
             return (
               <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
                 disabled={!enabled}
-                className="h-8 w-full rounded-lg border-none text-[11px] font-semibold sm:h-9 sm:text-[12px]"
+                className="h-10 w-full rounded-xl border-none text-[13px] font-semibold sm:h-11"
                 style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
                 {item.type === 'Returnable' ? 'Borrow' : 'Add Purchase'}
               </button>
@@ -139,7 +140,7 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
             return (
               <button onClick={e => { e.stopPropagation(); onAddCart(item) }}
                 disabled={!enabled}
-                className="h-8 w-full rounded-lg border-none text-[11px] font-semibold sm:h-9 sm:text-[12px]"
+                className="h-10 w-full rounded-xl border-none text-[13px] font-semibold sm:h-11"
                 style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
                 {enabled ? (item.type === 'Returnable' ? 'Borrow' : 'Purchase') : 'Unavailable'}
               </button>
@@ -147,14 +148,14 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
           })()}
           {!staffMode && !user && onRequireAuth && (
             <button onClick={e => { e.stopPropagation(); onRequireAuth() }}
-              className="flex h-8 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-semibold sm:h-9 sm:text-[12px]"
+              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold sm:h-11"
               style={{ border: `1.5px dashed ${TEAL}55`, background: `${TEAL}08`, color: TEAL }}>
-              <Lock size={10} />{item.type === 'Returnable' ? 'Join to Borrow' : 'Join to Purchase'}
+              <Lock size={12} />{item.type === 'Returnable' ? 'Join to Borrow' : 'Join to Purchase'}
             </button>
           )}
           {!staffMode && !user && !onRequireAuth && (
             <button onClick={e => { e.stopPropagation(); onView(item) }}
-              className="h-8 w-full rounded-lg text-[11px] font-semibold sm:h-9 sm:text-[12px]"
+              className="h-10 w-full rounded-xl text-[13px] font-semibold sm:h-11"
               style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', color: '#475569' }}>
               View Details
             </button>
@@ -500,7 +501,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
       }}>
         <div style={{ position: 'absolute', top: '50%', right: '10%', transform: 'translateY(-50%)', width: 320, height: 220, background: 'radial-gradient(circle, rgba(8,145,178,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div className="mx-auto max-w-[1280px] px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ position: 'relative', zIndex: 1 }}>
-          {user && <PageBreadcrumb current="/catalog" />}
+          {user && !isStaff && <PageBreadcrumb current="/catalog" />}
           <h1 style={{ margin: 0, fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
             {isStaff ? 'Browse Items' : 'Browse Equipment'}
           </h1>
@@ -546,7 +547,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           <p className="m-0 mb-3 text-[13px] font-medium" style={{ color: '#94a3b8' }}>{filtered.length} items</p>
 
           {/* Fixed column counts so cards stay equal-sized even with 1–2 results */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 lg:gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
             {filtered.map(item => (
               <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
                 staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />

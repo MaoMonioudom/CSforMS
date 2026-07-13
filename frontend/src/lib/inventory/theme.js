@@ -28,6 +28,7 @@ export const T = {
 
 export const statusConfig = {
   available:   { label: 'Available',   color: T.green,  bg: T.greenLight  },
+  low_stock:   { label: 'Low Stock',   color: T.amber,  bg: T.amberLight  },
   borrowed:    { label: 'Borrowed',    color: T.amber,  bg: T.amberLight  },
   maintenance: { label: 'Maintenance', color: T.red,    bg: T.redLight    },
   unavailable: { label: 'Unavailable', color: T.muted,  bg: T.stone       },

@@ -14,6 +14,10 @@ export default function AdminLayout() {
   });
   const [resizing, setResizing] = useState(false);
 
+  // Inventory pages render their own full-width top bar right of the sidebar,
+  // so they get the raw area; other modules keep the padded, centered main.
+  const fullBleed = useLocation().pathname.startsWith("/admin/inventory");
+
   useEffect(() => {
     if (!resizing) return;
 
@@ -36,10 +40,6 @@ export default function AdminLayout() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(width));
   }, [width]);
-
-  // Inventory pages render their own full-width top bar right of the sidebar,
-  // so they get the raw area; other modules keep the padded, centered main.
-  const fullBleed = useLocation().pathname.startsWith("/admin/inventory");
 
   return (
     <div className="flex min-h-screen bg-gray-50">

@@ -112,13 +112,13 @@ export default function InventoryAdminArea() {
       <SignOutConfirmDialog open={signOutOpen} onOpenChange={setSignOutOpen} redirectTo="/inventory" />
 
       <Routes>
-        <Route index element={<AdminDashboard items={items} users={users} borrows={borrows} requests={requests} />} />
+        <Route index element={<AdminDashboard items={items} users={users} borrows={borrows} requests={requests} payments={payments} />} />
         <Route path="manage"   element={<InventoryManager items={items} setItems={setItems} user={user} filaments={filaments} setFilaments={setFilaments} />} />
         <Route path="services" element={<ServicePage user={user} users={users} setUsers={setUsers} filaments={filaments} setFilaments={setFilaments} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} />} />
         <Route path="users"    element={user.role === 'admin' ? <UserManager users={users} setUsers={setUsers} /> : <Navigate to="/admin/inventory" replace />} />
-        <Route path="borrows"  element={<BorrowsTracker {...sharedBorrow} users={users} setUsers={setUsers} showToast={showToast} />} />
+        <Route path="borrows"  element={<BorrowsTracker {...sharedBorrow} users={users} setUsers={setUsers} showToast={showToast} user={user} />} />
         <Route path="requests" element={<RequestsManager requests={requests} setRequests={setRequests} {...sharedBorrow} users={users} setUsers={setUsers} user={user} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} filaments={filaments} setFilaments={setFilaments} />} />
-        <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} />} />
+        <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} items={items} />} />
         <Route path="catalog"  element={<Catalog items={items} user={user} cart={cart} setCart={setCart} showToast={showToast} users={users} setUsers={setUsers} setItems={setItems} setBorrows={setBorrows} setPayments={setPayments} />} />
         <Route path="*"        element={<Navigate to="/admin/inventory" replace />} />
       </Routes>

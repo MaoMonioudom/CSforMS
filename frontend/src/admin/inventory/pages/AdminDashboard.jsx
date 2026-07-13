@@ -10,7 +10,7 @@ import { CATEGORIES } from '../../../lib/inventory/data'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-export default function AdminDashboard({ items, users, borrows, requests }) {
+export default function AdminDashboard({ items, users, borrows, requests, payments = [] }) {
   const [expanded, setExpanded] = useState(null)
   const [range, setRange] = useState('all')
 
@@ -157,50 +157,142 @@ export default function AdminDashboard({ items, users, borrows, requests }) {
         </div>
       </div>
 
-      {/* ── Borrow & Purchase transactions — paginated like the payment list ── */}
-      <TransactionsPanel borrows={borrows} users={users} />
+      {/* ── Recent transactions — borrows/purchases, credit payments, and
+          pending/approved requests, all in one feed ── */}
+      <TransactionsPanel borrows={borrows} users={users} items={items} payments={payments} requests={requests} />
     </div>
   )
 }
 
 const TXN_PAGE_SIZE = 10
 
-// All borrow/purchase activity grouped into transactions, newest first,
-// with next/prev paging.
-function TransactionsPanel({ borrows, users }) {
+// Credit-service payment types not already represented by a borrow/purchase
+// record (Item Purchase / Item Loan share an orderId with a borrow entry,
+// so including them here would just duplicate that row).
+const CREDIT_PAYMENT_TYPES = ['Membership Activation', 'Membership Credit Top-Up', 'Document Printing', '3D Printing']
+
+function requestLabel(req) {
+  if (req.type === 'credit_topup') return `Credit Top-Up — $${req.amountUSD}`
+  if (req.type === 'printing')     return `Document Printing — ${req.pages} page${req.pages === 1 ? '' : 's'}`
+  if (req.type === '3d_printing')  return `3D Print Job — ${req.filamentName || 'filament TBD'}`
+  return req.itemName
+}
+
+// Unified recent-transactions feed: borrow/purchase groups (from `borrows`),
+// credit-service payments (from `payments`), and pending/approved requests
+// not yet reflected elsewhere (from `requests`) — each row expands inline
+// (no side panel, no separate View button) to list every item's name,
+// category, and quantity.
+function TransactionsPanel({ borrows, users, items, payments, requests }) {
   const [page, setPage] = useState(1)
   const [typeTab, setTypeTab] = useState('All')
+  const [expandedKey, setExpandedKey] = useState(null)
 
   const getUser = (id) => users.find(u => u.id === id)
+  const getProduct = (itemId) => items.find(i => i.id === itemId)
+  const getCategory = (itemId) => {
+    const product = getProduct(itemId)
+    return product ? CATEGORIES.find(c => c.id === product.category)?.label : null
+  }
 
-  const groups = []
+  // ── Borrow / purchase groups ──────────────────────────────────────────
+  const borrowGroups = []
   const seen = new Map()
   borrows.forEach(b => {
     const key = b.orderId || `single-${b.id}`
-    if (seen.has(key)) { groups[seen.get(key)].items.push(b); return }
-    seen.set(key, groups.length)
-    groups.push({ key, userId: b.userId, date: b.date, items: [b] })
+    if (seen.has(key)) { borrowGroups[seen.get(key)].raw.push(b); return }
+    seen.set(key, borrowGroups.length)
+    borrowGroups.push({ key: `bw-${key}`, userId: b.userId, date: b.date, raw: [b] })
   })
-  groups.sort((a, b) => new Date(b.date) - new Date(a.date))
+  const groupStatus = (g) => {
+    const active = g.raw.filter(b => b.action !== 'purchased' && b.status === 'active')
+    if (active.some(b => b.dueDate && new Date(b.dueDate) < new Date())) return 'overdue'
+    if (active.length > 0) return 'active'
+    return g.raw.every(b => b.action === 'purchased') ? 'purchased' : 'completed'
+  }
+  const borrowEntries = borrowGroups.map(g => ({
+    key: g.key, userId: g.userId, date: g.date,
+    type: g.raw.every(b => b.action === 'purchased') ? 'Purchase' : 'Borrow',
+    status: groupStatus(g),
+    // Borrowing itself isn't charged (only late/damaged penalties, handled
+    // separately in Borrow Tracker) — so a Borrow item's unit/total is 0.
+    // Purchases keep their real recorded credit cost.
+    items: g.raw.map(b => {
+      const qty = b.qty || 1
+      const unit = b.action === 'purchased' ? (b.credits != null ? Math.round(b.credits / qty) : (getProduct(b.itemId)?.credits ?? 0)) : 0
+      return { name: b.itemName, category: getCategory(b.itemId), qty, unit, total: unit * qty, currency: 'cr' }
+    }),
+  }))
 
-  const groupType = (g) => g.items.every(b => b.action === 'purchased') ? 'Purchase' : 'Borrow'
-  const filtered = typeTab === 'All' ? groups : groups.filter(g => groupType(g) === typeTab)
+  // ── Credit-service payments ───────────────────────────────────────────
+  const paymentEntries = payments
+    .filter(p => CREDIT_PAYMENT_TYPES.includes(p.type))
+    .map(p => ({
+      key: `pay-${p.id}`, userId: null, studentName: p.customerName, studentId: p.customerId, date: p.date,
+      type: 'Credit', status: p.status === 'Completed' ? 'pay_completed' : 'pay_pending',
+      items: [{ name: p.type, category: 'Credit Service', qty: 1, unit: p.amount, total: p.amount, currency: p.currency === 'USD' ? '$' : 'cr' }],
+    }))
+
+  // ── Pending / approved requests not yet turned into a borrow or payment ──
+  const openRequests = requests.filter(r => r.status === 'pending' || r.status === 'awaiting_weight' || r.status === 'approved')
+  const reqGroups = []
+  const reqSeen = new Map()
+  const reqOthers = []
+  openRequests.forEach(r => {
+    if (r.type === 'borrow') {
+      const key = r.orderId || `single-${r.id}`
+      if (reqSeen.has(key)) { reqGroups[reqSeen.get(key)].group.push(r); return }
+      reqSeen.set(key, reqGroups.length)
+      reqGroups.push({ key: `req-${key}`, group: [r] })
+    } else {
+      reqOthers.push(r)
+    }
+  })
+  const requestValue = (req) => {
+    if (req.type === 'credit_topup') return { unit: req.amountUSD, currency: '$' }
+    if (req.type === 'printing')     return { unit: req.credits ?? 0, currency: 'cr' }
+    if (req.type === '3d_printing')  return { unit: req.credits ?? 0, currency: 'cr' }
+    return { unit: 0, currency: 'cr' }
+  }
+  const requestEntries = [
+    ...reqGroups.map(g => ({
+      key: g.key, userId: g.group[0].userId, date: g.group[0].date, type: 'Borrow',
+      status: g.group[0].status === 'approved' ? 'approved' : 'pending',
+      // Same rule as approved borrows — a Borrow item isn't charged, so 0/0.
+      items: g.group.map(r => ({ name: r.itemName, category: getCategory(r.itemId), qty: r.qty || 1, unit: 0, total: 0, currency: 'cr' })),
+    })),
+    ...reqOthers.map(r => {
+      const v = requestValue(r)
+      return {
+        key: `req-${r.id}`, userId: r.userId, date: r.date, type: 'Credit',
+        status: r.status === 'approved' ? 'approved' : 'pending',
+        items: [{ name: requestLabel(r), category: 'Credit Service', qty: 1, unit: v.unit, total: v.unit, currency: v.currency }],
+      }
+    }),
+  ]
+
+  const allEntries = [...borrowEntries, ...paymentEntries, ...requestEntries]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const filtered = typeTab === 'All' ? allEntries : allEntries.filter(e => e.type === typeTab)
   const totalPages = Math.max(1, Math.ceil(filtered.length / TXN_PAGE_SIZE))
   const visible = filtered.slice((page - 1) * TXN_PAGE_SIZE, page * TXN_PAGE_SIZE)
 
-  const groupStatus = (g) => {
-    const active = g.items.filter(b => b.action !== 'purchased' && b.status === 'active')
-    if (active.some(b => b.dueDate && new Date(b.dueDate) < new Date())) return 'overdue'
-    if (active.length > 0) return 'active'
-    return g.items.every(b => b.action === 'purchased') ? 'purchased' : 'completed'
+  const TYPE_STYLE = {
+    Borrow:   { bg: T.blueLight, fg: T.blue },
+    Purchase: { bg: T.amberLight, fg: T.amber },
+    Credit:   { bg: T.purpleLight, fg: T.purple },
   }
 
   return (
     <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-white lg:mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone px-4 py-4 sm:px-6">
-        <h3 className="m-0 text-[15px] font-bold text-charcoal">Borrow &amp; Purchase Transactions</h3>
+        <div>
+          <h3 className="m-0 text-[15px] font-bold text-charcoal">Recent Transactions</h3>
+          <p className="m-0 mt-0.5 text-xs text-faint">Borrows &amp; purchases, credit payments, and pending/approved requests — click a row for item details.</p>
+        </div>
         <div className="flex flex-wrap gap-1.5">
-          {['All', 'Borrow', 'Purchase'].map(t => (
+          {['All', 'Borrow', 'Purchase', 'Credit'].map(t => (
             <button key={t} onClick={() => { setTypeTab(t); setPage(1) }}
               className="rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
               style={t === typeTab
@@ -212,27 +304,80 @@ function TransactionsPanel({ borrows, users }) {
         </div>
       </div>
 
-      {visible.length === 0 ? (
-        <p className="m-0 p-8 text-center text-sm text-faint">No transactions yet.</p>
-      ) : visible.map(g => {
-        const u = getUser(g.userId)
-        return (
-          <div key={g.key} className="flex items-center gap-3 border-b border-stone px-4 py-3 last:border-b-0 sm:gap-4 sm:px-6">
-            <div className="min-w-0 flex-1">
-              <p className="m-0 truncate text-[13px] font-semibold text-ink">{u?.name || `User #${g.userId}`}{u?.studentId ? ` (${u.studentId})` : ''}</p>
-              <p className="m-0 mt-0.5 truncate text-[11px] text-faint">
-                {g.items.map(b => b.itemName + (b.qty > 1 ? ` ×${b.qty}` : '')).join(', ')}
-              </p>
-            </div>
-            <span className="hidden flex-shrink-0 text-xs text-inv-muted sm:block">{g.date}</span>
-            <span className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
-              style={groupType(g) === 'Purchase' ? { background: T.amberLight, color: T.amber } : { background: T.blueLight, color: T.blue }}>
-              {groupType(g)}
-            </span>
-            <div className="flex-shrink-0"><Badge status={groupStatus(g)} small /></div>
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 760 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.8fr 2.2fr 1fr 1fr 24px', gap: 10, padding: '10px 24px', background: T.cream }}>
+            {['Student Name', 'Transaction', 'Items', 'Date', 'Status', ''].map(h => (
+              <span key={h} style={{ color: T.faint, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+            ))}
           </div>
-        )
-      })}
+
+          {visible.length === 0 ? (
+            <p className="m-0 p-8 text-center text-sm text-faint">No transactions yet.</p>
+          ) : visible.map(e => {
+            const u = e.userId != null ? getUser(e.userId) : null
+            const studentName = u?.name || e.studentName || `User #${e.userId}`
+            const studentId = u?.studentId || e.studentId
+            const isOpen = expandedKey === e.key
+            const ts = TYPE_STYLE[e.type]
+            return (
+              <div key={e.key}>
+                <div onClick={() => setExpandedKey(isOpen ? null : e.key)}
+                  style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.8fr 2.2fr 1fr 1fr 24px', gap: 10, padding: '12px 24px', alignItems: 'center', borderTop: `1px solid ${T.stone}`, cursor: 'pointer' }}
+                  className="hover:bg-cream">
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{studentName}</p>
+                    {studentId && <p style={{ margin: 0, fontSize: 10, color: T.faint }}>{studentId}</p>}
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 999, width: 'fit-content', background: ts.bg, color: ts.fg }}>
+                    {e.type}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: T.charcoal, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {e.items.length === 1 ? e.items[0].name : `${e.items.length} items`}
+                    </p>
+                  </div>
+                  <span style={{ fontSize: 12, color: T.muted }}>{e.date}</span>
+                  <div><Badge status={e.status} small /></div>
+                  <ChevronDown size={14} color={T.faint} style={{ transition: 'transform .15s', transform: isOpen ? 'rotate(180deg)' : 'none' }} />
+                </div>
+
+                {/* Inline expand — clean item table, no card/panel */}
+                {isOpen && (() => {
+                  const grandTotal = e.items.reduce((s, it) => s + (it.total || 0), 0)
+                  const currency = e.items[0]?.currency || 'cr'
+                  return (
+                    <div style={{ padding: '0 24px 14px 24px', background: T.cream, borderTop: `1px solid ${T.stone}` }} onClick={ev => ev.stopPropagation()}>
+                      <div style={{ marginTop: 12, background: '#fff', border: `1px solid ${T.border}`, borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr', gap: 8, padding: '8px 14px', background: T.cream, borderBottom: `1px solid ${T.border}` }}>
+                          {['Item', 'Category', 'Qty', 'Unit Credit', 'Total'].map((h, i) => (
+                            <span key={h} style={{ fontSize: 10, fontWeight: 800, color: T.faint, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: i >= 2 ? 'right' : 'left' }}>{h}</span>
+                          ))}
+                        </div>
+                        {e.items.map((it, i) => (
+                          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr', gap: 8, padding: '9px 14px', borderBottom: i === e.items.length - 1 ? 'none' : `1px solid ${T.stone}` }}>
+                            <span style={{ fontSize: 12.5, fontWeight: 600, color: T.charcoal, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name}</span>
+                            <span style={{ fontSize: 12, color: T.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.category || '—'}</span>
+                            <span style={{ fontSize: 12, color: T.muted, textAlign: 'right' }}>{it.qty}</span>
+                            <span style={{ fontSize: 12, color: T.muted, textAlign: 'right' }}>{it.currency === '$' ? '$' : ''}{it.unit}{it.currency === 'cr' ? ' cr' : ''}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: T.charcoal, textAlign: 'right' }}>{it.currency === '$' ? '$' : ''}{it.total}{it.currency === 'cr' ? ' cr' : ''}</span>
+                          </div>
+                        ))}
+                        {e.items.length > 1 && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '9px 14px', background: T.cream, borderTop: `1px solid ${T.border}` }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: T.faint, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transaction Total</span>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: T.charcoal }}>{currency === '$' ? '$' : ''}{grandTotal}{currency === 'cr' ? ' cr' : ''}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
       <div className="flex items-center justify-between border-t border-stone px-4 py-3 sm:px-6">
         <span className="text-xs text-faint">Showing {visible.length} of {filtered.length} transactions</span>
