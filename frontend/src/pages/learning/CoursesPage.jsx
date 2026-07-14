@@ -5,7 +5,7 @@ import CourseCard from "../../components/learning/ui/CourseCard";
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 
 export default function CoursesPage() {
-  const { active, setActive, filtered } = useCourseFilter();
+  const { active, setActive, filtered, loading } = useCourseFilter();
 
   return (
     <div className="bg-paper font-body">
@@ -16,9 +16,11 @@ export default function CoursesPage() {
             The Course Library
           </h1>
           <p className="mb-6 text-base text-ink-soft">
-            {filtered.length > 0
-              ? `${filtered.length} volumes across programming, robotics, and AI — each a complete learning journey.`
-              : "No courses match the selected category yet."}
+            {loading
+              ? "Opening the library…"
+              : filtered.length > 0
+                ? `${filtered.length} volumes across programming, robotics, and AI — each a complete learning journey.`
+                : "No courses match the selected category yet."}
           </p>
 
           {/* Category filters */}

@@ -7,7 +7,7 @@ const AuthCtx = createContext(null);
 // frontend (AdminGuard, AdminSidebar's role badge, etc.) was built around
 // capitalized roles ('Admin'/'Staff'/'User') — map at the boundary so
 // nothing downstream has to care which convention the API uses.
-const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User" };
+const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User", lecturer: "Lecturer" };
 
 function toFrontendUser(row) {
   return {

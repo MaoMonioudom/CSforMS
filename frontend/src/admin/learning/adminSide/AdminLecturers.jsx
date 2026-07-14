@@ -4,7 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 } from "@/components/community/ui/dialog";
 import { useCourses } from "../../../hooks/learning/useCourses";
-import { getLecturers, createLecturer, setUserActive } from "../../../data/userStore";
+import { useLecturers } from "../../../hooks/learning/useLecturers";
 
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
 
@@ -18,13 +18,13 @@ function AddLecturerDialog({ open, onOpenChange, onCreate }) {
   const [error, setError] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
       setError("Name, email, and password are all required.");
       return;
     }
-    const result = onCreate({ name: form.name.trim(), email: form.email.trim(), password: form.password });
+    const result = await onCreate({ name: form.name.trim(), email: form.email.trim(), password: form.password });
     if (result?.error) {
       setError(result.error);
       return;
@@ -65,24 +65,26 @@ function AddLecturerDialog({ open, onOpenChange, onCreate }) {
 
 export default function AdminLecturers() {
   const { courses } = useCourses();
-  const [lecturers, setLecturers] = useState(() => getLecturers());
+  const { lecturers, createLecturer, setActive } = useLecturers();
   const [addOpen, setAddOpen] = useState(false);
 
   const courseCountFor = (lecturerId) => courses.filter((c) => c.instructorId === lecturerId).length;
 
-  const create = ({ name, email, password }) => {
-    if (lecturers.some((l) => l.email.toLowerCase() === email.toLowerCase())) {
-      return { error: "A lecturer with that email already exists." };
+  const create = async ({ name, email, password }) => {
+    try {
+      await createLecturer({ name, email, password });
+      setAddOpen(false);
+      return { ok: true };
+    } catch (err) {
+      return { error: err.message || "Could not create the lecturer." };
     }
-    createLecturer({ name, email, password });
-    setLecturers(getLecturers());
-    setAddOpen(false);
-    return { ok: true };
   };
-
-  const toggleActive = (lecturer) => {
-    setUserActive(lecturer.id, !lecturer.active);
-    setLecturers(getLecturers());
+  const toggleActive = async (lecturer) => {
+    try {
+      await setActive(lecturer.id, !lecturer.active);
+    } catch (err) {
+      window.alert(err.message || "Could not update the lecturer.");
+    }
   };
 
   return (

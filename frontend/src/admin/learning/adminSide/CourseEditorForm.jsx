@@ -84,7 +84,7 @@ function LessonEditor({ lesson, index, onChange, onRemove, onMove, isFirst, isLa
   );
 }
 
-export default function CourseEditorForm({ initialCourse, lecturers, onSubmit, onCancel }) {
+export default function CourseEditorForm({ initialCourse, lecturers, lockInstructorId, onSubmit, onCancel }) {
   const isNew = !initialCourse;
 
   const [form, setForm] = useState(() => ({
@@ -93,7 +93,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, onSubmit, o
     category: initialCourse?.category || "",
     level: initialCourse?.level || LEVEL_OPTIONS[0],
     duration: initialCourse?.duration || "",
-    instructorId: initialCourse?.instructorId || "",
+    instructorId: initialCourse?.instructorId || lockInstructorId || "",
     paths: initialCourse?.paths?.length ? initialCourse.paths : ["basic"],
     interactivePrice: initialCourse?.interactivePrice ?? "",
     tags: (initialCourse?.tags || []).join(", "),
@@ -207,10 +207,14 @@ export default function CourseEditorForm({ initialCourse, lecturers, onSubmit, o
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>Instructor</label>
-            <select className={inputCls} value={form.instructorId} onChange={set("instructorId")}>
-              <option value="">Unassigned</option>
-              {lecturers.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
+            {lockInstructorId ? (
+              <input className={inputCls} value={lecturers.find((l) => l.id === lockInstructorId)?.name || ""} disabled />
+            ) : (
+              <select className={inputCls} value={form.instructorId} onChange={set("instructorId")}>
+                <option value="">Unassigned</option>
+                {lecturers.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            )}
           </div>
           <div>
             <label className={labelCls}>Tags (comma separated)</label>

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { getCourseById } from "../../data/courseStore";
+import { useCourse } from "../../hooks/learning/useCourses";
 import LessonPageView from "../../components/learning/ui/BookReader/LessonPageView";
 import NotFound from "../NotFound";
 
@@ -8,8 +8,15 @@ const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 export default function LessonDetail() {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
-  const course = getCourseById(id);
+  const { course, loading } = useCourse(id);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-navy-deep font-body">
+        <p className="text-sm text-navy-muted">Opening the book…</p>
+      </div>
+    );
+  }
   if (!course) return <NotFound />;
 
   const lesson = (course.lessons || []).find((l) => String(l.id) === lessonId);

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { getAllCourses } from "../../data/courseStore";
+import { useCourses } from "./useCourses";
 
 /**
  * Encapsulates category-filter logic for the courses page.
@@ -7,8 +7,7 @@ import { getAllCourses } from "../../data/courseStore";
  */
 export function useCourseFilter(initialCategory = "All") {
   const [active, setActive] = useState(initialCategory);
-
-  const courses = useMemo(() => getAllCourses(), []);
+  const { courses, loading } = useCourses();
 
   const filtered = useMemo(
     () =>
@@ -18,5 +17,5 @@ export function useCourseFilter(initialCategory = "All") {
     [active, courses]
   );
 
-  return { active, setActive, filtered };
+  return { active, setActive, filtered, loading };
 }

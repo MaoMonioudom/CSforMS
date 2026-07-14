@@ -82,10 +82,12 @@ const COMMUNITY_LINKS = [
 
 const LEARNING_LINKS = [
   { label: "Library",        to: "/learning",  featured: true, desc: "Browse all courses"        },
-  { label: "My Courses",     to: "/learning"  },
-  { label: "Progress",       to: "/learning"  },
-  { label: "Bookmarks",      to: "/learning"  },
-  { label: "Announcements",  to: "/learning"  },
+  { label: "Home",       to: "/learning"  },
+  { label: "About",          to: "/learning/about"  },
+  { label: "Courses",        to: "/learning/courses"  },
+  // { label: "Progress",       to: "/learning"  },
+  // { label: "Bookmarks",      to: "/learning"  },
+  // { label: "Announcements",  to: "/learning"  },
 ];
 
 // Inventory only has three real pages — Home, Browse (Catalog), and

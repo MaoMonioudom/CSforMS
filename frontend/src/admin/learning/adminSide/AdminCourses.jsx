@@ -6,9 +6,12 @@ export default function AdminCourses() {
   const { courses, deleteCourse } = useCourses();
   const navigate = useNavigate();
 
-  const remove = (course) => {
-    if (window.confirm(`Delete "${course.title}"? This can't be undone.`)) {
-      deleteCourse(course.id);
+  const remove = async (course) => {
+    if (!window.confirm(`Delete "${course.title}"? This can't be undone.`)) return;
+    try {
+      await deleteCourse(course.id);
+    } catch (err) {
+      window.alert(err.message || "Could not delete the course.");
     }
   };
 

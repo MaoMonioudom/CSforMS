@@ -1,8 +1,39 @@
 import { Router } from "express";
-import { createCrudRouter } from "../../shared/crudRouter.js";
+import { requireAuth, requireRole } from "../../middleware/requireAuth.js";
+import {
+  listCourses,
+  getCourse,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  listLecturers,
+  createLecturer,
+  setLecturerStatus,
+  enrollInCourse,
+  unlockCoursePath,
+  getMyLearning,
+} from "./learning.controller.js";
 
 const router = Router();
 
-router.use("/courses", createCrudRouter("courses"));
+// Public catalog — anyone can browse courses and lessons.
+router.get("/courses", listCourses);
+router.get("/courses/:id", getCourse);
+
+// Content management. requireRole gates the roles; per-course ownership for
+// lecturers is enforced inside the controller.
+router.post("/courses", requireAuth, requireRole("admin", "staff", "lecturer"), createCourse);
+router.put("/courses/:id", requireAuth, requireRole("admin", "staff", "lecturer"), updateCourse);
+router.delete("/courses/:id", requireAuth, requireRole("admin", "staff", "lecturer"), deleteCourse);
+
+// Lecturer accounts (Learning admin panel).
+router.get("/lecturers", requireAuth, requireRole("admin", "staff", "lecturer"), listLecturers);
+router.post("/lecturers", requireAuth, requireRole("admin", "staff"), createLecturer);
+router.put("/lecturers/:id/status", requireAuth, requireRole("admin", "staff"), setLecturerStatus);
+
+// Learner actions.
+router.post("/courses/:id/enroll", requireAuth, enrollInCourse);
+router.post("/courses/:id/unlock", requireAuth, unlockCoursePath);
+router.get("/me", requireAuth, getMyLearning);
 
 export default router;
