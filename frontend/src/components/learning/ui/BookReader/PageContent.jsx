@@ -1,4 +1,5 @@
 import { formatNumber, getInitials } from "../../../../utils/format";
+import { normalizeLessonBody } from "../../../../utils/format";
 import {
   typeBadgeClass,
   LESSON_NUM,
@@ -90,6 +91,7 @@ function TocPage({ course, onJumpToLesson }) {
 /* ── Lesson ── */
 export function LessonPage({ page, course }) {
   const { lesson: l, num } = page;
+  const bodyText = normalizeLessonBody(l.body);
   return (
     <>
       <span className={typeBadgeClass(l.type)}>{l.type}</span>
@@ -98,7 +100,7 @@ export function LessonPage({ page, course }) {
       </div>
       <h2 className={LESSON_TITLE}>{l.title}</h2>
       <div className={LESSON_DUR}>⏱ {l.duration}</div>
-      <div className={LESSON_BODY} dangerouslySetInnerHTML={{ __html: l.body }} />
+      <div className={`${LESSON_BODY} whitespace-pre-wrap`}>{bodyText}</div>
       {l.points && l.points.length > 0 && (
         <div className={LESSON_POINTS}>
           <div className={LESSON_POINTS_TITLE}>Key takeaways</div>

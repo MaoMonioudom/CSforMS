@@ -34,21 +34,41 @@ export function formatNumber(n) {
  * e.g. "<p>Python is <b>great</b></p>" → "Python is great"
  */
 export function stripHtmlPreview(html = "", maxLength = 90) {
-  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const text = normalizeLessonBody(html).replace(/\s+/g, " ").trim();
   return text.length > maxLength ? `${text.slice(0, maxLength).trim()}…` : text;
 }
 
 /**
- * Splits a lesson body into an intro paragraph and a list of steps
- * (its <li> bullets), for the Step-by-Step path's checklist view.
- * e.g. "<p>Intro</p><ul><li>Do X</li><li>Do Y</li></ul>"
- *   → { intro: "Intro", items: ["Do X", "Do Y"] }
+ * Normalizes a lesson body into plain text so editors and readers do not
+ * need to deal with HTML markup.
  */
-export function parseBodySteps(html = "") {
-  const stripTags = (s) => s.replace(/<[^>]+>/g, "").trim();
-  const intro = stripTags(html.match(/<p>([\s\S]*?)<\/p>/)?.[1] ?? "");
-  const items = Array.from(html.matchAll(/<li>([\s\S]*?)<\/li>/g)).map((m) =>
-    stripTags(m[1])
-  );
-  return { intro, items };
+export function normalizeLessonBody(body = "") {
+  const text = String(body)
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|ul|ol)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+
+  return text.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/**
+ * Splits a lesson body into an intro line and a list of steps for the
+ * Step-by-Step path. The first non-empty line becomes the intro and the
+ * remaining lines become checklist items.
+ */
+export function parseBodySteps(body = "") {
+  const lines = normalizeLessonBody(body)
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return {
+    intro: lines[0] || "",
+    items: lines.slice(1),
+  };
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { normalizeLessonBody } from "../../../utils/format";
 
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
 const labelCls = "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5";
@@ -11,7 +12,8 @@ const PATH_OPTIONS = [
 ];
 
 const LEVEL_OPTIONS = ["Beginner", "Intermediate", "Advanced"];
-const LESSON_TYPES = ["video", "reading"];
+const LESSON_TYPES = ["video", "reading", "Lab", "Project", "Assignment"];
+const COLOR_PRESETS = ["#2D6A4F", "#7B2D8B", "#C9600A", "#1A5276", "#7D6608", "#1B6B5A"];
 
 function emptyLesson() {
   return { title: "", duration: "", type: "video", body: "", points: "" };
@@ -23,7 +25,7 @@ function toFormLesson(lesson) {
     title: lesson.title || "",
     duration: lesson.duration || "",
     type: lesson.type || "video",
-    body: lesson.body || "",
+    body: normalizeLessonBody(lesson.body || ""),
     points: (lesson.points || []).join("\n"),
   };
 }
@@ -70,9 +72,9 @@ function LessonEditor({ lesson, index, onChange, onRemove, onMove, isFirst, isLa
       </div>
 
       <div>
-        <label className={labelCls}>Body (HTML)</label>
-        <textarea className={`${inputCls} font-mono text-xs`} rows={4} value={lesson.body} onChange={set("body")}
-          placeholder="<p>Lesson content…</p>" />
+        <label className={labelCls}>Body</label>
+        <textarea className={inputCls} rows={4} value={lesson.body} onChange={set("body")}
+          placeholder="Lesson content" />
       </div>
 
       <div>
@@ -94,6 +96,8 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
     level: initialCourse?.level || LEVEL_OPTIONS[0],
     duration: initialCourse?.duration || "",
     instructorId: initialCourse?.instructorId || lockInstructorId || "",
+    coverColor: initialCourse?.coverColor || "#2D6A4F",
+    spineColor: initialCourse?.spineColor || "#1B4332",
     paths: initialCourse?.paths?.length ? initialCourse.paths : ["basic"],
     interactivePrice: initialCourse?.interactivePrice ?? "",
     tags: (initialCourse?.tags || []).join(", "),
@@ -148,6 +152,8 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
       duration: form.duration.trim(),
       instructorId: form.instructorId || null,
       instructor: instructor?.name || "",
+      coverColor: form.coverColor.trim() || undefined,
+      spineColor: form.spineColor.trim() || undefined,
       paths: form.paths,
       interactivePrice: form.paths.includes("interactive") && form.interactivePrice !== ""
         ? Number(form.interactivePrice)
@@ -159,7 +165,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         title: l.title.trim(),
         duration: l.duration.trim(),
         type: l.type,
-        body: l.body,
+        body: l.body.trim(),
         points: l.points.split("\n").map((p) => p.trim()).filter(Boolean),
       })),
     };
@@ -201,6 +207,59 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
           <div>
             <label className={labelCls}>Duration</label>
             <input className={inputCls} value={form.duration} onChange={set("duration")} placeholder="e.g. 12 weeks" />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Cover color</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                className="h-10 w-14 rounded-lg border border-gray-200 bg-white p-1"
+                value={form.coverColor}
+                onChange={set("coverColor")}
+                aria-label="Cover color picker"
+              />
+              <input
+                className={inputCls}
+                value={form.coverColor}
+                onChange={set("coverColor")}
+                placeholder="#2D6A4F"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Use a hex value or the picker.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {COLOR_PRESETS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, coverColor: color }))}
+                  className="h-6 w-6 rounded-full border border-gray-200 shadow-sm"
+                  style={{ backgroundColor: color }}
+                  aria-label={`Set cover color to ${color}`}
+                />
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Spine color</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                className="h-10 w-14 rounded-lg border border-gray-200 bg-white p-1"
+                value={form.spineColor}
+                onChange={set("spineColor")}
+                aria-label="Spine color picker"
+              />
+              <input
+                className={inputCls}
+                value={form.spineColor}
+                onChange={set("spineColor")}
+                placeholder="#1B4332"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Use a hex value or the picker.</p>
           </div>
         </div>
 
