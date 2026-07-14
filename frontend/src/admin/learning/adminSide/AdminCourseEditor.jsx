@@ -1,23 +1,32 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CourseEditorForm from "./CourseEditorForm";
-import { getCourseById, saveCourse, createCourse } from "../../../data/courseStore";
-import { getLecturers } from "../../../data/userStore";
+import { useCourse } from "../../../hooks/learning/useCourses";
+import { useLecturers } from "../../../hooks/learning/useLecturers";
+import { learningApi } from "../../../lib/api/learning";
 import NotFound from "../../../pages/NotFound";
 
 export default function AdminCourseEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id;
-  const course = isNew ? null : getCourseById(id);
+  const { course, loading } = useCourse(id);
+  const { lecturers } = useLecturers();
+  const [error, setError] = useState("");
 
+  if (!isNew && loading) {
+    return <p className="text-sm text-gray-400">Loading course…</p>;
+  }
   if (!isNew && !course) return <NotFound />;
 
-  const lecturers = getLecturers().filter((l) => l.active);
-
-  const handleSubmit = (courseData) => {
-    if (isNew) createCourse(courseData);
-    else saveCourse(courseData);
-    navigate("/admin/learning/courses");
+  const handleSubmit = async (courseData) => {
+    try {
+      if (isNew) await learningApi.createCourse(courseData);
+      else await learningApi.updateCourse(id, courseData);
+      navigate("/admin/learning/courses");
+    } catch (err) {
+      setError(err.message || "Could not save the course.");
+    }
   };
 
   return (
@@ -29,9 +38,13 @@ export default function AdminCourseEditor() {
         </p>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{error}</div>
+      )}
+
       <CourseEditorForm
         initialCourse={course}
-        lecturers={lecturers}
+        lecturers={lecturers.filter((l) => l.active)}
         onSubmit={handleSubmit}
         onCancel={() => navigate("/admin/learning/courses")}
       />

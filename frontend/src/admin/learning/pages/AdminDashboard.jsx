@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { BookOpen, GraduationCap, Users2, ArrowUpRight } from "lucide-react";
-import { getAllCourses } from "../../../data/courseStore";
-import { getLecturers } from "../../../data/userStore";
+import { useCourses } from "../../../hooks/learning/useCourses";
+import { useLecturers } from "../../../hooks/learning/useLecturers";
 
 function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
   return (
@@ -26,8 +26,8 @@ function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
 }
 
 export default function AdminDashboard() {
-  const courses = getAllCourses();
-  const lecturers = getLecturers();
+  const { courses } = useCourses();
+  const { lecturers } = useLecturers();
   const totalStudents = courses.reduce((sum, c) => sum + (c.students || 0), 0);
 
   return (

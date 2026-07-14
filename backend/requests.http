@@ -202,18 +202,87 @@ Authorization: Bearer {{authToken}}
 
 
 ### =====================================================
-### Learning module (pk: id — this table came from the first migration)
+### Learning module (tables from supabase/005_learning_tables.sql;
+### seed demo data with: node scripts/seedLearning.js)
 ### =====================================================
 
+### Public catalog — courses come back in the frontend shape, lessons nested
 GET {{baseUrl}}/api/learning/courses
 
+### Single course
+GET {{baseUrl}}/api/learning/courses/1
+
+### Create a course (admin/staff/lecturer; lecturers become the instructor
+### automatically regardless of instructorId)
 POST {{baseUrl}}/api/learning/courses
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
   "title": "Intro to 3D Printing",
+  "subtitle": "From STL to first layer",
   "description": "Basics of FDM printing",
   "category": "Fabrication",
-  "level": "Beginner"
+  "level": "Beginner",
+  "duration": "6 weeks",
+  "paths": ["basic", "interactive"],
+  "interactivePrice": 9.99,
+  "tags": ["3d-printing", "hardware"],
+  "lessons": [
+    {
+      "title": "Meet the printer",
+      "duration": "30 min",
+      "type": "video",
+      "body": "<p>Parts of an FDM printer.</p>",
+      "points": ["Hotend melts filament", "Bed adhesion matters"]
+    }
+  ]
 }
+
+### Update a course (same body shape; lessons array replaces all lessons)
+PUT {{baseUrl}}/api/learning/courses/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Python Fundamentals (updated)",
+  "paths": ["basic"]
+}
+
+### Delete a course
+DELETE {{baseUrl}}/api/learning/courses/1
+Authorization: Bearer {{authToken}}
+
+### Lecturers (admin/staff to create or de/activate)
+GET {{baseUrl}}/api/learning/lecturers
+Authorization: Bearer {{authToken}}
+
+POST {{baseUrl}}/api/learning/lecturers
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New Lecturer",
+  "email": "new.lecturer@makerspace.edu",
+  "password": "lecturer123"
+}
+
+PUT {{baseUrl}}/api/learning/lecturers/9/status
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "active": false
+}
+
+### Learner actions (any signed-in user)
+POST {{baseUrl}}/api/learning/courses/1/enroll
+Authorization: Bearer {{authToken}}
+
+### Mock purchase of the interactive path
+POST {{baseUrl}}/api/learning/courses/1/unlock
+Authorization: Bearer {{authToken}}
+
+### My enrollments + unlocks
+GET {{baseUrl}}/api/learning/me
+Authorization: Bearer {{authToken}}

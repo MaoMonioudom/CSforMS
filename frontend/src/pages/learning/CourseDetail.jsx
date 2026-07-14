@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getCourseById } from "../../data/courseStore";
+import { useCourse } from "../../hooks/learning/useCourses";
 import LessonBookCard from "../../components/learning/ui/LessonBookCard";
 import PathSelector from "../../components/learning/ui/PathSelector";
 import CheckoutModal from "../../components/learning/ui/Checkout/CheckoutModal";
@@ -12,12 +12,24 @@ const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const course = getCourseById(id);
+  const { course, loading } = useCourse(id);
   const { isUnlocked, unlock } = useUnlockedPaths();
 
-  const [activePath, setActivePath] = useState(() => course?.paths?.[0] ?? "basic");
+  const [activePath, setActivePath] = useState("basic");
   const [showCheckout, setShowCheckout] = useState(false);
 
+  // The course arrives async — once it does, start on its first path.
+  useEffect(() => {
+    if (course?.paths?.length) setActivePath(course.paths[0]);
+  }, [course]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-navy-deep font-body">
+        <p className="text-sm text-navy-muted">Opening the book…</p>
+      </div>
+    );
+  }
   if (!course) return <NotFound />;
 
   const lessons = course.lessons || [];

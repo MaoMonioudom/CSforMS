@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { getAllCourses } from "../../data/courseStore";
+import { useCourses } from "../../hooks/learning/useCourses";
 import SectionHeader from "../../components/learning/ui/SectionHeader";
 import HeroShelf from "../../components/learning/ui/HeroShelf";
 import CourseCard from "../../components/learning/ui/CourseCard";
@@ -25,10 +25,12 @@ const BTN =
   "inline-flex cursor-pointer items-center justify-center gap-2 rounded px-7 py-[13px] font-body text-[0.9rem] font-semibold transition-all duration-300";
 
 export default function Home() {
-  const courses = getAllCourses();
+  const { courses } = useCourses();
   const featured = courses.slice(0, 3);
-  const totalStudents = courses.reduce((sum, c) => sum + c.students, 0);
-  const avgRating = courses.reduce((sum, c) => sum + c.rating, 0) / courses.length;
+  const totalStudents = courses.reduce((sum, c) => sum + (c.students || 0), 0);
+  const avgRating = courses.length
+    ? courses.reduce((sum, c) => sum + (c.rating || 0), 0) / courses.length
+    : 0;
   const stats = [
     { value: `${courses.length}+`, label: "Courses" },
     { value: `${formatNumber(Math.round(totalStudents / 100) * 100)}+`, label: "Students" },
