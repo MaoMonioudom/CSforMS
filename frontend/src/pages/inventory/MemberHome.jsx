@@ -9,6 +9,7 @@ import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inve
 import PageBreadcrumb from '../../components/inventory/layout/PageBreadcrumb'
 import CreditInfoModal from '../../components/inventory/ui/CreditInfoModal'
 import { useAuth } from '../../hub/AuthContext'
+import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const NAVY   = '#0e7490' // teal-700 — primary accent (kept name to avoid touching every usage)
 const TEAL   = '#0891b2'
@@ -41,6 +42,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   // (id, name, matching borrow/request records) still comes from Inventory's
   // local state, since borrow/purchase logic isn't wired to the real backend yet.
   const { user: hubUser } = useAuth()
+  const { submitTopUpRequest, submitPrintingRequest, submit3DPrintRequest } = useInventory()
   const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
 
   const [activeCat, setActiveCat]   = useState('all')
@@ -59,11 +61,13 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   const [creditOpen, setCreditOpen] = useState(false)
   const scrollToCredits = () => setCreditOpen(true)
 
-  const requestTopUp = (amountUSD) => {
-    const today = new Date().toISOString().split('T')[0]
-    const reqId = Date.now()
-    setRequests?.(prev => [...prev, { id: reqId, userId: user.id, type: 'credit_topup', amountUSD, status: 'pending', date: today }])
-    showToast?.('Top-up request sent to the makerspace team.')
+  const requestTopUp = async (amountUSD) => {
+    try {
+      await submitTopUpRequest({ amountUSD })
+      showToast?.('Top-up request sent to the makerspace team.')
+    } catch (err) {
+      showToast?.(err.message || 'Could not send the top-up request.', 'error')
+    }
   }
 
   // Due-date reminder — briefly toast once per visit if the student has a borrow
@@ -90,26 +94,25 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
   const openPrintModal = (id) => { setPrintModal(id); setPages(''); setNotes(''); setFilamentId(filaments[0]?.id || '') }
 
-  const submitPrintRequest = () => {
-    const today = new Date().toISOString().split('T')[0]
-    const reqId = Date.now()
-    if (printModal === 'printing') {
-      const p = Number(pages)
-      if (!p || p <= 0) { showToast('Enter how many pages you need.', 'error'); return }
-      const credits = p * PRINT_SERVICES[0].rate
-      setRequests(prev => [...prev, { id: reqId, userId: user.id, type: 'printing', pages: p, credits, status: 'pending', date: today }])
-      // Staff see this in their own Requests queue — no notification needed since
-      // only students have a notification center.
-      showToast('Printing request sent to staff.')
-    } else {
-      const filament = filaments.find(f => f.id === Number(filamentId))
-      setRequests(prev => [...prev, {
-        id: reqId, userId: user.id, type: '3d_printing', filamentId: Number(filamentId) || null,
-        filamentName: filament ? `${filament.name} ${filament.color}` : 'Any available', note: notes, status: 'awaiting_weight', date: today,
-      }])
-      showToast('3D print request sent — staff will weigh your print and confirm the cost.')
+  const submitPrintRequest = async () => {
+    try {
+      if (printModal === 'printing') {
+        const p = Number(pages)
+        if (!p || p <= 0) { showToast('Enter how many pages you need.', 'error'); return }
+        const credits = p * PRINT_SERVICES[0].rate
+        await submitPrintingRequest({ pages: p, credits })
+        // Staff see this in their own Requests queue — no notification needed since
+        // only students have a notification center.
+        showToast('Printing request sent to staff.')
+      } else {
+        if (!filamentId) { showToast('Choose a filament first.', 'error'); return }
+        await submit3DPrintRequest({ filamentId: Number(filamentId), note: notes })
+        showToast('3D print request sent — staff will weigh your print and confirm the cost.')
+      }
+      setPrintModal(null)
+    } catch (err) {
+      showToast(err.message || 'Could not send the request.', 'error')
     }
-    setPrintModal(null)
   }
 
   return (

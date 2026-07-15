@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Users, CheckCircle2, XCircle } from 'lucide-react'
+import { api } from '../../../lib/api/client'
+import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const PERMS = ['manage_items', 'track_borrows', 'view_dashboard', 'approve_borrows', 'manage_maintenance']
 const roleStyles = {
@@ -9,24 +11,40 @@ const roleStyles = {
 }
 
 export default function UserManager({ users, setUsers }) {
+  const ctx = useInventory()
   const [sel, setSel] = useState(null)
   const pendingMembers = users.filter((u) => u.membership === 'pending')
 
+  // Permissions are a UI-only concept for now (no backend column) — local toggle.
   const togglePerm = (uid, perm) => setUsers((p) => p.map((u) => {
     if (u.id !== uid) return u
     const perms = u.permissions || []
     return { ...u, permissions: perms.includes(perm) ? perms.filter((x) => x !== perm) : [...perms, perm] }
   }))
 
-  const setMembership = (uid, membership) => {
-    const credits = membership === 'active' ? 200 : 0
-    setUsers((p) => p.map((u) => (u.id !== uid ? u : { ...u, membership, credits })))
-    setSel((u) => (u && u.id === uid ? { ...u, membership, credits } : u))
+  // Legacy pending-approval buttons — real memberships are only ever
+  // active/inactive, so this list stays empty; kept for compile safety.
+  const setMembership = (uid, m) => {
+    if (m === 'active') return toggleMembership(uid)
+    ctx?.showToast?.('Denying membership requests is not supported.', 'error')
   }
 
-  const toggleMembership = (uid) => {
+  // Activation goes through the membership module (upserts the memberships row).
+  // Deactivation isn't supported server-side, so the toggle only activates.
+  const toggleMembership = async (uid) => {
     const current = users.find((u) => u.id === uid)
-    setMembership(uid, current?.membership === 'active' ? null : 'active')
+    if (current?.membership === 'active') {
+      ctx?.showToast?.('Memberships expire on their own — deactivation is not supported.', 'error')
+      return
+    }
+    try {
+      await api.post(`/api/membership/${uid}/activate`)
+      await ctx?.refreshUsers?.()
+      setSel((u) => (u && u.id === uid ? { ...u, membership: 'active' } : u))
+      ctx?.showToast?.('Membership activated.')
+    } catch (err) {
+      ctx?.showToast?.(err.message || 'Activation failed.', 'error')
+    }
   }
 
   return (

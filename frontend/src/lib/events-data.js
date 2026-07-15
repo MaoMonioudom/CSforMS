@@ -78,12 +78,11 @@ export async function fetchMyEventRegistrations() {
   return data;
 }
 
+// One-way — there's no self-service unregister. If you can't make it,
+// an admin removes you (removeEventRegistrant below) so the spot frees up
+// for someone else without letting registration be a no-commitment toggle.
 export async function registerForEvent(id) {
   await api.post(`/api/community/events/${id}/register`);
-}
-
-export async function unregisterFromEvent(id) {
-  await api.del(`/api/community/events/${id}/register`);
 }
 
 // Admin/staff only — who's registered for one event.
@@ -96,6 +95,11 @@ export async function fetchEventRegistrants(id) {
     userName: r.user.user_name,
     registeredAt: r.registration_date,
   }));
+}
+
+// Admin/staff only — removes a specific registrant (e.g. a no-show).
+export async function removeEventRegistrant(eventId, userId) {
+  await api.del(`/api/community/events/${eventId}/registrants/${userId}`);
 }
 
 // Admin/staff only — sends every active registrant an in-app notification.

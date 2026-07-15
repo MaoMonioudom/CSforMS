@@ -73,6 +73,18 @@ export function AuthProvider({ children }) {
     return mapped;
   };
 
+  // Establishes a session from a token issued outside the normal login/signup
+  // calls — the Microsoft OAuth callback and the reset-password flow both
+  // hand back a ready-made session token instead of credentials.
+  const loginWithToken = async (token) => {
+    setToken(token);
+    const { user: row } = await api.get("/api/auth/session");
+    const mapped = toFrontendUser(row);
+    setUser(mapped);
+    refreshMembership();
+    return mapped;
+  };
+
   const logout = () => { setUser(null); setToken(null); };
 
   // Patches fields on the current user client-side only — for things that
@@ -83,7 +95,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthCtx.Provider value={{ user, loading, login, signup, logout, updateUser, refreshMembership }}>
+    <AuthCtx.Provider value={{ user, loading, login, signup, loginWithToken, logout, updateUser, refreshMembership }}>
       {children}
     </AuthCtx.Provider>
   );

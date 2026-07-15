@@ -1,4 +1,5 @@
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
+import { adjustCredits, CreditsError } from "../../shared/credits.js";
 
 // Membership is deliberately not staff-actioned through a request/approval
 // queue — payment always happens in person at the front desk (cash/QR), so
@@ -98,35 +99,14 @@ export async function topUpCredits(req, res, next) {
       return res.status(400).json({ error: "credits must be a positive number" });
     }
 
-    const { data: membership, error: lookupError } = await supabaseAdmin
-      .from("memberships")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!membership) {
-      return res.status(400).json({ error: "This user is not a member yet — activate membership first" });
-    }
-
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from("memberships")
-      .update({ credits: membership.credits + credits })
-      .eq("membership_id", membership.membership_id)
-      .select()
-      .single();
-    if (updateError) throw updateError;
-
-    const { error: txnError } = await supabaseAdmin.from("credit_transactions").insert({
-      membership_id: membership.membership_id,
-      transaction_type: "earn",
-      source_type: "membership",
-      amount: credits,
+    const updated = await adjustCredits(userId, credits, {
+      sourceType: "membership",
       description: description || "Credit top-up at front desk",
     });
-    if (txnError) throw txnError;
 
     res.json({ data: toPublicMembership(updated) });
   } catch (err) {
+    if (err instanceof CreditsError) return res.status(err.status).json({ error: err.message });
     next(err);
   }
 }

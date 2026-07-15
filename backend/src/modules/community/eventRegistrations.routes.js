@@ -9,6 +9,11 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 // here is at least two segments past /events (e.g. /:id/register,
 // /registrations/me), so nothing collides with the generic router's single
 // -segment /:id.
+//
+// Registration is intentionally one-way for the registrant: once you're in,
+// there's no self-cancel — an admin has to remove you (see
+// DELETE /:id/registrants/:userId below). This is a deliberate product
+// decision, not an oversight.
 const router = Router();
 
 router.post("/:id/register", requireAuth, async (req, res, next) => {
@@ -23,22 +28,6 @@ router.post("/:id/register", requireAuth, async (req, res, next) => {
       );
     if (error) throw error;
     res.status(201).json({ data: { eventId, registered: true } });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.delete("/:id/register", requireAuth, async (req, res, next) => {
-  if (!assertSupabaseConfigured(res)) return;
-  try {
-    const eventId = Number(req.params.id);
-    const { error } = await supabaseAdmin
-      .from("event_registrations")
-      .update({ participant_status: "cancelled" })
-      .eq("event_id", eventId)
-      .eq("user_id", req.user.user_id);
-    if (error) throw error;
-    res.status(204).end();
   } catch (err) {
     next(err);
   }
@@ -91,6 +80,25 @@ router.get("/:id/registrants", requireAuth, requireRole("admin", "staff"), async
       .order("registration_date", { ascending: false });
     if (error) throw error;
     res.json({ data: data.map(normalizeRow) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Admin/staff-only: removes a specific registrant (e.g. a no-show freeing
+// their spot for someone else) — the only way a registration goes away.
+router.delete("/:id/registrants/:userId", requireAuth, requireRole("admin", "staff"), async (req, res, next) => {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const eventId = Number(req.params.id);
+    const userId = Number(req.params.userId);
+    const { error } = await supabaseAdmin
+      .from("event_registrations")
+      .update({ participant_status: "cancelled" })
+      .eq("event_id", eventId)
+      .eq("user_id", userId);
+    if (error) throw error;
+    res.status(204).end();
   } catch (err) {
     next(err);
   }

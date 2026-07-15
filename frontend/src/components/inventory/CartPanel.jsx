@@ -1,10 +1,15 @@
+import { useState } from 'react'
 import { ShoppingCart, X, Minus, Plus, RotateCcw, ShoppingBag, ArrowRight, Info } from 'lucide-react'
 import { T } from '../../lib/inventory/theme'
 import { CATEGORIES, OVERDUE_RATE } from '../../lib/inventory/data'
+import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const LOAN_DAYS = 7 // fallback borrow period if an item somehow has no chosen due date
 
-export default function CartPanel({ cart, setCart, user, setUser, setBorrows, setRequests, showToast, onClose }) {
+export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
+  const { submitBorrowRequests, purchaseItems } = useInventory()
+  const [busy, setBusy] = useState(false)
+
   const updateQty = (id, delta) => setCart(prev => prev.map(ci => ci.item.id === id ? { ...ci, qty: Math.max(1, ci.qty + delta) } : ci))
   const remove    = (id) => setCart(prev => prev.filter(ci => ci.item.id !== id))
 
@@ -13,33 +18,30 @@ export default function CartPanel({ cart, setCart, user, setUser, setBorrows, se
   const totalCr        = cart.reduce((s, ci) => s + ci.item.credits * ci.qty, 0)
   const buyCr          = buyItems.reduce((s, ci) => s + ci.item.credits * ci.qty, 0)
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (user.membership !== 'active') { showToast('Active membership required.', 'error'); return }
     if (buyItems.length > 0 && user.credits < buyCr) { showToast('Insufficient credits.', 'error'); return }
-    const requestDate = new Date()
-    const dateStr = requestDate.toISOString().split('T')[0]
-    const fallbackDue = new Date(requestDate); fallbackDue.setDate(fallbackDue.getDate() + LOAN_DAYS)
-    // Every item placed in this single checkout shares one orderId so borrow/purchase
-    // records and their notification can later be grouped back into one transaction.
-    const orderId = `ORD-${Date.now()}`
-    if (borrowItems.length > 0) {
-      borrowItems.forEach(ci => {
-        const req = {
-          id: Date.now() + ci.item.id, userId: user.id, itemId: ci.item.id, itemName: ci.item.name, type: 'borrow', status: 'pending',
-          date: dateStr, dueDate: ci.dueDate || fallbackDue.toISOString().split('T')[0], qty: ci.qty, orderId,
-        }
-        setRequests(prev => [...prev, req])
-      })
-      // Staff see this in their own Requests queue — no notification needed since
-      // only students have a notification center.
+    const fallbackDue = new Date(); fallbackDue.setDate(fallbackDue.getDate() + LOAN_DAYS)
+    setBusy(true)
+    try {
+      if (borrowItems.length > 0) {
+        // One request per item, grouped under a shared order id server-side.
+        await submitBorrowRequests(borrowItems.map(ci => ({
+          itemId: ci.item.id, qty: ci.qty,
+          dueDate: ci.dueDate || fallbackDue.toISOString().split('T')[0],
+        })))
+      }
+      if (buyItems.length > 0) {
+        await purchaseItems(buyItems.map(ci => ({ itemId: ci.item.id, qty: ci.qty })))
+      }
+      setCart([])
+      onClose()
+      showToast(borrowItems.length > 0 ? `${borrowItems.length} borrow request(s) submitted for staff approval.` : 'Purchase complete!')
+    } catch (err) {
+      showToast(err.message || 'Checkout failed. Please try again.', 'error')
+    } finally {
+      setBusy(false)
     }
-    if (buyItems.length > 0) {
-      setUser(u => ({ ...u, credits: u.credits - buyCr }))
-      buyItems.forEach(ci => setBorrows(prev => [...prev, { id: Date.now() + ci.item.id, userId: user.id, itemId: ci.item.id, itemName: ci.item.name, action: 'purchased', date: dateStr, status: 'purchased', qty: ci.qty, credits: ci.item.credits * ci.qty, orderId }]))
-    }
-    setCart([])
-    onClose()
-    showToast(borrowItems.length > 0 ? `${borrowItems.length} borrow request(s) submitted for staff approval.` : 'Purchase complete!')
   }
 
   return (
@@ -117,8 +119,8 @@ export default function CartPanel({ cart, setCart, user, setUser, setBorrows, se
                 </div>
               )}
 
-              <button onClick={placeOrder}
-                style={{ width: '100%', background: T.charcoal, color: '#fff', border: 'none', borderRadius: 10, padding: 13, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <button onClick={placeOrder} disabled={busy}
+                style={{ width: '100%', background: T.charcoal, color: '#fff', border: 'none', borderRadius: 10, padding: 13, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: busy ? 0.6 : 1 }}>
                 {borrowItems.length > 0 && buyItems.length === 0 ? 'Submit Borrow Requests' : buyItems.length > 0 && borrowItems.length === 0 ? 'Confirm Purchase' : 'Submit All'}
                 <ArrowRight size={16} />
               </button>

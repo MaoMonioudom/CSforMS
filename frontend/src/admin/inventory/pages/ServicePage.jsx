@@ -3,6 +3,7 @@ import { Search, Printer, BadgeCheck, Box } from 'lucide-react'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { PRINT_SERVICES } from '../../../lib/inventory/data'
+import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 
@@ -11,7 +12,8 @@ const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 // approval step needed since the student is standing at the counter. 3D print
 // cost is driven entirely by the selected filament's own credit-per-gram rate,
 // so editing that rate in Manage Stock changes the price here immediately.
-export default function ServicePage({ users = [], setUsers, filaments = [], setFilaments, setNotifications, setPayments, showToast, user }) {
+export default function ServicePage({ users = [], filaments = [], showToast, user }) {
+  const ctx = useInventory()
   const [query,      setQuery]      = useState('')
   const [student,    setStudent]    = useState(null)
   const [pages,      setPages]      = useState('')
@@ -31,36 +33,33 @@ export default function ServicePage({ users = [], setUsers, filaments = [], setF
   const printCredits = Math.round(Number(pages || 0) * PRINT_RATE)
   const printCost3D  = Math.round(Number(grams || 0) * filamentRate)
 
-  const today = () => new Date().toISOString().split('T')[0]
-
-  const notifyAndPay = (amount, orderId, type, message) => {
-    setUsers(prev => prev.map(u => u.id === student.id ? { ...u, credits: u.credits - amount } : u))
-    setStudent(prev => ({ ...prev, credits: prev.credits - amount }))
-    setPayments?.(prev => [{
-      id: Date.now(), customerName: student.name, customerId: student.studentId, date: today(),
-      amount, currency: 'CR', status: 'Completed', method: 'Credit', orderId, type, handledBy: user?.id,
-    }, ...prev])
-    setNotifications?.(prev => [{ id: Date.now() + 1, type: 'approved', message, read: false, date: today(), userId: student.id }, ...prev])
-  }
-
-  const chargePrinting = () => {
+  const chargePrinting = async () => {
     const p = Number(pages)
     if (!p || p <= 0) { showToast?.('Enter how many pages.', 'error'); return }
     if (student.credits < printCredits) { showToast?.(`${student.name} needs ${printCredits} cr but only has ${student.credits}.`, 'error'); return }
-    notifyAndPay(printCredits, `PRINT-${Date.now()}`, 'Document Printing', `Staff printed ${p} page(s) for you — ${printCredits} cr charged.`)
-    showToast?.(`Charged ${printCredits} cr for ${p} page(s) — ${student.name}`)
-    setPages('')
+    try {
+      await ctx.chargePrint({ studentId: student.id, pages: p, rate: PRINT_RATE })
+      setStudent(prev => ({ ...prev, credits: prev.credits - printCredits }))
+      showToast?.(`Charged ${printCredits} cr for ${p} page(s) — ${student.name}`)
+      setPages('')
+    } catch (err) {
+      showToast?.(err.message || 'Charge failed.', 'error')
+    }
   }
 
-  const charge3D = () => {
+  const charge3D = async () => {
     const g = Number(grams)
     if (!g || g <= 0) { showToast?.('Enter the print weight in grams.', 'error'); return }
     if (!filament) { showToast?.('Select a filament first.', 'error'); return }
     if (student.credits < printCost3D) { showToast?.(`${student.name} needs ${printCost3D} cr but only has ${student.credits}.`, 'error'); return }
-    notifyAndPay(printCost3D, `3DP-${Date.now()}`, '3D Printing', `Your 3D print is ready — ${g}g used, ${printCost3D} cr charged.`)
-    setFilaments?.(prev => prev.map(f => f.id === filament.id ? { ...f, stockGrams: Math.max(0, f.stockGrams - g) } : f))
-    showToast?.(`Charged ${printCost3D} cr for ${g}g (${filament.name} ${filament.color}) — ${student.name}`)
-    setGrams('')
+    try {
+      await ctx.charge3D({ studentId: student.id, filamentId: filament.id, grams: g })
+      setStudent(prev => ({ ...prev, credits: prev.credits - printCost3D }))
+      showToast?.(`Charged ${printCost3D} cr for ${g}g (${filament.name} ${filament.color}) — ${student.name}`)
+      setGrams('')
+    } catch (err) {
+      showToast?.(err.message || 'Charge failed.', 'error')
+    }
   }
 
   return (
