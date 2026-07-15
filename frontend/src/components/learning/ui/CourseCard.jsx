@@ -44,6 +44,13 @@ export default function CourseCard({ course }) {
           <span className="text-xs leading-none" aria-hidden="true">📖</span>
           {course.lessons?.length ?? 0} ch.
         </span>
+        <span
+          className="inline-flex items-center gap-[5px] text-[12.5px] font-medium text-[#B9C2CE]"
+          title={`${course.students || 0} enrolled students`}
+        >
+          <span className="text-xs leading-none" aria-hidden="true">👥</span>
+          {(course.students || 0).toLocaleString()}
+        </span>
         <span className="ml-auto inline-flex items-center gap-[5px] text-[12.5px] font-medium text-(--accent)">
           <span className="text-xs leading-none" aria-hidden="true">★</span>
           {course.rating}

@@ -33,7 +33,7 @@ export default function Home() {
     : 0;
   const stats = [
     { value: `${courses.length}+`, label: "Courses" },
-    { value: `${formatNumber(Math.round(totalStudents / 100) * 100)}+`, label: "Students" },
+    { value: `${formatNumber(totalStudents)}+`, label: "Students" },
     { value: `${avgRating.toFixed(1)}★`, label: "Avg Rating" },
   ];
 
