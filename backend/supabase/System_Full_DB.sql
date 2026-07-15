@@ -14,6 +14,9 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     profile_img_url TEXT,
 
+    microsoft_id VARCHAR(255) UNIQUE,
+    microsoft_linked_at TIMESTAMP,
+
     role VARCHAR(20) NOT NULL
         CHECK (role IN ('user', 'staff', 'admin'))
         DEFAULT 'user',
@@ -241,155 +244,127 @@ CREATE TABLE location_items (
 );
 
 CREATE TABLE inventory_items (
-    item_id SERIAL PRIMARY KEY,
-
+    id SERIAL PRIMARY KEY,
     category_id INTEGER,
     location_id INTEGER,
-
     is_returnable BOOLEAN DEFAULT TRUE,
-
-    item_name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
-
-    current_stock INTEGER DEFAULT 0 CHECK (current_stock >= 0),
-
+    stock INTEGER DEFAULT 0 CHECK (stock >= 0),
+    condition VARCHAR(50) DEFAULT 'Good',
     status VARCHAR(20)
-        CHECK (status IN ('available', 'unavailable'))
+        CHECK (status IN ('available', 'borrowed', 'maintenance', 'unavailable'))
         DEFAULT 'available',
-
-    unit_credit INTEGER DEFAULT 0,
-
+    credits INTEGER DEFAULT 0,
+    maintenance_log JSONB DEFAULT '[]',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL,
     FOREIGN KEY (location_id) REFERENCES location_items(location_id) ON DELETE SET NULL
 );
 
-CREATE TABLE borrow_transactions (
-    borrow_id SERIAL PRIMARY KEY,
+CREATE TABLE profiles (
+    id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    student_id VARCHAR(50) UNIQUE,
+    membership VARCHAR(20) NOT NULL DEFAULT 'inactive'
+        CHECK (membership IN ('active', 'inactive', 'pending')),
+    credits INTEGER NOT NULL DEFAULT 0 CHECK (credits >= 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE requests (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    item_id INTEGER NOT NULL,
-
-    quantity_borrow INTEGER NOT NULL CHECK (quantity_borrow > 0),
-
-    borrow_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    due_date TIMESTAMP NOT NULL,
-
+    item_id INTEGER,
+    item_name VARCHAR(255),
+    type VARCHAR(50) NOT NULL
+        CHECK (type IN ('borrow', 'credit_topup', 'printing', '3d_printing')),
+    status VARCHAR(20) NOT NULL
+        CHECK (status IN ('pending', 'approved', 'denied'))
+        DEFAULT 'pending',
+    amount_usd INTEGER,
+    credits INTEGER,
+    pages INTEGER,
+    grams INTEGER,
+    filament_id INTEGER,
+    due_date DATE,
     approved_by INTEGER,
-
-    status VARCHAR(20)
-        CHECK (status IN ('borrowed', 'returned', 'overdue'))
-        DEFAULT 'borrowed',
-
+    order_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES inventory_items(item_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE SET NULL,
+    FOREIGN KEY (filament_id) REFERENCES filaments(id) ON DELETE SET NULL,
     FOREIGN KEY (approved_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
-CREATE TABLE return_transactions (
-    return_id SERIAL PRIMARY KEY,
-    borrow_id INTEGER NOT NULL,
-
-    quantity_returned INTEGER DEFAULT 1 CHECK (quantity_returned > 0),
-
-    is_damaged BOOLEAN DEFAULT FALSE,
-    notes TEXT,
-
-    received_by INTEGER,
-    return_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (borrow_id) REFERENCES borrow_transactions(borrow_id) ON DELETE CASCADE,
-    FOREIGN KEY (received_by) REFERENCES users(user_id) ON DELETE SET NULL
-);
-
-CREATE TABLE item_additions (
-    item_add_id SERIAL PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-
-    quantity_added INTEGER NOT NULL CHECK (quantity_added > 0),
-    unit_price INTEGER,
-    notes TEXT,
-
-    added_by INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (item_id) REFERENCES inventory_items(item_id) ON DELETE CASCADE,
-    FOREIGN KEY (added_by) REFERENCES users(user_id) ON DELETE SET NULL
-);
-
-CREATE TABLE maintenance_logs (
-    maintenance_id SERIAL PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-
-    reported_by INTEGER,
-    quantity_damaged INTEGER DEFAULT 1,
-
-    notes TEXT,
-    reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (item_id) REFERENCES inventory_items(item_id) ON DELETE CASCADE,
-    FOREIGN KEY (reported_by) REFERENCES users(user_id) ON DELETE SET NULL
-);
-
--- =====================================================
--- 8. COMMERCE SYSTEM
--- =====================================================
-
-CREATE TABLE invoices (
-    invoice_id SERIAL PRIMARY KEY,
+CREATE TABLE borrows (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-
-    total_credit INTEGER DEFAULT 0,
-    total_amount INTEGER DEFAULT 0,
-
-    status VARCHAR(20)
-        CHECK (status IN ('pending', 'paid', 'cancelled'))
-        DEFAULT 'pending',
-
-    payment_method VARCHAR(20),
-
-    verified_by INTEGER,
-
+    item_id INTEGER,
+    item_name VARCHAR(255),
+    action VARCHAR(50) NOT NULL
+        CHECK (action IN ('borrowed', 'returned', 'purchased')),
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    due_date DATE,
+    return_date DATE,
+    status VARCHAR(20) NOT NULL
+        CHECK (status IN ('active', 'completed', 'returned'))
+        DEFAULT 'active',
+    credits INTEGER DEFAULT 0,
+    approved_by INTEGER,
+    order_id VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (verified_by) REFERENCES users(user_id) ON DELETE SET NULL
+    FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE SET NULL,
+    FOREIGN KEY (approved_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
-CREATE TABLE purchase_items (
-    purchase_item_id SERIAL PRIMARY KEY,
-    invoice_id INTEGER NOT NULL,
-
-    item_id INTEGER,
-
-    quantity INTEGER DEFAULT 1,
-    unit_price INTEGER DEFAULT 0,
-    subtotal INTEGER DEFAULT 0,
-
+CREATE TABLE filaments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    stock_grams INTEGER NOT NULL DEFAULT 0 CHECK (stock_grams >= 0),
+    rate INTEGER NOT NULL DEFAULT 4,
+    status VARCHAR(20) NOT NULL
+        CHECK (status IN ('available', 'unavailable'))
+        DEFAULT 'available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES inventory_items(item_id) ON DELETE SET NULL
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE payments (
-    payment_id SERIAL PRIMARY KEY,
-    invoice_id INTEGER NOT NULL,
-
-    transaction_id TEXT,
-    payment_method VARCHAR(20),
-
-    amount_paid INTEGER DEFAULT 0,
-
-    payment_status VARCHAR(20)
-        CHECK (payment_status IN ('pending', 'paid', 'failed', 'cancelled'))
-        DEFAULT 'pending',
-
-    paid_at TIMESTAMP,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    customer_name VARCHAR(255),
+    customer_id VARCHAR(100),
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    amount INTEGER NOT NULL DEFAULT 0,
+    currency VARCHAR(20) NOT NULL DEFAULT 'CR',
+    status VARCHAR(20) NOT NULL DEFAULT 'Completed',
+    method VARCHAR(50),
+    order_id VARCHAR(100),
+    type VARCHAR(100),
+    handled_by INTEGER,
+    item_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (handled_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
 
-    FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    type VARCHAR(50),
+    message TEXT NOT NULL,
+    read BOOLEAN DEFAULT FALSE,
+    date DATE,
+    dedup_key VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE (user_id, dedup_key)
 );
 
 -- =====================================================

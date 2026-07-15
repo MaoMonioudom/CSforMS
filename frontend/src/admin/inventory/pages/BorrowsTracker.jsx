@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { T } from '../../../lib/inventory/theme'
 import { OVERDUE_RATE, CATEGORIES } from '../../../lib/inventory/data'
+import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const DAY = 86400000
 const today = () => new Date().toISOString().split('T')[0]
@@ -137,7 +138,8 @@ function TransactionDetail({ r }) {
 }
 
 // ── Borrows Tracker (staff/admin) ────────────────────────────────────────
-export default function BorrowsTracker({ borrows, setBorrows, items, setItems, users = [], setUsers, showToast, user }) {
+export default function BorrowsTracker({ borrows, items, users = [], showToast, user }) {
+  const ctx = useInventory()
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [sortDir, setSortDir] = useState('asc')
@@ -212,52 +214,46 @@ export default function BorrowsTracker({ borrows, setBorrows, items, setItems, u
     return list
   }, [records, query, statusFilter, sortDir])
 
-  // ── Actions ─────────────────────────────────────────────────────────────
-  const confirmReturnGroup = (rec, itemStates) => {
-    const d = today()
+  // ── Actions — all persisted through the backend ─────────────────────────
+  const confirmReturnGroup = async (rec, itemStates) => {
     const anyIssue = rec.activeItems.some(b => itemStates[b.id]?.condition !== 'Good')
-    setBorrows(prev => prev.map(b => {
-      const state = itemStates[b.id]
-      if (!state) return b
-      return { ...b, status: 'completed', returnDate: d, condition: state.condition.toLowerCase() === 'good' ? 'good' : state.condition === 'Damaged' ? 'damaged' : 'maintenance', ...(state.issue ? { issue: state.issue } : {}) }
-    }))
-    setItems(prev => prev.map(i => {
-      const b = rec.activeItems.find(x => x.itemId === i.id)
-      if (!b) return i
-      const state = itemStates[b.id]
-      if (!state) return i
-      if (state.condition === 'Good') return { ...i, status: 'available', stock: i.stock + 1, condition: 'Good' }
-      const entry = { id: `maint-${b.id}-${Date.now()}`, reportedBy: user?.name || 'Staff', issue: state.issue || 'Reported issue', date: d, status: 'open' }
-      return { ...i, status: 'maintenance', stock: i.stock + 1, condition: state.condition, maintenanceLog: [entry, ...(i.maintenanceLog || [])] }
-    }))
-    setReturning(null)
-    showToast?.(anyIssue ? 'Items returned. Some flagged for repair — maintenance log created and borrowing disabled until fixed.' : 'All items confirmed returned in good condition.')
+    try {
+      for (const b of rec.activeItems) {
+        const state = itemStates[b.id]
+        if (!state) continue
+        await ctx.returnBorrow(b.id, {
+          isDamaged: state.condition !== 'Good',
+          notes: state.issue || (state.condition !== 'Good' ? `Returned as ${state.condition}` : undefined),
+        })
+      }
+      setReturning(null)
+      showToast?.(anyIssue ? 'Items returned. Some flagged for repair — maintenance log created and borrowing disabled until fixed.' : 'All items confirmed returned in good condition.')
+    } catch (err) {
+      showToast?.(err.message || 'Return failed.', 'error')
+    }
   }
 
-  const confirmDeduct = (rec, amount, reason) => {
+  const confirmDeduct = async (rec, amount, reason) => {
     if (!amount || amount <= 0) { showToast?.('Enter the credit amount to deduct.', 'error'); return }
-    setUsers?.(prev => prev.map(u => u.id === rec.userId ? { ...u, credits: Math.max(0, u.credits - amount) } : u))
-    setBorrows(prev => prev.map(b => rec.activeItems.some(x => x.id === b.id) ? { ...b, penaltyCredits: (b.penaltyCredits || 0) + amount / rec.activeItems.length } : b))
-    setDeducting(null)
-    showToast?.(`Deducted ${amount} credit${amount !== 1 ? 's' : ''} from ${rec.student?.name || 'student'}${reason ? ` — ${reason}` : ''}.`)
+    try {
+      await ctx.deductCredits({ userId: rec.userId, amount, reason })
+      setDeducting(null)
+      showToast?.(`Deducted ${amount} credit${amount !== 1 ? 's' : ''} from ${rec.student?.name || 'student'}${reason ? ` — ${reason}` : ''}.`)
+    } catch (err) {
+      showToast?.(err.message || 'Deduction failed.', 'error')
+    }
   }
 
-  const saveEdit = (rec, dueDates, qtyMap) => {
-    setBorrows(prev => prev.map(b => {
-      if (!dueDates[b.id] && !qtyMap[b.id]) return b
-      return { ...b, ...(dueDates[b.id] ? { dueDate: dueDates[b.id] } : {}), ...(qtyMap[b.id] ? { qty: qtyMap[b.id] } : {}) }
-    }))
+  // Borrow history is an immutable ledger now — due dates are set at approval
+  // and completed transactions can't be edited or deleted from the UI.
+  const saveEdit = () => {
     setEditing(null)
-    showToast?.('Borrow record updated.')
+    showToast?.('Borrow records can no longer be edited — set the due date when approving the request.', 'error')
   }
 
-  const deleteRecord = (rec) => {
-    const activeIds = new Set(rec.activeItems.map(b => b.itemId))
-    setItems(prev => prev.map(i => activeIds.has(i.id) ? { ...i, status: 'available', stock: i.stock + 1 } : i))
-    const ids = new Set(rec.raw.map(b => b.id))
-    setBorrows(prev => prev.filter(b => !ids.has(b.id)))
+  const deleteRecord = () => {
     setDeleting(null)
-    showToast?.('Record deleted.')
+    showToast?.('Borrow history is permanent and cannot be deleted.', 'error')
   }
 
   return (

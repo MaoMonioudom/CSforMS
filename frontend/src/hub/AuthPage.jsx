@@ -1,25 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Layers, Mail, Lock, User, LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
+import { Layers, Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import msBbgLogo from "../assets/ms_bbg_logo.png";
 import { HubNav } from "./HubNav";
 import { AppFooter } from "../components/AppFooter";
+import { BASE_URL } from "../lib/api/client";
+import { D, GRADIENT, ErrorBox, TextField, PasswordField, MicrosoftButton, OrDivider } from "./authUi";
+import { destinationFor } from "./authNav";
 // Single shared page for both /login and /register — which mode is active
 // is derived from the route, and switching modes navigates between the two
 // routes while sliding an overlay panel across (classic sign-in/sign-up
 // panel pattern): register puts the info panel on the left and the form on
 // the right; login is the mirror of that.
-
-const D = {
-  bg:     "#eef5fc",
-  bg2:    "#dbeafe",
-  card:   "#ffffff",
-  border: "rgba(99,102,241,0.18)",
-  muted:  "#5b7286",
-  text:   "#16324a",
-};
-const GRADIENT = "linear-gradient(135deg,#033e8a,#0078b7)";
 
 // const MODULES = [
 //   { label: "Community", color: "#c9a86c" },
@@ -27,45 +20,15 @@ const GRADIENT = "linear-gradient(135deg,#033e8a,#0078b7)";
 //   { label: "Inventory", color: "#0891b2" },
 // ];
 
-const inputStyle = { background: "rgba(15,50,80,0.045)", border: "1px solid rgba(15,50,80,0.14)", color: D.text };
-const focusIn  = (e) => (e.target.style.borderColor = "#6366f1");
-const focusOut = (e) => (e.target.style.borderColor = "rgba(15,50,80,0.14)");
+const OAUTH_ERROR_MESSAGES = {
+  invalid_state: "Your sign-in attempt expired. Please try again.",
+  no_email: "Microsoft didn't share an email address for that account.",
+  inactive: "This account is inactive.",
+  domain_not_allowed: "That Microsoft account isn't eligible to sign up here.",
+};
 
-function ErrorBox({ message }) {
-  if (!message) return null;
-  return (
-    <div className="px-4 py-2.5 rounded-xl text-sm font-medium"
-      style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.28)", color: "#b91c1c" }}>
-      {message}
-    </div>
-  );
-}
-
-function TextField({ icon: Icon, ...props }) {
-  return (
-    <div className="relative">
-      <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: D.muted }} />
-      <input {...props} className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none transition-colors"
-        style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
-    </div>
-  );
-}
-
-function PasswordField({ value, onChange, placeholder, autoComplete, show, onToggleShow }) {
-  return (
-    <div className="relative">
-      <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: D.muted }} />
-      <input
-        type={show ? "text" : "password"} value={value} onChange={onChange}
-        placeholder={placeholder} autoComplete={autoComplete}
-        className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm outline-none transition-colors"
-        style={inputStyle} onFocus={focusIn} onBlur={focusOut}
-      />
-      <button type="button" onClick={onToggleShow} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: D.muted }}>
-        {show ? <EyeOff size={14} /> : <Eye size={14} />}
-      </button>
-    </div>
-  );
+function continueWithMicrosoft() {
+  window.location.href = `${BASE_URL}/api/auth/microsoft/login?intent=login`;
 }
 
 // ── Login form ──────────────────────────────────────────────────────────────
@@ -83,7 +46,12 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold" style={{ color: D.muted }}>Password</label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold" style={{ color: D.muted }}>Password</label>
+          <Link to="/forgot-password" className="text-xs font-semibold hover:underline" style={{ color: "#6366f1" }}>
+            Forgot password?
+          </Link>
+        </div>
         <PasswordField value={form.password} onChange={set("password")} placeholder="••••••••" autoComplete="current-password" show={showPw} onToggleShow={() => setShowPw(v => !v)} />
       </div>
 
@@ -93,6 +61,9 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
         {loading ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <LogIn size={14} />}
         {loading ? "Signing in…" : "Sign In"}
       </button>
+
+      <OrDivider />
+      <MicrosoftButton onClick={continueWithMicrosoft} />
 
       {mobileToggle}
     </form>
@@ -143,6 +114,9 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
         {loading ? "Creating account…" : "Create Account"}
       </button>
 
+      <OrDivider />
+      <MicrosoftButton onClick={continueWithMicrosoft} />
+
       {mobileToggle}
     </form>
   );
@@ -166,12 +140,12 @@ export default function AuthPage() {
 
   useEffect(() => { setError(""); setLoading(false); }, [isRegister]);
 
-  // Admin/Staff always land in the admin panel — regardless of what page
-  // they clicked "Sign In" from, they're here to manage things, not to
-  // resume browsing. Everyone else returns to wherever they came from
-  // (`from`), or their profile if there's nowhere to return to.
-  const destinationFor = (role, from) =>
-    (role === "Admin" || role === "Staff") ? "/admin" : (from || "/profile");
+  // Surfaces failures redirected back from the Microsoft OAuth callback
+  // (e.g. /login?error=inactive) as the same ErrorBox a failed form submit uses.
+  useEffect(() => {
+    const code = new URLSearchParams(location.search).get("error");
+    if (code) setError(OAUTH_ERROR_MESSAGES[code] || "Something went wrong signing in with Microsoft.");
+  }, [location.search]);
 
   // Already signed in but landed on /login or /register anyway (e.g. via a
   // bookmark, or the "back" button after a previous sign-in) — bounce away

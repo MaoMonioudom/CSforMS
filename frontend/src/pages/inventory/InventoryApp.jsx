@@ -26,7 +26,7 @@ export default function InventoryApp() {
   const goToLogin = () => navigate('/login', { state: { from: BASE } })
 
   const {
-    user, setUser, items, setItems, users, setUsers,
+    user, items, setItems, users, setUsers,
     borrows, setBorrows, requests, setRequests,
     notifications, setNotifications, payments, setPayments,
     filaments, toast, setToast, showToast,
@@ -87,7 +87,7 @@ export default function InventoryApp() {
           </Routes>
         </main>
         {cartOpen && user && (
-          <CartPanel cart={cart} setCart={setCart} user={user} setUser={setUser} setBorrows={setBorrows} setRequests={setRequests} showToast={showToast} onClose={() => setCartOpen(false)} />
+          <CartPanel cart={cart} setCart={setCart} user={user} showToast={showToast} onClose={() => setCartOpen(false)} />
         )}
       </div>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}

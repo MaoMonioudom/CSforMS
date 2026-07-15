@@ -28,6 +28,9 @@ import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
 import HubAboutPage from "./hub/AboutPage";
 import AuthPage from "./hub/AuthPage";
+import ForgotPasswordPage from "./hub/ForgotPasswordPage";
+import ResetPasswordPage from "./hub/ResetPasswordPage";
+import MicrosoftCallbackPage from "./hub/MicrosoftCallbackPage";
 import ProfilePage from "./hub/ProfilePage";
 import NotificationsPage from "./hub/NotificationsPage";
 import MembershipPage from "./hub/MembershipPage";
@@ -100,6 +103,9 @@ export default function App() {
         <Route path="/hub/about" element={<HubAboutPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/register" element={<AuthPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/callback" element={<MicrosoftCallbackPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/membership" element={<MembershipPage />} />

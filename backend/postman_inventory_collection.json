@@ -1,0 +1,487 @@
+{
+  "info": {
+    "name": "CSforMS — Inventory API",
+    "description": "Inventory module test flow. Run top-to-bottom:\n\n1. AUTH — log in as a student and as a staff/admin. Tokens are saved to collection variables automatically.\n2. CATALOG — public reads + staff item/filament management.\n3. STUDENT FLOW — submit borrow / top-up / printing / 3D requests, self-purchase, notifications.\n4. STAFF APPROVALS — approve or deny what the student submitted. IDs are saved automatically from the student's requests.\n5. BORROWS & RETURNS — list loans, return (good/damaged), late-fee deduction, maintenance.\n6. COUNTER — walk-up printing/3D, in-person sale, membership & credit top-up.\n7. ADMIN VIEWS — payments (invoices) and the student directory.\n\nBefore starting: set `studentEmail`/`studentPassword` and `staffEmail`/`staffPassword` in the collection variables to real accounts (the staff account's role must be 'staff' or 'admin' in the users table).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "studentEmail", "value": "student@student.cadt.edu.kh" },
+    { "key": "studentPassword", "value": "test123" },
+    { "key": "staffEmail", "value": "staff@cadt.edu.kh" },
+    { "key": "staffPassword", "value": "test123" },
+    { "key": "studentToken", "value": "" },
+    { "key": "staffToken", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "itemId", "value": "1" },
+    { "key": "consumableItemId", "value": "2" },
+    { "key": "filamentId", "value": "1" },
+    { "key": "borrowRequestId", "value": "" },
+    { "key": "topupRequestId", "value": "" },
+    { "key": "printingRequestId", "value": "" },
+    { "key": "threeDRequestId", "value": "" },
+    { "key": "borrowId", "value": "" },
+    { "key": "notificationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 · Auth",
+      "item": [
+        {
+          "name": "Login — Student",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.test('logged in', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('studentToken', d.token);",
+            "pm.collectionVariables.set('studentId', d.user.user_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Login — Staff/Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.test('logged in', () => pm.response.to.have.status(200));",
+            "pm.test('is staff or admin', () => ['staff','admin'].includes(d.user.role));",
+            "pm.collectionVariables.set('staffToken', d.token);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Session check (student)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/api/auth/session"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Catalog (public reads + staff writes)",
+      "item": [
+        { "name": "List items (public)", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/items" } },
+        { "name": "List categories (public)", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/categories" } },
+        { "name": "List locations (public)", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/locations" } },
+        { "name": "List filaments (public)", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/filaments" } },
+        {
+          "name": "Create item (staff)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "if (d.data) pm.collectionVariables.set('itemId', d.data.item_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/items",
+            "body": { "mode": "raw", "raw": "{\n  \"item_name\": \"Arduino UNO R3\",\n  \"description\": \"Microcontroller board\",\n  \"is_returnable\": true,\n  \"unit_credit\": 4,\n  \"current_stock\": 10,\n  \"min_stock\": 2,\n  \"status\": \"available\",\n  \"category_id\": 2,\n  \"location_id\": 1\n}" }
+          }
+        },
+        {
+          "name": "Create consumable item (staff)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "if (d.data) pm.collectionVariables.set('consumableItemId', d.data.item_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/items",
+            "body": { "mode": "raw", "raw": "{\n  \"item_name\": \"Solder Wire 60/40\",\n  \"description\": \"100g spool\",\n  \"is_returnable\": false,\n  \"unit_credit\": 2,\n  \"current_stock\": 20,\n  \"min_stock\": 5,\n  \"status\": \"available\",\n  \"category_id\": 8,\n  \"location_id\": 2\n}" }
+          }
+        },
+        {
+          "name": "Update item (staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/items/{{itemId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"current_stock\": 12\n}" }
+          }
+        },
+        {
+          "name": "Create filament (staff)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/filaments",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"PLA\",\n  \"color\": \"Red\",\n  \"hex\": \"#e11d48\",\n  \"stock_grams\": 1000,\n  \"rate\": 4\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 · Student flow",
+      "item": [
+        {
+          "name": "Submit borrow request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.test('created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('borrowRequestId', d.data.request_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests",
+            "body": { "mode": "raw", "raw": "{\n  \"request_type\": \"borrow\",\n  \"item_id\": {{itemId}},\n  \"quantity\": 1,\n  \"due_date\": \"2026-07-25\",\n  \"note\": \"For class project\"\n}" }
+          }
+        },
+        {
+          "name": "Submit credit top-up request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.collectionVariables.set('topupRequestId', d.data.request_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests",
+            "body": { "mode": "raw", "raw": "{\n  \"request_type\": \"credit_topup\",\n  \"amount_usd\": 5\n}" }
+          }
+        },
+        {
+          "name": "Submit printing request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.collectionVariables.set('printingRequestId', d.data.request_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests",
+            "body": { "mode": "raw", "raw": "{\n  \"request_type\": \"printing\",\n  \"pages\": 10,\n  \"credits\": 20\n}" }
+          }
+        },
+        {
+          "name": "Submit 3D print request",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "pm.collectionVariables.set('threeDRequestId', d.data.request_id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests",
+            "body": { "mode": "raw", "raw": "{\n  \"request_type\": \"3d_printing\",\n  \"filament_id\": {{filamentId}},\n  \"note\": \"Phone stand model\"\n}" }
+          }
+        },
+        {
+          "name": "My requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/requests"
+          }
+        },
+        {
+          "name": "Self-purchase consumable (needs credits)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/purchase",
+            "body": { "mode": "raw", "raw": "{\n  \"cart\": [ { \"itemId\": {{consumableItemId}}, \"qty\": 1 } ]\n}" }
+          }
+        },
+        {
+          "name": "My notifications",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "if (d.data && d.data.length) pm.collectionVariables.set('notificationId', d.data[0].notification_id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/notifications"
+          }
+        },
+        {
+          "name": "Mark one notification read",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/notifications/{{notificationId}}/read"
+          }
+        },
+        {
+          "name": "Mark all notifications read",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/notifications/read-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 · Staff approvals",
+      "item": [
+        {
+          "name": "All requests (staff sees everyone's)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/requests"
+          }
+        },
+        {
+          "name": "Approve borrow request(s)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests/approve-borrow",
+            "body": { "mode": "raw", "raw": "{\n  \"requestIds\": [ {{borrowRequestId}} ]\n}" }
+          }
+        },
+        {
+          "name": "Approve credit top-up",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/requests/{{topupRequestId}}/approve-topup"
+          }
+        },
+        {
+          "name": "Approve printing",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/requests/{{printingRequestId}}/approve-printing"
+          }
+        },
+        {
+          "name": "Confirm 3D weight (charges by grams × rate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests/{{threeDRequestId}}/confirm-3d-weight",
+            "body": { "mode": "raw", "raw": "{\n  \"grams\": 25\n}" }
+          }
+        },
+        {
+          "name": "Deny request(s)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/requests/deny",
+            "body": { "mode": "raw", "raw": "{\n  \"requestIds\": [ {{borrowRequestId}} ]\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 · Borrows & returns",
+      "item": [
+        {
+          "name": "List borrows (staff = all, student = own)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const d = pm.response.json();",
+            "const active = (d.data || []).find(b => b.status === 'borrowed');",
+            "if (active) pm.collectionVariables.set('borrowId', active.borrow_id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/borrows"
+          }
+        },
+        {
+          "name": "Return borrow — good condition",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/borrows/{{borrowId}}/return",
+            "body": { "mode": "raw", "raw": "{\n  \"isDamaged\": false\n}" }
+          }
+        },
+        {
+          "name": "Return borrow — damaged (creates maintenance log)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/borrows/{{borrowId}}/return",
+            "body": { "mode": "raw", "raw": "{\n  \"isDamaged\": true,\n  \"notes\": \"Cracked casing\"\n}" }
+          }
+        },
+        {
+          "name": "Deduct credits (late/damage fee)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/borrows/deduct-credits",
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": {{studentId}},\n  \"amount\": 10,\n  \"reason\": \"Late return fee — 2 days\"\n}" }
+          }
+        },
+        {
+          "name": "Report item maintenance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/items/{{itemId}}/report-maintenance",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Button not responding\",\n  \"quantityDamaged\": 1\n}" }
+          }
+        },
+        {
+          "name": "Complete item maintenance",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/items/{{itemId}}/maintenance-complete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 · Counter (walk-up, no request row)",
+      "item": [
+        {
+          "name": "Activate membership ($20 → active + 200cr)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/topup-counter",
+            "body": { "mode": "raw", "raw": "{\n  \"studentId\": {{studentId}},\n  \"amountUSD\": 20,\n  \"method\": \"cash\",\n  \"type\": \"membership\"\n}" }
+          }
+        },
+        {
+          "name": "Credit top-up counter ($ → credits at 40/$1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/topup-counter",
+            "body": { "mode": "raw", "raw": "{\n  \"studentId\": {{studentId}},\n  \"amountUSD\": 5,\n  \"method\": \"qr\",\n  \"type\": \"topup\"\n}" }
+          }
+        },
+        {
+          "name": "Walk-up document printing",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/services/print",
+            "body": { "mode": "raw", "raw": "{\n  \"studentId\": {{studentId}},\n  \"pages\": 5,\n  \"rate\": 2\n}" }
+          }
+        },
+        {
+          "name": "Walk-up 3D print",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/services/3d-print",
+            "body": { "mode": "raw", "raw": "{\n  \"studentId\": {{studentId}},\n  \"filamentId\": {{filamentId}},\n  \"grams\": 15\n}" }
+          }
+        },
+        {
+          "name": "Counter sale (purchase + borrow cart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/inventory/sale",
+            "body": { "mode": "raw", "raw": "{\n  \"studentId\": {{studentId}},\n  \"cart\": [\n    { \"itemId\": {{consumableItemId}}, \"qty\": 2, \"action\": \"purchase\" },\n    { \"itemId\": {{itemId}}, \"qty\": 1, \"action\": \"borrow\" }\n  ]\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 · Admin views",
+      "item": [
+        {
+          "name": "Payments / invoices list",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/payments"
+          }
+        },
+        {
+          "name": "Student directory (users + membership + credits)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/inventory/users"
+          }
+        },
+        {
+          "name": "Membership of one user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/membership/{{studentId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

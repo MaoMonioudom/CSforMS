@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes } from 'lucide-react'
 import { T } from '../../lib/inventory/theme'
 import { CATEGORIES } from '../../lib/inventory/data'
+import { useInventory } from '../../lib/inventory/InventoryContext'
 import PageBreadcrumb from '../../components/inventory/layout/PageBreadcrumb'
 
 const NOTIF_META = {
@@ -94,12 +95,20 @@ function Badge({ status }) {
 }
 
 export default function NotificationsPage({ notifications, setNotifications, user, borrows, requests, items = [] }) {
+  const ctx = useInventory()
   const isUser = user.role === 'user'
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
 
-  const markAll = () => setNotifications(p => p.map(n => ({ ...n, read: true })))
-  const markOne = (id) => setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n))
+  // Optimistic local flip + server write-through.
+  const markAll = () => {
+    setNotifications(p => p.map(n => ({ ...n, read: true })))
+    ctx?.markAllNotificationsRead?.().catch(() => {})
+  }
+  const markOne = (id) => {
+    setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n))
+    ctx?.markNotificationRead?.(id).catch(() => {})
+  }
 
   // Build one unified, chronological feed: system notifications + (for students)
   // their own borrow/purchase/request activity — all in a single list, no tabs.

@@ -5,7 +5,9 @@
 node_modules
 dist
 dist-ssr
-
+frontend/.env
+backend/.env
+*/.env
 # Logs
 logs
 *.log

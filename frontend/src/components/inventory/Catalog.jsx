@@ -4,6 +4,7 @@ import Badge from './ui/Badge'
 import PageBreadcrumb from './layout/PageBreadcrumb'
 import { T } from '../../lib/inventory/theme'
 import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE } from '../../lib/inventory/data'
+import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const LOAN_DAYS = 7 // standard borrow period — shown to the student before they confirm
 
@@ -372,7 +373,8 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
 }
 
 // ── Catalog Page ──────────────────────────────────────────────────────────────
-export default function Catalog({ items, user, cart, setCart, showToast, onRequireAuth, users, setUsers, setItems, setBorrows, setPayments, onCartOpen, borrows = [] }) {
+export default function Catalog({ items, user, cart, setCart, showToast, onRequireAuth, users, onCartOpen, borrows = [] }) {
+  const ctx = useInventory()
   const [search,     setSearch]     = useState('')
   const [filterCat,  setFilterCat]  = useState('all')
   const [filterType, setFilterType] = useState('all')
@@ -424,70 +426,48 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   }
 
   // Staff: activate a student's membership in person — $20 charge, 200 bonus credits.
-  const activateStudentMembership = (method = 'Cash') => {
-    const txnId = Date.now()
-    setUsers(prev => prev.map(u => u.id === staffStudent.id ? { ...u, membership: 'active', credits: u.credits + MEMBERSHIP_PLAN.bonusCredits } : u))
-    setStaffStudent(prev => ({ ...prev, membership: 'active', credits: prev.credits + MEMBERSHIP_PLAN.bonusCredits }))
-    setPayments?.(prev => [{
-      id: txnId, customerName: staffStudent.name, customerId: staffStudent.studentId,
-      date: new Date().toISOString().split('T')[0], amount: MEMBERSHIP_PLAN.price, currency: 'USD', status: 'Completed',
-      method, orderId: `MEM-${txnId}`, type: 'Membership Activation', handledBy: user.id,
-    }, ...prev])
-    showToast(`Activated membership for ${staffStudent.name} — $${MEMBERSHIP_PLAN.price} charged (${method}), ${MEMBERSHIP_PLAN.bonusCredits} credits added.`)
+  const activateStudentMembership = async (method = 'Cash') => {
+    try {
+      await ctx.topUpCounter({ studentId: staffStudent.id, amountUSD: MEMBERSHIP_PLAN.price, method: method.toLowerCase(), type: 'membership' })
+      setStaffStudent(prev => ({ ...prev, membership: 'active', credits: prev.credits + MEMBERSHIP_PLAN.bonusCredits }))
+      showToast(`Activated membership for ${staffStudent.name} — $${MEMBERSHIP_PLAN.price} charged (${method}), ${MEMBERSHIP_PLAN.bonusCredits} credits added.`)
+    } catch (err) {
+      showToast(err.message || 'Membership activation failed.', 'error')
+    }
   }
 
   // Staff: top up a student's credits — staff enters the dollar amount paid in cash or QR,
   // credits are computed from the shared CREDIT_RATE (not deducted from existing credits).
-  const topUpStudentCredits = (dollarAmount, method = 'Cash') => {
+  const topUpStudentCredits = async (dollarAmount, method = 'Cash') => {
     const creditsToAdd = Math.round(dollarAmount * CREDIT_RATE)
-    const txnId = Date.now()
-    setUsers(prev => prev.map(u => u.id === staffStudent.id ? { ...u, credits: u.credits + creditsToAdd } : u))
-    setStaffStudent(prev => ({ ...prev, credits: prev.credits + creditsToAdd }))
-    setPayments?.(prev => [{
-      id: txnId, customerName: staffStudent.name, customerId: staffStudent.studentId,
-      date: new Date().toISOString().split('T')[0], amount: dollarAmount, currency: 'USD', status: 'Completed',
-      method, orderId: `TOPUP-${txnId}`, type: 'Membership Credit Top-Up', handledBy: user.id,
-    }, ...prev])
-    showToast(`Charged $${dollarAmount} via ${method} → ${creditsToAdd} credits added to ${staffStudent.name}.`)
+    try {
+      await ctx.topUpCounter({ studentId: staffStudent.id, amountUSD: dollarAmount, method: method.toLowerCase(), type: 'topup' })
+      setStaffStudent(prev => ({ ...prev, credits: prev.credits + creditsToAdd }))
+      showToast(`Charged $${dollarAmount} via ${method} → ${creditsToAdd} credits added to ${staffStudent.name}.`)
+    } catch (err) {
+      showToast(err.message || 'Top-up failed.', 'error')
+    }
   }
 
-  // Staff: finalize the in-person order — sell consumables (deduct credits + stock), lend returnables (mark borrowed).
-  const completeStaffSale = () => {
+  // Staff: finalize the in-person order — the backend sells consumables (invoice +
+  // credit charge + stock) and lends returnables (borrow_transactions) in one call.
+  const completeStaffSale = async () => {
     if (!staffStudent || staffOrder.length === 0) return
     if (staffStudent.membership !== 'active') { showToast(`${staffStudent.name} does not have an active membership.`, 'error'); return }
     const buyTotal = staffOrder.filter(o => o.item.type === 'Consumable').reduce((s, o) => s + o.item.credits * o.qty, 0)
     if (buyTotal > staffStudent.credits) { showToast('Student has insufficient credits for this order.', 'error'); return }
 
-    const saleId = Date.now()
-    const today = new Date().toISOString().split('T')[0]
-    // Every item in this in-person sale shares one orderId so it groups back into
-    // a single transaction on the Borrow Tracker and Payments page.
-    const orderId = `ORD-${saleId}`
-
-    if (buyTotal > 0) setUsers(prev => prev.map(u => u.id === staffStudent.id ? { ...u, credits: u.credits - buyTotal } : u))
-    setItems(prev => prev.map(i => {
-      const o = staffOrder.find(x => x.item.id === i.id)
-      if (!o) return i
-      return o.item.type === 'Consumable'
-        ? { ...i, stock: Math.max(0, i.stock - o.qty) }
-        : { ...i, status: 'borrowed', stock: Math.max(0, i.stock - 1) }
-    }))
-    staffOrder.forEach(o => {
-      setBorrows(prev => [...prev, o.item.type === 'Consumable'
-        ? { id: saleId + o.item.id, userId: staffStudent.id, itemId: o.item.id, itemName: o.item.name, action: 'purchased', date: today, status: 'purchased', qty: o.qty, credits: o.item.credits * o.qty, soldBy: user.id, orderId }
-        : { id: saleId + o.item.id, userId: staffStudent.id, itemId: o.item.id, itemName: o.item.name, action: 'borrowed', date: today, returnDate: null, status: 'active', approvedBy: user.id, orderId }
-      ])
-      setPayments?.(prev => [{
-        id: saleId + o.item.id, customerName: staffStudent.name, customerId: staffStudent.studentId,
-        date: today, amount: o.item.type === 'Consumable' ? o.item.credits * o.qty : 0, currency: 'CR', status: 'Completed',
-        method: o.item.type === 'Consumable' ? 'Credit' : 'Borrow', orderId,
-        type: o.item.type === 'Consumable' ? 'Item Purchase' : 'Item Borrow', itemName: o.item.name, handledBy: user.id,
-      }, ...prev])
-    })
-
-    showToast(`Order complete for ${staffStudent.name}.`)
-    setStaffStudent(prev => buyTotal > 0 ? { ...prev, credits: prev.credits - buyTotal } : prev)
-    setStaffOrder([])
+    try {
+      await ctx.staffSale({
+        studentId: staffStudent.id,
+        cart: staffOrder.map(o => ({ itemId: o.item.id, qty: o.qty, action: o.item.type === 'Consumable' ? 'purchase' : 'borrow' })),
+      })
+      showToast(`Order complete for ${staffStudent.name}.`)
+      setStaffStudent(prev => buyTotal > 0 ? { ...prev, credits: prev.credits - buyTotal } : prev)
+      setStaffOrder([])
+    } catch (err) {
+      showToast(err.message || 'Sale failed.', 'error')
+    }
   }
 
   return (

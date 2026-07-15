@@ -1,16 +1,19 @@
-import { useState } from 'react'
-import { Search, Plus, Edit2, Trash2, AlertTriangle, ChevronDown, Box, Wrench, X, User, Calendar, FileText } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Search, Plus, Edit2, Trash2, AlertTriangle, ChevronDown, Box, Wrench, X, User, Calendar, FileText, ImagePlus } from 'lucide-react'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
+import { useInventory } from '../../../lib/inventory/InventoryContext'
+import { uploadItemImage } from '../../../lib/inventory/api'
 
-const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0 }
+const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0, image: null }
 const FIL_BLANK = { name: 'PLA', color: '', hex: '#94A3B8', stockGrams: 0, rate: 4 }
 
 const ROOMS = ['Makerspace Room', 'Mechanic Room', 'Fabrication Lab', 'Digital Lab', 'Storage Room']
 const STATUS_FILTERS = ['All', 'Available', 'Borrowed', 'Maintenance', 'Low Stock', 'Unavailable']
 const PAGE_SIZE = 10
-export default function InventoryManager({ items, setItems, user, filaments = [], setFilaments }) {
+export default function InventoryManager({ items, user, filaments = [] }) {
+  const ctx = useInventory()
   const [search,  setSearch]  = useState('')
   const [cat,     setCat]     = useState('all')
   const [statusTab, setStatusTab] = useState('All')
@@ -20,6 +23,8 @@ export default function InventoryManager({ items, setItems, user, filaments = []
   const [form,    setForm]    = useState(BLANK)
   const [delId,   setDelId]   = useState(null)
   const [expanded, setExpanded] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   // ── Filament inventory (used for 3D print job pricing) ───────────────────────
@@ -29,10 +34,13 @@ export default function InventoryManager({ items, setItems, user, filaments = []
   const [filDelId,   setFilDelId]   = useState(null)
   const setFF = (k, v) => setFilForm(f => ({ ...f, [k]: v }))
 
-  const saveFilament = () => {
-    if (filEditing) setFilaments(p => p.map(f => f.id === filEditing ? { ...f, ...filForm } : f))
-    else setFilaments(p => [...p, { ...filForm, id: Date.now() }])
-    setFilModal(false)
+  const saveFilament = async () => {
+    try {
+      await ctx.saveFilament(filEditing ? { ...filForm, id: filEditing } : filForm)
+      setFilModal(false)
+    } catch (err) {
+      ctx.showToast?.(err.message || 'Could not save the filament.', 'error')
+    }
   }
 
   // "Low Stock" is derived (stock at/below minimum) rather than a stored status.
@@ -46,10 +54,13 @@ export default function InventoryManager({ items, setItems, user, filaments = []
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visibleItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const save = () => {
-    if (editing) setItems(p => p.map(i => i.id === editing ? { ...i, ...form } : i))
-    else setItems(p => [...p, { ...form, id: Date.now() }])
-    setModal(false)
+  const save = async () => {
+    try {
+      await ctx.saveItem(editing ? { ...form, id: editing } : form)
+      setModal(false)
+    } catch (err) {
+      ctx.showToast?.(err.message || 'Could not save the item.', 'error')
+    }
   }
 
   const inp = { width: '100%', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 14, color: T.charcoal, outline: 'none', boxSizing: 'border-box' }
@@ -135,7 +146,7 @@ export default function InventoryManager({ items, setItems, user, filaments = []
                       style={{ padding: '5px 10px', background: T.cream, border: 'none', borderRadius: 7, color: T.muted, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
                       <Edit2 size={10} /> Edit
                     </button>
-                    <select value={item.status} onChange={e => setItems(p => p.map(i => i.id === item.id ? { ...i, status: e.target.value } : i))}
+                    <select value={item.status} onChange={e => ctx.saveItem({ ...item, status: e.target.value }).catch(err => ctx.showToast?.(err.message || 'Update failed.', 'error'))}
                       style={{ padding: '5px 8px', background: T.cream, border: 'none', borderRadius: 7, color: T.muted, fontSize: 12, flexShrink: 0, maxWidth: 100 }}>
                       <option>available</option><option>borrowed</option><option>maintenance</option><option>unavailable</option>
                     </select>
@@ -270,7 +281,7 @@ export default function InventoryManager({ items, setItems, user, filaments = []
             <p style={{ color: T.muted, fontSize: 14, marginBottom: '1.5rem' }}>This cannot be undone.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => setFilDelId(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => { setFilaments(p => p.filter(f => f.id !== filDelId)); setFilDelId(null) }} style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+              <button onClick={async () => { try { await ctx.deleteFilament(filDelId) } catch (err) { ctx.showToast?.(err.message || 'Delete failed.', 'error') } setFilDelId(null) }} style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
             </div>
           </div>
         </div>
@@ -311,6 +322,44 @@ export default function InventoryManager({ items, setItems, user, filaments = []
                 <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Description</label>
                 <textarea value={form.description} onChange={e => setF('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
               </div>
+              {/* Item photo — uploads to storage immediately, URL saved with the item */}
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Item Photo</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 10, border: `1px solid ${T.border}`, background: T.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                    {form.image
+                      ? <img src={form.image} alt="Item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <ImagePlus size={20} color={T.faint} />}
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (!file) return
+                      if (file.size > 5 * 1024 * 1024) { ctx.showToast?.('Image must be under 5MB.', 'error'); return }
+                      setUploading(true)
+                      try {
+                        const url = await uploadItemImage(file)
+                        setF('image', url)
+                        ctx.showToast?.('Image uploaded.')
+                      } catch (err) {
+                        ctx.showToast?.(err.message || 'Upload failed.', 'error')
+                      } finally {
+                        setUploading(false)
+                      }
+                    }} />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                    style={{ padding: '9px 16px', background: T.white, border: `1.5px solid ${T.border}`, borderRadius: 8, color: T.charcoal, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: uploading ? 0.6 : 1 }}>
+                    <ImagePlus size={14} /> {uploading ? 'Uploading…' : form.image ? 'Change Image' : 'Upload Image'}
+                  </button>
+                  {form.image && (
+                    <button type="button" onClick={() => setF('image', null)}
+                      style={{ padding: '9px 12px', background: 'none', border: 'none', color: T.red, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem', justifyContent: 'flex-end' }}>
               <button onClick={() => setModal(false)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
@@ -329,7 +378,7 @@ export default function InventoryManager({ items, setItems, user, filaments = []
             <p style={{ color: T.muted, fontSize: 14, marginBottom: '1.5rem' }}>This cannot be undone.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => setDelId(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => { setItems(p => p.filter(i => i.id !== delId)); setDelId(null) }} style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+              <button onClick={async () => { try { await ctx.deleteItem(delId) } catch (err) { ctx.showToast?.(err.message || 'Delete failed.', 'error') } setDelId(null) }} style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
             </div>
           </div>
         </div>
