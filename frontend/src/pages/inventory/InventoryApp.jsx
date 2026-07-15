@@ -52,9 +52,14 @@ export default function InventoryApp() {
               />
             } />
 
-            {/* Guest-accessible read-only browse — no account needed to look around */}
+            {/* Guest-accessible read-only browse — no account needed to look
+                around. If you're actually signed in when you land here (e.g.
+                the TopNav menu link, a bookmark), send you to the real
+                catalog instead of the read-only preview. */}
             <Route path="browse" element={
-              <Catalog items={items} user={null} cart={cart} setCart={setCart} showToast={showToast} onRequireAuth={goToLogin} />
+              hubUser
+                ? <Navigate to={`${BASE}/catalog`} replace />
+                : <Catalog items={items} user={null} cart={cart} setCart={setCart} showToast={showToast} onRequireAuth={goToLogin} />
             } />
 
             {hubUser && (
