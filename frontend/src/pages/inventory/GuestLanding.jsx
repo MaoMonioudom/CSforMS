@@ -535,35 +535,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="px-4 pb-9 pt-10 sm:px-8 sm:pt-12 lg:px-12" style={{ background: "#020d12" }}>
-        <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-          <div className="grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-10" style={{ display: "grid", marginBottom: 40 }}>
-            <div className="col-span-2 sm:col-span-1">
-              <img src={LOGO_IMAGE} alt="MakerVault" style={{ height: 26, marginBottom: 16, filter: "brightness(0) invert(1)", opacity: .8 }} />
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,.38)", lineHeight: 1.65, maxWidth: 280 }}>
-                CADT Makerspace inventory system — borrow equipment, purchase materials, and track your projects.
-              </p>
-            </div>
-            {[
-              { heading: "Platform",  links: ["Catalog", "Zones", "Membership", "Notifications"]     },
-              { heading: "Resources", links: ["How It Works", "Equipment Guide", "Credit System", "FAQ"] },
-              { heading: "CADT",      links: ["About", "Makerspace", "Contact Us", "Open Hours"]     },
-            ].map(({ heading, links }) => (
-              <div key={heading}>
-                <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 16 }}>
-                  {heading}
-                </p>
-                {links.map(l => <a key={l} className="mv-footer-link" onClick={go}>{l}</a>)}
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)" }}>© 2025 CADT Makerspace. All rights reserved.</p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)" }}>Built at CADT · Phnom Penh, Cambodia</p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer removed — InventoryApp already renders the shared <AppFooter />. */}
     </div>
   );
 }

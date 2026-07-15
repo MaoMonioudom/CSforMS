@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Calendar, MapPin, Users } from "lucide-react";
 import {
   fetchEventById, formatEventDate,
-  fetchMyEventRegistrations, registerForEvent, unregisterFromEvent,
+  fetchMyEventRegistrations, registerForEvent,
 } from "@/lib/events-data";
 import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
@@ -34,7 +34,9 @@ export default function EventDetailPage() {
       .finally(() => setLoading(false));
   }, [eventId, user]);
 
-  const handleRegisterToggle = async () => {
+  // One-way — no self-service unregister. If someone can't make it, an
+  // admin removes them from the Registrants panel so the spot frees up.
+  const handleRegister = async () => {
     if (!user) {
       navigate("/login", { state: { from: location.pathname } });
       return;
@@ -42,15 +44,9 @@ export default function EventDetailPage() {
     setError("");
     setWorking(true);
     try {
-      if (registered) {
-        await unregisterFromEvent(eventId);
-        setRegistered(false);
-        setEvent((prev) => ({ ...prev, participants: Math.max(0, prev.participants - 1) }));
-      } else {
-        await registerForEvent(eventId);
-        setRegistered(true);
-        setEvent((prev) => ({ ...prev, participants: prev.participants + 1 }));
-      }
+      await registerForEvent(eventId);
+      setRegistered(true);
+      setEvent((prev) => ({ ...prev, participants: prev.participants + 1 }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -160,14 +156,19 @@ export default function EventDetailPage() {
               </div>
               <Button
                 className={registered
-                  ? "mt-5 w-full border border-events text-events bg-transparent hover:bg-events/10"
+                  ? "mt-5 w-full border border-events text-events bg-transparent"
                   : "mt-5 w-full bg-events text-events-foreground hover:bg-events/90"}
-                disabled={working}
-                onClick={handleRegisterToggle}
+                disabled={working || registered}
+                onClick={handleRegister}
               >
-                {working ? "…" : registered ? "Registered ✓ — cancel" : "Register for this event"}
+                {registered ? "Registered ✓" : working ? "…" : "Register for this event"}
               </Button>
               {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+              {registered && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Can't make it? Contact the organizer to be removed.
+                </p>
+              )}
             </div>
           </aside>
         </div>

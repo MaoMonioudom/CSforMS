@@ -39,7 +39,8 @@ export default function PaymentsPage({ payments, setPayments, items = [] }) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const remove = (id) => { setPayments(prev => prev.filter(p => p.id !== id)); setExpanded(null) }
+  // Invoices are a permanent financial record — no client-side deletion.
+  const remove = null
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -145,11 +146,7 @@ export default function PaymentsPage({ payments, setPayments, items = [] }) {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex justify-end">
-                      <button onClick={() => remove(p.id)} className="flex items-center gap-1 rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-red hover:bg-red-light">
-                        <Trash2 size={12} /> Delete
-                      </button>
-                    </div>
+                    {/* Invoices are a permanent financial record — deletion removed. */}
                   </div>
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell } from "lucide-react";
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, formatEventDateShort,
-  fetchEventRegistrants, sendEventReminder,
+  fetchEventRegistrants, sendEventReminder, removeEventRegistrant,
 } from "@/lib/events-data";
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
@@ -81,6 +81,18 @@ function RegistrantsDialog({ event, onOpenChange }) {
     }
   };
 
+  // Registration has no self-cancel by design — this is the only way a
+  // registrant comes off the list once they're on it.
+  const handleRemove = async (registrant) => {
+    setStatus("");
+    try {
+      await removeEventRegistrant(event.id, registrant.userId);
+      setRegistrants((prev) => prev.filter((r) => r.userId !== registrant.userId));
+    } catch (err) {
+      setStatus(err.message);
+    }
+  };
+
   return (
     <Dialog open={!!event} onOpenChange={(open) => !open && onOpenChange(null)}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -101,9 +113,15 @@ function RegistrantsDialog({ event, onOpenChange }) {
         ) : (
           <ul className="divide-y divide-gray-100">
             {registrants.map((r) => (
-              <li key={r.userId} className="py-2.5 flex flex-col">
-                <span className="text-sm font-medium text-gray-900">{r.name}</span>
-                <span className="text-xs text-gray-400">{r.email}</span>
+              <li key={r.userId} className="py-2.5 flex items-center justify-between gap-2">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium text-gray-900 truncate">{r.name}</span>
+                  <span className="text-xs text-gray-400 truncate">{r.email}</span>
+                </div>
+                <button onClick={() => handleRemove(r)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0" title="Remove">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </li>
             ))}
           </ul>

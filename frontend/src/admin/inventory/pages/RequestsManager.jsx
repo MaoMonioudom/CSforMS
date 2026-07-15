@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { T } from '../../../lib/inventory/theme'
 import { CREDIT_RATE, PRINT_SERVICES, CATEGORIES } from '../../../lib/inventory/data'
+import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 const PAGE_SIZE = 10
@@ -46,7 +47,8 @@ function InfoRow({ label, value }) {
 // ── Requests Manager (staff/admin approve) — handles borrow requests, credit
 // top-ups, document printing, and 3D print jobs (which need a weight entered
 // by staff before they can be charged) in one queue ───────────────────────────
-export default function RequestsManager({ requests, setRequests, borrows, setBorrows, items, setItems, users, setUsers, user, setNotifications, setPayments, showToast, filaments = [], setFilaments }) {
+export default function RequestsManager({ requests, borrows, items, users, user, showToast, filaments = [] }) {
+  const ctx = useInventory()
   const [gramsInput, setGramsInput] = useState({})
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -56,87 +58,46 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
   const getLabel = (id) => { const u = users.find(x => x.id === id); return u ? u.name + (u.studentId ? ` (${u.studentId})` : '') : `User #${id}` }
   const getUser  = (id) => users.find(u => u.id === id)
   const getCategory = (itemId) => { const p = items.find(i => i.id === itemId); return p ? CATEGORIES.find(c => c.id === p.category)?.label : null }
-  const today = () => new Date().toISOString().split('T')[0]
 
-  const approveBorrow = (req) => {
-    const d = today()
-    const fallbackDue = new Date(); fallbackDue.setDate(fallbackDue.getDate() + 7)
-    const dueDate = req.dueDate || fallbackDue.toISOString().split('T')[0]
-    setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id } : r))
-    // req.id is already unique per item — safer than Date.now() when approving
-    // several items from the same transaction in one synchronous loop.
-    setBorrows(p => [...p, { id: Date.now() + req.id, userId: req.userId, itemId: req.itemId, itemName: req.itemName, action: 'borrowed', date: d, dueDate, returnDate: null, status: 'active', approvedBy: user.id, orderId: req.orderId }])
-    setItems(p => p.map(i => i.id === req.itemId ? { ...i, status: 'borrowed', stock: Math.max(0, i.stock - 1) } : i))
+  // All mutations go through the backend now — these wrappers just add toasts.
+  const tryAction = async (fn, successMsg) => {
+    try {
+      await fn()
+      if (successMsg) showToast(successMsg)
+    } catch (err) {
+      showToast(err.message || 'Action failed. Please try again.', 'error')
+    }
   }
 
-  // Approve or decline every request in a multi-item borrow transaction together,
-  // then send exactly one notification covering the whole transaction.
-  const approveGroup = (group) => {
-    group.forEach(approveBorrow)
-    const d = today()
-    const itemsLabel = group.map(r => r.itemName).join(', ')
-    setNotifications(p => [{ id: Date.now(), type: 'approved', message: group.length === 1
-      ? `Your borrowing request has been approved — ${group[0].itemName}, due back ${group[0].dueDate}.`
-      : `Your borrowing request has been approved — ${itemsLabel}.`, read: false, date: d, userId: group[0].userId }, ...p])
-    showToast(group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
-  }
+  // Approve or decline every request in a multi-item borrow transaction together —
+  // the backend creates the borrow rows, adjusts stock, and notifies the student.
+  const approveGroup = (group) =>
+    tryAction(() => ctx.approveBorrowGroup(group.map(r => r.id)),
+      group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
 
-  const denyGroup = (group) => {
-    group.forEach(req => setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'denied' } : r)))
-    const d = today()
-    setNotifications(p => [{ id: Date.now(), type: 'denied', message: 'Your borrowing request has been rejected.', read: false, date: d, userId: group[0].userId }, ...p])
-    showToast('Declined request')
-  }
+  const denyGroup = (group) =>
+    tryAction(() => ctx.denyRequests(group.map(r => r.id)), 'Declined request')
 
   const approveTopUp = (req) => {
-    const d = today()
-    const creditsToAdd = Math.round(req.amountUSD * CREDIT_RATE)
     const student = getUser(req.userId)
-    setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id } : r))
-    setUsers(p => p.map(u => u.id === req.userId ? { ...u, credits: u.credits + creditsToAdd } : u))
-    setPayments?.(prev => [{
-      id: req.id, customerName: student?.name || `User #${req.userId}`, customerId: student?.studentId,
-      date: d, amount: req.amountUSD, currency: 'USD', status: 'Completed',
-      method: 'Cash', orderId: `TOPUP-${req.id}`, type: 'Membership Credit Top-Up', handledBy: user.id,
-    }, ...prev])
-    setNotifications(p => [{ id: Date.now(), type: 'approved', message: `Your payment has been completed — $${req.amountUSD} → +${creditsToAdd} credits.`, read: false, date: d, userId: req.userId }, ...p])
-    showToast(`Approved top-up: +${creditsToAdd} credits for ${student?.name}`)
+    const creditsToAdd = Math.round(req.amountUSD * CREDIT_RATE)
+    return tryAction(() => ctx.approveTopUp(req.id), `Approved top-up: +${creditsToAdd} credits for ${student?.name || `user #${req.userId}`}`)
   }
 
   const approvePrinting = (req) => {
-    const d = today()
     const student = getUser(req.userId)
-    if (!student || student.credits < req.credits) { showToast('Student has insufficient credits for this print job.', 'error'); return }
-    setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id } : r))
-    setUsers(p => p.map(u => u.id === req.userId ? { ...u, credits: u.credits - req.credits } : u))
-    setPayments?.(prev => [{
-      id: req.id, customerName: student.name, customerId: student.studentId, date: d, amount: req.credits, currency: 'CR',
-      status: 'Completed', method: 'Credit', orderId: `PRINT-${req.id}`, type: 'Document Printing', handledBy: user.id,
-    }, ...prev])
-    setNotifications(p => [{ id: Date.now(), type: 'approved', message: `Your purchased items are ready for pickup — ${req.pages} page${req.pages === 1 ? '' : 's'} printed, ${req.credits} cr charged.`, read: false, date: d, userId: req.userId }, ...p])
-    showToast(`Approved printing for ${student.name} — ${req.credits} cr`)
+    if (student && student.credits < req.credits) { showToast('Student has insufficient credits for this print job.', 'error'); return }
+    return tryAction(() => ctx.approvePrinting(req.id), `Approved printing — ${req.credits} cr`)
   }
 
-  // Staff weigh the finished 3D print and enter grams here — cost is computed live
-  // from the assigned filament's own credit-per-gram rate.
+  // Staff weigh the finished 3D print and enter grams here — cost is computed
+  // by the backend from the assigned filament's credit-per-gram rate.
   const confirm3DWeight = (req) => {
     const grams = Number(gramsInput[req.id])
     if (!grams || grams <= 0) { showToast('Enter the print weight in grams.', 'error'); return }
     const filament = filaments.find(f => f.id === req.filamentId)
-    const rate = filament?.rate ?? 4
-    const credits = Math.round(grams * rate)
-    const student = getUser(req.userId)
-    if (!student || student.credits < credits) { showToast(`Student needs ${credits} cr but only has ${student?.credits ?? 0}.`, 'error'); return }
-    const d = today()
-    setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'approved', approvedBy: user.id, grams, credits } : r))
-    setUsers(p => p.map(u => u.id === req.userId ? { ...u, credits: u.credits - credits } : u))
-    if (req.filamentId) setFilaments?.(p => p.map(f => f.id === req.filamentId ? { ...f, stockGrams: Math.max(0, f.stockGrams - grams) } : f))
-    setPayments?.(prev => [{
-      id: req.id, customerName: student.name, customerId: student.studentId, date: d, amount: credits, currency: 'CR',
-      status: 'Completed', method: 'Credit', orderId: `3DP-${req.id}`, type: '3D Printing', handledBy: user.id,
-    }, ...prev])
-    setNotifications(p => [{ id: Date.now(), type: 'approved', message: `Your purchased items are ready for pickup — 3D print, ${grams}g used, ${credits} cr charged.`, read: false, date: d, userId: req.userId }, ...p])
-    showToast(`Charged ${credits} cr for ${grams}g (${student.name})`)
+    const credits = Math.round(grams * (filament?.rate ?? 4))
+    return tryAction(() => ctx.confirm3DWeight(req.id, grams), `Charged ~${credits} cr for ${grams}g`)
   }
 
   // Only credit top-up, printing, and 3D print jobs route here — borrow requests
@@ -147,14 +108,7 @@ export default function RequestsManager({ requests, setRequests, borrows, setBor
     if (req.type === '3d_printing') return confirm3DWeight(req)
   }
 
-  const deny = (req) => {
-    setRequests(p => p.map(r => r.id === req.id ? { ...r, status: 'denied' } : r))
-    const message = req.type === 'credit_topup' ? `Your $${req.amountUSD} credit top-up request has been rejected.`
-      : req.type === 'printing' ? 'Your printing request has been rejected.'
-      : 'Your 3D print job request has been rejected.'
-    setNotifications(p => [{ id: Date.now(), type: 'denied', message, read: false, date: today(), userId: req.userId }, ...p])
-    showToast('Declined request')
-  }
+  const deny = (req) => tryAction(() => ctx.denyRequests([req.id]), 'Declined request')
 
   const rowMeta = (req) => {
     if (req.type === 'credit_topup') return { icon: <CreditCard size={14} color={T.amber} />, title: `Credit Top-Up — $${req.amountUSD} (${Math.round(req.amountUSD * CREDIT_RATE)} cr)`, category: 'Credit Top-Up' }

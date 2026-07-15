@@ -18,6 +18,9 @@ export async function requireAuth(req, res, next) {
   } catch {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
+  // Purpose-scoped tokens (OAuth state, password-reset links) must never be
+  // usable as a session token, even though they're signed with the same secret.
+  if (payload.purpose) return res.status(401).json({ error: "Invalid or expired token" });
 
   const { data: user, error } = await supabaseAdmin
     .from("users")

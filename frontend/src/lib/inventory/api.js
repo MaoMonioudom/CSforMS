@@ -1,49 +1,230 @@
-// Data-access layer. Every export is async on purpose: today it resolves
-// against localStorage-backed mock data, but a real backend can replace the
-// body of each function without touching any component that calls it.
-import {
-  SAMPLE_ITEMS, INITIAL_USERS, INITIAL_BORROWS, INITIAL_REQUESTS, INITIAL_NOTIFICATIONS, INITIAL_FILAMENTS,
-} from './data'
-import { loadCollection, saveCollection } from './storage'
+// Data-access layer for the inventory module. Every function talks to the
+// real backend (/api/inventory/*) through the shared hub API client; the
+// mappers translate DB rows (snake_case, DB vocab) into the UI shapes the
+// components were built around, mirroring toFrontendUser in hub/AuthContext.
+import { api } from '../api/client'
+import { CATEGORIES } from './data'
 
-const delay = (v) => new Promise((res) => setTimeout(() => res(v), 0))
+// ── Mappers: DB row → UI shape ───────────────────────────────────────────
 
-export function getInitialState() {
+const categoryIdBySlug = (slug) => CATEGORIES.find((c) => c.id === slug) || null
+
+function categorySlug(categoryName) {
+  const match = CATEGORIES.find((c) => c.label === categoryName)
+  return match ? match.id : null
+}
+
+export function toUiItem(row, catById = {}, locById = {}) {
+  const cat = catById[row.category_id]
+  const loc = locById[row.location_id]
   return {
-    items:         loadCollection('items', SAMPLE_ITEMS),
-    users:         loadCollection('users', INITIAL_USERS),
-    borrows:       loadCollection('borrows', INITIAL_BORROWS),
-    requests:      loadCollection('requests', INITIAL_REQUESTS),
-    notifications: loadCollection('notifications', INITIAL_NOTIFICATIONS),
-    payments:      loadCollection('payments', []),
-    filaments:     loadCollection('filaments', INITIAL_FILAMENTS),
+    id: row.item_id,
+    name: row.item_name,
+    description: row.description || '',
+    usage: row.usage || '',
+    type: row.is_returnable ? 'Returnable' : 'Consumable',
+    credits: row.unit_credit ?? 0,
+    stock: row.current_stock ?? 0,
+    minStock: row.min_stock ?? 0,
+    // DB status is only available/unavailable — 'unavailable' is what the
+    // backend sets while an item has an open damage report.
+    status: row.status === 'unavailable' ? 'maintenance' : 'available',
+    condition: row.status === 'unavailable' ? 'Maintenance' : 'Good',
+    category: cat ? categorySlug(cat.category_name) : null,
+    categoryId: row.category_id,
+    locationId: row.location_id,
+    zone: loc?.shelf_code || loc?.zone_name || '—',
+    room: loc?.location_name || '—',
+    borrowCount: 0,
+    image: row.image_url || null,
   }
 }
 
-export function persist(key, value) {
-  saveCollection(key, value)
+export function toDbItem(ui, categories = [], locations = []) {
+  const catLabel = categoryIdBySlug(ui.category)?.label
+  const category = categories.find((c) => c.category_name === catLabel)
+  const location = locations.find((l) => l.shelf_code === ui.zone) || locations.find((l) => l.location_name === ui.room)
+  return {
+    item_name: ui.name,
+    description: ui.description || null,
+    is_returnable: ui.type !== 'Consumable',
+    unit_credit: Number(ui.credits) || 0,
+    current_stock: Number(ui.stock) || 0,
+    min_stock: Number(ui.minStock) || 0,
+    status: ui.status === 'maintenance' ? 'unavailable' : 'available',
+    category_id: ui.categoryId ?? category?.category_id ?? null,
+    location_id: ui.locationId ?? location?.location_id ?? null,
+    image_url: ui.image || null,
+  }
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────
-export async function login({ email, password }, users) {
-  const match = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-  if (!match) throw new Error('No account found for that email.')
-  if (match.membership === 'pending') throw new Error('Your membership is still pending staff approval.')
-  return delay(match)
+export function toUiBorrow(row) {
+  const ret = Array.isArray(row.return_transactions) ? row.return_transactions[0] : null
+  return {
+    id: row.borrow_id,
+    userId: row.user_id,
+    itemId: row.item_id,
+    itemName: row.inventory_items?.item_name || '—',
+    action: row.status === 'returned' ? 'returned' : 'borrowed',
+    qty: row.quantity_borrow,
+    date: (row.borrow_date || '').slice(0, 10),
+    dueDate: (row.due_date || '').slice(0, 10) || null,
+    returnDate: ret ? (ret.return_date || '').slice(0, 10) : null,
+    status: row.status === 'returned' ? 'completed' : 'active',
+    overdue: row.status !== 'returned' && row.due_date && new Date(row.due_date) < new Date(),
+    condition: ret?.is_damaged ? 'Damaged' : 'Good',
+    approvedBy: row.approved_by,
+    orderId: row.order_id,
+  }
 }
 
-export async function register(payload, users) {
-  const isCadtEmail = /@(student\.)?cadt\.edu\.kh$/i.test(payload.email)
-  if (!payload.studentId && !isCadtEmail) {
-    throw new Error('A valid Student ID or CADT email is required to register.')
+export function toUiRequest(row) {
+  return {
+    id: row.request_id,
+    userId: row.user_id,
+    itemId: row.item_id,
+    itemName: row.inventory_items?.item_name || null,
+    type: row.request_type,
+    status: row.status,
+    date: (row.created_at || '').slice(0, 10),
+    qty: row.quantity,
+    dueDate: row.due_date,
+    amountUSD: row.amount_usd != null ? Number(row.amount_usd) : null,
+    credits: row.credits,
+    pages: row.pages,
+    grams: row.grams,
+    filamentId: row.filament_id,
+    filamentName: row.filaments ? `${row.filaments.name} ${row.filaments.color || ''}`.trim() : null,
+    orderId: row.order_id,
+    note: row.note,
   }
-  const newUser = {
-    id: Date.now(),
-    role: 'user',
-    membership: 'pending',
-    credits: 0,
-    joinDate: new Date().toISOString().split('T')[0],
-    ...payload,
-  }
-  return delay(newUser)
 }
+
+export function toUiNotification(row) {
+  return {
+    id: row.notification_id,
+    type: row.notification_type,
+    message: row.message,
+    read: row.is_read,
+    date: (row.created_at || '').slice(0, 10),
+    userId: row.user_id,
+  }
+}
+
+export function toUiFilament(row) {
+  return {
+    id: row.filament_id,
+    name: row.name,
+    color: row.color,
+    hex: row.hex,
+    stockGrams: row.stock_grams,
+    rate: row.rate,
+  }
+}
+
+// ── Fetchers ─────────────────────────────────────────────────────────────
+
+export async function fetchCatalog() {
+  const [items, categories, locations, filaments] = await Promise.all([
+    api.get('/api/inventory/items'),
+    api.get('/api/inventory/categories'),
+    api.get('/api/inventory/locations'),
+    api.get('/api/inventory/filaments'),
+  ])
+  const catById = Object.fromEntries(categories.data.map((c) => [c.category_id, c]))
+  const locById = Object.fromEntries(locations.data.map((l) => [l.location_id, l]))
+  return {
+    items: items.data.map((r) => toUiItem(r, catById, locById)),
+    filaments: filaments.data.map(toUiFilament),
+    categories: categories.data,
+    locations: locations.data,
+  }
+}
+
+export const fetchBorrows = () => api.get('/api/inventory/borrows').then((r) => r.data.map(toUiBorrow))
+export const fetchRequests = () => api.get('/api/inventory/requests').then((r) => r.data.map(toUiRequest))
+export const fetchNotifications = () => api.get('/api/inventory/notifications').then((r) => r.data.map(toUiNotification))
+export const fetchPayments = () => api.get('/api/inventory/payments').then((r) => r.data) // pre-flattened
+export const fetchUsers = () => api.get('/api/inventory/users').then((r) => r.data.map((u) => ({ ...u, permissions: [] })))
+
+// ── Student actions ──────────────────────────────────────────────────────
+
+// lines: [{ itemId, qty, dueDate?, note? }] — one request row per item,
+// grouped by a shared order id so staff can approve the cart together.
+export async function submitBorrowRequests(lines) {
+  const orderId = `ORD-${Date.now()}`
+  for (const l of lines) {
+    await api.post('/api/inventory/requests', {
+      request_type: 'borrow', item_id: l.itemId, quantity: l.qty || 1,
+      due_date: l.dueDate || null, note: l.note || null, order_id: orderId,
+    })
+  }
+  return orderId
+}
+
+export const submitTopUpRequest = ({ amountUSD, note }) =>
+  api.post('/api/inventory/requests', { request_type: 'credit_topup', amount_usd: amountUSD, note: note || null })
+
+export const submitPrintingRequest = ({ pages, credits, note }) =>
+  api.post('/api/inventory/requests', { request_type: 'printing', pages, credits, note: note || null })
+
+export const submit3DPrintRequest = ({ filamentId, note }) =>
+  api.post('/api/inventory/requests', { request_type: '3d_printing', filament_id: filamentId, note: note || null })
+
+// cart: [{ itemId, qty }] — consumables only, charged to own credits.
+export const purchaseItems = (cart) => api.post('/api/inventory/purchase', { cart })
+
+// ── Staff actions ────────────────────────────────────────────────────────
+
+export const approveBorrowGroup = (requestIds) => api.post('/api/inventory/requests/approve-borrow', { requestIds })
+export const denyRequests = (requestIds) => api.post('/api/inventory/requests/deny', { requestIds })
+export const approveTopUp = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-topup`)
+export const approvePrinting = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-printing`)
+export const confirm3DWeight = (requestId, grams) => api.post(`/api/inventory/requests/${requestId}/confirm-3d-weight`, { grams })
+export const returnBorrow = (borrowId, { isDamaged = false, notes } = {}) =>
+  api.post(`/api/inventory/borrows/${borrowId}/return`, { isDamaged, notes })
+export const deductCredits = ({ userId, amount, reason }) =>
+  api.post('/api/inventory/borrows/deduct-credits', { userId, amount, reason })
+export const chargePrint = ({ studentId, pages, rate }) =>
+  api.post('/api/inventory/services/print', { studentId, pages, rate })
+export const charge3D = ({ studentId, filamentId, grams }) =>
+  api.post('/api/inventory/services/3d-print', { studentId, filamentId, grams })
+export const staffSale = ({ studentId, cart }) => api.post('/api/inventory/sale', { studentId, cart })
+export const topUpCounter = ({ studentId, amountUSD, method, type }) =>
+  api.post('/api/inventory/topup-counter', { studentId, amountUSD, method, type })
+
+// ── Item / filament CRUD (staff) ─────────────────────────────────────────
+
+export const createItem = (dbItem) => api.post('/api/inventory/items', dbItem)
+export const updateItem = (itemId, dbItem) => api.put(`/api/inventory/items/${itemId}`, dbItem)
+export const deleteItem = (itemId) => api.del(`/api/inventory/items/${itemId}`)
+export const reportMaintenance = (itemId, { notes, quantityDamaged } = {}) =>
+  api.post(`/api/inventory/items/${itemId}/report-maintenance`, { notes, quantityDamaged })
+export const completeMaintenance = (itemId) => api.post(`/api/inventory/items/${itemId}/maintenance-complete`)
+
+export const createFilament = (f) =>
+  api.post('/api/inventory/filaments', { name: f.name, color: f.color, hex: f.hex, stock_grams: f.stockGrams ?? 0, rate: f.rate ?? 4 })
+export const updateFilament = (id, f) =>
+  api.put(`/api/inventory/filaments/${id}`, { name: f.name, color: f.color, hex: f.hex, stock_grams: f.stockGrams, rate: f.rate })
+export const deleteFilament = (id) => api.del(`/api/inventory/filaments/${id}`)
+
+// Multipart upload — the JSON client can't carry files, so this goes through
+// fetch directly with the same bearer token. Returns the public image URL.
+export async function uploadItemImage(file) {
+  const { getToken } = await import('../api/client')
+  const form = new FormData()
+  form.append('image', file)
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/inventory/items/upload-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: form,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`)
+  return data.data.url
+}
+
+// ── Notifications ────────────────────────────────────────────────────────
+
+export const markNotificationRead = (id) => api.post(`/api/inventory/notifications/${id}/read`)
+export const markAllNotificationsRead = () => api.post('/api/inventory/notifications/read-all')
