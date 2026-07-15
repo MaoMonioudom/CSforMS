@@ -5,6 +5,7 @@ import LessonBookCard from "../../components/learning/ui/LessonBookCard";
 import PathSelector from "../../components/learning/ui/PathSelector";
 import CheckoutModal from "../../components/learning/ui/Checkout/CheckoutModal";
 import { useUnlockedPaths } from "../../hooks/learning/useUnlockedPaths";
+import { useEnrollment } from "../../hooks/learning/useEnrollment";
 import NotFound from "../NotFound";
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
@@ -14,6 +15,7 @@ export default function CourseDetail() {
   const navigate = useNavigate();
   const { course, loading } = useCourse(id);
   const { isUnlocked, unlock } = useUnlockedPaths();
+  const { signedIn, enrolled, enrolling, enroll, setEnrolled } = useEnrollment(id);
 
   const [activePath, setActivePath] = useState("basic");
   const [showCheckout, setShowCheckout] = useState(false);
@@ -45,8 +47,18 @@ export default function CourseDetail() {
 
   const handlePaymentSuccess = () => {
     unlock(course.id);
+    // The unlock endpoint also enrolls the buyer server-side; mirror it here.
+    if (signedIn) setEnrolled(true);
     setActivePath("interactive");
     setShowCheckout(false);
+  };
+
+  const handleEnroll = () => {
+    if (!signedIn) {
+      navigate("/login");
+      return;
+    }
+    enroll();
   };
 
   return (
@@ -73,10 +85,24 @@ export default function CourseDetail() {
           {course.title}
         </h1>
         <p className="mb-4 max-w-[640px] text-[15px] text-[#B9C2CE]">{course.subtitle}</p>
-        <div className="flex gap-[18px] border-b border-[#F7F5F0]/10 pb-6 text-[13px] text-[#B9C2CE]">
+        <div className="flex flex-wrap items-center gap-[18px] border-b border-[#F7F5F0]/10 pb-6 text-[13px] text-[#B9C2CE]">
           <span>⏱ {course.duration}</span>
           <span>📖 {lessons.length} lessons</span>
           <span>⭐ {course.rating}</span>
+          <span>👥 {(course.students || 0).toLocaleString()} students</span>
+          {enrolled ? (
+            <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[12px] font-semibold text-emerald-300">
+              ✓ Enrolled
+            </span>
+          ) : (
+            <button
+              onClick={handleEnroll}
+              disabled={enrolling}
+              className="cursor-pointer rounded-full bg-gold px-4 py-1.5 text-[12px] font-semibold text-navy-deep transition-opacity hover:opacity-85 disabled:opacity-50"
+            >
+              {enrolling ? "Enrolling…" : signedIn ? "Enroll in this course" : "Sign in to enroll"}
+            </button>
+          )}
         </div>
 
         {/* Path selection */}

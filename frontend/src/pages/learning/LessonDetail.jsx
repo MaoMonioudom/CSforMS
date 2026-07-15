@@ -1,5 +1,8 @@
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourse } from "../../hooks/learning/useCourses";
+import { getToken } from "../../lib/api/client";
+import { learningApi } from "../../lib/api/learning";
 import LessonPageView from "../../components/learning/ui/BookReader/LessonPageView";
 import NotFound from "../NotFound";
 
@@ -9,6 +12,13 @@ export default function LessonDetail() {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
   const { course, loading } = useCourse(id);
+
+  // Opening a lesson while signed in counts as studying the course — record
+  // the enrollment so admin sees real student numbers. Idempotent upsert
+  // server-side, so firing on every visit is fine.
+  useEffect(() => {
+    if (id && getToken()) learningApi.enroll(id).catch(() => {});
+  }, [id]);
 
   if (loading) {
     return (

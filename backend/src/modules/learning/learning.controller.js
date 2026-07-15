@@ -362,6 +362,16 @@ export async function unlockCoursePath(req, res, next) {
         { onConflict: "course_id,user_id,path", ignoreDuplicates: true }
       );
     if (error) throw error;
+
+    // Buying a path means the user is a student of the course.
+    const { error: enrollError } = await supabaseAdmin
+      .from("course_enrollments")
+      .upsert(
+        { course_id: courseId, user_id: req.user.user_id },
+        { onConflict: "course_id,user_id", ignoreDuplicates: true }
+      );
+    if (enrollError) throw enrollError;
+
     res.status(201).json({ data: { courseId, path: "interactive" } });
   } catch (err) {
     next(err);
@@ -382,6 +392,119 @@ export async function getMyLearning(req, res, next) {
       data: {
         enrolledCourseIds: enrollments.data.map((r) => r.course_id),
         unlockedCourseIds: unlocks.data.map((r) => r.course_id),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin reporting — who is in each course, and what's happening platform-wide.
+
+// Roster for one course. Admin/staff see any course; a lecturer only their own.
+export async function listCourseStudents(req, res, next) {
+  try {
+    const courseId = Number(req.params.id);
+    const { data: course, error: findError } = await supabaseAdmin
+      .from("courses")
+      .select("course_id, title, instructor_id")
+      .eq("course_id", courseId)
+      .maybeSingle();
+    if (findError) throw findError;
+    if (!course) return res.status(404).json({ error: "Course not found" });
+    if (!canEditCourse(req.user, course)) {
+      return res.status(403).json({ error: "You can only view students of your own courses" });
+    }
+
+    const [enrollments, unlocks] = await Promise.all([
+      supabaseAdmin
+        .from("course_enrollments")
+        .select("enrolled_at, student:users(user_id, full_name, email)")
+        .eq("course_id", courseId)
+        .order("enrolled_at", { ascending: false }),
+      supabaseAdmin
+        .from("course_unlocks")
+        .select("user_id, path, price_paid, created_at")
+        .eq("course_id", courseId),
+    ]);
+    if (enrollments.error) throw enrollments.error;
+    if (unlocks.error) throw unlocks.error;
+
+    const unlockByUser = new Map(unlocks.data.map((u) => [u.user_id, u]));
+    const students = enrollments.data.map((row) => {
+      const unlock = unlockByUser.get(row.student?.user_id);
+      return {
+        id: row.student?.user_id ?? null,
+        name: row.student?.full_name || "Unknown user",
+        email: row.student?.email || "",
+        enrolledAt: row.enrolled_at,
+        purchasedInteractive: Boolean(unlock),
+        pricePaid: unlock?.price_paid != null ? Number(unlock.price_paid) : null,
+        purchasedAt: unlock?.created_at ?? null,
+      };
+    });
+
+    res.json({
+      data: {
+        courseId: course.course_id,
+        courseTitle: course.title,
+        students,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Platform-wide stats + recent activity for the Learning admin dashboard.
+export async function getLearningOverview(req, res, next) {
+  try {
+    const [enrollments, unlocks] = await Promise.all([
+      supabaseAdmin
+        .from("course_enrollments")
+        .select("enrolled_at, user_id, student:users(full_name), course:courses(course_id, title)")
+        .order("enrolled_at", { ascending: false }),
+      supabaseAdmin
+        .from("course_unlocks")
+        .select("created_at, user_id, price_paid, student:users(full_name), course:courses(course_id, title)")
+        .order("created_at", { ascending: false }),
+    ]);
+    if (enrollments.error) throw enrollments.error;
+    if (unlocks.error) throw unlocks.error;
+
+    const uniqueStudents = new Set(enrollments.data.map((r) => r.user_id)).size;
+    const totalRevenue = unlocks.data.reduce((sum, r) => sum + Number(r.price_paid || 0), 0);
+
+    // One merged feed so the dashboard can show "X enrolled in Y" and
+    // "X purchased Y ($Z)" in time order.
+    const activity = [
+      ...enrollments.data.map((r) => ({
+        type: "enrollment",
+        student: r.student?.full_name || "Unknown user",
+        courseId: r.course?.course_id ?? null,
+        courseTitle: r.course?.title || "Deleted course",
+        at: r.enrolled_at,
+      })),
+      ...unlocks.data.map((r) => ({
+        type: "purchase",
+        student: r.student?.full_name || "Unknown user",
+        courseId: r.course?.course_id ?? null,
+        courseTitle: r.course?.title || "Deleted course",
+        price: r.price_paid != null ? Number(r.price_paid) : null,
+        at: r.created_at,
+      })),
+    ]
+      .sort((a, b) => new Date(b.at) - new Date(a.at))
+      .slice(0, 20);
+
+    res.json({
+      data: {
+        totalEnrollments: enrollments.data.length,
+        uniqueStudents,
+        totalPurchases: unlocks.data.length,
+        totalRevenue,
+        activity,
       },
     });
   } catch (err) {
