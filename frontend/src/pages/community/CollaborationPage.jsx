@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { SectionPage } from "@/components/community/SectionPage";
 import { CollabCard } from "@/components/community/CollabCard";
-import { collabPosts } from "@/lib/collaboration-data";
+import { fetchCollabPosts, createCollabPost } from "@/lib/collaboration-data";
+import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
 import {
   Dialog,
@@ -12,39 +14,46 @@ import {
 } from "@/components/community/ui/dialog";
 import { Input } from "@/components/community/ui/input";
 import { Label } from "@/components/community/ui/label";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const filters = ["All", "Looking for Team", "Recruiting", "Competition", "Research"];
 
-function CreateCollabDialog({ open, onOpenChange }) {
-  const [roles, setRoles] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [roleInput, setRoleInput] = useState("");
-  const [skillInput, setSkillInput] = useState("");
+// Only fields the collaboration_posts table actually has columns for —
+// roles-needed/skills/author-profile would need their own tables (see
+// collaboration-data.js), so they're left out rather than collected and
+// silently dropped.
+function CreateCollabDialog({ open, onOpenChange, onCreated }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const addRole = () => {
-    const r = roleInput.trim();
-    if (r && !roles.includes(r)) {
-      setRoles([...roles, r]);
-      setRoleInput("");
-    }
-  };
-
-  const removeRole = (r) => setRoles(roles.filter((x) => x !== r));
-
-  const addSkill = () => {
-    const s = skillInput.trim();
-    if (s && !skills.includes(s)) {
-      setSkills([...skills, s]);
-      setSkillInput("");
-    }
-  };
-
-  const removeSkill = (s) => setSkills(skills.filter((x) => x !== s));
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onOpenChange(false);
+    setError("");
+    const form = new FormData(e.target);
+    const payload = {
+      post_type: form.get("type") === "looking-for-team" ? "looking_for_team" : "recruiting",
+      project_title: form.get("projectTitle")?.trim(),
+      category: form.get("category")?.trim() || null,
+      short_pitch: form.get("shortPitch")?.trim() || null,
+      description: form.get("description")?.trim() || null,
+      team_size_current: Number(form.get("currentSize")) || 1,
+      team_size_target: Number(form.get("targetSize")) || null,
+      contact_email: form.get("contactEmail")?.trim() || null,
+      contact_discord: form.get("contactDiscord")?.trim() || null,
+      contact_telegram: form.get("contactTelegram")?.trim() || null,
+    };
+
+    setSubmitting(true);
+    try {
+      const created = await createCollabPost(payload);
+      onCreated(created);
+      e.target.reset();
+      onOpenChange(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -109,58 +118,6 @@ function CreateCollabDialog({ open, onOpenChange }) {
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             />
           </div>
-          <div>
-            <Label className="mb-1.5 block">Roles needed</Label>
-            <div className="flex gap-2">
-              <Input
-                value={roleInput}
-                onChange={(e) => setRoleInput(e.target.value)}
-                placeholder="e.g. Frontend Developer"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRole(); } }}
-              />
-              <Button type="button" variant="outline" onClick={addRole}>
-                <Plus className="size-4" />
-              </Button>
-            </div>
-            {roles.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {roles.map((r) => (
-                  <span key={r} className="inline-flex items-center gap-1 rounded-md border border-collaboration/30 bg-collaboration/10 px-2 py-0.5 text-xs font-medium text-collaboration">
-                    {r}
-                    <button type="button" onClick={() => removeRole(r)} className="hover:text-collaboration/70">
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div>
-            <Label className="mb-1.5 block">Skills & tech</Label>
-            <div className="flex gap-2">
-              <Input
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                placeholder="e.g. React, Python"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
-              />
-              <Button type="button" variant="outline" onClick={addSkill}>
-                <Plus className="size-4" />
-              </Button>
-            </div>
-            {skills.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {skills.map((s) => (
-                  <span key={s} className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    #{s}
-                    <button type="button" onClick={() => removeSkill(s)} className="hover:text-foreground">
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <Label htmlFor="currentSize" className="mb-1.5 block">Current team size</Label>
@@ -169,20 +126,6 @@ function CreateCollabDialog({ open, onOpenChange }) {
             <div>
               <Label htmlFor="targetSize" className="mb-1.5 block">Target team size</Label>
               <Input id="targetSize" name="targetSize" type="number" min={1} placeholder="3" required />
-            </div>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="authorName" className="mb-1.5 block">Your name</Label>
-              <Input id="authorName" name="authorName" placeholder="Moni Ratha" required />
-            </div>
-            <div>
-              <Label htmlFor="authorYear" className="mb-1.5 block">Year</Label>
-              <Input id="authorYear" name="authorYear" placeholder="Year 3" required />
-            </div>
-            <div>
-              <Label htmlFor="authorMajor" className="mb-1.5 block">Major</Label>
-              <Input id="authorMajor" name="authorMajor" placeholder="Computer Science" required />
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-3">
@@ -199,12 +142,19 @@ function CreateCollabDialog({ open, onOpenChange }) {
               <Input id="contactTelegram" name="contactTelegram" placeholder="@username" />
             </div>
           </div>
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90">
-              Create Post
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
+            >
+              {submitting ? "Posting…" : "Create Post"}
             </Button>
           </div>
         </form>
@@ -214,7 +164,24 @@ function CreateCollabDialog({ open, onOpenChange }) {
 }
 
 export default function CollaborationPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [collabPosts, setCollabPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCollabPosts().then(setCollabPosts).finally(() => setLoading(false));
+  }, []);
+
+  const handleCreateClick = () => {
+    if (!user) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+    setOpen(true);
+  };
 
   return (
     <SectionPage
@@ -235,7 +202,7 @@ export default function CollaborationPage() {
         <div className="flex items-center gap-3">
           <p className="text-sm text-muted-foreground">{collabPosts.length} posts</p>
           <Button
-            onClick={() => setOpen(true)}
+            onClick={handleCreateClick}
             className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
           >
             <Plus className="size-4" /> Create
@@ -257,12 +224,22 @@ export default function CollaborationPage() {
           </button>
         ))}
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {collabPosts.map((post, i) => (
-          <CollabCard key={post.id} post={post} index={i} />
-        ))}
-      </div>
-      <CreateCollabDialog open={open} onOpenChange={setOpen} />
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading posts…</p>
+      ) : collabPosts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No posts yet — be the first to create one.</p>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {collabPosts.map((post, i) => (
+            <CollabCard key={post.id} post={post} index={i} />
+          ))}
+        </div>
+      )}
+      <CreateCollabDialog
+        open={open}
+        onOpenChange={setOpen}
+        onCreated={(post) => setCollabPosts((prev) => [post, ...prev])}
+      />
     </SectionPage>
   );
 }

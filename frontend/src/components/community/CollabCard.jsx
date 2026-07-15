@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { collabTypeEmoji, collabTypeLabel, formatRelativeTime } from "@/lib/collaboration-data";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 const tilts = [1, -1.2, 0.6, -0.8, 1.4, -0.5, 1, -1.5];
 
@@ -80,10 +81,10 @@ export function CollabCard({ post, index = 0 }) {
 
         {/* Author */}
         <div className="mt-auto flex items-center gap-2.5 border-t border-black/6 pt-4">
-          <img
+          <InitialAvatar
+            name={post.author.name}
             src={post.author.avatar}
-            alt={post.author.name}
-            className="size-8 rounded-full object-cover ring-2 ring-collaboration/20"
+            className="size-8 ring-2 ring-collaboration/20 text-xs"
           />
           <div className="text-xs leading-tight">
             <p className="font-bold text-foreground">{post.author.name}</p>

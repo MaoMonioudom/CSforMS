@@ -1,35 +1,40 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, Users, MessageSquare, UserCog, ArrowUpRight } from "lucide-react";
-import { events } from "@/lib/events-data";
-import { collabPosts } from "@/lib/collaboration-data";
-import { communityPosts } from "@/lib/community-data";
+import { fetchEvents } from "@/lib/events-data";
+import { fetchCollabPosts } from "@/lib/collaboration-data";
+import { fetchCommunityPosts } from "@/lib/community-data";
 import { ChartCard, LegendDot, HBar } from "../../components/charts";
 
 const MOCK_USERS = 48;
 
 // --- Derived chart data ---
-const communityCategories = communityPosts.reduce((acc, p) => {
-  acc[p.category] = (acc[p.category] || 0) + 1;
-  return acc;
-}, {});
-const communityDonutData = [
-  { label: "Technical",    value: communityCategories.Technical    || 0, color: "#f97316" },
-  { label: "Showcase",     value: communityCategories.Showcase     || 0, color: "#8b5cf6" },
-  { label: "Social",       value: communityCategories.Social       || 0, color: "#06b6d4" },
-  { label: "Question",     value: communityCategories.Question     || 0, color: "#3b82f6" },
-  { label: "Announcement", value: communityCategories.Announcement || 0, color: "#10b981" },
-].filter(d => d.value > 0);
+function deriveCommunityDonutData(communityPosts) {
+  const communityCategories = communityPosts.reduce((acc, p) => {
+    acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, {});
+  return [
+    { label: "Technical",    value: communityCategories.Technical    || 0, color: "#f97316" },
+    { label: "Showcase",     value: communityCategories.Showcase     || 0, color: "#8b5cf6" },
+    { label: "Social",       value: communityCategories.Social       || 0, color: "#06b6d4" },
+    { label: "Question",     value: communityCategories.Question     || 0, color: "#3b82f6" },
+    { label: "Announcement", value: communityCategories.Announcement || 0, color: "#10b981" },
+  ].filter(d => d.value > 0);
+}
 
-const topCommunityPosts = [...communityPosts]
-  .sort((a, b) => b.likes - a.likes)
-  .slice(0, 5);
+function deriveTopCommunityPosts(communityPosts) {
+  return [...communityPosts].sort((a, b) => b.likes - a.likes).slice(0, 5);
+}
 
-const skillCounts = {};
-collabPosts.forEach(post => post.skills.forEach(s => { skillCounts[s] = (skillCounts[s] || 0) + 1; }));
-const topSkills = Object.entries(skillCounts)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 8)
-  .map(([name, count]) => ({ name, count }));
+function deriveTopSkills(collabPosts) {
+  const skillCounts = {};
+  collabPosts.forEach(post => post.skills.forEach(s => { skillCounts[s] = (skillCounts[s] || 0) + 1; }));
+  return Object.entries(skillCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, count }));
+}
 
 // --- Base components ---
 
@@ -57,7 +62,7 @@ function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
 
 // --- Chart components ---
 
-function EventFillChart() {
+function EventFillChart({ events }) {
   const sorted = [...events].sort(
     (a, b) => b.participants / b.capacity - a.participants / a.capacity
   );
@@ -91,7 +96,7 @@ function EventFillChart() {
   );
 }
 
-function CommunityDonutChart() {
+function CommunityDonutChart({ communityDonutData }) {
   const radius = 38;
   const strokeWidth = 13;
   const circumference = 2 * Math.PI * radius;
@@ -142,7 +147,7 @@ function CommunityDonutChart() {
   );
 }
 
-function TopPostsChart() {
+function TopPostsChart({ topCommunityPosts }) {
   const maxLikes = topCommunityPosts[0]?.likes || 1;
   return (
     <ChartCard title="Top Community Posts" subtitle="Ranked by likes">
@@ -162,7 +167,7 @@ function TopPostsChart() {
   );
 }
 
-function SkillsDemandChart() {
+function SkillsDemandChart({ topSkills }) {
   const maxCount = topSkills[0]?.count || 1;
   return (
     <ChartCard title="In-Demand Skills" subtitle="Across collaboration posts">
@@ -185,6 +190,18 @@ function SkillsDemandChart() {
 // --- Page ---
 
 export default function AdminDashboard() {
+  const [events, setEvents] = useState([]);
+  useEffect(() => { fetchEvents().then(setEvents); }, []);
+
+  const [collabPosts, setCollabPosts] = useState([]);
+  useEffect(() => { fetchCollabPosts().then(setCollabPosts); }, []);
+  const topSkills = deriveTopSkills(collabPosts);
+
+  const [communityPosts, setCommunityPosts] = useState([]);
+  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts); }, []);
+  const communityDonutData = deriveCommunityDonutData(communityPosts);
+  const topCommunityPosts = deriveTopCommunityPosts(communityPosts);
+
   return (
     <div>
       <div className="mb-8">
@@ -200,13 +217,13 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <EventFillChart />
-        <CommunityDonutChart />
+        <EventFillChart events={events} />
+        <CommunityDonutChart communityDonutData={communityDonutData} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <TopPostsChart />
-        <SkillsDemandChart />
+        <TopPostsChart topCommunityPosts={topCommunityPosts} />
+        <SkillsDemandChart topSkills={topSkills} />
       </div>
     </div>
   );

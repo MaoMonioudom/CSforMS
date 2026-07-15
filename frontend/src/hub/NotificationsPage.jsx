@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CheckCheck, Bell, BellOff,
-  MessageSquare, BookOpen, Package, Award, GraduationCap,
-} from "lucide-react";
+import { CheckCheck, Bell, BellOff, MessageSquare } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
 import { BackBar } from "../components/BackBar";
+import { fetchNotifications, markNotificationRead } from "../lib/notifications-data";
+import { formatRelativeTime } from "../lib/community-data";
 
 const D = {
   bg:     "#eef5fc",
@@ -27,57 +26,68 @@ const FILTERS = [
   { key: "system",    label: "System",    color: "#6366f1" },
 ];
 
-const INITIAL_NOTIFICATIONS = [
-  { id: 1, type: "system",    title: "Badge earned: Workshop Rookie", message: "You joined your first workshop — Intro to Electronics.",            time: "Just now",   read: false, icon: Award,         color: "#6366f1" },
-  { id: 2, type: "community", title: "New reply on your post",        message: "Ahmed Q. replied to “Anyone want to grab coffee after Friday's...”", time: "1h ago",    read: false, icon: MessageSquare, color: "#c9a86c", to: "/community/communityspace" },
-  { id: 3, type: "learning",  title: "New chapter unlocked",          message: "Chapter 4: Functions is now available in Python for Makers.",         time: "3h ago",     read: false, icon: BookOpen,      color: "#c0392b", to: "/learning" },
-  { id: 4, type: "inventory", title: "Request approved",              message: "Your request for Arduino Uno R3 × 2 has been approved.",         time: "Yesterday",  read: true,  icon: Package,       color: "#0891b2", to: "/inventory" },
-  { id: 5, type: "community", title: "Event reminder",                message: "Maker Fair 2026 starts this Sunday at Main Hall, Building A.",         time: "Yesterday",  read: true,  icon: MessageSquare, color: "#c9a86c", to: "/community/eventspace" },
-  { id: 6, type: "learning",  title: "Workshop starting soon",        message: "Soldering Bootcamp begins tomorrow at 10:00 AM.",                       time: "2 days ago", read: true,  icon: GraduationCap, color: "#c0392b" },
-  { id: 7, type: "system",    title: "Badge earned: Resourceful",     message: "You requested 5 items from the Inventory module.",                     time: "3 days ago", read: true,  icon: Award,         color: "#6366f1" },
-  { id: 8, type: "inventory", title: "Return reminder",               message: "Your borrowed 3D printer filament is due back in 2 days.",             time: "4 days ago", read: true,  icon: Package,       color: "#0891b2" },
-];
+// Presentation per notification_type — the backend only stores a plain
+// message string, so icon/color/title/filter-bucket/link are decided here.
+// Add an entry per new notification_type as the backend grows more of them.
+const TYPE_META = {
+  event_reminder: { title: "Event reminder", icon: MessageSquare, color: "#c9a86c", to: "/community/eventspace", filterKey: "community" },
+};
+const DEFAULT_META = { title: "Notification", icon: Bell, color: "#6366f1", filterKey: "system" };
+const metaFor = (type) => TYPE_META[type] || DEFAULT_META;
 
-// Groups by relative recency so the list reads as Today / Yesterday / Earlier
+// Groups by calendar day so the list reads as Today / Yesterday / Earlier
 // instead of one long undifferentiated feed.
-function groupOf(time) {
-  if (time === "Just now" || /^\d+h ago$/.test(time)) return "Today";
-  if (time === "Yesterday") return "Yesterday";
+function groupOf(iso) {
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / 86400000);
+  if (diffDays <= 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
   return "Earlier";
 }
 const GROUPS = ["Today", "Yesterday", "Earlier"];
 
 function NotificationRow({ n, onClick, isLast }) {
-  const Icon = n.icon;
+  const meta = metaFor(n.type);
+  const Icon = meta.icon;
   return (
     <button onClick={() => onClick(n)}
       className="w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
       style={{
         borderBottom: isLast ? "none" : "1px solid rgba(15,50,80,0.08)",
-        background: n.read ? "transparent" : `${n.color}0d`,
+        background: n.read ? "transparent" : `${meta.color}0d`,
       }}>
-      <Icon size={16} style={{ color: n.color, marginTop: 2 }} className="shrink-0" />
+      <Icon size={16} style={{ color: meta.color, marginTop: 2 }} className="shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-sm truncate" style={{ color: D.text }}>{n.title}</p>
-          {!n.read && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: n.color }} />}
+          <p className="font-bold text-sm truncate" style={{ color: D.text }}>{meta.title}</p>
+          {!n.read && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: meta.color }} />}
         </div>
         <p className="text-xs mt-0.5 leading-relaxed" style={{ color: D.muted }}>{n.message}</p>
       </div>
-      <span className="text-[10px] shrink-0" style={{ color: D.faint }}>{n.time}</span>
+      <span className="text-[10px] shrink-0" style={{ color: D.faint }}>{formatRelativeTime(n.postedAt)}</span>
     </button>
   );
 }
 
 export default function NotificationsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [notifs, setNotifs] = useState(INITIAL_NOTIFICATIONS);
+  const [notifs, setNotifs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    // Wait for AuthContext to finish restoring the session from a stored
+    // token before deciding no one's logged in — otherwise a page refresh
+    // here always bounces through /login (user is briefly null on mount)
+    // even when the session is valid.
+    if (!authLoading && !user) navigate("/login");
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications().then(setNotifs).finally(() => setLoading(false));
+  }, [user]);
 
   if (!user) return null;
 
@@ -86,14 +96,20 @@ export default function NotificationsPage() {
   const visible = notifs.filter(n => {
     if (filter === "all") return true;
     if (filter === "unread") return !n.read;
-    return n.type === filter;
+    return metaFor(n.type).filterKey === filter;
   });
 
-  const markAllRead = () => setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllRead = () => {
+    const unread = notifs.filter(n => !n.read);
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    unread.forEach(n => markNotificationRead(n.id).catch(() => {}));
+  };
 
   const handleClick = (n) => {
     setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
-    if (n.to) navigate(n.to);
+    if (!n.read) markNotificationRead(n.id).catch(() => {});
+    const to = metaFor(n.type).to;
+    if (to) navigate(to);
   };
 
   return (
@@ -147,7 +163,9 @@ export default function NotificationsPage() {
         </div>
 
         {/* Notification list — grouped by recency, colour-accented by module */}
-        {visible.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-center py-12" style={{ color: D.muted }}>Loading…</p>
+        ) : visible.length === 0 ? (
           <div className="rounded-2xl p-12 text-center flex flex-col items-center gap-3"
             style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
             <BellOff size={28} style={{ color: D.faint }} />
@@ -156,7 +174,7 @@ export default function NotificationsPage() {
           </div>
         ) : (
           GROUPS.map(group => {
-            const items = visible.filter(n => groupOf(n.time) === group);
+            const items = visible.filter(n => groupOf(n.postedAt) === group);
             if (items.length === 0) return null;
             return (
               <div key={group} className="mb-6 last:mb-0">

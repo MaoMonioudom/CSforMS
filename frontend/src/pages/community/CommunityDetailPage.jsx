@@ -1,11 +1,28 @@
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Heart, MessageCircle, Share2 } from "lucide-react";
-import { categoryEmoji, formatRelativeTime, getCommunityPostById } from "@/lib/community-data";
+import { categoryEmoji, formatRelativeTime, fetchCommunityPostById } from "@/lib/community-data";
 import { Button } from "@/components/community/ui/button";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
+import { useAuth } from "@/hub/AuthContext";
 
 export default function CommunityDetailPage() {
   const { postId } = useParams();
-  const post = getCommunityPostById(postId);
+  const { user } = useAuth();
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchCommunityPostById(postId)
+      .then(setPost)
+      .catch(() => setPost(null))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  if (loading) {
+    return <div className="mx-auto max-w-3xl px-6 py-24 text-center text-muted-foreground">Loading…</div>;
+  }
 
   if (!post) {
     return (
@@ -37,11 +54,7 @@ export default function CommunityDetailPage() {
         </nav>
         <article className="rounded-2xl border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3">
-            <img
-              src={post.author.avatar}
-              alt={post.author.name}
-              className="size-12 rounded-full object-cover"
-            />
+            <InitialAvatar name={post.author.name} src={post.author.avatar} className="size-12 text-lg" />
             <div>
               <p className="text-sm font-semibold">{post.author.name}</p>
               <p className="text-xs text-muted-foreground">
@@ -95,11 +108,7 @@ export default function CommunityDetailPage() {
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Comments</h2>
           <div className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
-            <img
-              src="https://i.pravatar.cc/120?u=you"
-              alt=""
-              className="size-9 rounded-full object-cover"
-            />
+            <InitialAvatar name={user?.name} src={user?.avatar} className="size-9 text-sm" />
             <textarea
               placeholder="Write a comment…"
               className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-community"
@@ -117,11 +126,7 @@ export default function CommunityDetailPage() {
             ) : (
               post.comments.map((c) => (
                 <li key={c.id} className="flex gap-3 rounded-xl border border-border bg-card p-4">
-                  <img
-                    src={c.author.avatar}
-                    alt={c.author.name}
-                    className="size-9 shrink-0 rounded-full object-cover"
-                  />
+                  <InitialAvatar name={c.author.name} src={c.author.avatar} className="size-9 shrink-0 text-sm" />
                   <div className="min-w-0">
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-semibold">{c.author.name}</span>

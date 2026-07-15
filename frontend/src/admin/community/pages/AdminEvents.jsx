@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Pencil, Trash2, Plus, Calendar, MapPin } from "lucide-react";
-import { events as initialEvents, formatEventDateShort } from "@/lib/events-data";
+import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell } from "lucide-react";
+import {
+  fetchEvents, createEvent, updateEvent, deleteEvent, formatEventDateShort,
+  fetchEventRegistrants, sendEventReminder,
+} from "@/lib/events-data";
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 } from "@/components/community/ui/dialog";
@@ -9,24 +12,14 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/community/ui/alert-dialog";
-
-// Admin has no backend yet — CRUD lives in local state, seeded from the mock
-// data. Wiring this to real persistence later is a matter of swapping these
-// setters for API calls; the form/dialog plumbing stays the same.
-const DEFAULT_AUTHOR = { name: "Admin Team", role: "Event Organizer", avatar: "https://i.pravatar.cc/120?img=68" };
+import { Button } from "@/components/community/ui/button";
 
 const EMPTY_FORM = {
   title: "", location: "", date: "", endDate: "",
-  capacity: "", participants: "0", tags: "", image: "",
-  shortDescription: "", description: "",
+  capacity: "", image: "", description: "",
 };
 
-function slugify(str) {
-  return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "event";
-}
-
-// datetime-local <-> ISO helpers. The mock data stores UTC ISO strings with
-// seconds ("2026-07-12T10:00:00Z"); toISOString() already gives us that.
+// datetime-local <-> ISO helpers.
 function toLocalInput(iso) {
   return iso ? new Date(iso).toISOString().slice(0, 16) : "";
 }
@@ -37,7 +30,7 @@ function toIso(local) {
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
 const labelCls = "block text-xs font-semibold text-gray-500 mb-1";
 
-function Actions({ event, onEdit, onDelete }) {
+function Actions({ event, onEdit, onDelete, onViewRegistrants }) {
   return (
     <div className="flex items-center gap-1">
       <Link
@@ -46,6 +39,10 @@ function Actions({ event, onEdit, onDelete }) {
       >
         <Eye className="h-3.5 w-3.5" />
       </Link>
+      <button onClick={() => onViewRegistrants(event)}
+        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Registrants">
+        <Users className="h-3.5 w-3.5" />
+      </button>
       <button onClick={() => onEdit(event)}
         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Edit">
         <Pencil className="h-3.5 w-3.5" />
@@ -58,10 +55,65 @@ function Actions({ event, onEdit, onDelete }) {
   );
 }
 
-function EventCard({ event, onEdit, onDelete }) {
-  const pct = Math.round((event.participants / event.capacity) * 100);
-  const fillColor = pct >= 90 ? "#f87171" : pct >= 70 ? "#fb923c" : "#34d399";
+function RegistrantsDialog({ event, onOpenChange }) {
+  const [registrants, setRegistrants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState("");
 
+  useEffect(() => {
+    if (!event) return;
+    setLoading(true);
+    setStatus("");
+    fetchEventRegistrants(event.id).then(setRegistrants).finally(() => setLoading(false));
+  }, [event]);
+
+  const handleRemind = async () => {
+    setSending(true);
+    setStatus("");
+    try {
+      const sent = await sendEventReminder(event.id);
+      setStatus(sent > 0 ? `Reminder sent to ${sent} ${sent === 1 ? "person" : "people"}.` : "No one is registered yet.");
+    } catch (err) {
+      setStatus(err.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!event} onOpenChange={(open) => !open && onOpenChange(null)}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Registrants — {event?.title}</DialogTitle>
+          <DialogDescription>{registrants.length} registered</DialogDescription>
+        </DialogHeader>
+
+        <Button onClick={handleRemind} disabled={sending || loading} className="w-full bg-gray-900 text-white hover:bg-gray-700">
+          <Bell className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send reminder"}
+        </Button>
+        {status && <p className="text-xs text-gray-500">{status}</p>}
+
+        {loading ? (
+          <p className="text-sm text-gray-400 py-6 text-center">Loading…</p>
+        ) : registrants.length === 0 ? (
+          <p className="text-sm text-gray-400 py-6 text-center">No one has registered yet.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {registrants.map((r) => (
+              <li key={r.userId} className="py-2.5 flex flex-col">
+                <span className="text-sm font-medium text-gray-900">{r.name}</span>
+                <span className="text-xs text-gray-400">{r.email}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EventCard({ event, onEdit, onDelete, onViewRegistrants }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-sm transition-all flex flex-col">
       <div className="relative h-32 bg-gray-100 shrink-0">
@@ -75,6 +127,9 @@ function EventCard({ event, onEdit, onDelete }) {
         <span className="absolute top-2 left-2 bg-white/95 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm">
           {formatEventDateShort(event.date)}
         </span>
+        <span className="absolute top-2 right-2 bg-white/95 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm capitalize">
+          {event.status}
+        </span>
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
@@ -82,29 +137,10 @@ function EventCard({ event, onEdit, onDelete }) {
         <p className="text-xs text-gray-400 truncate mt-0.5 flex items-center gap-1">
           <MapPin className="h-3 w-3 shrink-0" /> {event.location}
         </p>
+        <p className="text-xs text-gray-400 mt-1">Capacity: {event.capacity || "—"}</p>
 
-        <div className="mt-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wide">Spots</span>
-            <span className="text-xs font-semibold tabular-nums" style={{ color: fillColor }}>
-              {event.participants}/{event.capacity}
-            </span>
-          </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: fillColor }} />
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-1 flex-1">
-          {event.tags.map(t => (
-            <span key={t} className="inline-block bg-orange-50 text-orange-600 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-              {t}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-gray-50 flex justify-end">
-          <Actions event={event} onEdit={onEdit} onDelete={onDelete} />
+        <div className="mt-3 pt-3 border-t border-gray-50 flex-1 flex items-end justify-end">
+          <Actions event={event} onEdit={onEdit} onDelete={onDelete} onViewRegistrants={onViewRegistrants} />
         </div>
       </div>
     </div>
@@ -112,17 +148,26 @@ function EventCard({ event, onEdit, onDelete }) {
 }
 
 export default function AdminEvents() {
-  const [list, setList] = useState(initialEvents);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [registrantsTarget, setRegistrantsTarget] = useState(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchEvents().then(setList).finally(() => setLoading(false));
+  }, []);
 
   const updateField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
   const openAdd = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setError("");
     setFormOpen(true);
   };
 
@@ -133,44 +178,53 @@ export default function AdminEvents() {
       location: ev.location,
       date: toLocalInput(ev.date),
       endDate: ev.endDate ? toLocalInput(ev.endDate) : "",
-      capacity: String(ev.capacity),
-      participants: String(ev.participants),
-      tags: ev.tags.join(", "),
+      capacity: String(ev.capacity || ""),
       image: ev.image || "",
-      shortDescription: ev.shortDescription || "",
       description: ev.description || "",
     });
+    setError("");
     setFormOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
     const payload = {
       title: form.title.trim(),
       location: form.location.trim(),
-      date: toIso(form.date),
-      endDate: form.endDate ? toIso(form.endDate) : undefined,
-      capacity: Number(form.capacity) || 0,
-      participants: Number(form.participants) || 0,
-      tags,
-      image: form.image.trim() || undefined,
-      shortDescription: form.shortDescription.trim(),
+      start_date: toIso(form.date),
+      end_date: form.endDate ? toIso(form.endDate) : null,
+      max_participants: form.capacity ? Number(form.capacity) : null,
+      image_url: form.image.trim() || null,
       description: form.description.trim(),
     };
 
-    if (editingId) {
-      setList(prev => prev.map(ev => ev.id === editingId ? { ...ev, ...payload } : ev));
-    } else {
-      const id = `${slugify(payload.title)}-${Math.random().toString(36).slice(2, 6)}`;
-      setList(prev => [{ id, author: DEFAULT_AUTHOR, ...payload }, ...prev]);
+    setSaving(true);
+    setError("");
+    try {
+      if (editingId) {
+        const updated = await updateEvent(editingId, payload);
+        setList(prev => prev.map(ev => ev.id === editingId ? updated : ev));
+      } else {
+        const created = await createEvent(payload);
+        setList(prev => [created, ...prev]);
+      }
+      setFormOpen(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
-    setFormOpen(false);
   };
 
-  const confirmDelete = () => {
-    setList(prev => prev.filter(ev => ev.id !== deleteTarget.id));
-    setDeleteTarget(null);
+  const confirmDelete = async () => {
+    try {
+      await deleteEvent(deleteTarget.id);
+      setList(prev => prev.filter(ev => ev.id !== deleteTarget.id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -186,11 +240,17 @@ export default function AdminEvents() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {list.map(ev => (
-          <EventCard key={ev.id} event={ev} onEdit={openEdit} onDelete={setDeleteTarget} />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-sm text-gray-400">Loading events…</p>
+      ) : list.length === 0 ? (
+        <p className="text-sm text-gray-400">No events yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {list.map(ev => (
+            <EventCard key={ev.id} event={ev} onEdit={openEdit} onDelete={setDeleteTarget} onViewRegistrants={setRegistrantsTarget} />
+          ))}
+        </div>
+      )}
 
       {/* Add / Edit form */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -203,6 +263,10 @@ export default function AdminEvents() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="grid gap-4">
+            {error && (
+              <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{error}</div>
+            )}
+
             <div>
               <label className={labelCls}>Title</label>
               <input className={inputCls} value={form.title} onChange={updateField("title")} required />
@@ -224,20 +288,9 @@ export default function AdminEvents() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Capacity</label>
-                <input type="number" min="0" className={inputCls} value={form.capacity} onChange={updateField("capacity")} required />
-              </div>
-              <div>
-                <label className={labelCls}>Registered</label>
-                <input type="number" min="0" className={inputCls} value={form.participants} onChange={updateField("participants")} />
-              </div>
-            </div>
-
             <div>
-              <label className={labelCls}>Tags <span className="font-normal text-gray-400">(comma separated)</span></label>
-              <input className={inputCls} value={form.tags} onChange={updateField("tags")} placeholder="workshop, electronics, beginner" />
+              <label className={labelCls}>Capacity <span className="font-normal text-gray-400">(optional)</span></label>
+              <input type="number" min="0" className={inputCls} value={form.capacity} onChange={updateField("capacity")} />
             </div>
 
             <div>
@@ -246,12 +299,7 @@ export default function AdminEvents() {
             </div>
 
             <div>
-              <label className={labelCls}>Short description</label>
-              <textarea className={inputCls} rows={2} value={form.shortDescription} onChange={updateField("shortDescription")} />
-            </div>
-
-            <div>
-              <label className={labelCls}>Full description</label>
+              <label className={labelCls}>Description</label>
               <textarea className={inputCls} rows={4} value={form.description} onChange={updateField("description")} />
             </div>
 
@@ -260,8 +308,8 @@ export default function AdminEvents() {
                 className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
                 Cancel
               </button>
-              <button type="submit"
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-700 transition-colors">
+              <button type="submit" disabled={saving}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-700 transition-colors disabled:opacity-50">
                 {editingId ? "Save changes" : "Create event"}
               </button>
             </DialogFooter>
@@ -286,6 +334,8 @@ export default function AdminEvents() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RegistrantsDialog event={registrantsTarget} onOpenChange={setRegistrantsTarget} />
     </div>
   );
 }

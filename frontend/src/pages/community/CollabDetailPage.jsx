@@ -1,16 +1,31 @@
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Mail, MessageCircle, Send, Users } from "lucide-react";
 import {
   collabTypeEmoji,
   collabTypeLabel,
   formatRelativeTime,
-  getCollabPostById,
+  fetchCollabPostById,
 } from "@/lib/collaboration-data";
 import { Button } from "@/components/community/ui/button";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 export default function CollabDetailPage() {
   const { postId } = useParams();
-  const post = getCollabPostById(postId);
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchCollabPostById(postId)
+      .then(setPost)
+      .catch(() => setPost(null))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  if (loading) {
+    return <div className="mx-auto max-w-3xl px-6 py-24 text-center text-muted-foreground">Loading…</div>;
+  }
 
   if (!post) {
     return (
@@ -60,11 +75,7 @@ export default function CollabDetailPage() {
         <div className="grid gap-10 lg:grid-cols-3">
           <article className="lg:col-span-2 space-y-10">
             <div className="flex items-center gap-3 rounded-2xl border border-border p-4">
-              <img
-                src={post.author.avatar}
-                alt={post.author.name}
-                className="size-12 rounded-full object-cover"
-              />
+              <InitialAvatar name={post.author.name} src={post.author.avatar} className="size-12 text-lg" />
               <div>
                 <p className="text-sm font-semibold">{post.author.name}</p>
                 <p className="text-xs text-muted-foreground">

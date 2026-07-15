@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { categoryEmoji, formatRelativeTime } from "@/lib/community-data";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 const tilts = [-0.8, 1, -1.3, 0.6, 1.2, -0.5, 0.9, -1.1];
 const paperShadow = "0 2px 4px rgba(0,0,0,0.07), 0 6px 20px rgba(0,0,0,0.09)";
@@ -51,10 +52,10 @@ export function CommunityPostCard({ post, index = 0 }) {
 
       {/* Author row */}
       <div className="flex items-center gap-3 px-5 pt-4 pb-2">
-        <img
+        <InitialAvatar
+          name={post.author.name}
           src={post.author.avatar}
-          alt={post.author.name}
-          className="size-9 shrink-0 rounded-full object-cover ring-2 ring-community/20"
+          className="size-9 shrink-0 ring-2 ring-community/20 text-sm"
         />
         <div className="min-w-0">
           <p className="text-sm font-extrabold leading-tight">{post.author.name}</p>

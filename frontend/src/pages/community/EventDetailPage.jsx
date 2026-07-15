@@ -1,14 +1,66 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Calendar, MapPin, Users } from "lucide-react";
-import { getEventById, formatEventDate } from "@/lib/events-data";
+import {
+  fetchEventById, formatEventDate,
+  fetchMyEventRegistrations, registerForEvent, unregisterFromEvent,
+} from "@/lib/events-data";
+import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
 
 export default function EventDetailPage() {
   const { eventId } = useParams();
-  const event = getEventById(eventId);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [registered, setRegistered] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetchEventById(eventId),
+      user ? fetchMyEventRegistrations() : Promise.resolve([]),
+    ])
+      .then(([ev, myIds]) => {
+        setEvent(ev);
+        setRegistered(myIds.includes(Number(eventId)));
+      })
+      .catch(() => setEvent(null))
+      .finally(() => setLoading(false));
+  }, [eventId, user]);
+
+  const handleRegisterToggle = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+    setError("");
+    setWorking(true);
+    try {
+      if (registered) {
+        await unregisterFromEvent(eventId);
+        setRegistered(false);
+        setEvent((prev) => ({ ...prev, participants: Math.max(0, prev.participants - 1) }));
+      } else {
+        await registerForEvent(eventId);
+        setRegistered(true);
+        setEvent((prev) => ({ ...prev, participants: prev.participants + 1 }));
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="mx-auto max-w-3xl px-6 py-24 text-center text-muted-foreground">Loading…</div>;
+  }
 
   if (!event) {
     return (
@@ -22,8 +74,8 @@ export default function EventDetailPage() {
     );
   }
 
-  const participants = event.participants + (registered ? 1 : 0);
-  const pct = Math.min(100, Math.round((participants / event.capacity) * 100));
+  const participants = event.participants;
+  const pct = event.capacity ? Math.min(100, Math.round((participants / event.capacity) * 100)) : 0;
 
   return (
     <main className="bg-background">
@@ -107,13 +159,15 @@ export default function EventDetailPage() {
                 />
               </div>
               <Button
-                className="mt-5 w-full bg-events text-events-foreground hover:bg-events/90"
-                disabled={registered}
-                onClick={() => setRegistered(true)}
+                className={registered
+                  ? "mt-5 w-full border border-events text-events bg-transparent hover:bg-events/10"
+                  : "mt-5 w-full bg-events text-events-foreground hover:bg-events/90"}
+                disabled={working}
+                onClick={handleRegisterToggle}
               >
-                {registered ? "Registered ✓" : "Register for this event"}
+                {working ? "…" : registered ? "Registered ✓ — cancel" : "Register for this event"}
               </Button>
-              <p className="mt-3 text-xs text-muted-foreground">Demo only — not yet persisted.</p>
+              {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
             </div>
           </aside>
         </div>

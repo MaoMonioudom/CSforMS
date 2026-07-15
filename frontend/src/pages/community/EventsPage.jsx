@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SectionPage, PushPin } from "@/components/community/SectionPage";
 import { EventCard } from "@/components/community/EventCard";
-import { events, getEventStatus, formatEventDateShort } from "@/lib/events-data";
+import { fetchEvents, getEventStatus, formatEventDateShort } from "@/lib/events-data";
 
 const VISIBLE = 6;
 
@@ -76,9 +76,20 @@ function MoreStack({ count, onClick }) {
 
 export default function EventsPage() {
   const [expanded, setExpanded] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents().then(setEvents).finally(() => setLoading(false));
+  }, []);
+
   const visible = expanded ? events : events.slice(0, VISIBLE);
   const hidden = events.length - VISIBLE;
   const ongoing = events.find(e => getEventStatus(e) === "ongoing");
+  const thisWeek = events.filter(e => {
+    const days = (new Date(e.date) - new Date()) / 86400000;
+    return days >= 0 && days <= 7;
+  }).length;
 
   return (
     <SectionPage
@@ -92,7 +103,7 @@ export default function EventsPage() {
       banner={ongoing ? <OngoingBanner event={ongoing} /> : null}
       stats={[
         { value: events.length, label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
-        { value: 3,             label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
+        { value: thisWeek,      label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
       ]}
     >
       <div className="mb-8 flex items-end justify-between">
@@ -100,21 +111,27 @@ export default function EventsPage() {
         <p className="text-sm text-muted-foreground">{events.length} events</p>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((event, i) => (
-          <div
-            key={event.id}
-            className="animate-pin-in"
-            style={{ animationDelay: `${i * 70}ms` }}
-          >
-            <EventCard event={event} index={i} />
-          </div>
-        ))}
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading events…</p>
+      ) : events.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No events yet — check back soon.</p>
+      ) : (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((event, i) => (
+            <div
+              key={event.id}
+              className="animate-pin-in"
+              style={{ animationDelay: `${i * 70}ms` }}
+            >
+              <EventCard event={event} index={i} />
+            </div>
+          ))}
 
-        {!expanded && hidden > 0 && (
-          <MoreStack count={hidden} onClick={() => setExpanded(true)} />
-        )}
-      </div>
+          {!expanded && hidden > 0 && (
+            <MoreStack count={hidden} onClick={() => setExpanded(true)} />
+          )}
+        </div>
+      )}
 
       {expanded && (
         <div className="mt-8 text-center">

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Eye, Trash2 } from "lucide-react";
-import { collabPosts as initialCollabPosts } from "@/lib/collaboration-data";
+import { fetchCollabPosts, deleteCollabPost } from "@/lib/collaboration-data";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/community/ui/alert-dialog";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 // These posts are user-authored — admins moderate (view, remove) rather than
 // edit someone else's content under their name. No Edit action here, unlike
@@ -33,12 +34,24 @@ const typeColors = {
 };
 
 export default function AdminCollaboration() {
-  const [list, setList] = useState(initialCollabPosts);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [error, setError] = useState("");
 
-  const confirmDelete = () => {
-    setList(prev => prev.filter(p => p.id !== deleteTarget.id));
-    setDeleteTarget(null);
+  useEffect(() => {
+    fetchCollabPosts().then(setList).finally(() => setLoading(false));
+  }, []);
+
+  const confirmDelete = async () => {
+    try {
+      await deleteCollabPost(deleteTarget.id);
+      setList(prev => prev.filter(p => p.id !== deleteTarget.id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -50,7 +63,16 @@ export default function AdminCollaboration() {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5 mb-4">{error}</div>
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {loading ? (
+          <p className="text-sm text-gray-400 p-8 text-center">Loading…</p>
+        ) : list.length === 0 ? (
+          <p className="text-sm text-gray-400 p-8 text-center">No posts yet.</p>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -77,7 +99,7 @@ export default function AdminCollaboration() {
                   </td>
                   <td className="px-5 py-3.5 hidden md:table-cell">
                     <div className="flex items-center gap-2">
-                      <img src={post.author.avatar} alt={post.author.name} className="h-6 w-6 rounded-full object-cover shrink-0" />
+                      <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-6 w-6 shrink-0 text-[10px]" />
                       <span className="text-gray-700 truncate max-w-120px">{post.author.name}</span>
                     </div>
                   </td>
@@ -108,6 +130,7 @@ export default function AdminCollaboration() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

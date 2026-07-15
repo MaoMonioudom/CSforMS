@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Eye, Trash2 } from "lucide-react";
-import { communityPosts as initialCommunityPosts } from "@/lib/community-data";
+import { fetchCommunityPosts, deleteCommunityPost } from "@/lib/community-data";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
 } from "@/components/community/ui/alert-dialog";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 // User-authored posts — admins moderate (view, remove) rather than edit
 // someone else's content under their name. No Edit action here, unlike
@@ -36,12 +37,24 @@ const categoryColors = {
 };
 
 export default function AdminCommunity() {
-  const [list, setList] = useState(initialCommunityPosts);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [error, setError] = useState("");
 
-  const confirmDelete = () => {
-    setList(prev => prev.filter(p => p.id !== deleteTarget.id));
-    setDeleteTarget(null);
+  useEffect(() => {
+    fetchCommunityPosts().then(setList).finally(() => setLoading(false));
+  }, []);
+
+  const confirmDelete = async () => {
+    try {
+      await deleteCommunityPost(deleteTarget.id);
+      setList(prev => prev.filter(p => p.id !== deleteTarget.id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -53,7 +66,16 @@ export default function AdminCommunity() {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5 mb-4">{error}</div>
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {loading ? (
+          <p className="text-sm text-gray-400 p-8 text-center">Loading…</p>
+        ) : list.length === 0 ? (
+          <p className="text-sm text-gray-400 p-8 text-center">No posts yet.</p>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -84,7 +106,7 @@ export default function AdminCommunity() {
                   </td>
                   <td className="px-5 py-3.5 hidden md:table-cell">
                     <div className="flex items-center gap-2">
-                      <img src={post.author.avatar} alt={post.author.name} className="h-6 w-6 rounded-full object-cover shrink-0" />
+                      <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-6 w-6 shrink-0 text-[10px]" />
                       <div className="min-w-0">
                         <p className="text-gray-700 truncate max-w-[110px] text-xs font-medium">{post.author.name}</p>
                         <p className="text-gray-400 text-[10px]">{post.author.handle}</p>
@@ -115,6 +137,7 @@ export default function AdminCommunity() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

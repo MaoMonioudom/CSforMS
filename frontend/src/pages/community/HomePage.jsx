@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, Calendar, Users, MessageSquare, MapPin } from "lucide-react";
-import { events, formatEventDateShort } from "@/lib/events-data";
-import { communityPosts, formatRelativeTime } from "@/lib/community-data";
-import { collabPosts } from "@/lib/collaboration-data";
+import { fetchEvents, formatEventDateShort } from "@/lib/events-data";
+import { fetchCommunityPosts, formatRelativeTime } from "@/lib/community-data";
+import { fetchCollabPosts } from "@/lib/collaboration-data";
 import { searchCommunity, suggestRelated, resultKey } from "@/lib/search";
 import { SearchResultsFeed } from "@/components/community/SearchResultsFeed";
+import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 // ── Push Pin ──────────────────────────────────────────────────────────────────
 function PushPin({ color = "#ef4444", size = 16 }) {
@@ -141,7 +142,7 @@ function CollabNote({ post, rotate, idx }) {
           ))}
         </div>
         <div className="mt-3 flex items-center gap-1.5">
-          <img src={post.author.avatar} alt={post.author.name} className="h-5 w-5 rounded-full object-cover" />
+          <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-5 w-5 text-[8px]" />
           <span className="text-[10px] text-muted-foreground font-semibold">{post.author.name}</span>
         </div>
       </Link>
@@ -200,6 +201,15 @@ function StatPin({ value, label, color, rotate, pinColor }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const [events, setEvents] = useState([]);
+  useEffect(() => { fetchEvents().then(setEvents); }, []);
+
+  const [collabPosts, setCollabPosts] = useState([]);
+  useEffect(() => { fetchCollabPosts().then(setCollabPosts); }, []);
+
+  const [communityPosts, setCommunityPosts] = useState([]);
+  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts); }, []);
+
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
   const searchResults = useMemo(() => (query ? searchCommunity(query) : []), [query]);
@@ -328,50 +338,54 @@ export default function HomePage() {
           {/* Middle pinned notes cluster */}
           <div className="hidden lg:flex flex-col gap-7 pt-14 flex-1 max-w-52.5">
             {/* Hot discussion sticky */}
-            <Pinned rotate={2} pinColor="#dc2626">
-              <Link
-                to={`/community/${communityPosts[0].id}`}
-                className="flex flex-col p-4"
-                style={{
-                  minHeight: "160px",
-                  background: "#fffde7",
-                  boxShadow: "3px 5px 18px rgba(0,0,0,0.2)",
-                }}
-              >
-                <span className="text-[9px] font-extrabold uppercase tracking-widest text-orange-500">Hot Discussion</span>
-                <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-3">
-                  {communityPosts[0].title}
-                </p>
-                <div className="mt-3 flex items-center gap-1.5">
-                  <img src={communityPosts[0].author.avatar} alt="" className="h-5 w-5 rounded-full object-cover" />
-                  <span className="text-[10px] text-muted-foreground font-semibold">{communityPosts[0].author.name}</span>
-                </div>
-              </Link>
-            </Pinned>
+            {communityPosts.length > 0 && (
+              <Pinned rotate={2} pinColor="#dc2626">
+                <Link
+                  to={`/community/${communityPosts[0].id}`}
+                  className="flex flex-col p-4"
+                  style={{
+                    minHeight: "160px",
+                    background: "#fffde7",
+                    boxShadow: "3px 5px 18px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-orange-500">Hot Discussion</span>
+                  <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-3">
+                    {communityPosts[0].title}
+                  </p>
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <InitialAvatar name={communityPosts[0].author.name} src={communityPosts[0].author.avatar} className="h-5 w-5 text-[8px]" />
+                    <span className="text-[10px] text-muted-foreground font-semibold">{communityPosts[0].author.name}</span>
+                  </div>
+                </Link>
+              </Pinned>
+            )}
 
             {/* Next event note */}
-            <Pinned rotate={-1.5} pinColor="#f97316">
-              <Link
-                to={`/community/eventspace/${events[1].id}`}
-                className="flex flex-col p-4"
-                style={{
-                  minHeight: "140px",
-                  background: "white",
-                  boxShadow: "3px 5px 18px rgba(0,0,0,0.18)",
-                  backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #dde6f0 24px)",
-                  backgroundSize: "100% 24px",
-                  backgroundPositionY: "32px",
-                }}
-              >
-                <span className="text-[9px] font-extrabold uppercase tracking-widest text-events">📅 Next Up</span>
-                <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
-                  {events[1].title}
-                </p>
-                <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {events[1].location}
-                </p>
-              </Link>
-            </Pinned>
+            {events.length > 1 && (
+              <Pinned rotate={-1.5} pinColor="#f97316">
+                <Link
+                  to={`/community/eventspace/${events[1].id}`}
+                  className="flex flex-col p-4"
+                  style={{
+                    minHeight: "140px",
+                    background: "white",
+                    boxShadow: "3px 5px 18px rgba(0,0,0,0.18)",
+                    backgroundImage: "repeating-linear-gradient(transparent, transparent 23px, #dde6f0 24px)",
+                    backgroundSize: "100% 24px",
+                    backgroundPositionY: "32px",
+                  }}
+                >
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-events">📅 Next Up</span>
+                  <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
+                    {events[1].title}
+                  </p>
+                  <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-2.5 w-2.5 shrink-0" /> {events[1].location}
+                  </p>
+                </Link>
+              </Pinned>
+            )}
           </div>
 
         </div>
