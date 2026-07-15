@@ -67,9 +67,13 @@ export function toUiBorrow(row) {
     itemName: row.inventory_items?.item_name || '—',
     action: row.status === 'returned' ? 'returned' : 'borrowed',
     qty: row.quantity_borrow,
-    date: (row.borrow_date || '').slice(0, 10),
+    // Full timestamps (not date-only) — borrow_date/return_date are real
+    // moments (when staff approved/processed it), shown with time on the
+    // notifications feed. dueDate stays date-only — it's a day-level
+    // deadline, not a specific moment.
+    date: row.borrow_date,
     dueDate: (row.due_date || '').slice(0, 10) || null,
-    returnDate: ret ? (ret.return_date || '').slice(0, 10) : null,
+    returnDate: ret ? ret.return_date : null,
     status: row.status === 'returned' ? 'completed' : 'active',
     overdue: row.status !== 'returned' && row.due_date && new Date(row.due_date) < new Date(),
     condition: ret?.is_damaged ? 'Damaged' : 'Good',
@@ -86,7 +90,11 @@ export function toUiRequest(row) {
     itemName: row.inventory_items?.item_name || null,
     type: row.request_type,
     status: row.status,
-    date: (row.created_at || '').slice(0, 10),
+    date: row.created_at,
+    // requests.updated_at only changes on approve/deny (see
+    // approveBorrowGroup/denyRequestGroup/etc. in inventory.controller.js),
+    // so once the request is no longer pending it's the approval/denial time.
+    approvedAt: row.status !== 'pending' ? row.updated_at : null,
     qty: row.quantity,
     dueDate: row.due_date,
     amountUSD: row.amount_usd != null ? Number(row.amount_usd) : null,
@@ -106,7 +114,7 @@ export function toUiNotification(row) {
     type: row.notification_type,
     message: row.message,
     read: row.is_read,
-    date: (row.created_at || '').slice(0, 10),
+    date: row.created_at,
     userId: row.user_id,
   }
 }

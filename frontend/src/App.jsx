@@ -66,7 +66,6 @@ function UserLayout() {
 function LearningLayout() {
   return (
     <div className="learning-scope">
-      <CursorEffect />
       <TopNav />
       <Outlet />
       <AppFooter />
@@ -109,27 +108,6 @@ export default function App() {
           <Route path="/community/communityspace/:postId" element={<CommunityDetailPage />} />
         </Route>
 
-        {/* Learning — TopNav + Footer */}
-        <Route element={<UserLayout />}>
-          <Route path="/learning" element={<LearningHomePage />} />
-          <Route path="/learning/courses" element={<LearningCoursesPage />} />
-          <Route path="/learning/course/:id" element={<LearningCourseDetail />} />
-          <Route path="/learning/:id/lessons/:lessonId" element={<LearningLessonDetail />} />
-          <Route path="/learning/about" element={<LearningAbout />} />
-          <Route path="/contact" element={<LearningContact />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-
-        {/* Learning spaces — TopNav + Footer, scoped to the library theme */}
-        <Route element={<LearningLayout />}>
-          <Route path="/learning" element={<LearningHomePage />} />
-          <Route path="/learning/courses" element={<LearningCoursesPage />} />
-          <Route path="/learning/course/:id" element={<LearningCourseDetail />} />
-          <Route path="/learning/:id/lessons/:lessonId" element={<LearningLessonDetail />} />
-          <Route path="/learning/about" element={<LearningAbout />} />
-          <Route path="/learning/contact" element={<LearningContact />} />
-        </Route>
-
         {/* Learning spaces — TopNav + Footer, scoped to the library theme */}
         <Route element={<LearningLayout />}>
           <Route path="/learning" element={<LearningHomePage />} />
@@ -167,6 +145,12 @@ export default function App() {
             <Route path="learning/courses/new" element={<LecturerCourseEditor />} />
             <Route path="learning/courses/:id/edit" element={<LecturerCourseEditor />} />
           </Route>
+        </Route>
+
+        {/* Catch-all — NotFound uses the library theme's CSS tokens
+            (--color-navy-deep etc.), so it needs LearningLayout's wrapper. */}
+        <Route element={<LearningLayout />}>
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

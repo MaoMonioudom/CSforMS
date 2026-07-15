@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell } from "lucide-react";
+import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell, ImagePlus } from "lucide-react";
 import {
   fetchEvents, createEvent, updateEvent, deleteEvent, formatEventDateShort,
-  fetchEventRegistrants, sendEventReminder, removeEventRegistrant,
+  fetchEventRegistrants, sendEventReminder, removeEventRegistrant, uploadEventImage,
 } from "@/lib/events-data";
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
@@ -175,10 +175,29 @@ export default function AdminEvents() {
   const [registrantsTarget, setRegistrantsTarget] = useState(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchEvents().then(setList).finally(() => setLoading(false));
   }, []);
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
+    setUploading(true);
+    setError("");
+    try {
+      const url = await uploadEventImage(file);
+      setForm((prev) => ({ ...prev, image: url }));
+    } catch (err) {
+      setError(err.message || "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const updateField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
@@ -312,8 +331,25 @@ export default function AdminEvents() {
             </div>
 
             <div>
-              <label className={labelCls}>Image URL <span className="font-normal text-gray-400">(optional)</span></label>
-              <input className={inputCls} value={form.image} onChange={updateField("image")} placeholder="https://..." />
+              <label className={labelCls}>Cover image <span className="font-normal text-gray-400">(optional)</span></label>
+              <div className="flex items-center gap-3">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                  {form.image
+                    ? <img src={form.image} alt="Event cover" className="h-full w-full object-cover" />
+                    : <ImagePlus className="h-5 w-5 text-gray-300" />}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleImageSelect} />
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+                  <ImagePlus className="h-3.5 w-3.5" /> {uploading ? "Uploading…" : form.image ? "Change image" : "Upload image"}
+                </button>
+                {form.image && (
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
+                    className="text-sm font-medium text-red-500 hover:text-red-600">
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
 
             <div>

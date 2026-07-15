@@ -9,11 +9,9 @@ import { useAuth } from '../../hub/AuthContext'
 
 import Toast from '../../components/inventory/ui/Toast'
 import { TopNav } from '../../components/TopNav'
-import { CursorEffect } from '../../components/community/CursorEffect'
 import { AppFooter } from '../../components/AppFooter'
 
 import HomePage from './HomePage'
-import NotificationsPage from './NotificationsPage'
 
 import Catalog from '../../components/inventory/Catalog'
 import CartPanel from '../../components/inventory/CartPanel'
@@ -27,8 +25,8 @@ export default function InventoryApp() {
 
   const {
     user, items, setItems, users, setUsers,
-    borrows, setBorrows, requests, setRequests,
-    notifications, setNotifications, payments, setPayments,
+    borrows, setBorrows, setRequests,
+    notifications, payments, setPayments,
     filaments, toast, setToast, showToast,
     cart, setCart, cartOpen, setCartOpen,
   } = useInventory()
@@ -42,7 +40,6 @@ export default function InventoryApp() {
 
   return (
     <div className="inv-root min-h-screen bg-cream flex flex-col">
-      <CursorEffect />
       <TopNav />
       <div className="flex-1 flex min-h-[calc(100vh-56px)] sm:min-h-[calc(100vh-60px)]">
         <main className="min-w-0 flex-1">
@@ -75,11 +72,11 @@ export default function InventoryApp() {
                     onCartOpen={() => setCartOpen(true)} borrows={borrows}
                   />
                 } />
-                {/* My Borrows merged into Notifications as a folder tab */}
-                <Route path="my-borrows" element={<Navigate to={`${BASE}/notifications`} replace />} />
-                <Route path="notifications" element={
-                  <NotificationsPage notifications={notifications} setNotifications={setNotifications} user={user} borrows={borrows} requests={requests} items={items} />
-                } />
+                {/* Notifications page is now shared across all 3 modules — one
+                    implementation at /notifications (see hub/NotificationsPage.jsx),
+                    still reachable from here for anything that links to the old path. */}
+                <Route path="my-borrows" element={<Navigate to="/notifications" replace />} />
+                <Route path="notifications" element={<Navigate to="/notifications" replace />} />
               </>
             )}
 
