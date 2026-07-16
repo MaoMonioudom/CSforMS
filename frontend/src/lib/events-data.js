@@ -1,4 +1,4 @@
-import { api } from "./api/client";
+import { api, getToken, BASE_URL } from "./api/client";
 
 // Real events (from the `events` table) don't carry a photo/tag list or a
 // per-event organizer profile yet — those need their own tables/routes we
@@ -63,6 +63,22 @@ export async function updateEvent(id, payload) {
 
 export async function deleteEvent(id) {
   await api.del(`/api/community/events/${id}`);
+}
+
+// Multipart upload — the JSON client can't carry files, so this goes through
+// fetch directly with the same bearer token. Returns the public image URL
+// (same pattern as inventory's uploadItemImage).
+export async function uploadEventImage(file) {
+  const form = new FormData();
+  form.append("image", file);
+  const res = await fetch(`${BASE_URL}/api/community/events/upload-image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+  return data.data.url;
 }
 
 // { [event_id]: count } across every event — one call covers every card, no

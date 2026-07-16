@@ -16,6 +16,21 @@ export async function listMyNotifications(req, res, next) {
   }
 }
 
+export async function markAllNotificationsRead(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const { error } = await supabaseAdmin
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", req.user.user_id)
+      .eq("is_read", false);
+    if (error) throw error;
+    res.json({ data: { ok: true } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function markNotificationRead(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {

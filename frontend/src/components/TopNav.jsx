@@ -90,13 +90,14 @@ const LEARNING_LINKS = [
   // { label: "Announcements",  to: "/learning"  },
 ];
 
-// Inventory only has three real pages — Home, Browse (Catalog), and
-// Notifications — everything else lives inside those (e.g. requests are
-// submitted from the item detail on Browse, not a separate page).
+// Inventory only has two real pages now — Home and Browse (Catalog) —
+// everything else lives inside those (e.g. requests are submitted from the
+// item detail on Browse, not a separate page). Notifications dropped from
+// this list — it's unified across all 3 modules and reachable from the
+// bell icon, same as Community/Learning don't list it either.
 const INVENTORY_LINKS = [
-  { label: "Browse Resources", to: "/inventory/browse",       featured: true, desc: "All makerspace items" },
-  { label: "Home",             to: "/inventory"               },
-  { label: "Notifications",    to: "/inventory/notifications" },
+  { label: "Home",   to: "/inventory",         featured: true, desc: "Your makerspace hub" },
+  { label: "Browse", to: "/inventory/browse" },
 ];
 
 // ── Cluster label ─────────────────────────────────────────────────────────────

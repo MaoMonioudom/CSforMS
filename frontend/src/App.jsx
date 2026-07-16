@@ -68,7 +68,6 @@ function UserLayout() {
 function LearningLayout() {
   return (
     <div className="learning-scope">
-      <CursorEffect />
       <TopNav />
       <Outlet />
       <AppFooter />
@@ -119,7 +118,6 @@ export default function App() {
           <Route path="/learning/:id/lessons/:lessonId" element={<LearningLessonDetail />} />
           <Route path="/learning/about" element={<LearningAbout />} />
           <Route path="/learning/contact" element={<LearningContact />} />
-          <Route path="/contact" element={<LearningContact />} />
         </Route>
 
         {/* Admin: guard checks Admin/Staff role first, layout is the shared shell */}
@@ -153,8 +151,9 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Anything unmatched — 404 with the standard nav/footer */}
-        <Route element={<UserLayout />}>
+        {/* Catch-all — NotFound uses the library theme's CSS tokens
+            (--color-navy-deep etc.), so it needs LearningLayout's wrapper. */}
+        <Route element={<LearningLayout />}>
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

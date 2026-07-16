@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../../config/supabaseClient.js";
 import { adjustCredits, getMembershipByUserId, CreditsError } from "../../shared/credits.js";
+import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 
 const CREDIT_RATE = 40;               // credits granted per $1 topped up
 const MEMBERSHIP_PLAN = { price: 20, bonusCredits: 200 };
@@ -96,7 +97,7 @@ export async function listBorrows(req, res, next) {
     if (!isStaff(req.user)) query = query.eq("user_id", req.user.user_id);
     const { data, error } = await query;
     if (error) throw error;
-    res.json({ data });
+    res.json({ data: data.map(normalizeRow) });
   } catch (err) { next(err); }
 }
 
@@ -109,7 +110,7 @@ export async function listRequests(req, res, next) {
     if (!isStaff(req.user)) query = query.eq("user_id", req.user.user_id);
     const { data, error } = await query;
     if (error) throw error;
-    res.json({ data });
+    res.json({ data: data.map(normalizeRow) });
   } catch (err) { next(err); }
 }
 
@@ -761,7 +762,7 @@ export async function listNotifications(req, res, next) {
       .from("notifications").select("*").eq("user_id", req.user.user_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    res.json({ data });
+    res.json({ data: data.map(normalizeRow) });
   } catch (err) { next(err); }
 }
 
