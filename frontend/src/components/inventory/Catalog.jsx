@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar, MapPin } from 'lucide-react'
 import Badge from './ui/Badge'
 import PageBreadcrumb from './layout/PageBreadcrumb'
@@ -123,8 +123,9 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
           </span>
         </div>
 
-        {/* Action button — equal height across all cards/breakpoints */}
-        <div className="mt-2">
+        {/* Action button — pinned to the card bottom so every button in a
+            row sits on the same line, whatever the content height above */}
+        <div className="mt-auto pt-2">
           {staffMode && (() => {
             const enabled = !!staffStudent && item.status === 'available' && item.stock > 0
             return (
@@ -392,6 +393,13 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     i.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  // Show 3 rows of cards first (3 columns on desktop → 9 items); each
+  // "See More" click reveals 9 more. Resets whenever the filters change.
+  const PAGE_ROWS = 9
+  const [visibleCount, setVisibleCount] = useState(PAGE_ROWS)
+  useEffect(() => { setVisibleCount(PAGE_ROWS) }, [search, filterCat, filterType])
+  const visible = filtered.slice(0, visibleCount)
+
   const addCart = (item, dueDate) => {
     if (!user || user.role !== 'user')        { showToast('Log in as a student to borrow or purchase.', 'error'); return }
     if (user.membership !== 'active')          { showToast('Active membership required.', 'error'); return }
@@ -528,11 +536,22 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
 
           {/* Fixed column counts so cards stay equal-sized even with 1–2 results */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-            {filtered.map(item => (
+            {visible.map(item => (
               <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
                 staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
             ))}
           </div>
+
+          {/* See More — reveals the next batch of items */}
+          {filtered.length > visibleCount && (
+            <div className="mt-6 flex justify-center">
+              <button onClick={() => setVisibleCount(c => c + PAGE_ROWS)}
+                className="rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-colors"
+                style={{ background: '#fff', border: `1.5px solid ${TEAL}55`, color: TEAL, cursor: 'pointer' }}>
+                See More ({filtered.length - visibleCount} more)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right column — sticky in-person order panel (staff/admin only) */}

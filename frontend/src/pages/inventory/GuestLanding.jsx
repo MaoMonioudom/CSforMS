@@ -143,7 +143,9 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         .mv-cat-cell:hover .mv-cat-browse { transform:translateX(4px); }
         .mv-footer-link { font-size:12px;color:rgba(255,255,255,.45);margin-bottom:9px;cursor:pointer;transition:color .15s;display:block; }
         .mv-footer-link:hover { color:#fff; }
-        .mv-hero-display { font-family:'CADTMonoDisplay','Poppins','Inter',sans-serif; }
+        /* .inv-root h1 (index.css) outranks a single class, so the hero
+           class needs the .inv-root prefix for the mono font to win. */
+        .inv-root .mv-hero-display, .mv-hero-display { font-family:'CADTMonoDisplay','Poppins','Inter',sans-serif; }
         .mv-step-card { transition:background .15s,border-color .15s,box-shadow .15s; }
         .mv-step-card:hover { background:#fff!important;border-color:${TEAL}44!important;box-shadow:0 4px 20px rgba(8,145,178,.10); }
         .mv-testi-card { transition:box-shadow .2s; }
@@ -174,10 +176,10 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               <Package size={11} style={{ color: "#67e8f9" }} />
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: "#67e8f9" }}>CADT · Makerspace Inventory</span>
             </div>
-            <h1 className="mv-hero-display" style={{ fontSize: "clamp(44px,5.5vw,74px)", lineHeight: 1.05, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 24, color: "#fff" }}>
-              Your<br />
-              <span style={{ color: "#67e8f9" }}>Makerspace</span><br />
-              Inventory Hub.
+            <h1 className="mv-hero-display" style={{ fontSize: "clamp(38px,4.8vw,64px)", lineHeight: 1.08, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 24, color: "#fff" }}>
+              Build Something,<br />
+              <span style={{ color: "#67e8f9" }}>Built by Inventory</span><br />
+              in CADT Makerspace
             </h1>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: "rgba(255,255,255,0.5)", maxWidth: 460, marginBottom: 36 }}>
               Browse tools, borrow equipment, and purchase materials — searchable by zone, shelf, category, and room. Built for the CADT community.
