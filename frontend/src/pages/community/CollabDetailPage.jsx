@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Mail, MessageCircle, Send, Users } from "lucide-react";
 import {
-  collabTypeEmoji,
   collabTypeLabel,
   formatRelativeTime,
   fetchCollabPostById,
@@ -58,7 +57,6 @@ export default function CollabDetailPage() {
           </nav>
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-collaboration px-3 py-1 text-xs font-semibold text-collaboration-foreground">
-              <span>{collabTypeEmoji[post.type]}</span>
               {collabTypeLabel[post.type]}
             </span>
             <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">

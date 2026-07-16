@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SectionPage } from "@/components/community/SectionPage";
 import { CollabCard } from "@/components/community/CollabCard";
@@ -14,17 +14,34 @@ import {
 } from "@/components/community/ui/dialog";
 import { Input } from "@/components/community/ui/input";
 import { Label } from "@/components/community/ui/label";
+import { TagsInput } from "@/components/community/TagsInput";
 import { Plus } from "lucide-react";
 
-const filters = ["All", "Looking for Team", "Recruiting", "Competition", "Research"];
+// post_type only has these 2 real values (DB CHECK constraint) — category
+// used to also appear here as "Competition"/"Research", but category is
+// free text with no fixed vocabulary (people type "Robotics", "Play PLay",
+// anything), so those two were never reliably filterable and are dropped.
+const filters = [
+  { id: "all", label: "All" },
+  { id: "looking-for-team", label: "Looking for Team" },
+  { id: "recruiting", label: "Recruiting" },
+];
 
-// Only fields the collaboration_posts table actually has columns for —
-// roles-needed/skills/author-profile would need their own tables (see
-// collaboration-data.js), so they're left out rather than collected and
-// silently dropped.
+// author-profile (year/major) has nowhere to live yet — no per-user academic
+// fields on `users` — so that one's still left out (see collaboration-data.js).
 function CreateCollabDialog({ open, onOpenChange, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [skills, setSkills] = useState([]);
+  const formRef = useRef(null);
+
+  const parseList = (v) => (v || "").split(",").map(s => s.trim()).filter(Boolean);
+
+  const closeAndReset = () => {
+    formRef.current?.reset();
+    setSkills([]);
+    onOpenChange(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +53,8 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
       category: form.get("category")?.trim() || null,
       short_pitch: form.get("shortPitch")?.trim() || null,
       description: form.get("description")?.trim() || null,
+      roles_needed: parseList(form.get("rolesNeeded")),
+      skills,
       team_size_current: Number(form.get("currentSize")) || 1,
       team_size_target: Number(form.get("targetSize")) || null,
       contact_email: form.get("contactEmail")?.trim() || null,
@@ -47,8 +66,7 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
     try {
       const created = await createCollabPost(payload);
       onCreated(created);
-      e.target.reset();
-      onOpenChange(false);
+      closeAndReset();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -65,29 +83,39 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
             Fill in all the details to post your project or find teammates.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5 mt-2">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 mt-2">
           <div>
             <Label className="mb-1.5 block">Post type</Label>
-            <div className="flex gap-3">
-              <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-accent">
-                <input
-                  type="radio"
-                  name="type"
-                  value="looking-for-team"
-                  required
-                  className="accent-collaboration"
-                />
-                <span className="text-sm">Looking for Team</span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-accent has-[:checked]:border-collaboration has-[:checked]:bg-collaboration/5">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="looking-for-team"
+                    required
+                    className="accent-collaboration"
+                  />
+                  Looking for Team
+                </span>
+                <span className="pl-5 text-xs text-muted-foreground">
+                  You want to join a project — describe your skills and what kind of team you're hoping to find.
+                </span>
               </label>
-              <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-accent">
-                <input
-                  type="radio"
-                  name="type"
-                  value="recruiting"
-                  required
-                  className="accent-collaboration"
-                />
-                <span className="text-sm">Recruiting Teammates</span>
+              <label className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-accent has-[:checked]:border-collaboration has-[:checked]:bg-collaboration/5">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="recruiting"
+                    required
+                    className="accent-collaboration"
+                  />
+                  Recruiting Teammates
+                </span>
+                <span className="pl-5 text-xs text-muted-foreground">
+                  You already have a project and need more people to join you.
+                </span>
               </label>
             </div>
           </div>
@@ -120,6 +148,17 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
+              <Label htmlFor="rolesNeeded" className="mb-1.5 block">Roles needed</Label>
+              <Input id="rolesNeeded" name="rolesNeeded" placeholder="e.g. Frontend Dev, Designer" />
+              <p className="mt-1 text-xs text-muted-foreground">Comma-separated</p>
+            </div>
+            <div>
+              <Label className="mb-1.5 block">Skills & tech</Label>
+              <TagsInput value={skills} onChange={setSkills} noun="skill" />
+            </div>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
               <Label htmlFor="currentSize" className="mb-1.5 block">Current team size</Label>
               <Input id="currentSize" name="currentSize" type="number" min={0} placeholder="0" required />
             </div>
@@ -146,7 +185,7 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={closeAndReset}>
               Cancel
             </Button>
             <Button
@@ -170,6 +209,7 @@ export default function CollaborationPage() {
   const [open, setOpen] = useState(false);
   const [collabPosts, setCollabPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
     fetchCollabPosts().then(setCollabPosts).finally(() => setLoading(false));
@@ -182,6 +222,10 @@ export default function CollaborationPage() {
     }
     setOpen(true);
   };
+
+  const visiblePosts = activeFilter === "all"
+    ? collabPosts
+    : collabPosts.filter(p => p.type === activeFilter);
 
   return (
     <SectionPage
@@ -200,7 +244,7 @@ export default function CollaborationPage() {
       <div className="mb-6 flex items-end justify-between gap-4">
         <h2 className="text-2xl font-semibold tracking-tight">Open posts</h2>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">{collabPosts.length} posts</p>
+          <p className="text-sm text-muted-foreground">{visiblePosts.length} posts</p>
           <Button
             onClick={handleCreateClick}
             className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
@@ -210,27 +254,30 @@ export default function CollaborationPage() {
         </div>
       </div>
       <div className="mb-8 flex flex-wrap gap-2">
-        {filters.map((f, i) => (
+        {filters.map(f => (
           <button
-            key={f}
+            key={f.id}
             type="button"
+            onClick={() => setActiveFilter(f.id)}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-              i === 0
+              activeFilter === f.id
                 ? "border-collaboration bg-collaboration text-collaboration-foreground"
                 : "border-border bg-background text-muted-foreground hover:border-collaboration hover:text-foreground"
             }`}
           >
-            {f}
+            {f.label}
           </button>
         ))}
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading posts…</p>
-      ) : collabPosts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No posts yet — be the first to create one.</p>
+      ) : visiblePosts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {collabPosts.length === 0 ? "No posts yet — be the first to create one." : "No posts match this filter."}
+        </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {collabPosts.map((post, i) => (
+          {visiblePosts.map((post, i) => (
             <CollabCard key={post.id} post={post} index={i} />
           ))}
         </div>

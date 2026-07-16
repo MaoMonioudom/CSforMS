@@ -155,7 +155,7 @@ function CommunityCard({ post, rotate }) {
   return (
     <Pinned rotate={rotate} pinColor="#7c3aed">
       <Link
-        to={`/community/${post.id}`}
+        to={`/community/communityspace/${post.id}`}
         className="flex flex-col bg-white p-4 min-h-45"
         style={{
           boxShadow: "3px 5px 18px rgba(0,0,0,0.18)",
@@ -341,7 +341,7 @@ export default function HomePage() {
             {communityPosts.length > 0 && (
               <Pinned rotate={2} pinColor="#dc2626">
                 <Link
-                  to={`/community/${communityPosts[0].id}`}
+                  to={`/community/communityspace/${communityPosts[0].id}`}
                   className="flex flex-col p-4"
                   style={{
                     minHeight: "160px",
@@ -415,7 +415,7 @@ export default function HomePage() {
         {/* ── Collaboration ───────────────────────────────────── */}
         <section className="mb-20">
           <div className="flex items-end justify-between mb-12">
-            <BoardLabel rotate={0.8} pinColor="#6366f1">🤝 Looking for Teammates</BoardLabel>
+            <BoardLabel rotate={0.8} pinColor="#6366f1">Looking for Teammates</BoardLabel>
             <Link
               to="/community/collabspace"
               className="flex items-center gap-1 text-white/75 hover:text-white font-bold text-sm transition-colors"

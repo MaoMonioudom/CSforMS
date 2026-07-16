@@ -359,8 +359,9 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {isUser && filter === 'inventory' && (
-        <div className="inv-hscroll mb-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+      {isUser && (
+        <div className="inv-hscroll mb-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
+          style={{ visibility: filter === 'inventory' ? 'visible' : 'hidden' }}>
           {INVENTORY_SUB_FILTERS.map(f => {
             const active = invSubFilter === f.id
             return (
@@ -400,7 +401,7 @@ export default function NotificationsPage() {
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <cfg.Icon size={16} color={cfg.color} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
                     <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{formatEntryDateTime(n.date)}</p>
                   </div>
@@ -457,7 +458,7 @@ export default function NotificationsPage() {
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <meta.Icon size={16} color={meta.color} />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600 }}>Credit Top-Up — ${e.raw.amountUSD}</p>
                   <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{meta.label} · {formatEntryDateTime(e.date)}</p>
                 </div>

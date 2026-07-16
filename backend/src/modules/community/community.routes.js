@@ -3,7 +3,10 @@ import multer from "multer";
 import { createCrudRouter } from "../../shared/crudRouter.js";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { requireAuth, requireRole } from "../../middleware/requireAuth.js";
+import { optionalAuth } from "../../middleware/optionalAuth.js";
 import eventRegistrationsRoutes from "./eventRegistrations.routes.js";
+import { listCollabPosts, getCollabPost, createCollabPost, deleteCollabPost } from "./collaboration.controller.js";
+import { listCommunityPosts, getCommunityPost, createCommunityPost, deleteCommunityPost, toggleLike, createComment } from "./communityPost.controller.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -40,8 +43,50 @@ router.post("/events/upload-image", requireAuth, requireRole("admin", "staff"), 
 // Events are admin/staff-owned — everyone else (including logged-in
 // students) gets read-only access; writes require the admin panel.
 router.use("/events", createCrudRouter("events", { pkColumn: "event_id", ownerField: "created_by", writeRoles: ["admin", "staff"] }));
+// Collaboration posts have real child tables for roles/skills
+// (collaboration_roles, collaboration_skills+tags) that crudRouter can't
+// read, write, or clean up on delete — list/detail/create/delete get
+// dedicated handlers (collaboration.controller.js) registered ahead of the
+// generic router. Update isn't used anywhere in the UI, so it's the one
+// verb still left to crudRouter.
+router.get("/collaborations", listCollabPosts);
+router.get("/collaborations/:id", getCollabPost);
+router.post("/collaborations", requireAuth, createCollabPost);
+router.delete("/collaborations/:id", requireAuth, deleteCollabPost);
 // Both are feeds, not catalogs — newest first, like any social feed.
 router.use("/collaborations", createCrudRouter("collaboration_posts", { pkColumn: "collab_id", ownerField: "user_id", embedAuthor: true, orderBy: { column: "created_at", ascending: false } }));
+
+// Shared tag dictionary (post_tags/event_tags/collaboration_skills all point
+// here) — backs the skills typeahead on Find Team's create form, so people
+// see "React" already exists instead of typing "react.js" as a near-dupe.
+// Public/read-only, same as every other list endpoint.
+router.get("/tags", async (req, res, next) => {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const q = (req.query.q || "").trim();
+    let query = supabaseAdmin.from("tags").select("tag_id, tag_name").order("tag_name").limit(20);
+    if (q) query = query.ilike("tag_name", `%${q}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+// Community posts have a real child table for tags (post_tags+tags) that
+// crudRouter can't read, write, or clean up on delete — same treatment as
+// collaborations above. Update isn't used anywhere in the UI, so it's the
+// one verb still left to crudRouter.
+//
+// GET routes use optionalAuth (not requireAuth) — the feed stays public for
+// guests, optionalAuth just attaches req.user when a token IS present so
+// the handler can compute "did I already like this" per viewer.
+router.get("/posts", optionalAuth, listCommunityPosts);
+router.get("/posts/:id", optionalAuth, getCommunityPost);
+router.post("/posts", requireAuth, createCommunityPost);
+router.delete("/posts/:id", requireAuth, deleteCommunityPost);
+router.post("/posts/:id/like", requireAuth, toggleLike);
+router.post("/posts/:id/comments", requireAuth, createComment);
 router.use("/posts", createCrudRouter("community_posts", { pkColumn: "post_id", ownerField: "user_id", embedAuthor: true, orderBy: { column: "created_at", ascending: false } }));
 
 export default router;

@@ -1,11 +1,6 @@
 import { api } from "./api/client";
 
-// Real collaboration posts don't have a per-post "roles needed" list or a
-// "skills" tag list yet — those live in separate tables (collaboration_roles,
-// tags) with no route wired up. Same story as events: default to empty
-// instead of faking data.
-//
-// Author IS real, though — the backend embeds it via a join (see
+// Author is real — the backend embeds it via a join (see
 // crudRouter.js's embedAuthor). Most accounts have no profile_img_url, so
 // `avatar` is often null — that's intentional, not a bug: InitialAvatar
 // renders a letter avatar instead of inventing a fake photo. year/major
@@ -26,11 +21,11 @@ function mapCollab(row) {
     id: row.collab_id,
     type: row.post_type === "looking_for_team" ? "looking-for-team" : "recruiting",
     projectTitle: row.project_title,
-    rolesNeeded: [],
+    rolesNeeded: row.roles_needed || [],
     category: row.category || "General",
     shortPitch: row.short_pitch || "",
     description: row.description || "",
-    skills: [],
+    skills: row.skills || [],
     teamSize: { current: row.team_size_current ?? 1, target: row.team_size_target ?? 1 },
     author: mapAuthor(row.author),
     contact: {
@@ -60,9 +55,11 @@ export async function deleteCollabPost(id) {
   await api.del(`/api/community/collaborations/${id}`);
 }
 
-// payload keys must match the collaboration_posts columns exactly — the
-// backend inserts the body as-is (see crudRouter.js). user_id is stamped
-// server-side from the authenticated caller, not sent here.
+// post_type/project_title/etc. map straight to collaboration_posts columns;
+// roles_needed/skills are handled separately server-side (collaboration.
+// controller.js), writing to collaboration_roles / collaboration_skills+tags
+// rather than columns on this table. user_id is stamped server-side from the
+// authenticated caller, not sent here.
 export async function createCollabPost(payload) {
   const { data } = await api.post("/api/community/collaborations", payload);
   return mapCollab(data);
@@ -85,8 +82,4 @@ export function formatRelativeTime(iso) {
 export const collabTypeLabel = {
   "looking-for-team": "Looking for Team",
   recruiting: "Recruiting Teammates"
-};
-export const collabTypeEmoji = {
-  "looking-for-team": "🙋",
-  recruiting: "🤝"
 };

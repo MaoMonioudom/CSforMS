@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { collabTypeEmoji, collabTypeLabel, formatRelativeTime } from "@/lib/collaboration-data";
+import { collabTypeLabel, formatRelativeTime } from "@/lib/collaboration-data";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 const tilts = [1, -1.2, 0.6, -0.8, 1.4, -0.5, 1, -1.5];
@@ -49,7 +49,6 @@ export function CollabCard({ post, index = 0 }) {
     >
       {/* Colored header band — signup sheet style */}
       <div className="bg-collaboration px-5 py-3 flex items-center gap-2 shrink-0">
-        <span className="text-lg">{collabTypeEmoji[post.type]}</span>
         <span className="text-sm font-extrabold text-collaboration-foreground tracking-wide">
           {collabTypeLabel[post.type]}
         </span>

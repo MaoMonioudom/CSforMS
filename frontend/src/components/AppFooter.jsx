@@ -40,11 +40,8 @@ const COLUMNS = [
     label:  "Inventory",
     accent: "#38bdf8",
     links: [
-      { label: "Home",           to: "/inventory" },
-      { label: "My Requests",    to: "/inventory" },
-      { label: "Categories",     to: "/inventory" },
-      { label: "Reserve an Item",to: "/inventory" },
-      { label: "Return Tracker", to: "/inventory" },
+      { label: "Home",   to: "/inventory" },
+      { label: "Browse", to: "/inventory/browse" },
     ],
   },
 ];

@@ -204,6 +204,13 @@
     border-color: var(--color-border);
   }
 
+  /* Reserves the vertical scrollbar's width permanently so pages that grow
+     past the viewport height (e.g. toggling a filter row) don't shift their
+     content sideways when the scrollbar pops in/out. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);

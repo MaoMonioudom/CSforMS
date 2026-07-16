@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Heart, MessageCircle, Share2 } from "lucide-react";
-import { categoryEmoji, formatRelativeTime, fetchCommunityPostById } from "@/lib/community-data";
+import { formatRelativeTime, fetchCommunityPostById, toggleLike, createComment } from "@/lib/community-data";
 import { Button } from "@/components/community/ui/button";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 import { useAuth } from "@/hub/AuthContext";
@@ -9,8 +9,13 @@ import { useAuth } from "@/hub/AuthContext";
 export default function CommunityDetailPage() {
   const { postId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -19,6 +24,46 @@ export default function CommunityDetailPage() {
       .catch(() => setPost(null))
       .finally(() => setLoading(false));
   }, [postId]);
+
+  // Optimistic toggle, same pattern as CommunityPage's feed — flip local
+  // state immediately, reconcile with the server's real values, roll back
+  // on failure.
+  const handleToggleLike = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+    const snapshot = post;
+    setPost(p => ({ ...p, likedByMe: !p.likedByMe, likes: p.likes + (p.likedByMe ? -1 : 1) }));
+    try {
+      const { likes, likedByMe } = await toggleLike(postId);
+      setPost(p => ({ ...p, likes, likedByMe }));
+    } catch {
+      setPost(snapshot);
+    }
+  };
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+    const content = commentText.trim();
+    if (!content) return;
+
+    setSubmittingComment(true);
+    setCommentError("");
+    try {
+      const comment = await createComment(postId, content);
+      setPost(p => ({ ...p, comments: [...p.comments, comment] }));
+      setCommentText("");
+    } catch (err) {
+      setCommentError(err.message);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
 
   if (loading) {
     return <div className="mx-auto max-w-3xl px-6 py-24 text-center text-muted-foreground">Loading…</div>;
@@ -62,7 +107,7 @@ export default function CommunityDetailPage() {
               </p>
             </div>
             <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-community/10 px-2.5 py-1 text-xs font-medium text-community">
-              <span>{categoryEmoji[post.category]}</span> {post.category}
+              {post.category}
             </span>
           </div>
           {post.title && (
@@ -90,9 +135,11 @@ export default function CommunityDetailPage() {
           <div className="mt-6 flex items-center gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
             <button
               type="button"
+              onClick={handleToggleLike}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community"
+              style={post.likedByMe ? { color: "#dc2626" } : undefined}
             >
-              <Heart className="size-4" /> {post.likes} likes
+              <Heart className="size-4" fill={post.likedByMe ? "currentColor" : "none"} /> {post.likes} likes
             </button>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5">
               <MessageCircle className="size-4" /> {post.comments.length} comments
@@ -107,17 +154,22 @@ export default function CommunityDetailPage() {
         </article>
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Comments</h2>
-          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+          <form onSubmit={handleSubmitComment} className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
             <InitialAvatar name={user?.name} src={user?.avatar} className="size-9 text-sm" />
             <textarea
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
               placeholder="Write a comment…"
               className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-community"
               rows={2}
             />
-            <Button className="bg-community text-community-foreground hover:opacity-90">
-              Reply
+            <Button type="submit" disabled={submittingComment || !commentText.trim()} className="bg-community text-community-foreground hover:opacity-90">
+              {submittingComment ? "Posting…" : "Reply"}
             </Button>
-          </div>
+          </form>
+          {commentError && (
+            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{commentError}</p>
+          )}
           <ul className="mt-5 space-y-4">
             {post.comments.length === 0 ? (
               <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">

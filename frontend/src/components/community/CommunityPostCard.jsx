@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
-import { categoryEmoji, formatRelativeTime } from "@/lib/community-data";
+import { formatRelativeTime } from "@/lib/community-data";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 const tilts = [-0.8, 1, -1.3, 0.6, 1.2, -0.5, 0.9, -1.1];
@@ -22,7 +22,7 @@ function Pushpin() {
   );
 }
 
-export function CommunityPostCard({ post, index = 0 }) {
+export function CommunityPostCard({ post, index = 0, onToggleLike }) {
   const rotate = tilts[index % tilts.length];
 
   return (
@@ -44,7 +44,6 @@ export function CommunityPostCard({ post, index = 0 }) {
     >
       {/* Sticky-note header — colored band with category */}
       <div className="bg-community px-5 py-3 flex items-center gap-2 shrink-0">
-        <span className="text-base">{categoryEmoji[post.category]}</span>
         <span className="text-xs font-extrabold text-community-foreground uppercase tracking-wider">
           {post.category}
         </span>
@@ -64,7 +63,7 @@ export function CommunityPostCard({ post, index = 0 }) {
       </div>
 
       {/* Content */}
-      <Link to={`/community/${post.id}`} className="block px-5 pb-4">
+      <Link to={`/community/communityspace/${post.id}`} className="block px-5 pb-4">
         {post.title && (
           <h3 className="text-base font-extrabold leading-snug tracking-tight group-hover:text-community transition-colors mb-2">
             {post.title}
@@ -96,12 +95,14 @@ export function CommunityPostCard({ post, index = 0 }) {
       <div className="flex items-center gap-1 border-t border-black/6 px-3 py-2 text-sm text-muted-foreground">
         <button
           type="button"
+          onClick={() => onToggleLike?.(post.id)}
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community"
+          style={post.likedByMe ? { color: "#dc2626" } : undefined}
         >
-          <Heart className="size-4" /> {post.likes}
+          <Heart className="size-4" fill={post.likedByMe ? "currentColor" : "none"} /> {post.likes}
         </button>
         <Link
-          to={`/community/${post.id}`}
+          to={`/community/communityspace/${post.id}`}
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community"
         >
           <MessageCircle className="size-4" /> {post.comments.length}

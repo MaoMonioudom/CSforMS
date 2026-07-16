@@ -502,7 +502,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
             <div className="relative flex-1 sm:max-w-[360px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94a3b8' }} />
               <input placeholder="Search by name…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full py-2.5 pl-8 pr-3 text-sm outline-none"
+                className="h-10 w-full py-2 pl-8 pr-3 text-sm outline-none"
                 style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 10, color: '#0f172a', transition: 'border-color .15s' }}
                 onFocus={e => e.target.style.borderColor = TEAL}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
@@ -512,7 +512,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 const active = filterType === t.id
                 return (
                   <button key={t.id} onClick={() => setFilterType(t.id)}
-                    className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                    className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors sm:h-10"
                     style={active
                       ? { background: TEAL, color: '#fff', border: 'none' }
                       : { background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0' }}>

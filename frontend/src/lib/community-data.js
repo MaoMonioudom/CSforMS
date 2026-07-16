@@ -1,10 +1,7 @@
 import { api } from "./api/client";
 
-// Real community posts (post_id, user_id, title, content, category,
-// created_at) don't carry tags, a like count, or comments yet — those live
-// in separate tables (tags, post_votes, post_comments) with no route wired
-// up. Same approach as events/collaboration: default to empty/zero instead
-// of faking numbers.
+// tags, likes, and comments are all real now (post_tags+tags, post_votes,
+// post_comments — all via communityPost.controller.js).
 //
 // Author IS real, though — the backend embeds it via a join (see
 // crudRouter.js's embedAuthor). Most accounts have no profile_img_url, so
@@ -21,6 +18,15 @@ function mapAuthor(author) {
   };
 }
 
+function mapComment(row) {
+  return {
+    id: row.comment_id,
+    body: row.content,
+    author: mapAuthor(row.author),
+    postedAt: row.created_at,
+  };
+}
+
 function mapPost(row) {
   return {
     id: row.post_id,
@@ -29,9 +35,10 @@ function mapPost(row) {
     title: row.title || null,
     body: row.content,
     image: null,
-    tags: [],
-    likes: 0,
-    comments: [],
+    tags: row.tags || [],
+    likes: row.likes ?? 0,
+    likedByMe: row.liked_by_me ?? false,
+    comments: (row.comments || []).map(mapComment),
     postedAt: row.created_at,
   };
 }
@@ -54,21 +61,29 @@ export async function deleteCommunityPost(id) {
   await api.del(`/api/community/posts/${id}`);
 }
 
-// payload keys must match the community_posts columns exactly — the
-// backend inserts the body as-is (see crudRouter.js). user_id is stamped
+// Toggles the caller's like on a post; returns the fresh total count and
+// whether the caller now has it liked, so callers can sync local state
+// without a full refetch.
+export async function toggleLike(id) {
+  const { data } = await api.post(`/api/community/posts/${id}/like`, {});
+  return { likes: data.likes, likedByMe: data.liked_by_me };
+}
+
+// Posts a comment and returns it already mapped, so the caller can append
+// it to `post.comments` without a full refetch.
+export async function createComment(postId, content) {
+  const { data } = await api.post(`/api/community/posts/${postId}/comments`, { content });
+  return mapComment(data);
+}
+
+// title/content/category map straight to community_posts columns; tags are
+// handled separately server-side (communityPost.controller.js), writing to
+// post_tags+tags rather than a column on this table. user_id is stamped
 // server-side from the authenticated caller, not sent here.
 export async function createCommunityPost(payload) {
   const { data } = await api.post("/api/community/posts", payload);
   return mapPost(data);
 }
-
-export const categoryEmoji = {
-  Technical: "🔧",
-  Social: "☕",
-  Showcase: "✨",
-  Question: "❓",
-  Announcement: "📣"
-};
 
 export function formatRelativeTime(iso) {
   const diff = Date.now() - new Date(iso).getTime();
