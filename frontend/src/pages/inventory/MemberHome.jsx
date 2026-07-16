@@ -42,12 +42,11 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   // (id, name, matching borrow/request records) still comes from Inventory's
   // local state, since borrow/purchase logic isn't wired to the real backend yet.
   const { user: hubUser } = useAuth()
-  const { submitTopUpRequest, submitPrintingRequest, submit3DPrintRequest } = useInventory()
+  const { submitTopUpRequest, submit3DPrintRequest } = useInventory()
   const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
 
   const [activeCat, setActiveCat]   = useState('all')
   const [printModal, setPrintModal] = useState(null)
-  const [pages,      setPages]      = useState('')
   const [filamentId, setFilamentId] = useState(filaments[0]?.id || '')
   const [notes,      setNotes]      = useState('')
 
@@ -92,23 +91,15 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   const catItems    = activeCat === 'all' ? items : items.filter(i => i.category === activeCat)
   const visibleItems = catItems.slice(0, 8)
 
-  const openPrintModal = (id) => { setPrintModal(id); setPages(''); setNotes(''); setFilamentId(filaments[0]?.id || '') }
+  // Document printing is walk-up only (staff charge it instantly at the front
+  // desk) — students can't queue a remote request for it, unlike 3D printing.
+  const openPrintModal = () => { setPrintModal('3d_printing'); setNotes(''); setFilamentId(filaments[0]?.id || '') }
 
   const submitPrintRequest = async () => {
     try {
-      if (printModal === 'printing') {
-        const p = Number(pages)
-        if (!p || p <= 0) { showToast('Enter how many pages you need.', 'error'); return }
-        const credits = p * PRINT_SERVICES[0].rate
-        await submitPrintingRequest({ pages: p, credits })
-        // Staff see this in their own Requests queue — no notification needed since
-        // only students have a notification center.
-        showToast('Printing request sent to staff.')
-      } else {
-        if (!filamentId) { showToast('Choose a filament first.', 'error'); return }
-        await submit3DPrintRequest({ filamentId: Number(filamentId), note: notes })
-        showToast('3D print request sent — staff will weigh your print and confirm the cost.')
-      }
+      if (!filamentId) { showToast('Choose a filament first.', 'error'); return }
+      await submit3DPrintRequest({ filamentId: Number(filamentId), note: notes })
+      showToast('3D print request sent — staff will weigh your print and confirm the cost.')
       setPrintModal(null)
     } catch (err) {
       showToast(err.message || 'Could not send the request.', 'error')
@@ -236,11 +227,11 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 ))}
               </ul>
 
-              <button onClick={() => openPrintModal('printing')}
-                className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5"
-                style={{ background: NAVY, marginTop: 'auto' }}>
-                Request Printing <ArrowRight size={14} />
-              </button>
+              {/* Walk-up only — staff charge this instantly at the front desk,
+                  so there's no remote request to submit. */}
+              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-semibold" style={{ background: THEME.cream, color: THEME.muted, justifyContent: 'center' }}>
+                <MapPin size={13} /> Available at the front desk — visit in person
+              </div>
             </div>
           </div>
 
@@ -485,9 +476,9 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
         </div>
       </section>
 
-      {/* ── PRINT / 3D PRINT REQUEST MODAL ── */}
+      {/* ── 3D PRINT REQUEST MODAL — document printing is walk-up only ── */}
       {printModal && (() => {
-        const service = PRINT_SERVICES.find(s => s.id === printModal)
+        const service = PRINT_SERVICES.find(s => s.id === '3d_printing')
         return (
           <div className="fixed inset-0 z-[900] flex items-center justify-center bg-charcoal/40 p-4" onClick={() => setPrintModal(null)}>
             <div onClick={e => e.stopPropagation()} className="w-full max-w-[420px] rounded-2xl bg-white shadow-2xl">
@@ -509,36 +500,22 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
               {/* Modal body */}
               <div className="p-5">
-                {printModal === 'printing' ? (
-                  <>
-                    <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Number of pages</label>
-                    <input type="number" min="1" placeholder="e.g. 10" value={pages} onChange={e => setPages(e.target.value)}
-                      className="mb-2 w-full rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none" />
-                    <div className="mb-4 flex items-center justify-between rounded-xl p-3" style={{ background: THEME.blueLight }}>
-                      <span className="text-xs text-inv-muted">Total cost</span>
-                      <span className="text-sm font-bold" style={{ color: NAVY }}>{pages > 0 ? `${pages * PRINT_SERVICES[0].rate} credits` : '—'}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Choose filament</label>
-                    <select value={filamentId} onChange={e => setFilamentId(e.target.value)}
-                      className="mb-3 w-full rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none">
-                      {filaments.length === 0 && <option value="">No filament configured yet</option>}
-                      {filaments.map(f => (
-                        <option key={f.id} value={f.id}>{f.name} — {f.color} ({f.stockGrams}g in stock)</option>
-                      ))}
-                    </select>
-                    <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Notes for staff (optional)</label>
-                    <textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)}
-                      placeholder="What are you printing? Any special instructions?"
-                      className="mb-3 w-full resize-none rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none" />
-                    <div className="mb-4 flex items-center justify-between rounded-xl p-3" style={{ background: THEME.purpleLight }}>
-                      <span className="text-xs text-inv-muted">Charged after weighing</span>
-                      <span className="text-sm font-bold" style={{ color: THEME.purple }}>4 cr / gram</span>
-                    </div>
-                  </>
-                )}
+                <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Choose filament</label>
+                <select value={filamentId} onChange={e => setFilamentId(e.target.value)}
+                  className="mb-3 w-full rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none">
+                  {filaments.length === 0 && <option value="">No filament configured yet</option>}
+                  {filaments.map(f => (
+                    <option key={f.id} value={f.id}>{f.name} — {f.color} ({f.stockGrams}g in stock)</option>
+                  ))}
+                </select>
+                <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Notes for staff (optional)</label>
+                <textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)}
+                  placeholder="What are you printing? Any special instructions?"
+                  className="mb-3 w-full resize-none rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none" />
+                <div className="mb-4 flex items-center justify-between rounded-xl p-3" style={{ background: THEME.purpleLight }}>
+                  <span className="text-xs text-inv-muted">Charged after weighing</span>
+                  <span className="text-sm font-bold" style={{ color: THEME.purple }}>4 cr / gram</span>
+                </div>
 
                 <div className="flex gap-2">
                   <button onClick={() => setPrintModal(null)}
@@ -548,7 +525,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                   </button>
                   <button onClick={submitPrintRequest}
                     className="flex-1 rounded-xl border-none py-2.5 text-sm font-bold text-white"
-                    style={{ background: printModal === 'printing' ? NAVY : THEME.purple }}>
+                    style={{ background: THEME.purple }}>
                     Submit Request
                   </button>
                 </div>

@@ -86,9 +86,10 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,23,42,0.10)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'}>
 
-      {/* Image */}
-      <div className="relative h-36 flex-shrink-0 sm:h-44 lg:h-48">
-        <ItemImage item={item} cat={cat} size={52} className="h-full w-full" />
+      {/* Image — taller in staff mode, where cards are fixed at 2-per-row
+          and have the extra width to spare. */}
+      <div className={`relative flex-shrink-0 ${staffMode ? 'h-48 sm:h-56 lg:h-64' : 'h-36 sm:h-44 lg:h-48'}`}>
+        <ItemImage item={item} cat={cat} size={staffMode ? 64 : 52} className="h-full w-full" />
         <div className="absolute left-3 top-3"><Badge status={item.status} small /></div>
         <div className="absolute right-3 top-3 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
           style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
@@ -103,20 +104,20 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
+      <div className={`flex flex-1 flex-col gap-2 ${staffMode ? 'p-5 sm:p-6' : 'p-4 sm:p-5'}`}>
         {cat && (
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold"
+          <span className={`inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 font-semibold ${staffMode ? 'text-[12px]' : 'text-[11px]'}`}
             style={{ background: '#f1f5f9', color: '#64748b' }}>
-            <cat.Icon size={11} color={cat.iconColor} />
+            <cat.Icon size={staffMode ? 12 : 11} color={cat.iconColor} />
             {cat.label}
           </span>
         )}
 
-        <h3 className="m-0 truncate text-[16px] font-bold leading-snug sm:text-[17px]" style={{ color: '#0f172a' }}>{item.name}</h3>
+        <h3 className={`m-0 truncate font-bold leading-snug ${staffMode ? 'text-[18px] sm:text-[19px]' : 'text-[16px] sm:text-[17px]'}`} style={{ color: '#0f172a' }}>{item.name}</h3>
 
-        <div className="flex items-center justify-between text-[12px]">
+        <div className={`flex items-center justify-between ${staffMode ? 'text-[13px]' : 'text-[12px]'}`}>
           <span className="flex items-center gap-1 truncate font-medium" style={{ color: '#64748b' }}>
-            <MapPin size={11} style={{ flexShrink: 0, color: '#94a3b8' }} /> {item.room}{item.zone ? ` · Zone ${item.zone}` : ''}
+            <MapPin size={staffMode ? 12 : 11} style={{ flexShrink: 0, color: '#94a3b8' }} /> {item.room}{item.zone ? ` · Zone ${item.zone}` : ''}
           </span>
           <span className="flex flex-shrink-0 items-center gap-1 font-semibold" style={{ color: isLow ? '#f59e0b' : '#16a34a' }}>
             {isLow && <AlertTriangle size={10} />}{item.stock} in stock
@@ -171,19 +172,19 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
 // ── Pricing reference card — shown before any charge so staff know the rates ───
 function PricingRateCard() {
   return (
-    <div className="rounded-lg p-3" style={{ background: T.accentLight }}>
-      <p className="m-0 mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide" style={{ color: T.accent }}>
-        <Info size={12} /> Pricing reference
+    <div className="rounded-lg p-4" style={{ background: T.accentLight }}>
+      <p className="m-0 mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide" style={{ color: T.accent }}>
+        <Info size={14} /> Pricing reference
       </p>
-      <div className="flex items-start gap-2 py-1">
-        <BadgeCheck size={14} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
-        <p className="m-0 text-xs leading-snug text-ink">
+      <div className="flex items-start gap-2 py-1.5">
+        <BadgeCheck size={16} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
+        <p className="m-0 text-sm leading-snug text-ink">
           Membership: <strong>${MEMBERSHIP_PLAN.price}/year</strong> → grants <strong>{MEMBERSHIP_PLAN.bonusCredits} bonus credits</strong> per student
         </p>
       </div>
-      <div className="flex items-start gap-2 py-1">
-        <Wallet size={14} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
-        <p className="m-0 text-xs leading-snug text-ink">
+      <div className="flex items-start gap-2 py-1.5">
+        <Wallet size={16} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
+        <p className="m-0 text-sm leading-snug text-ink">
           Credit top-up rate: <strong>{CREDIT_RATE} credits per $1</strong> paid in cash
         </p>
       </div>
@@ -233,9 +234,9 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   )
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-4">
-      <h3 className="m-0 flex items-center gap-2 text-sm font-bold text-charcoal">
-        <UserCheck size={15} style={{ color: T.accent }} /> In-Person Sale
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-5">
+      <h3 className="m-0 flex items-center gap-2 text-base font-bold text-charcoal">
+        <UserCheck size={17} style={{ color: T.accent }} /> In-Person Sale
       </h3>
 
       {!staffStudent ? (
@@ -386,6 +387,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   const [staffOrder,   setStaffOrder]   = useState([])
   const [confirmBorrow, setConfirmBorrow] = useState(null)
   const [borrowDueDate, setBorrowDueDate] = useState('')
+  const [borrowPurpose, setBorrowPurpose] = useState('')
 
   const filtered = items.filter(i =>
     (filterCat === 'all' || i.category === filterCat) &&
@@ -400,13 +402,13 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   useEffect(() => { setVisibleCount(PAGE_ROWS) }, [search, filterCat, filterType])
   const visible = filtered.slice(0, visibleCount)
 
-  const addCart = (item, dueDate) => {
+  const addCart = (item, dueDate, purpose) => {
     if (!user || user.role !== 'user')        { showToast('Log in as a student to borrow or purchase.', 'error'); return }
     if (user.membership !== 'active')          { showToast('Active membership required.', 'error'); return }
     if (item.status !== 'available')           { showToast('This item is not currently available.', 'error'); return }
     setCart(prev => {
       const ex = prev.find(ci => ci.item.id === item.id)
-      return ex ? prev.map(ci => ci.item.id === item.id ? { ...ci, qty: ci.qty + 1 } : ci) : [...prev, { item, qty: 1, dueDate }]
+      return ex ? prev.map(ci => ci.item.id === item.id ? { ...ci, qty: ci.qty + 1 } : ci) : [...prev, { item, qty: 1, dueDate, purpose }]
     })
     showToast(`${item.name} added to cart.`)
     // On mobile, don't auto-open the cart panel — only the explicit cart icon should.
@@ -500,7 +502,10 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
       </div>
 
     <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
-      <div className={isStaff ? 'grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]' : ''}>
+      {/* The admin sidebar is always visible (no collapse at tablet), so the
+          two-column split only kicks in at lg — at md the content column is
+          too squeezed by the sidebar for a 340px side panel to fit. */}
+      <div className={isStaff ? 'grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]' : ''}>
         {/* Main column — categories, search, filters, item grid */}
         <div className="min-w-0">
           <CategoryTiles items={items} filterCat={filterCat} setFilterCat={setFilterCat} />
@@ -535,7 +540,12 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           <p className="m-0 mb-3 text-[13px] font-medium" style={{ color: '#94a3b8' }}>{filtered.length} items</p>
 
           {/* Fixed column counts so cards stay equal-sized even with 1–2 results */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+          {/* Staff view stays at 2 columns even on wide screens — with the
+              380px sale panel already claiming space, 2 wider cards read
+              cleaner than 3 cramped ones. */}
+          <div className={isStaff
+            ? 'grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6'
+            : 'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6'}>
             {visible.map(item => (
               <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
                 staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
@@ -708,6 +718,15 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 </div>
               </div>
               <p className="m-0 mb-3 text-xs text-inv-muted">Choose when you'll return this item. Staff still need to approve the request.</p>
+
+              {/* Required — staff see this on the request so they know why the item's needed */}
+              <div className="mb-4">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-faint">Borrow Purpose</label>
+                <textarea rows={2} value={borrowPurpose} onChange={e => setBorrowPurpose(e.target.value)}
+                  placeholder="What are you using this for?"
+                  className="w-full resize-none rounded-lg border bg-cream px-3 py-2 text-sm outline-none" style={{ borderColor: T.border }} />
+              </div>
+
               {/* Late-return rule — the student agrees to this before confirming */}
               <div className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2.5" style={{ background: '#fef3c7', border: '1px solid #fde68a' }}>
                 <AlertTriangle size={13} style={{ color: '#d97706', flexShrink: 0, marginTop: 1 }} />
@@ -716,12 +735,17 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 </p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { setConfirmBorrow(null); setBorrowDueDate('') }}
+                <button onClick={() => { setConfirmBorrow(null); setBorrowDueDate(''); setBorrowPurpose('') }}
                   className="flex-1 rounded-lg border py-2.5 text-sm font-semibold text-inv-muted" style={{ borderColor: T.border }}>
                   Cancel
                 </button>
-                <button onClick={() => { addCart(confirmBorrow, borrowDueDate || fmt(defaultDue)); setConfirmBorrow(null); setBorrowDueDate('') }}
-                  className="flex-1 rounded-lg border-none py-2.5 text-sm font-bold text-white" style={{ background: '#0891b2' }}>
+                <button onClick={() => {
+                    if (!borrowPurpose.trim()) { showToast('Please state the borrow purpose.', 'error'); return }
+                    addCart(confirmBorrow, borrowDueDate || fmt(defaultDue), borrowPurpose.trim())
+                    setConfirmBorrow(null); setBorrowDueDate(''); setBorrowPurpose('')
+                  }}
+                  disabled={!borrowPurpose.trim()}
+                  className="flex-1 rounded-lg border-none py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50" style={{ background: '#0891b2' }}>
                   Confirm Borrow
                 </button>
               </div>

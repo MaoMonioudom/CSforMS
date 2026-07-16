@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package } from 'lucide-react'
+import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package, ArrowLeft } from 'lucide-react'
 import { T } from '../lib/inventory/theme'
 import { CATEGORIES } from '../lib/inventory/data'
 import { useInventory } from '../lib/inventory/InventoryContext'
 import { useAuth } from './AuthContext'
 import { TopNav } from '../components/TopNav'
+import { AppFooter } from '../components/AppFooter'
 import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll } from '../lib/notifications-data'
+import { fmtDateTime } from '../lib/inventory/datetime'
 
 // One notification feed for all three modules (Community, Learning,
 // Inventory) — same page whether you land here from the top-nav bell or
@@ -52,10 +54,10 @@ const ACTIVITY_META = {
 // /inventory/my-borrows redirect for how you land here from that module).
 const FEED_FILTERS = [
   { id: 'all',       label: 'All',        Icon: Boxes },
+  { id: 'system',    label: 'System',     Icon: Bell },
   { id: 'community', label: 'Community',  Icon: MessageSquare },
   { id: 'learning',  label: 'Learning',   Icon: BookOpen },
   { id: 'inventory', label: 'Inventory',  Icon: Package },
-  { id: 'system',    label: 'System',     Icon: Bell },
 ]
 
 // Second-level tabs, shown only when the Inventory tab is active.
@@ -69,19 +71,11 @@ const INVENTORY_SUB_FILTERS = [
 ]
 
 // Every entry kind (notification, borrow/purchase, request, credit top-up)
-// carries a real timestamp, not just a date — show the time: "9:12 AM"
-// today/yesterday, a full date otherwise. dueDate is deliberately excluded
-// — that's a day-level deadline, not a moment, so it's rendered separately
-// without a time. Module-scope (not just inside NotificationsPage) since
-// DetailModal's itemList rendering (returnDate) needs it too.
-function formatEntryDateTime(dateStr) {
-  const d = new Date(dateStr)
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const startOfDay = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
-  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000)
-  if (diffDays <= 1) return time
-  return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · ${time}`
-}
+// carries a real timestamp — always shown in full ("2:09 PM, 7-16-2026"),
+// in Cambodia time, regardless of how recent it is. Module-scope (not just
+// inside NotificationsPage) since DetailModal's itemList rendering
+// (returnDate) needs it too.
+const formatEntryDateTime = fmtDateTime
 
 function DetailModal({ title, rows, status, onClose, itemList }) {
   return (
@@ -323,7 +317,7 @@ export default function NotificationsPage() {
           <div className="px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
             <button onClick={() => navigate(-1)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              ← Back
+              <ArrowLeft size={14} /> Back
             </button>
             <h1 style={{ margin: 0, fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Notifications
@@ -339,7 +333,7 @@ export default function NotificationsPage() {
       {!isUser && (
         <button onClick={() => navigate(-1)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: T.white, border: `1px solid ${T.border}`, color: T.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          ← Back
+          <ArrowLeft size={14} /> Back
         </button>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -500,7 +494,7 @@ export default function NotificationsPage() {
           rows={[
             ['Requested', formatEntryDateTime(selected.raw[0].date)],
             ['Approved', selected.raw[0].approvedAt ? formatEntryDateTime(selected.raw[0].approvedAt) : null],
-            ['Note', selected.raw[0].note],
+            ['Purpose', selected.raw[0].note],
           ]}
         />
       )}
@@ -533,6 +527,7 @@ export default function NotificationsPage() {
         )
       })()}
       </div>
+      {isUser && <AppFooter />}
     </div>
   )
 }

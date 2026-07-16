@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { RotateCcw, AlertTriangle, ChevronDown } from 'lucide-react'
+import { AlertTriangle, ChevronDown } from 'lucide-react'
 import GradientStatCard from '../../../components/inventory/ui/GradientStatCard'
+import ItemThumb from '../../../components/inventory/ui/ItemThumb'
 import DonutChart from '../../../components/inventory/ui/DonutChart'
 import BarChart from '../../../components/inventory/ui/BarChart'
 import Badge from '../../../components/inventory/ui/Badge'
 import DateRangeFilter, { inRange } from '../../../components/inventory/ui/DateRangeFilter'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -49,11 +51,13 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
     <div className="p-4 sm:p-6 lg:p-8">
       {/* Gradient stat cards */}
       <div className="mb-6 grid gap-3 sm:gap-4 lg:mb-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-        <GradientStatCard label="Total Items" value={total} period="All time" trend={4.2} gradient="linear-gradient(135deg,#DBEAFE,#EEF2FF)" />
-        <GradientStatCard label="Borrowed" value={borrowed} period="Today" trend={2.8} gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
-        <GradientStatCard label="Maintenance" value={maint} period="Today" trend={-1.5} gradient="linear-gradient(135deg,#FEE2E6,#FFF1F2)" />
-        <GradientStatCard label="Active Members" value={members} period="This month" trend={6.1} gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
-        <GradientStatCard label="Pending Requests" value={pending} period="Today" trend={pending > 0 ? 3.4 : 0} gradient="linear-gradient(135deg,#EDE9FE,#F5F3FF)" />
+        {/* No trend props — we have no historical snapshots to compute real
+            percentage changes from, and made-up numbers mislead. */}
+        <GradientStatCard label="Total Items" value={total} period="All time" gradient="linear-gradient(135deg,#DBEAFE,#EEF2FF)" />
+        <GradientStatCard label="Borrowed" value={borrowed} period="Today" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
+        <GradientStatCard label="Maintenance" value={maint} period="Today" gradient="linear-gradient(135deg,#FEE2E6,#FFF1F2)" />
+        <GradientStatCard label="Active Members" value={members} period="This month" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
+        <GradientStatCard label="Pending Requests" value={pending} period="Today" gradient="linear-gradient(135deg,#EDE9FE,#F5F3FF)" />
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr] lg:mb-6">
@@ -95,9 +99,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
               <div key={item.id} className="border-b border-stone last:border-b-0">
                 <button onClick={() => setExpanded(isOpen ? null : item.id)}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cream sm:px-6">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: cat?.color || T.stone }}>
-                    {cat && <cat.Icon size={16} color={cat.iconColor} />}
-                  </div>
+                  <ItemThumb item={item} cat={cat} size={36} iconSize={16} />
                   <div className="min-w-0 flex-1">
                     <p className="m-0 truncate text-[13px] font-medium text-ink">{item.name}</p>
                     <p className="m-0 mt-0.5 truncate text-[11px] text-faint">{cat?.label}</p>
@@ -142,17 +144,19 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
           {/* Recent activity */}
           <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
             <h3 className="m-0 mb-3 text-[15px] font-semibold text-charcoal">Recent Activity</h3>
-            {rangedBorrows.slice(-3).reverse().map(b => (
-              <div key={b.id} className="mb-2.5 flex items-start gap-2.5 last:mb-0">
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md" style={{ background: b.status === 'completed' ? T.greenLight : T.amberLight }}>
-                  <RotateCcw size={13} color={b.status === 'completed' ? T.green : T.amber} />
+            {rangedBorrows.slice(-3).reverse().map(b => {
+              const actItem = items.find(i => i.id === b.itemId)
+              const actCat = actItem && CATEGORIES.find(c => c.id === actItem.category)
+              return (
+                <div key={b.id} className="mb-2.5 flex items-start gap-2.5 last:mb-0">
+                  <ItemThumb item={actItem} cat={actCat} size={28} iconSize={13} />
+                  <div className="min-w-0">
+                    <p className="m-0 truncate text-[13px] font-medium text-ink">{b.itemName}</p>
+                    <p className="m-0 text-xs text-faint">{b.action} · {fmtDateTime(b.date)}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="m-0 truncate text-[13px] font-medium text-ink">{b.itemName}</p>
-                  <p className="m-0 text-xs text-faint">{b.action} · {b.date}</p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
@@ -337,7 +341,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
                       {e.items.length === 1 ? e.items[0].name : `${e.items.length} items`}
                     </p>
                   </div>
-                  <span style={{ fontSize: 12, color: T.muted }}>{e.date}</span>
+                  <span style={{ fontSize: 12, color: T.muted }}>{fmtDateTime(e.date)}</span>
                   <div><Badge status={e.status} small /></div>
                   <ChevronDown size={14} color={T.faint} style={{ transition: 'transform .15s', transform: isOpen ? 'rotate(180deg)' : 'none' }} />
                 </div>

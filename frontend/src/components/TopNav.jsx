@@ -363,20 +363,22 @@ function ModuleBox({ mod, cfg, dark }) {
 }
 
 // ── Credit box ────────────────────────────────────────────────────────────────
+// Links to /credits — the manage-credits panel (balance, top-up, history).
 function CreditBox({ credits, dark }) {
   return (
-    <div
+    <Link
+      to="/credits"
       className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
       style={{
         background: dark ? "rgba(16,185,129,0.16)" : "rgba(16,185,129,0.10)",
         border:     `1.5px solid rgba(16,185,129,${dark ? 0.4 : 0.28})`,
         color:      "#10b981",
       }}
-      title="Credits"
+      title="Manage credits"
     >
       <Coins size={13} strokeWidth={2.2} />
       <span className="text-[11px] font-extrabold tracking-wide">{credits ?? 0}</span>
-    </div>
+    </Link>
   );
 }
 

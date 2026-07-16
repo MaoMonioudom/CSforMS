@@ -29,6 +29,7 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
         await submitBorrowRequests(borrowItems.map(ci => ({
           itemId: ci.item.id, qty: ci.qty,
           dueDate: ci.dueDate || fallbackDue.toISOString().split('T')[0],
+          note: ci.purpose || null,
         })))
       }
       if (buyItems.length > 0) {

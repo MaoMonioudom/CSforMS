@@ -400,6 +400,16 @@
 .inv-hscroll { scrollbar-width: none; -ms-overflow-style: none; }
 .inv-hscroll::-webkit-scrollbar { display: none; }
 
+/* Inventory side (student + admin/staff) — scroll stays functional everywhere,
+   the scrollbar itself is just never drawn. Covers the page scrollbar (via
+   :has, so only routes actually rendering .inv-root are affected) and every
+   scrollable container inside it (tables, the Manage Stock/Requests
+   horizontal wrappers, modals, etc). */
+html:has(.inv-root), body:has(.inv-root) { scrollbar-width: none; -ms-overflow-style: none; }
+html:has(.inv-root)::-webkit-scrollbar, body:has(.inv-root)::-webkit-scrollbar { display: none; }
+.inv-root, .inv-root * { scrollbar-width: none; -ms-overflow-style: none; }
+.inv-root::-webkit-scrollbar, .inv-root *::-webkit-scrollbar { display: none; }
+
 /* Category tiles on phones: borderless Telegram-tab look (inline styles set the
    desktop border, so this needs !important to win below the sm breakpoint). */
 @media (max-width: 639px) {

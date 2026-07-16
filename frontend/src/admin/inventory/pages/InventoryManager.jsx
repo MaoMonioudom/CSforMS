@@ -5,6 +5,7 @@ import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
 import { uploadItemImage } from '../../../lib/inventory/api'
+import ItemThumb from '../../../components/inventory/ui/ItemThumb'
 
 const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0, image: null }
 const FIL_BLANK = { name: 'PLA', color: '', hex: '#94A3B8', stockGrams: 0, rate: 4 }
@@ -119,9 +120,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
             <div className="trow" style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.1fr 0.8fr 0.7fr 0.6fr 0.9fr 1.5fr', gap: 10, padding: '12px 16px', alignItems: 'center', transition: 'background 0.1s', cursor: 'pointer' }}
               onClick={() => setExpanded(isOpen ? null : item.id)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 7, background: c?.color || T.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {c && <c.Icon size={14} color={c.iconColor} />}
-                </div>
+                <ItemThumb item={item} cat={c} size={30} iconSize={14} />
                 <div>
                   <p style={{ margin: 0, color: T.charcoal, fontWeight: 500, fontSize: 13 }}>{item.name}</p>
                   <p style={{ margin: 0, color: T.faint, fontSize: 11 }}>{item.room}</p>

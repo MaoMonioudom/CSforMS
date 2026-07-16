@@ -7,6 +7,7 @@ import {
 import { T } from '../../../lib/inventory/theme'
 import { CREDIT_RATE, PRINT_SERVICES, CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 const PAGE_SIZE = 10
@@ -204,7 +205,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
       `}</style>
 
       <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Borrow Request Management</h1>
+        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Request Management</h1>
         <p className="m-0 mt-0.5 text-sm text-faint">Review and approve student requests — borrow items, credit top-ups, and print jobs.</p>
       </div>
 
@@ -264,35 +265,41 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 </div>
                 <span style={{ fontSize: 12, color: T.muted }}>{e.totalQty}</span>
                 <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5 }}>
-                  <div className="req-truncate">{e.first.date}</div>
-                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {e.first.dueDate}</div>}
+                  <div className="req-truncate">{fmtDateTime(e.first.date)}</div>
+                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {fmtDateTime(e.first.dueDate)}</div>}
                 </div>
                 <div><StatusPill status={e.status} /></div>
-                <div className="req-actions" onClick={ev => ev.stopPropagation()}>
-                  {e.status === 'Pending' && !needsWeight && (
+                {/* 3D print jobs need a weight entered before they can be charged —
+                    that control lives here in Actions only, not as a separate
+                    full-width strip under the row. */}
+                <div className="req-actions" onClick={ev => ev.stopPropagation()} style={needsWeight ? { flexDirection: 'column', alignItems: 'flex-end', gap: 4 } : undefined}>
+                  {needsWeight ? (
                     <>
-                      <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                      <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input type="number" min="0" step="0.1" placeholder="Grams" value={gramsInput[e.first.id] || ''}
+                          onChange={ev => setGramsInput(p => ({ ...p, [e.first.id]: ev.target.value }))}
+                          style={{ width: 70, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 7, padding: '6px 8px', fontSize: 12, outline: 'none' }} />
+                        <button className="req-btn req-btn-approve" title="Confirm weight & charge" onClick={() => confirm3DWeight(e.first)}><Check size={12} /></button>
+                        <button className="req-btn req-btn-decline" title="Decline" onClick={() => deny(e.first)}><Ban size={12} /></button>
+                      </div>
+                      {gramsInput[e.first.id] > 0 && (() => {
+                        const rate = filaments.find(f => f.id === e.first.filamentId)?.rate ?? 4
+                        return <span style={{ fontSize: 10.5, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[e.first.id] * rate)} cr</strong></span>
+                      })()}
+                    </>
+                  ) : (
+                    <>
+                      {e.status === 'Pending' && (
+                        <>
+                          <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                          <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                        </>
+                      )}
+                      <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
                     </>
                   )}
-                  <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
                 </div>
               </div>
-
-              {/* 3D print jobs — weigh the finished print, then charge */}
-              {needsWeight && (
-                <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', borderBottom: `1px solid ${T.stone}` }}>
-                  <input type="number" min="0" step="0.1" placeholder="Weight in grams" value={gramsInput[e.first.id] || ''}
-                    onChange={ev => setGramsInput(p => ({ ...p, [e.first.id]: ev.target.value }))}
-                    style={{ width: 140, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, outline: 'none' }} />
-                  {gramsInput[e.first.id] > 0 && (() => {
-                    const rate = filaments.find(f => f.id === e.first.filamentId)?.rate ?? 4
-                    return <span style={{ fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[e.first.id] * rate)} cr</strong> at {rate}cr/g</span>
-                  })()}
-                  <button className="req-btn req-btn-decline" onClick={() => deny(e.first)}><Ban size={12} /> Decline</button>
-                  <button className="req-btn req-btn-approve" onClick={() => confirm3DWeight(e.first)}><Check size={12} /> Confirm Weight &amp; Charge</button>
-                </div>
-              )}
             </div>
           )
         })}
@@ -311,7 +318,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               <div style={{ marginBottom: 6 }}>
                 <span className="req-items-pill"><Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'} · Qty {e.totalQty}</span>
               </div>
-              <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{e.first.date}{e.first.dueDate ? ` → ${e.first.dueDate}` : ''}</div>
+              <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{fmtDateTime(e.first.date)}{e.first.dueDate ? ` → ${fmtDateTime(e.first.dueDate)}` : ''}</div>
               <div className="req-actions">
                 {e.status === 'Pending' && !(!e.isBorrow && e.first.type === '3d_printing') && (
                   <>
@@ -361,8 +368,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5 }}>
                   <InfoRow label="Name" value={detail.student?.name || `User #${detail.first.userId}`} />
                   <InfoRow label="Student ID" value={detail.student?.studentId || '—'} />
-                  <InfoRow label="Request Date" value={detail.first.date} />
-                  <InfoRow label="Return Date" value={detail.first.dueDate || '—'} />
+                  <InfoRow label="Request Date" value={fmtDateTime(detail.first.date)} />
+                  <InfoRow label="Return Date" value={detail.first.dueDate ? fmtDateTime(detail.first.dueDate) : '—'} />
                 </div>
               </div>
 
@@ -386,7 +393,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               </div>
 
               <div>
-                <SectionLabel icon={FileText} text="Borrow Notes" />
+                <SectionLabel icon={FileText} text={detail.isBorrow ? 'Borrow Notes' : 'Notes'} />
                 <p style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, background: T.cream, borderRadius: 8, padding: '10px 12px', margin: 0 }}>
                   {detail.first.note || 'No notes provided.'}
                 </p>
@@ -400,7 +407,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0891b2', marginTop: 5, flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: T.charcoal }}>{h.action}</div>
-                        <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {h.date}</div>
+                        <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {fmtDateTime(h.date)}</div>
                       </div>
                     </div>
                   ))}

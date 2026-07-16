@@ -118,7 +118,7 @@ export default function InventoryAdminArea() {
         <Route path="users"    element={user.role === 'admin' ? <UserManager users={users} setUsers={setUsers} /> : <Navigate to="/admin/inventory" replace />} />
         <Route path="borrows"  element={<BorrowsTracker {...sharedBorrow} users={users} setUsers={setUsers} showToast={showToast} user={user} />} />
         <Route path="requests" element={<RequestsManager requests={requests} setRequests={setRequests} {...sharedBorrow} users={users} setUsers={setUsers} user={user} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} filaments={filaments} setFilaments={setFilaments} />} />
-        <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} items={items} />} />
+        <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} items={items} requests={requests} users={users} />} />
         <Route path="catalog"  element={<Catalog items={items} user={user} cart={cart} setCart={setCart} showToast={showToast} users={users} setUsers={setUsers} setItems={setItems} setBorrows={setBorrows} setPayments={setPayments} />} />
         <Route path="*"        element={<Navigate to="/admin/inventory" replace />} />
       </Routes>
