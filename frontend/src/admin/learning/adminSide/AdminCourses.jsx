@@ -55,7 +55,15 @@ export default function AdminCourses() {
                   <td className="px-5 py-3.5 text-gray-600 hidden sm:table-cell">{c.category}</td>
                   <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{c.instructor || "—"}</td>
                   <td className="px-5 py-3.5 text-gray-500 text-xs hidden lg:table-cell">{(c.paths || []).join(", ")}</td>
-                  <td className="px-5 py-3.5 text-gray-700 font-medium tabular-nums">{(c.students || 0).toLocaleString()}</td>
+                  <td className="px-5 py-3.5">
+                    <Link
+                      to={`/admin/learning/courses/${c.id}/students`}
+                      className="text-gray-700 font-medium tabular-nums hover:text-blue-600 hover:underline transition-colors"
+                      title="View enrolled students"
+                    >
+                      {(c.students || 0).toLocaleString()}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1">
                       <Link

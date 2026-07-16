@@ -20,5 +20,12 @@ export const learningApi = {
 
   enroll: (courseId) => api.post(`/api/learning/courses/${courseId}/enroll`),
   unlock: (courseId) => api.post(`/api/learning/courses/${courseId}/unlock`),
+  rate: (courseId, stars) =>
+    api.post(`/api/learning/courses/${courseId}/rate`, { stars }).then((r) => r.data),
   myLearning: () => api.get("/api/learning/me").then((r) => r.data),
+
+  // Admin reporting.
+  courseStudents: (courseId) =>
+    api.get(`/api/learning/courses/${courseId}/students`).then((r) => r.data),
+  overview: () => api.get("/api/learning/overview").then((r) => r.data),
 };

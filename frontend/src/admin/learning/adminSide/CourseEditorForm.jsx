@@ -16,7 +16,7 @@ const LESSON_TYPES = ["video", "reading", "Lab", "Project", "Assignment"];
 const COLOR_PRESETS = ["#2D6A4F", "#7B2D8B", "#C9600A", "#1A5276", "#7D6608", "#1B6B5A"];
 
 function emptyLesson() {
-  return { title: "", duration: "", type: "video", body: "", points: "" };
+  return { title: "", duration: "", type: "video", body: "", stepsBody: "", interactiveBody: "", points: "" };
 }
 
 function toFormLesson(lesson) {
@@ -26,11 +26,13 @@ function toFormLesson(lesson) {
     duration: lesson.duration || "",
     type: lesson.type || "video",
     body: normalizeLessonBody(lesson.body || ""),
+    stepsBody: normalizeLessonBody(lesson.stepsBody || ""),
+    interactiveBody: normalizeLessonBody(lesson.interactiveBody || ""),
     points: (lesson.points || []).join("\n"),
   };
 }
 
-function LessonEditor({ lesson, index, onChange, onRemove, onMove, isFirst, isLast }) {
+function LessonEditor({ lesson, index, paths, onChange, onRemove, onMove, isFirst, isLast }) {
   const set = (field) => (e) => onChange(index, { ...lesson, [field]: e.target.value });
 
   return (
@@ -72,10 +74,27 @@ function LessonEditor({ lesson, index, onChange, onRemove, onMove, isFirst, isLa
       </div>
 
       <div>
-        <label className={labelCls}>Body</label>
+        <label className={labelCls}>Basic content</label>
         <textarea className={inputCls} rows={4} value={lesson.body} onChange={set("body")}
-          placeholder="Lesson content" />
+          placeholder="The lesson as plain reading material (shown on the Basic path)" />
       </div>
+
+      {paths.includes("stepByStep") && (
+        <div>
+          <label className={labelCls}>Step-by-step — one step per line</label>
+          <textarea className={inputCls} rows={4} value={lesson.stepsBody} onChange={set("stepsBody")}
+            placeholder={"Install Python from python.org\nOpen VS Code and create hello.py\nRun the script from the terminal"} />
+          <p className="mt-1 text-xs text-gray-400">Each line becomes one checklist step. Empty = steps are made from the Basic content's lines.</p>
+        </div>
+      )}
+
+      {paths.includes("interactive") && (
+        <div>
+          <label className={labelCls}>Interactive content (optional)</label>
+          <textarea className={inputCls} rows={4} value={lesson.interactiveBody} onChange={set("interactiveBody")}
+            placeholder="Content shown on the Interactive path, next to the AI guide. Empty = reuses the Basic content." />
+        </div>
+      )}
 
       <div>
         <label className={labelCls}>Key points (one per line)</label>
@@ -100,6 +119,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
     spineColor: initialCourse?.spineColor || "#1B4332",
     paths: initialCourse?.paths?.length ? initialCourse.paths : ["basic"],
     interactivePrice: initialCourse?.interactivePrice ?? "",
+    aiAgentUrl: initialCourse?.aiAgentUrl || "",
     tags: (initialCourse?.tags || []).join(", "),
     description: initialCourse?.description || "",
   }));
@@ -158,6 +178,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
       interactivePrice: form.paths.includes("interactive") && form.interactivePrice !== ""
         ? Number(form.interactivePrice)
         : undefined,
+      aiAgentUrl: form.paths.includes("interactive") ? form.aiAgentUrl.trim() : "",
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       description: form.description.trim(),
       lessons: lessons.map((l, i) => ({
@@ -166,6 +187,8 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         duration: l.duration.trim(),
         type: l.type,
         body: l.body.trim(),
+        stepsBody: l.stepsBody.trim(),
+        interactiveBody: l.interactiveBody.trim(),
         points: l.points.split("\n").map((p) => p.trim()).filter(Boolean),
       })),
     };
@@ -299,9 +322,17 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         </div>
 
         {form.paths.includes("interactive") && (
-          <div className="sm:w-1/3">
-            <label className={labelCls}>Interactive price (USD)</label>
-            <input type="number" min="0" step="0.01" className={inputCls} value={form.interactivePrice} onChange={set("interactivePrice")} placeholder="24.99" />
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div>
+              <label className={labelCls}>Interactive price (USD)</label>
+              <input type="number" min="0" step="0.01" className={inputCls} value={form.interactivePrice} onChange={set("interactivePrice")} placeholder="24.99" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>AI agent link</label>
+              <input type="url" className={inputCls} value={form.aiAgentUrl} onChange={set("aiAgentUrl")}
+                placeholder="https://your-ai-agent.example.com/chat" />
+              <p className="mt-1 text-xs text-gray-400">Embedded in the AI guide panel on Interactive lessons. Empty = built-in demo chat.</p>
+            </div>
           </div>
         )}
 
@@ -329,6 +360,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
                 key={i}
                 lesson={lesson}
                 index={i}
+                paths={form.paths}
                 onChange={updateLesson}
                 onRemove={removeLesson}
                 onMove={moveLesson}

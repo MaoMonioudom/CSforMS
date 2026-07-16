@@ -3,23 +3,23 @@ import { Link } from "react-router-dom";
 const VALUES = [
   {
     icon: "🎯",
-    title: "Depth over breadth",
-    desc: "We cover fewer topics but go deeper, so you actually understand what you're building.",
+    title: "Path of Courses",
+    desc: "We offer three learning paths: Basic, Step by Step, and Interactive.",
   },
   {
-    icon: "🛠",
-    title: "Learn by making",
-    desc: "Every course includes hands-on labs and a final project you can add to your portfolio.",
+    icon: "🔨",
+    title: "Basic Path",
+    desc: "Learn the fundamentals of each course, free of charge.",
   },
   {
-    icon: "📐",
-    title: "Structured freedom",
-    desc: "Clear curriculum, but learn at your own pace — no deadlines, no pressure.",
+    icon: "🪜",
+    title: "Step by Step Path",
+    desc: "Similar to the Basic Path, but with more hands-on activities that walk you through each step in a guided flow.",
   },
   {
-    icon: "🤝",
-    title: "Community",
-    desc: "Access a community of fellow learners to ask questions and share your builds.",
+    icon: "💵",
+    title: "Interactive Path",
+    desc: "In this path, students pay to learn with AI support. An AI agent helps students as they study and answers their questions along the way.",
   },
 ];
 
@@ -35,11 +35,11 @@ export default function About() {
         <div className={`${CONTAINER} !max-w-[720px]`}>
           <span className={EYEBROW}>Our Story</span>
           <h1 className="mb-4 mt-2 font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-parchment">
-            Learning should feel like discovery,<br />not obligation.
+            Learning should feel like discovery, not obligation.
           </h1>
           <p className="text-base leading-[1.8] text-navy-muted">
             Makerspace Learning was born from a simple idea: the best way to learn
-            technology is to treat it like a great book — something you pick up
+            technology is to treat it like a great book, something you pick up
             with curiosity and can't put down.
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function About() {
             <p className="mb-4 text-[0.9rem] leading-[1.8] text-navy-muted">
               Most online learning platforms overwhelm learners with endless
               lists and fragmented content. We believed there was a better
-              way — one inspired by the quiet focus of a library.
+              way, one inspired by the quiet focus of a library.
             </p>
             <p className="mb-4 text-[0.9rem] leading-[1.8] text-navy-muted">
               Each course is structured like a well-written book: with a clear
@@ -63,8 +63,8 @@ export default function About() {
               next.
             </p>
             <p className="mb-4 text-[0.9rem] leading-[1.8] text-navy-muted">
-              Our instructors are practitioners who have built real things —
-              robots, web applications, machine learning models — and they
+              Our instructors are practitioners who have built real things,
+              robots, web applications, machine learning models, and they
               teach from that experience.
             </p>
             <Link

@@ -30,7 +30,7 @@ const COLUMNS = [
     accent: "#e07060",
     links: [
       { label: "Home",           to: "/learning" },
-      { label: "About",       to: "/learning/about" },
+      { label: "Guidelines",       to: "/learning/about" },
       { label: "Courses",       to: "/learning/courses" },
       // { label: "Bookmarks",      to: "/learning" },
       // { label: "Announcements",  to: "/learning" },

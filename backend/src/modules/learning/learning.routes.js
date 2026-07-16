@@ -11,7 +11,10 @@ import {
   setLecturerStatus,
   enrollInCourse,
   unlockCoursePath,
+  rateCourse,
   getMyLearning,
+  listCourseStudents,
+  getLearningOverview,
 } from "./learning.controller.js";
 
 const router = Router();
@@ -31,9 +34,15 @@ router.get("/lecturers", requireAuth, requireRole("admin", "staff", "lecturer"),
 router.post("/lecturers", requireAuth, requireRole("admin", "staff"), createLecturer);
 router.put("/lecturers/:id/status", requireAuth, requireRole("admin", "staff"), setLecturerStatus);
 
+// Admin reporting. Roster is also open to lecturers (own courses only,
+// enforced in the controller); the overview is staff-only.
+router.get("/courses/:id/students", requireAuth, requireRole("admin", "staff", "lecturer"), listCourseStudents);
+router.get("/overview", requireAuth, requireRole("admin", "staff"), getLearningOverview);
+
 // Learner actions.
 router.post("/courses/:id/enroll", requireAuth, enrollInCourse);
 router.post("/courses/:id/unlock", requireAuth, unlockCoursePath);
+router.post("/courses/:id/rate", requireAuth, rateCourse);
 router.get("/me", requireAuth, getMyLearning);
 
 export default router;

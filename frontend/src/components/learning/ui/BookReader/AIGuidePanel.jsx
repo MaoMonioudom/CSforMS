@@ -9,12 +9,39 @@ const CANNED_REPLIES = [
 ];
 
 /**
- * Mock AI chat panel for the Interactive path. There's no real AI/backend
- * wired up — this fakes a conversation with canned replies so the
- * Interactive path's value (an AI guide alongside the lesson) is visible
- * in the UI. Swap `send()` for a real API call when a backend exists.
+ * AI guide panel for the Interactive path. When the course has an
+ * `aiAgentUrl` (set in the course editor), the agent is embedded here in
+ * an iframe. Without one, a demo chat with canned replies stands in so
+ * the path's value is still visible.
  */
-export default function AIGuidePanel({ lessonTitle }) {
+export default function AIGuidePanel({ lessonTitle, agentUrl }) {
+  if (agentUrl?.trim()) {
+    return (
+      <div className="mx-auto mt-5 max-w-[1000px] rounded-[10px] border border-gold/20 bg-navy px-[18px] py-4 font-body">
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="text-xs font-semibold text-gold">🤖 AI Guide</span>
+          <a
+            href={agentUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[10px] text-parchment/50 underline-offset-2 hover:text-gold hover:underline"
+          >
+            open in new tab ↗
+          </a>
+        </div>
+        <iframe
+          src={agentUrl}
+          title={`AI guide for ${lessonTitle}`}
+          className="h-[420px] w-full rounded-md border border-white/10 bg-white"
+          allow="clipboard-write"
+        />
+      </div>
+    );
+  }
+  return <DemoGuidePanel lessonTitle={lessonTitle} />;
+}
+
+function DemoGuidePanel({ lessonTitle }) {
   const [messages, setMessages] = useState(() => [
     {
       from: "ai",

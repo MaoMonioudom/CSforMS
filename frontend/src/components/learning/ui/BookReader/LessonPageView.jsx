@@ -70,14 +70,26 @@ export default function LessonPageView({ course, lessonId }) {
               total={lessons.length}
             />
           ) : (
-            <LessonPage page={{ type: "lesson", lesson, num: index + 1 }} course={course} />
+            <LessonPage
+              page={{
+                type: "lesson",
+                // Interactive path shows its dedicated content when the
+                // author wrote some; otherwise the basic body.
+                lesson:
+                  path === "interactive" && lesson.interactiveBody?.trim()
+                    ? { ...lesson, body: lesson.interactiveBody }
+                    : lesson,
+                num: index + 1,
+              }}
+              course={course}
+            />
           )}
         </div>
         <div className={PAGES_STACK} />
       </div>
 
       {path === "interactive" && (
-        <AIGuidePanel key={lesson.id} lessonTitle={lesson.title} />
+        <AIGuidePanel key={lesson.id} lessonTitle={lesson.title} agentUrl={course.aiAgentUrl} />
       )}
 
       <div className={NAV}>

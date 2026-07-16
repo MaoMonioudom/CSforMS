@@ -33,7 +33,7 @@ export default function Home() {
     : 0;
   const stats = [
     { value: `${courses.length}+`, label: "Courses" },
-    { value: `${formatNumber(Math.round(totalStudents / 100) * 100)}+`, label: "Students" },
+    { value: `${formatNumber(totalStudents)}+`, label: "Students" },
     { value: `${avgRating.toFixed(1)}★`, label: "Avg Rating" },
   ];
 
@@ -71,7 +71,7 @@ export default function Home() {
                 to="/learning/about"
                 className={`${BTN} border border-ink/35 bg-transparent text-ink hover:border-oxblood hover:text-oxblood`}
               >
-                Our Story
+                Our Guidelines
               </Link>
             </div>
             <div className="mt-10 flex gap-8 border-t border-ink/[0.12] pt-8 max-sm:gap-4">

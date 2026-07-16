@@ -22,10 +22,12 @@ import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
 import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import AdminCourses from "./admin/learning/adminSide/AdminCourses";
 import AdminCourseEditor from "./admin/learning/adminSide/AdminCourseEditor";
+import AdminCourseStudents from "./admin/learning/adminSide/AdminCourseStudents";
 import AdminLecturers from "./admin/learning/adminSide/AdminLecturers";
 import LecturerLayout from "./admin/layouts/LecturerLayout";
 import LecturerDashboard from "./admin/learning/lecturersSide/LecturerDashboard";
 import LecturerCourseEditor from "./admin/learning/lecturersSide/LecturerCourseEditor";
+import LecturerCourseStudents from "./admin/learning/lecturersSide/LecturerCourseStudents";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
@@ -132,6 +134,7 @@ export default function App() {
             <Route path="learning/courses" element={<AdminCourses />} />
             <Route path="learning/courses/new" element={<AdminCourseEditor />} />
             <Route path="learning/courses/:id/edit" element={<AdminCourseEditor />} />
+            <Route path="learning/courses/:id/students" element={<AdminCourseStudents />} />
             <Route path="learning/lecturers" element={<AdminLecturers />} />
             <Route path="inventory/*" element={<InventoryAdminArea />} />
           </Route>
@@ -144,6 +147,7 @@ export default function App() {
             <Route path="learning/courses" element={<LecturerDashboard />} />
             <Route path="learning/courses/new" element={<LecturerCourseEditor />} />
             <Route path="learning/courses/:id/edit" element={<LecturerCourseEditor />} />
+            <Route path="learning/courses/:id/students" element={<LecturerCourseStudents />} />
           </Route>
         </Route>
 

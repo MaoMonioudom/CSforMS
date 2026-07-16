@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { parseBodySteps } from "../../../../utils/format";
+import { normalizeLessonBody, parseBodySteps } from "../../../../utils/format";
 import {
   typeBadgeClass,
   LESSON_NUM,
@@ -11,11 +11,23 @@ import {
 } from "./bookStyles";
 
 /**
- * Step-by-Step path: same lesson content, broken into a checklist of
- * steps (the lesson body's bullet points) the learner ticks off in order.
+ * Step-by-Step path: a checklist the learner ticks off in order. Uses the
+ * lesson's dedicated step content (one step per line) when the author
+ * provided it; otherwise falls back to splitting the basic body's lines.
  */
+function getSteps(lesson) {
+  if (lesson.stepsBody?.trim()) {
+    const items = normalizeLessonBody(lesson.stepsBody)
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return { intro: "", items };
+  }
+  return parseBodySteps(lesson.body);
+}
+
 export default function StepByStepLesson({ lesson, num, total }) {
-  const { intro, items } = parseBodySteps(lesson.body);
+  const { intro, items } = getSteps(lesson);
   const [done, setDone] = useState(() => items.map(() => false));
 
   const toggle = (i) =>

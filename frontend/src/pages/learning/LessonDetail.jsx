@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourse } from "../../hooks/learning/useCourses";
+import { useEnrollment } from "../../hooks/learning/useEnrollment";
 import LessonPageView from "../../components/learning/ui/BookReader/LessonPageView";
 import NotFound from "../NotFound";
 
@@ -9,8 +11,15 @@ export default function LessonDetail() {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
   const { course, loading } = useCourse(id);
+  const { enrolled, loaded } = useEnrollment(id);
 
-  if (loading) {
+  // Lessons are for enrolled students only — anyone else (guest or not yet
+  // enrolled) is sent to the course page, where the enroll prompt appears.
+  useEffect(() => {
+    if (loaded && !enrolled) navigate(`/learning/course/${id}`, { replace: true });
+  }, [loaded, enrolled, id, navigate]);
+
+  if (loading || !loaded || !enrolled) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-navy-deep font-body">
         <p className="text-sm text-navy-muted">Opening the book…</p>

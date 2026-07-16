@@ -59,7 +59,15 @@ export default function LecturerDashboard() {
                   <td className="px-5 py-3.5 text-navy-muted hidden sm:table-cell">{c.category}</td>
                   <td className="px-5 py-3.5 text-navy-muted hidden md:table-cell">{(c.lessons || []).length}</td>
                   <td className="px-5 py-3.5 text-navy-muted text-xs hidden lg:table-cell">{(c.paths || []).join(", ")}</td>
-                  <td className="px-5 py-3.5 text-parchment font-medium tabular-nums">{(c.students || 0).toLocaleString()}</td>
+                  <td className="px-5 py-3.5">
+                    <Link
+                      to={`/lecturer/learning/courses/${c.id}/students`}
+                      className="text-parchment font-medium tabular-nums hover:text-gold hover:underline transition-colors"
+                      title="View enrolled students"
+                    >
+                      {(c.students || 0).toLocaleString()}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1">
                       <Link
