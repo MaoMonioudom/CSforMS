@@ -6,7 +6,6 @@ import { CATEGORIES } from '../lib/inventory/data'
 import { useInventory } from '../lib/inventory/InventoryContext'
 import { useAuth } from './AuthContext'
 import { TopNav } from '../components/TopNav'
-import { BackBar } from '../components/BackBar'
 import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll } from '../lib/notifications-data'
 
 // One notification feed for all three modules (Community, Learning,
@@ -312,7 +311,6 @@ export default function NotificationsPage() {
           normally provide TopNav themselves, but at this shared route nothing
           else does, so it's rendered here unconditionally. */}
       <TopNav />
-      <BackBar />
 
       {/* Dark teal header banner — students only (admin layout already shows a TopBar title) */}
       {isUser && (
@@ -323,6 +321,10 @@ export default function NotificationsPage() {
           borderBottom: '1px solid rgba(8,145,178,0.2)',
         }}>
           <div className="px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <button onClick={() => navigate(-1)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              ← Back
+            </button>
             <h1 style={{ margin: 0, fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Notifications
             </h1>
@@ -334,6 +336,12 @@ export default function NotificationsPage() {
       )}
 
       <div className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {!isUser && (
+        <button onClick={() => navigate(-1)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: T.white, border: `1px solid ${T.border}`, color: T.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          ← Back
+        </button>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         {!isUser
           ? <h1 className="m-0 font-heading text-lg font-bold text-charcoal">Notifications</h1>

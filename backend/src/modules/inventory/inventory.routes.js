@@ -12,8 +12,10 @@ const STAFF = requireRole("admin", "staff");
 
 // Items, filaments, categories, locations — public reads, authed writes.
 // This schema has per-table PK names, so pkColumn must be set explicitly.
-router.use("/items", createCrudRouter("inventory_items", { pkColumn: "item_id" }));
-router.use("/filaments", createCrudRouter("filaments", { pkColumn: "filament_id" }));
+// Newest first — every items/filaments list (browse, catalog, manage stock)
+// shows the most recently created entries at the top.
+router.use("/items", createCrudRouter("inventory_items", { pkColumn: "item_id", orderBy: { column: "created_at", ascending: false } }));
+router.use("/filaments", createCrudRouter("filaments", { pkColumn: "filament_id", orderBy: { column: "created_at", ascending: false } }));
 router.use("/categories", createCrudRouter("categories", { pkColumn: "category_id" }));
 router.use("/locations", createCrudRouter("location_items", { pkColumn: "location_id" }));
 

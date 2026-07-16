@@ -644,7 +644,6 @@ export function TopNav() {
   const close = () => setOpen(false);
   const toggleMod = (key) => setExpandedMod(prev => prev === key ? null : key);
   const mod = useModule();
-  const cfg = MODULE_CFG[mod];
   const isHub = mod === "hub";
   const isInventory = mod === "inventory";
   const { pathname } = useLocation();
@@ -654,6 +653,15 @@ export function TopNav() {
     ? inv.notifications.filter(n => !n.read && (n.forRoles?.includes(inv.user?.role) || n.userId === inv.user?.id)).length
     : 0;
   const lastSpace = useLastSpace(mod);
+  // Notifications keeps hub behavior (no search bar, page InfoBox) but wears
+  // the theme of whichever module space the user came from — dark chrome
+  // when arriving from Inventory, warm light chrome from Community.
+  const themeMod = pathname === "/notifications"
+    ? (Object.keys(SPACE_ROOTS).find((k) => SPACE_ROOTS[k] === lastSpace) || "community")
+    : mod;
+  const cfg = pathname === "/notifications"
+    ? { ...MODULE_CFG[mod], accent: MODULE_CFG[themeMod].accent, dark: MODULE_CFG[themeMod].dark }
+    : MODULE_CFG[mod];
   const logoTo = isHub ? lastSpace : cfg.root;
   const hubPage = HUB_PAGES[pathname];
 
