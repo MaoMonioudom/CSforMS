@@ -34,7 +34,7 @@ const statusColors = {
 // Staff can only create plain Users — granting Staff/Admin is Admin-only,
 // decided at creation time rather than by editing an existing account.
 const CREATABLE_ROLES_BY_ACTOR = {
-  Admin: ["User", "Staff", "Admin"],
+  Admin: ["User", "Staff", "Admin", "Lecturer"],
   Staff: ["User"],
 };
 

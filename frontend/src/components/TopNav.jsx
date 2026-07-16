@@ -83,7 +83,7 @@ const COMMUNITY_LINKS = [
 const LEARNING_LINKS = [
   { label: "Library",        to: "/learning",  featured: true, desc: "Browse all courses"        },
   { label: "Home",       to: "/learning"  },
-  { label: "About",          to: "/learning/about"  },
+  { label: "Guidelines",          to: "/learning/about"  },
   { label: "Courses",        to: "/learning/courses"  },
   // { label: "Progress",       to: "/learning"  },
   // { label: "Bookmarks",      to: "/learning"  },

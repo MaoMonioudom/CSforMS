@@ -12,7 +12,8 @@ const COURSE_SELECT = `
   *,
   instructor:users(user_id, full_name),
   lessons(*),
-  course_enrollments(count)
+  course_enrollments(count),
+  course_ratings(stars)
 `;
 
 // ---------------------------------------------------------------------------
@@ -27,6 +28,8 @@ function toFrontendLesson(row) {
     duration: row.duration || "",
     type: row.lesson_type || "video",
     body: row.body || "",
+    stepsBody: row.steps_body || "",
+    interactiveBody: row.interactive_body || "",
     points: row.points || [],
   };
 }
@@ -35,6 +38,14 @@ function toFrontendCourse(row) {
   const lessons = [...(row.lessons || [])]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(toFrontendLesson);
+  // Real student ratings win; the stored rating column is only the seeded
+  // fallback shown until the first rating arrives.
+  const stars = (row.course_ratings || []).map((r) => r.stars);
+  const avgRating = stars.length
+    ? Math.round((stars.reduce((sum, s) => sum + s, 0) / stars.length) * 10) / 10
+    : row.rating != null
+      ? Number(row.rating)
+      : 0;
   return {
     id: row.course_id,
     title: row.title,
@@ -45,7 +56,9 @@ function toFrontendCourse(row) {
     level: row.level || "Beginner",
     duration: row.duration || "",
     students: row.course_enrollments?.[0]?.count ?? 0,
-    rating: row.rating != null ? Number(row.rating) : 0,
+    rating: avgRating,
+    ratingCount: stars.length,
+    aiAgentUrl: row.ai_agent_url || "",
     paths: row.paths?.length ? row.paths : ["basic"],
     interactivePrice: row.interactive_price != null ? Number(row.interactive_price) : undefined,
     description: row.description || "",
@@ -68,6 +81,7 @@ function toCourseRow(payload) {
     spine_color: payload.spineColor || null,
     paths: Array.isArray(payload.paths) && payload.paths.length ? payload.paths : ["basic"],
     interactive_price: payload.interactivePrice ?? null,
+    ai_agent_url: payload.aiAgentUrl || null,
     tags: Array.isArray(payload.tags) ? payload.tags : [],
     instructor_id: payload.instructorId || null,
   };
@@ -81,6 +95,8 @@ function toLessonRows(courseId, lessons) {
     duration: l.duration || null,
     lesson_type: l.type || "video",
     body: l.body || null,
+    steps_body: l.stepsBody || null,
+    interactive_body: l.interactiveBody || null,
     points: Array.isArray(l.points) ? l.points : [],
   }));
 }
@@ -378,20 +394,73 @@ export async function unlockCoursePath(req, res, next) {
   }
 }
 
+// A student may rate a course only after enrolling; one rating per course,
+// re-rating overwrites the previous stars.
+export async function rateCourse(req, res, next) {
+  try {
+    const courseId = Number(req.params.id);
+    const stars = Number(req.body?.stars);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return res.status(400).json({ error: "stars must be an integer from 1 to 5" });
+    }
+
+    const { data: enrollment, error: findError } = await supabaseAdmin
+      .from("course_enrollments")
+      .select("enrollment_id")
+      .eq("course_id", courseId)
+      .eq("user_id", req.user.user_id)
+      .maybeSingle();
+    if (findError) throw findError;
+    if (!enrollment) {
+      return res.status(403).json({ error: "Enroll in the course before rating it" });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("course_ratings")
+      .upsert(
+        {
+          course_id: courseId,
+          user_id: req.user.user_id,
+          stars,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "course_id,user_id" }
+      );
+    if (error) throw error;
+
+    // Return the fresh average so the UI can update without a refetch.
+    const { data: allStars, error: avgError } = await supabaseAdmin
+      .from("course_ratings")
+      .select("stars")
+      .eq("course_id", courseId);
+    if (avgError) throw avgError;
+    const rating =
+      Math.round((allStars.reduce((sum, r) => sum + r.stars, 0) / allStars.length) * 10) / 10;
+
+    res.status(201).json({ data: { courseId, stars, rating, ratingCount: allStars.length } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Everything learning-related about the current user in one call, so the
 // frontend hooks can hydrate on page load.
 export async function getMyLearning(req, res, next) {
   try {
-    const [enrollments, unlocks] = await Promise.all([
+    const [enrollments, unlocks, ratings] = await Promise.all([
       supabaseAdmin.from("course_enrollments").select("course_id").eq("user_id", req.user.user_id),
       supabaseAdmin.from("course_unlocks").select("course_id").eq("user_id", req.user.user_id),
+      supabaseAdmin.from("course_ratings").select("course_id, stars").eq("user_id", req.user.user_id),
     ]);
     if (enrollments.error) throw enrollments.error;
     if (unlocks.error) throw unlocks.error;
+    if (ratings.error) throw ratings.error;
     res.json({
       data: {
         enrolledCourseIds: enrollments.data.map((r) => r.course_id),
         unlockedCourseIds: unlocks.data.map((r) => r.course_id),
+        // { [courseId]: stars } — the student's own ratings.
+        myRatings: Object.fromEntries(ratings.data.map((r) => [r.course_id, r.stars])),
       },
     });
   } catch (err) {

@@ -11,6 +11,7 @@ import {
   setLecturerStatus,
   enrollInCourse,
   unlockCoursePath,
+  rateCourse,
   getMyLearning,
   listCourseStudents,
   getLearningOverview,
@@ -41,6 +42,7 @@ router.get("/overview", requireAuth, requireRole("admin", "staff"), getLearningO
 // Learner actions.
 router.post("/courses/:id/enroll", requireAuth, enrollInCourse);
 router.post("/courses/:id/unlock", requireAuth, unlockCoursePath);
+router.post("/courses/:id/rate", requireAuth, rateCourse);
 router.get("/me", requireAuth, getMyLearning);
 
 export default router;

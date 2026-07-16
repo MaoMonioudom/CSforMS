@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourse } from "../../hooks/learning/useCourses";
-import { getToken } from "../../lib/api/client";
-import { learningApi } from "../../lib/api/learning";
+import { useEnrollment } from "../../hooks/learning/useEnrollment";
 import LessonPageView from "../../components/learning/ui/BookReader/LessonPageView";
 import NotFound from "../NotFound";
 
@@ -12,15 +11,15 @@ export default function LessonDetail() {
   const { id, lessonId } = useParams();
   const navigate = useNavigate();
   const { course, loading } = useCourse(id);
+  const { enrolled, loaded } = useEnrollment(id);
 
-  // Opening a lesson while signed in counts as studying the course — record
-  // the enrollment so admin sees real student numbers. Idempotent upsert
-  // server-side, so firing on every visit is fine.
+  // Lessons are for enrolled students only — anyone else (guest or not yet
+  // enrolled) is sent to the course page, where the enroll prompt appears.
   useEffect(() => {
-    if (id && getToken()) learningApi.enroll(id).catch(() => {});
-  }, [id]);
+    if (loaded && !enrolled) navigate(`/learning/course/${id}`, { replace: true });
+  }, [loaded, enrolled, id, navigate]);
 
-  if (loading) {
+  if (loading || !loaded || !enrolled) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-navy-deep font-body">
         <p className="text-sm text-navy-muted">Opening the book…</p>
