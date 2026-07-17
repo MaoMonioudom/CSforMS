@@ -7,7 +7,7 @@ import BarChart from '../../../components/inventory/ui/BarChart'
 import Badge from '../../../components/inventory/ui/Badge'
 import DateRangeFilter, { inRange } from '../../../components/inventory/ui/DateRangeFilter'
 import { T } from '../../../lib/inventory/theme'
-import { CATEGORIES } from '../../../lib/inventory/data'
+import { CATEGORIES, isLowStock, isOutOfStock } from '../../../lib/inventory/data'
 import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -21,7 +21,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
   const maint      = items.filter(i => i.status === 'maintenance').length
   const members    = users.filter(u => u.role === 'user' && u.membership === 'active').length
   const pending    = requests.filter(r => r.status === 'pending').length
-  const lowStock   = items.filter(i => i.stock <= i.minStock)
+  const lowStock   = items.filter(i => isLowStock(i.stock))
 
   const rangedBorrows = borrows.filter(b => inRange(b.date, range))
 
@@ -105,7 +105,8 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                     <p className="m-0 mt-0.5 truncate text-[11px] text-faint">{cat?.label}</p>
                   </div>
                   <span className="hidden text-xs text-inv-muted sm:block">{hasRangedActivity ? (rangedCounts[item.id] || 0) : (item.borrowCount || 0)} borrows</span>
-                  <Badge status={item.status} small />
+                  {/* "available" with zero stock is a lie — surface it as out of stock */}
+                  <Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small />
                   <ChevronDown size={14} className={`flex-shrink-0 text-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <div className={`grid overflow-hidden transition-all duration-200 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>

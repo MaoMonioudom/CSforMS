@@ -176,11 +176,14 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               <Package size={11} style={{ color: "#67e8f9" }} />
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: "#67e8f9" }}>CADT · Makerspace Inventory</span>
             </div>
-            <h1 className="mv-hero-display" style={{ fontSize: "clamp(38px,4.8vw,64px)", lineHeight: 1.08, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 24, color: "#fff" }}>
-              Build Something,<br />
-              <span style={{ color: "#67e8f9" }}>Built by Inventory</span><br />
-              in CADT Makerspace
-            </h1>
+            <div style={{ width: "fit-content", marginBottom: 24 }}>
+              <h1 className="mv-hero-display" style={{ fontSize: "clamp(28px,3.6vw,48px)", lineHeight: 1.12, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "#fff" }}>
+                Build<br />Something <span style={{ color: "#67e8f9" }}>Great</span>
+              </h1>
+              <p className="mv-hero-display" style={{ margin: "10px 0 0", fontSize: "clamp(12px,1.35vw,17px)", fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: "0.02em" }}>
+                Powered by CADT<br />Makerspace Inventory
+              </p>
+            </div>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: "rgba(255,255,255,0.5)", maxWidth: 460, marginBottom: 36 }}>
               Browse tools, borrow equipment, and purchase materials — searchable by zone, shelf, category, and room. Built for the CADT community.
             </p>

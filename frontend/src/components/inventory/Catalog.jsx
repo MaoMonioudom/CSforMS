@@ -3,7 +3,7 @@ import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, Us
 import Badge from './ui/Badge'
 import PageBreadcrumb from './layout/PageBreadcrumb'
 import { T } from '../../lib/inventory/theme'
-import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE } from '../../lib/inventory/data'
+import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE, isLowStock, isOutOfStock } from '../../lib/inventory/data'
 import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const LOAN_DAYS = 7 // standard borrow period — shown to the student before they confirm
@@ -77,7 +77,7 @@ function CategoryTiles({ items, filterCat, setFilterCat }) {
 // ── Item Card — larger, modern card with image, name, category, stock, location ──
 export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMode, staffStudent, onStaffAdd }) {
   const cat   = CATEGORIES.find(c => c.id === item.category)
-  const isLow = item.stock <= item.minStock && item.stock > 0
+  const isLow = isLowStock(item.stock)
 
   return (
     <div onClick={() => onView(item)}
@@ -86,11 +86,11 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,23,42,0.10)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'}>
 
-      {/* Image — taller in staff mode, where cards are fixed at 2-per-row
-          and have the extra width to spare. */}
-      <div className={`relative flex-shrink-0 ${staffMode ? 'h-48 sm:h-56 lg:h-64' : 'h-36 sm:h-44 lg:h-48'}`}>
-        <ItemImage item={item} cat={cat} size={staffMode ? 64 : 52} className="h-full w-full" />
-        <div className="absolute left-3 top-3"><Badge status={item.status} small /></div>
+      {/* Image — slightly shorter in staff mode, where 3 cards share the row
+          with the sale panel alongside, so compact reads cleaner. */}
+      <div className={`relative flex-shrink-0 ${staffMode ? 'h-32 sm:h-36 lg:h-40' : 'h-36 sm:h-44 lg:h-48'}`}>
+        <ItemImage item={item} cat={cat} size={48} className="h-full w-full" />
+        <div className="absolute left-3 top-3"><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
         <div className="absolute right-3 top-3 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
           style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
           {item.type === 'Returnable' ? 'Returnable' : 'Consumable'}
@@ -104,18 +104,18 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       </div>
 
       {/* Body */}
-      <div className={`flex flex-1 flex-col gap-2 ${staffMode ? 'p-5 sm:p-6' : 'p-4 sm:p-5'}`}>
+      <div className="flex flex-1 flex-col gap-2 p-4">
         {cat && (
-          <span className={`inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 font-semibold ${staffMode ? 'text-[12px]' : 'text-[11px]'}`}
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold"
             style={{ background: '#f1f5f9', color: '#64748b' }}>
-            <cat.Icon size={staffMode ? 12 : 11} color={cat.iconColor} />
+            <cat.Icon size={11} color={cat.iconColor} />
             {cat.label}
           </span>
         )}
 
-        <h3 className={`m-0 truncate font-bold leading-snug ${staffMode ? 'text-[18px] sm:text-[19px]' : 'text-[16px] sm:text-[17px]'}`} style={{ color: '#0f172a' }}>{item.name}</h3>
+        <h3 className="m-0 truncate text-[15px] font-bold leading-snug sm:text-[16px]" style={{ color: '#0f172a' }}>{item.name}</h3>
 
-        <div className={`flex items-center justify-between ${staffMode ? 'text-[13px]' : 'text-[12px]'}`}>
+        <div className="flex items-center justify-between text-[12px]">
           <span className="flex items-center gap-1 truncate font-medium" style={{ color: '#64748b' }}>
             <MapPin size={staffMode ? 12 : 11} style={{ flexShrink: 0, color: '#94a3b8' }} /> {item.room}{item.zone ? ` · Zone ${item.zone}` : ''}
           </span>
@@ -199,6 +199,14 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   const [dollarAmount, setDollarAmount] = useState('')
   const [showTopUp, setShowTopUp] = useState(false)
   const [payMethod, setPayMethod] = useState('Cash')
+  const [checkingOut, setCheckingOut] = useState(false)
+  // The context-level guard already blocks a second submit from firing a
+  // second transaction — this just reflects that back in the button so
+  // staff can see the click registered instead of mashing it again.
+  const handleCheckout = async () => {
+    setCheckingOut(true)
+    try { await onCheckout() } finally { setCheckingOut(false) }
+  }
 
   const results = query.trim()
     ? users.filter(u => u.role === 'user' && (
@@ -333,41 +341,86 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
             </div>
           )}
 
-          {/* Order summary */}
-          <div className="flex flex-col gap-2 border-t border-stone pt-3">
-            <p className="m-0 text-[11px] font-bold uppercase tracking-wide text-faint">Current Order</p>
-            {staffOrder.length === 0 ? (
-              <p className="m-0 text-xs text-faint">Add items from the catalog to sell or lend.</p>
-            ) : staffOrder.map(o => (
-              <div key={o.item.id} className="flex items-center gap-2">
-                <span className="flex-1 truncate text-xs text-ink">{o.item.name}</span>
-                <span className="flex-shrink-0 text-[11px] text-faint">{o.item.type === 'Returnable' ? 'Borrow' : `${o.item.credits * o.qty} cr`}</span>
-                {o.item.type === 'Consumable' && (
+          {/* Order summary — same sectioned card list as the student cart:
+              BORROW / PURCHASE groups, thumbnails, qty steppers, totals. */}
+          {(() => {
+            const borrowLines = staffOrder.filter(o => o.item.type === 'Returnable')
+            const buyLines    = staffOrder.filter(o => o.item.type === 'Consumable')
+            const borrowCr    = borrowLines.reduce((s, o) => s + o.item.credits * o.qty, 0)
+            const setQty      = (id, d) => setStaffOrder(prev => prev.map(x => x.item.id === id ? { ...x, qty: Math.max(1, x.qty + d) } : x))
+            const removeLine  = (id) => setStaffOrder(prev => prev.filter(x => x.item.id !== id))
+
+            const OrderLine = ({ o }) => {
+              const cat = CATEGORIES.find(c => c.id === o.item.category)
+              return (
+                <div className="flex items-center gap-2.5 border-b border-stone py-2.5 last:border-b-0">
+                  <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
+                    <ItemImage item={o.item} cat={cat} size={20} className="h-full w-full" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="m-0 truncate text-[13px] font-semibold text-charcoal">{o.item.name}</p>
+                    <p className="m-0 mt-0.5 text-[11px] text-faint">{o.item.credits} credit{o.item.credits === 1 ? '' : 's'}</p>
+                    {o.item.type === 'Returnable' && o.dueDate && (
+                      <p className="m-0 mt-0.5 text-[11px] font-semibold" style={{ color: T.blue }}>Return by {o.dueDate}</p>
+                    )}
+                  </div>
+                  <button onClick={() => setQty(o.item.id, -1)}
+                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white"><Minus size={10} /></button>
+                  <span className="w-4 flex-shrink-0 text-center text-xs font-bold">{o.qty}</span>
+                  <button onClick={() => setQty(o.item.id, 1)}
+                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white"><Plus size={10} /></button>
+                  <button onClick={() => removeLine(o.item.id)} className="flex-shrink-0 border-none bg-transparent text-faint"><X size={13} /></button>
+                </div>
+              )
+            }
+
+            return (
+              <div className="flex flex-col gap-3 border-t border-stone pt-3">
+                {staffOrder.length === 0 ? (
+                  <p className="m-0 text-xs text-faint">Add items from the catalog to sell or lend.</p>
+                ) : (
                   <>
-                    <button onClick={() => setStaffOrder(prev => prev.map(x => x.item.id === o.item.id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))}
-                      className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border border-border bg-white"><Minus size={9} /></button>
-                    <span className="w-3 flex-shrink-0 text-center text-[11px]">{o.qty}</span>
-                    <button onClick={() => setStaffOrder(prev => prev.map(x => x.item.id === o.item.id ? { ...x, qty: x.qty + 1 } : x))}
-                      className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border border-border bg-white"><Plus size={9} /></button>
+                    {borrowLines.length > 0 && (
+                      <div>
+                        <p className="m-0 mb-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: T.blue }}>
+                          <RotateCcw size={11} /> Borrow — Returnable
+                        </p>
+                        {borrowLines.map(o => <OrderLine key={o.item.id} o={o} />)}
+                      </div>
+                    )}
+                    {buyLines.length > 0 && (
+                      <div>
+                        <p className="m-0 mb-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: T.amber }}>
+                          <ShoppingBag size={11} /> Purchase — Consumable
+                        </p>
+                        {buyLines.map(o => <OrderLine key={o.item.id} o={o} />)}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-1.5 rounded-lg p-3" style={{ background: T.cream }}>
+                      {borrowLines.length > 0 && (
+                        <div className="flex items-center justify-between text-[13px]">
+                          <span className="text-inv-muted">Borrow (credit cost on approval)</span>
+                          <span className="font-bold" style={{ color: T.teal }}>{borrowCr} cr</span>
+                        </div>
+                      )}
+                      {buyLines.length > 0 && (
+                        <div className="flex items-center justify-between text-[13px]">
+                          <span className="text-inv-muted">Purchase total</span>
+                          <span className="font-bold text-charcoal">{total} cr</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <button onClick={handleCheckout} disabled={checkingOut}
+                      className="flex items-center justify-center gap-2 rounded-xl border-none py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" style={{ background: T.charcoal }}>
+                      <CheckCircle2 size={15} /> {checkingOut ? 'Processing…' : 'Complete Sale'}
+                    </button>
                   </>
                 )}
-                <button onClick={() => setStaffOrder(prev => prev.filter(x => x.item.id !== o.item.id))} className="flex-shrink-0 border-none bg-transparent text-faint"><X size={12} /></button>
               </div>
-            ))}
-          </div>
-
-          {staffOrder.length > 0 && (
-            <>
-              <div className="flex items-center justify-between border-t border-stone pt-3">
-                <span className="text-sm text-inv-muted">Total</span>
-                <span className="text-lg font-bold text-charcoal">{total} cr</span>
-              </div>
-              <button onClick={onCheckout}
-                className="flex items-center justify-center gap-2 rounded-md border-none py-3 text-sm font-bold text-white" style={{ background: T.charcoal }}>
-                <CheckCircle2 size={15} /> Complete Sale
-              </button>
-            </>
-          )}
+            )
+          })()}
         </>
       )}
     </div>
@@ -426,13 +479,23 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   }
 
   // Staff: add an item to the in-person sale order for the selected student.
+  // Returnables go through the same borrow-confirm dialog as the student
+  // side (return date + purpose) before landing in the order.
   const addToStaffOrder = (item) => {
     if (!staffStudent) { showToast('Select a student first.', 'error'); return }
+    if (item.type === 'Returnable') { setConfirmBorrow(item); return }
     setStaffOrder(prev => {
       const ex = prev.find(o => o.item.id === item.id)
-      if (ex) return item.type === 'Consumable' ? prev.map(o => o.item.id === item.id ? { ...o, qty: o.qty + 1 } : o) : prev
+      if (ex) return prev.map(o => o.item.id === item.id ? { ...o, qty: o.qty + 1 } : o)
       return [...prev, { item, qty: 1 }]
     })
+  }
+
+  // Called by the confirm dialog in staff mode once date + purpose are set.
+  const addStaffBorrowConfirmed = (item, dueDate, purpose) => {
+    setStaffOrder(prev => prev.find(o => o.item.id === item.id)
+      ? prev.map(o => o.item.id === item.id ? { ...o, dueDate, purpose } : o)
+      : [...prev, { item, qty: 1, dueDate, purpose }])
   }
 
   // Staff: activate a student's membership in person — $20 charge, 200 bonus credits.
@@ -470,7 +533,11 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     try {
       await ctx.staffSale({
         studentId: staffStudent.id,
-        cart: staffOrder.map(o => ({ itemId: o.item.id, qty: o.qty, action: o.item.type === 'Consumable' ? 'purchase' : 'borrow' })),
+        cart: staffOrder.map(o => ({
+          itemId: o.item.id, qty: o.qty,
+          action: o.item.type === 'Consumable' ? 'purchase' : 'borrow',
+          dueDate: o.dueDate || null, note: o.purpose || null,
+        })),
       })
       showToast(`Order complete for ${staffStudent.name}.`)
       setStaffStudent(prev => buyTotal > 0 ? { ...prev, credits: prev.credits - buyTotal } : prev)
@@ -482,24 +549,28 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
-      {/* Header — dark teal gradient banner */}
-      <div style={{
-        position: 'relative', overflow: 'hidden',
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, #0c4a6e 0%, #0e7490 55%, #0891b2 100%)',
-        backgroundSize: '40px 40px, 40px 40px, cover',
-        borderBottom: '1px solid rgba(8,145,178,0.2)',
-      }}>
-        <div style={{ position: 'absolute', top: '50%', right: '10%', transform: 'translateY(-50%)', width: 320, height: 220, background: 'radial-gradient(circle, rgba(8,145,178,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div className="mx-auto max-w-[1280px] px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ position: 'relative', zIndex: 1 }}>
-          {user && !isStaff && <PageBreadcrumb current="/catalog" />}
-          <h1 style={{ margin: 0, fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
-            {isStaff ? 'Browse Items' : 'Browse Equipment'}
-          </h1>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)', maxWidth: 560 }}>
-            {isStaff ? 'Manage inventory, or select a student to sell consumables and lend tools at the counter.' : 'Find what you need — borrow tools or purchase consumables with credits.'}
-          </p>
+      {/* Header banner — student side only. On the admin side the shared
+          teal top bar (PAGE_META in InventoryAdminArea) is the one page
+          header, so rendering another banner here would duplicate it. */}
+      {!isStaff && (
+        <div style={{
+          position: 'relative', overflow: 'hidden',
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, #0c4a6e 0%, #0e7490 55%, #0891b2 100%)',
+          backgroundSize: '40px 40px, 40px 40px, cover',
+          borderBottom: '1px solid rgba(8,145,178,0.2)',
+        }}>
+          <div style={{ position: 'absolute', top: '50%', right: '10%', transform: 'translateY(-50%)', width: 320, height: 220, background: 'radial-gradient(circle, rgba(8,145,178,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div className="mx-auto max-w-[1280px] px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ position: 'relative', zIndex: 1 }}>
+            {user && <PageBreadcrumb current="/catalog" />}
+            <h1 style={{ margin: 0, fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+              Browse Equipment
+            </h1>
+            <p style={{ margin: '8px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)', maxWidth: 560 }}>
+              Find what you need — borrow tools or purchase consumables with credits.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
     <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
       {/* The admin sidebar is always visible (no collapse at tablet), so the
@@ -540,12 +611,8 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           <p className="m-0 mb-3 text-[13px] font-medium" style={{ color: '#94a3b8' }}>{filtered.length} items</p>
 
           {/* Fixed column counts so cards stay equal-sized even with 1–2 results */}
-          {/* Staff view stays at 2 columns even on wide screens — with the
-              380px sale panel already claiming space, 2 wider cards read
-              cleaner than 3 cramped ones. */}
-          <div className={isStaff
-            ? 'grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6'
-            : 'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6'}>
+          {/* 3 compact cards per row on desktop, 2 on tablet — both sides. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
             {visible.map(item => (
               <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
                 staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
@@ -741,7 +808,10 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 </button>
                 <button onClick={() => {
                     if (!borrowPurpose.trim()) { showToast('Please state the borrow purpose.', 'error'); return }
-                    addCart(confirmBorrow, borrowDueDate || fmt(defaultDue), borrowPurpose.trim())
+                    // Same dialog serves both sides: students add to their own
+                    // cart, staff add to the in-person order for the student.
+                    if (isStaff) addStaffBorrowConfirmed(confirmBorrow, borrowDueDate || fmt(defaultDue), borrowPurpose.trim())
+                    else addCart(confirmBorrow, borrowDueDate || fmt(defaultDue), borrowPurpose.trim())
                     setConfirmBorrow(null); setBorrowDueDate(''); setBorrowPurpose('')
                   }}
                   disabled={!borrowPurpose.trim()}

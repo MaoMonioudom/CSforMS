@@ -296,10 +296,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
         }
       `}</style>
 
-      <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Borrow Tracker</h1>
-        <p className="m-0 mt-0.5 text-sm text-faint">Track all active loans and returns — click any row for full transaction details.</p>
-      </div>
+      {/* Page title/subtitle live in the shared teal top bar (PAGE_META). */}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, margin: '18px 0 12px', flexWrap: 'wrap' }}>
         <div className="bt-chip-scroll" style={{ flex: '1 1 auto', minWidth: 0 }}>

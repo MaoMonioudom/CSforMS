@@ -18,6 +18,6 @@ export function fmtDateTime(ts) {
     hour: 'numeric', minute: '2-digit', hour12: true,
   }).formatToParts(d)
   const get = (t) => parts.find((p) => p.type === t)?.value
-  const date = `${get('month')}-${get('day')}-${get('year')}`
+  const date = `${get('day')} ${get('month')}, ${get('year')}`
   return dateOnly ? date : `${get('hour')}:${get('minute')} ${get('dayPeriod')}, ${date}`
 }

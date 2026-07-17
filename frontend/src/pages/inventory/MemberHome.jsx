@@ -42,13 +42,10 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   // (id, name, matching borrow/request records) still comes from Inventory's
   // local state, since borrow/purchase logic isn't wired to the real backend yet.
   const { user: hubUser } = useAuth()
-  const { submitTopUpRequest, submit3DPrintRequest } = useInventory()
+  const { submitTopUpRequest } = useInventory()
   const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
 
   const [activeCat, setActiveCat]   = useState('all')
-  const [printModal, setPrintModal] = useState(null)
-  const [filamentId, setFilamentId] = useState(filaments[0]?.id || '')
-  const [notes,      setNotes]      = useState('')
 
   const activeLoans = borrows.filter(b => b.userId === user.id && b.action !== 'purchased' && b.status === 'active').length
   const unread      = notifications.filter(n => !n.read && (n.forRoles?.includes('user') || n.userId === user.id)).length
@@ -91,20 +88,8 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   const catItems    = activeCat === 'all' ? items : items.filter(i => i.category === activeCat)
   const visibleItems = catItems.slice(0, 8)
 
-  // Document printing is walk-up only (staff charge it instantly at the front
-  // desk) — students can't queue a remote request for it, unlike 3D printing.
-  const openPrintModal = () => { setPrintModal('3d_printing'); setNotes(''); setFilamentId(filaments[0]?.id || '') }
-
-  const submitPrintRequest = async () => {
-    try {
-      if (!filamentId) { showToast('Choose a filament first.', 'error'); return }
-      await submit3DPrintRequest({ filamentId: Number(filamentId), note: notes })
-      showToast('3D print request sent — staff will weigh your print and confirm the cost.')
-      setPrintModal(null)
-    } catch (err) {
-      showToast(err.message || 'Could not send the request.', 'error')
-    }
-  }
+  // Both print services are walk-up only — staff run and charge them at the
+  // front desk, so there's no remote request flow for either.
 
   return (
     <div style={{ background: CREAM, minHeight: '100%' }}>
@@ -229,8 +214,8 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
               {/* Walk-up only — staff charge this instantly at the front desk,
                   so there's no remote request to submit. */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-semibold" style={{ background: THEME.cream, color: THEME.muted, justifyContent: 'center' }}>
-                <MapPin size={13} /> Available at the front desk — visit in person
+              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.blueLight, color: THEME.blue, border: `1px solid ${THEME.blue}33`, justifyContent: 'center' }}>
+                <MapPin size={13} /> Available at the front desk — visit in makerspace
               </div>
             </div>
           </div>
@@ -272,11 +257,11 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 </div>
               )}
 
-              <button onClick={() => openPrintModal('3d_printing')}
-                className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition-all hover:-translate-y-0.5"
-                style={{ background: THEME.purple, marginTop: 'auto' }}>
-                Request 3D Print <ArrowRight size={14} />
-              </button>
+              {/* Walk-up only, same as document printing — staff run and weigh
+                  the print at the counter, so no remote request either. */}
+              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.purpleLight, color: THEME.purple, border: `1px solid ${THEME.purple}33`, justifyContent: 'center' }}>
+                <MapPin size={13} /> Available at the front desk — visit in makerspace
+              </div>
             </div>
           </div>
         </div>
@@ -475,65 +460,6 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           </div>
         </div>
       </section>
-
-      {/* ── 3D PRINT REQUEST MODAL — document printing is walk-up only ── */}
-      {printModal && (() => {
-        const service = PRINT_SERVICES.find(s => s.id === '3d_printing')
-        return (
-          <div className="fixed inset-0 z-[900] flex items-center justify-center bg-charcoal/40 p-4" onClick={() => setPrintModal(null)}>
-            <div onClick={e => e.stopPropagation()} className="w-full max-w-[420px] rounded-2xl bg-white shadow-2xl">
-              {/* Modal header */}
-              <div className="flex items-center justify-between border-b p-5" style={{ borderColor: BORDER }}>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: service.color }}>
-                    <service.Icon size={18} color={service.iconColor} />
-                  </div>
-                  <div>
-                    <h2 className="m-0 text-sm font-bold text-charcoal">Request {service.label}</h2>
-                    <p className="m-0 text-xs text-inv-muted">{service.rate} credits / {service.unit}</p>
-                  </div>
-                </div>
-                <button onClick={() => setPrintModal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg border-none bg-cream text-inv-muted">
-                  <X size={15} />
-                </button>
-              </div>
-
-              {/* Modal body */}
-              <div className="p-5">
-                <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Choose filament</label>
-                <select value={filamentId} onChange={e => setFilamentId(e.target.value)}
-                  className="mb-3 w-full rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none">
-                  {filaments.length === 0 && <option value="">No filament configured yet</option>}
-                  {filaments.map(f => (
-                    <option key={f.id} value={f.id}>{f.name} — {f.color} ({f.stockGrams}g in stock)</option>
-                  ))}
-                </select>
-                <label className="mb-1.5 block text-xs font-semibold text-inv-muted">Notes for staff (optional)</label>
-                <textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)}
-                  placeholder="What are you printing? Any special instructions?"
-                  className="mb-3 w-full resize-none rounded-xl border border-border bg-cream px-3 py-2.5 text-sm outline-none" />
-                <div className="mb-4 flex items-center justify-between rounded-xl p-3" style={{ background: THEME.purpleLight }}>
-                  <span className="text-xs text-inv-muted">Charged after weighing</span>
-                  <span className="text-sm font-bold" style={{ color: THEME.purple }}>4 cr / gram</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <button onClick={() => setPrintModal(null)}
-                    className="flex-1 rounded-xl border py-2.5 text-sm font-semibold text-inv-muted transition-colors hover:bg-cream"
-                    style={{ borderColor: BORDER }}>
-                    Cancel
-                  </button>
-                  <button onClick={submitPrintRequest}
-                    className="flex-1 rounded-xl border-none py-2.5 text-sm font-bold text-white"
-                    style={{ background: THEME.purple }}>
-                    Submit Request
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {creditOpen && (
         <CreditInfoModal user={user} onClose={() => setCreditOpen(false)} onRequestTopUp={requestTopUp} />

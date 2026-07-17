@@ -76,6 +76,15 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     tryAction(() => ctx.approveBorrowGroup(group.map(r => r.id)),
       group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
 
+  // Purchases charge the student at approval time — this is where credits
+  // are actually deducted and stock reduced, so precheck the balance.
+  const approvePurchase = (e) => {
+    const student = getUser(e.first.userId)
+    const total = e.group.reduce((s, r) => s + ((items.find(i => i.id === r.itemId)?.credits ?? 0) * (r.qty || 1)), 0)
+    if (student && student.credits < total) { showToast('Student has insufficient credits for this purchase.', 'error'); return }
+    return tryAction(() => ctx.approvePurchaseGroup(e.group.map(r => r.id)), `Approved purchase — ${total} cr deducted`)
+  }
+
   const denyGroup = (group) =>
     tryAction(() => ctx.denyRequests(group.map(r => r.id)), 'Declined request')
 
@@ -118,19 +127,19 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     return { icon: <Package2 size={14} color={T.blue} />, title: req.itemName, category: getCategory(req.itemId) }
   }
 
-  // Group every borrow request sharing an orderId into one transaction entry
-  // (pending AND handled, so the same grouping applies everywhere); credit
-  // top-up / printing / 3D print requests stay as individual entries.
+  // Group every borrow/purchase request sharing an orderId into one
+  // transaction entry (pending AND handled, so the same grouping applies
+  // everywhere); credit top-up / print requests stay as individual entries.
   const entries = useMemo(() => {
     const groups = []
     const index = new Map()
     const others = []
     requests.forEach(req => {
-      if (req.type === 'borrow') {
-        const key = req.orderId || `single-${req.id}`
+      if (req.type === 'borrow' || req.type === 'purchase') {
+        const key = `${req.type}-${req.orderId || `single-${req.id}`}`
         if (index.has(key)) { groups[index.get(key)].group.push(req); return }
         index.set(key, groups.length)
-        groups.push({ kind: 'borrow', key, group: [req], date: req.date })
+        groups.push({ kind: req.type, key, group: [req], date: req.date })
       } else {
         others.push({ kind: 'other', key: `req-${req.id}`, req, date: req.date })
       }
@@ -141,16 +150,25 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const statusLabel = (raw) => raw === 'approved' ? 'Approved' : raw === 'denied' ? 'Declined' : 'Pending'
 
   const withMeta = entries.map(entry => {
+    const isGroup = entry.kind === 'borrow' || entry.kind === 'purchase'
     const isBorrow = entry.kind === 'borrow'
-    const first = isBorrow ? entry.group[0] : entry.req
+    const first = isGroup ? entry.group[0] : entry.req
     const student = getUser(first.userId)
     const status = statusLabel(first.status)
-    const itemsList = isBorrow
+    const itemsList = isGroup
       ? entry.group.map(r => ({ id: r.id, name: r.itemName, qty: r.qty || 1, category: getCategory(r.itemId) }))
       : [{ id: first.id, name: rowMeta(first).title, qty: first.qty || 1, category: rowMeta(first).category }]
     const totalQty = itemsList.reduce((s, it) => s + it.qty, 0)
-    return { ...entry, isBorrow, first, student, status, itemsList, totalQty }
+    return { ...entry, isGroup, isBorrow, first, student, status, itemsList, totalQty }
   })
+
+  // One place decides how each entry kind is approved/declined.
+  const approveEntry = (e) => {
+    if (e.kind === 'borrow') return approveGroup(e.group)
+    if (e.kind === 'purchase') return approvePurchase(e)
+    return approve(e.first)
+  }
+  const denyEntry = (e) => e.isGroup ? denyGroup(e.group) : deny(e.first)
 
   const filtered = withMeta.filter(e =>
     (statusFilter === 'All' || e.status === statusFilter) &&
@@ -204,10 +222,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         }
       `}</style>
 
-      <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Request Management</h1>
-        <p className="m-0 mt-0.5 text-sm text-faint">Review and approve student requests — borrow items, credit top-ups, and print jobs.</p>
-      </div>
+      {/* Page title/subtitle live in the shared teal top bar (PAGE_META). */}
 
       {/* toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, margin: '18px 0', flexWrap: 'wrap' }}>
@@ -291,8 +306,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                     <>
                       {e.status === 'Pending' && (
                         <>
-                          <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                          <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                          <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                          <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
                         </>
                       )}
                       <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
@@ -322,8 +337,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               <div className="req-actions">
                 {e.status === 'Pending' && !(!e.isBorrow && e.first.type === '3d_printing') && (
                   <>
-                    <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                    <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                    <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                    <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
                   </>
                 )}
                 <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
@@ -417,11 +432,11 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               {detail.status === 'Pending' && !(!detail.isBorrow && detail.first.type === '3d_printing') && (
                 <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
                   <button className="req-btn req-btn-approve" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
-                    onClick={() => { (detail.isBorrow ? approveGroup(detail.group) : approve(detail.first)); setDetail(null) }}>
+                    onClick={() => { (approveEntry(detail)); setDetail(null) }}>
                     <Check size={13} /> Approve
                   </button>
                   <button className="req-btn req-btn-decline" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
-                    onClick={() => { (detail.isBorrow ? denyGroup(detail.group) : deny(detail.first)); setDetail(null) }}>
+                    onClick={() => { (denyEntry(detail)); setDetail(null) }}>
                     <Ban size={13} /> Decline
                   </button>
                 </div>

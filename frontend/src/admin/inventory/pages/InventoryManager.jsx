@@ -1,16 +1,17 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Search, Plus, Edit2, Trash2, AlertTriangle, ChevronDown, Box, Wrench, X, User, Calendar, FileText, ImagePlus } from 'lucide-react'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
-import { CATEGORIES } from '../../../lib/inventory/data'
+import { CATEGORIES, isLowStock, isOutOfStock } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
-import { uploadItemImage } from '../../../lib/inventory/api'
+import { uploadItemImage, fetchOpenMaintenance } from '../../../lib/inventory/api'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 import ItemThumb from '../../../components/inventory/ui/ItemThumb'
 
 const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0, image: null }
 const FIL_BLANK = { name: 'PLA', color: '', hex: '#94A3B8', stockGrams: 0, rate: 4 }
 
-const ROOMS = ['Makerspace Room', 'Mechanic Room', 'Fabrication Lab', 'Digital Lab', 'Storage Room']
+const ROOMS = ['Makerspace Room', 'Mechanic Room']
 const STATUS_FILTERS = ['All', 'Available', 'Borrowed', 'Maintenance', 'Low Stock', 'Unavailable']
 const PAGE_SIZE = 10
 export default function InventoryManager({ items, user, filaments = [] }) {
@@ -23,10 +24,18 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   const [editing, setEditing] = useState(null)
   const [form,    setForm]    = useState(BLANK)
   const [delId,   setDelId]   = useState(null)
+  const [maintItem, setMaintItem] = useState(null) // item being reported broken
+  const [maintNotes, setMaintNotes] = useState('')
   const [expanded, setExpanded] = useState(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // Open maintenance issues, keyed by item id — refetched whenever an item's
+  // maintenance status changes (report/complete/expand) so the reported
+  // problem shows up on the item without a full page reload.
+  const [openIssues, setOpenIssues] = useState({})
+  useEffect(() => { fetchOpenMaintenance().then(setOpenIssues).catch(() => {}) }, [items])
 
   // ── Filament inventory (used for 3D print job pricing) ───────────────────────
   const [filModal,   setFilModal]   = useState(false)
@@ -47,7 +56,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   // "Low Stock" is derived (stock at/below minimum) rather than a stored status.
   const matchesStatus = (i) => {
     if (statusTab === 'All') return true
-    if (statusTab === 'Low Stock') return i.stock <= i.minStock
+    if (statusTab === 'Low Stock') return isLowStock(i.stock)
     return i.status === statusTab.toLowerCase()
   }
 
@@ -113,7 +122,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
         {visibleItems.length === 0 && <p style={{ color: T.faint, textAlign: 'center', padding: '2rem', margin: 0 }}>No items match this filter.</p>}
         {visibleItems.map(item => {
           const c    = CATEGORIES.find(c => c.id === item.category)
-          const isLow = item.stock <= item.minStock
+          const isLow = isLowStock(item.stock)
           const isOpen = expanded === item.id
           return (
             <div key={item.id} style={{ borderBottom: `1px solid ${T.stone}` }}>
@@ -137,7 +146,8 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 {isLow && <AlertTriangle size={12} color={T.amber} />}
                 <span style={{ fontWeight: 600, fontSize: 13, color: isLow ? T.amber : T.charcoal }}>{item.stock}</span>
               </div>
-              <div><Badge status={item.status} small /></div>
+              {/* "available" with zero stock is misleading — show Out of Stock */}
+              <div><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
                 {user.role !== 'user' && (
                   <>
@@ -145,10 +155,17 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                       style={{ padding: '5px 10px', background: T.cream, border: 'none', borderRadius: 7, color: T.muted, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
                       <Edit2 size={10} /> Edit
                     </button>
-                    <select value={item.status} onChange={e => ctx.saveItem({ ...item, status: e.target.value }).catch(err => ctx.showToast?.(err.message || 'Update failed.', 'error'))}
-                      style={{ padding: '5px 8px', background: T.cream, border: 'none', borderRadius: 7, color: T.muted, fontSize: 12, flexShrink: 0, maxWidth: 100 }}>
-                      <option>available</option><option>borrowed</option><option>maintenance</option><option>unavailable</option>
-                    </select>
+                    {item.status === 'maintenance' ? (
+                      <button onClick={() => ctx.completeMaintenance(item.id).catch(err => ctx.showToast?.(err.message || 'Update failed.', 'error'))}
+                        style={{ padding: '5px 10px', background: T.greenLight, border: 'none', borderRadius: 7, color: T.green, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
+                        <Wrench size={10} /> Mark Repaired
+                      </button>
+                    ) : (
+                      <button onClick={() => { setMaintItem(item); setMaintNotes('') }}
+                        style={{ padding: '5px 10px', background: T.amberLight, border: 'none', borderRadius: 7, color: T.amber, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
+                        <AlertTriangle size={10} /> Report Issue
+                      </button>
+                    )}
                     {(user.role === 'admin' || user.role === 'staff') && (
                       <button onClick={() => setDelId(item.id)} style={{ padding: '5px 8px', background: T.redLight, border: 'none', borderRadius: 7, color: T.red, cursor: 'pointer', flexShrink: 0 }}>
                         <Trash2 size={11} />
@@ -163,7 +180,9 @@ export default function InventoryManager({ items, user, filaments = [] }) {
               <div style={{ overflow: 'hidden' }}>
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4" style={{ padding: '0 16px 14px 56px' }}>
                   {[['Description', item.description], ['Zone', `${item.zone} · ${item.room}`], ['Condition', item.condition], ['Borrow Count', item.borrowCount ?? 0],
-                    ...(item.status === 'maintenance' && item.issue ? [['Reported Issue', item.issue]] : [])].map(([k, v]) => (
+                    ...(item.status === 'maintenance' && openIssues[item.id]
+                      ? [['Reported Issue', `${openIssues[item.id].notes || 'No notes provided'} — ${fmtDateTime(openIssues[item.id].reportedAt)}`]]
+                      : [])].map(([k, v]) => (
                     <div key={k} style={{ background: T.cream, borderRadius: 8, padding: '8px 10px' }}>
                       <p style={{ margin: 0, color: T.faint, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</p>
                       <p style={{ margin: '3px 0 0', color: T.charcoal, fontSize: 12, fontWeight: 600 }}>{String(v)}</p>
@@ -363,6 +382,32 @@ export default function InventoryManager({ items, user, filaments = [] }) {
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem', justifyContent: 'flex-end' }}>
               <button onClick={() => setModal(false)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
               <button onClick={save} style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Save Item</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Issue — flips the item to Maintenance and logs the problem
+          (the note staff see on this row until the item is marked repaired). */}
+      {maintItem && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: T.white, borderRadius: 16, padding: '2rem', width: 380 }}>
+            <AlertTriangle size={30} color={T.amber} style={{ marginBottom: 10 }} />
+            <p style={{ color: T.charcoal, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Report an issue</p>
+            <p style={{ color: T.muted, fontSize: 13, marginBottom: 14 }}>{maintItem.name} will be marked Maintenance until resolved.</p>
+            <textarea rows={3} value={maintNotes} onChange={e => setMaintNotes(e.target.value)}
+              placeholder="What's wrong with it?"
+              style={{ width: '100%', boxSizing: 'border-box', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', resize: 'none', marginBottom: 16 }} />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setMaintItem(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={async () => {
+                  try { await ctx.reportMaintenance(maintItem.id, { notes: maintNotes.trim() || null }) }
+                  catch (err) { ctx.showToast?.(err.message || 'Could not report the issue.', 'error') }
+                  setMaintItem(null)
+                }}
+                style={{ padding: '9px 20px', background: T.amber, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+                Report Issue
+              </button>
             </div>
           </div>
         </div>

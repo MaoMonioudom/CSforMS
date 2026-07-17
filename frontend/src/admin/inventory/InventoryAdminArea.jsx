@@ -15,15 +15,17 @@ import RequestsManager from './pages/RequestsManager'
 import Catalog from '../../components/inventory/Catalog'
 
 // Titles for the teal gradient header — same visual language as the student side.
+// This top bar is the ONLY page header — the pages themselves no longer
+// render their own duplicate title banners underneath it.
 const PAGE_META = {
-  '':          { title: 'Dashboard',      subtitle: 'Inventory overview & management' },
-  'catalog':   { title: 'Browse Items',   subtitle: 'Sell consumables and lend tools at the counter' },
-  'services':  { title: 'Lab Services',   subtitle: 'Fulfill walk-up print and 3D print jobs' },
-  'requests':  { title: 'Requests',       subtitle: 'Review and approve student requests' },
-  'borrows':   { title: 'Borrow Tracker', subtitle: 'Track all active loans and returns' },
-  'manage':    { title: 'Manage Stock',   subtitle: 'Manage items, stock, and availability' },
-  'payments':  { title: 'Payment List',   subtitle: 'Track credit top-ups and item purchases' },
-  'users':     { title: 'Users & Roles',  subtitle: 'Manage members and staff permissions' },
+  '':          { title: 'Dashboard',          subtitle: 'Inventory overview & management' },
+  'catalog':   { title: 'Browse Items',       subtitle: 'Manage inventory, or select a student to sell consumables and lend tools at the counter' },
+  'services':  { title: 'Lab Services',       subtitle: 'Fulfill walk-up print and 3D print jobs — find a student, charge credits directly' },
+  'requests':  { title: 'Request Management', subtitle: 'Review and approve student requests — borrow items, credit top-ups, and print jobs' },
+  'borrows':   { title: 'Borrow Tracker',     subtitle: 'Track all active borrowed and returns — click any row for full transaction details' },
+  'manage':    { title: 'Manage Stock',       subtitle: 'Manage items, stock, and availability' },
+  'payments':  { title: 'Payment List',       subtitle: 'Track credit top-ups and item purchases' },
+  'users':     { title: 'Users & Roles',      subtitle: 'Manage members and staff permissions' },
 }
 
 // Inventory admin pages, rendered inside the shared AdminLayout (sidebar shell).
