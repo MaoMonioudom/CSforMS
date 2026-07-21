@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SectionPage, PushPin } from "@/components/community/SectionPage";
 import { EventCard } from "@/components/community/EventCard";
-import { fetchEvents, getEventStatus, formatEventDateShort } from "@/lib/events-data";
+import { fetchEventsPage, getEventStatus, formatEventDateShort } from "@/lib/events-data";
 
-const VISIBLE = 6;
+const PAGE_SIZE = 12;
 
 function OngoingBanner({ event }) {
   return (
@@ -31,13 +31,13 @@ function OngoingBanner({ event }) {
   );
 }
 
-function MoreStack({ count, onClick }) {
+function MoreStack({ count, onClick, loading }) {
   return (
     <div
       className="relative cursor-pointer select-none pt-4"
       style={{ minHeight: 220 }}
-      onClick={onClick}
-      title={`Show ${count} more events`}
+      onClick={loading ? undefined : onClick}
+      title={loading ? "Loading…" : `Show ${count} more events`}
     >
       {/* Fanned ghost cards behind */}
       <div
@@ -64,10 +64,10 @@ function MoreStack({ count, onClick }) {
         className="relative z-10 paper border border-black/8 h-full flex flex-col items-center justify-center gap-3 py-12"
         style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.11)" }}
       >
-        <span className="text-5xl font-black text-events">+{count}</span>
-        <span className="text-sm font-bold text-foreground">more events</span>
+        <span className="text-5xl font-black text-events">{loading ? "…" : `+${count}`}</span>
+        <span className="text-sm font-bold text-foreground">{loading ? "loading" : "more events"}</span>
         <span className="text-xs text-muted-foreground mt-1 px-6 text-center leading-snug">
-          Click to unpin and see all
+          {loading ? "Fetching the next batch…" : "Click to unpin and see more"}
         </span>
       </div>
     </div>
@@ -75,17 +75,41 @@ function MoreStack({ count, onClick }) {
 }
 
 export default function EventsPage() {
-  const [expanded, setExpanded] = useState(false);
   const [events, setEvents] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchEvents().then(setEvents).finally(() => setLoading(false));
+    fetchEventsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ events, total }) => { setEvents(events); setTotal(total); })
+      .catch(() => setError("Couldn't load events — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
 
-  const visible = expanded ? events : events.slice(0, VISIBLE);
-  const hidden = events.length - VISIBLE;
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const nextPage = page + 1;
+      const { events: more, total: freshTotal } = await fetchEventsPage({ page: nextPage, limit: PAGE_SIZE });
+      setEvents((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setError("Couldn't load more events — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const hasMore = events.length < total;
   const ongoing = events.find(e => getEventStatus(e) === "ongoing");
+  // Events load soonest-first (see community.routes.js's orderBy), so as
+  // long as there aren't more than a page's worth of events happening in
+  // the next 7 days, this stays accurate even before every page is loaded.
   const thisWeek = events.filter(e => {
     const days = (new Date(e.date) - new Date()) / 86400000;
     return days >= 0 && days <= 7;
@@ -102,14 +126,18 @@ export default function EventsPage() {
       tapeColor="rgba(249,115,22,0.78)"
       banner={ongoing ? <OngoingBanner event={ongoing} /> : null}
       stats={[
-        { value: events.length, label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
-        { value: thisWeek,      label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
+        { value: total,    label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
+        { value: thisWeek, label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
       ]}
     >
       <div className="mb-8 flex items-end justify-between">
         <h2 className="text-2xl font-semibold tracking-tight">Upcoming</h2>
-        <p className="text-sm text-muted-foreground">{events.length} events</p>
+        <p className="text-sm text-muted-foreground">{total} events</p>
       </div>
+
+      {error && (
+        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading events…</p>
@@ -117,30 +145,19 @@ export default function EventsPage() {
         <p className="text-sm text-muted-foreground">No events yet — check back soon.</p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((event, i) => (
+          {events.map((event, i) => (
             <div
               key={event.id}
               className="animate-pin-in"
-              style={{ animationDelay: `${i * 70}ms` }}
+              style={{ animationDelay: `${(i % PAGE_SIZE) * 70}ms` }}
             >
               <EventCard event={event} index={i} />
             </div>
           ))}
 
-          {!expanded && hidden > 0 && (
-            <MoreStack count={hidden} onClick={() => setExpanded(true)} />
+          {hasMore && (
+            <MoreStack count={total - events.length} onClick={handleLoadMore} loading={loadingMore} />
           )}
-        </div>
-      )}
-
-      {expanded && (
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => setExpanded(false)}
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
-          >
-            Collapse
-          </button>
         </div>
       )}
     </SectionPage>

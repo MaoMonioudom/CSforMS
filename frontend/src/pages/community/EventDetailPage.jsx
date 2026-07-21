@@ -15,6 +15,7 @@ export default function EventDetailPage() {
   const location = useLocation();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const [registered, setRegistered] = useState(false);
   const [working, setWorking] = useState(false);
@@ -22,6 +23,7 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     setLoading(true);
+    setLoadFailed(false);
     Promise.all([
       fetchEventById(eventId),
       user ? fetchMyEventRegistrations() : Promise.resolve([]),
@@ -30,7 +32,10 @@ export default function EventDetailPage() {
         setEvent(ev);
         setRegistered(myIds.includes(Number(eventId)));
       })
-      .catch(() => setEvent(null))
+      .catch((err) => {
+        setEvent(null);
+        if (err.status !== 404) setLoadFailed(true);
+      })
       .finally(() => setLoading(false));
   }, [eventId, user]);
 
@@ -61,8 +66,10 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">Event not found</h1>
-        <p className="mt-2 text-muted-foreground">This event doesn't exist or has been removed.</p>
+        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this event" : "Event not found"}</h1>
+        <p className="mt-2 text-muted-foreground">
+          {loadFailed ? "Something went wrong loading this page — please try again." : "This event doesn't exist or has been removed."}
+        </p>
         <Link to="/community/eventspace" className="mt-6 inline-block text-events underline">
           Back to all events
         </Link>

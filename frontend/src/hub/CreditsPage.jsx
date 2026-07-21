@@ -43,13 +43,17 @@ function SectionLabel({ children }) {
 }
 
 export default function CreditsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
+  // Wait for AuthContext to finish confirming a stored token before
+  // deciding the user is logged out — otherwise a refresh bounces someone
+  // who's genuinely still logged in through /login and out to /inventory.
   useEffect(() => {
+    if (authLoading) return;
     if (!user) { navigate("/login"); return; }
     if (!user.isMember) navigate("/membership");
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   if (!user || !user.isMember) return null;
 

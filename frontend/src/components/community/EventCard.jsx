@@ -77,12 +77,12 @@ export function EventCard({ event, index = 0 }) {
         <div className="mt-1">
           <div className="flex justify-between text-xs text-muted-foreground mb-1 font-semibold">
             <span>{event.participants} joined</span>
-            <span>{event.capacity - event.participants} left</span>
+            <span>{Math.max(0, event.capacity - event.participants)} left</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-black/8 overflow-hidden">
             <div
               className="h-full rounded-full bg-events"
-              style={{ width: `${(event.participants / event.capacity) * 100}%` }}
+              style={{ width: `${event.capacity ? Math.min(100, (event.participants / event.capacity) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -97,7 +97,6 @@ export function EventCard({ event, index = 0 }) {
           </div>
           <Button
             size="sm"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             className="rounded-full bg-events text-events-foreground hover:bg-events/90 font-bold shadow-sm"
           >
             Register

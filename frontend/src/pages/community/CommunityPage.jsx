@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Pencil } from "lucide-react";
 import { SectionPage } from "@/components/community/SectionPage";
 import { CommunityPostCard } from "@/components/community/CommunityPostCard";
-import { fetchCommunityPosts, createCommunityPost, toggleLike } from "@/lib/community-data";
+import { fetchCommunityPostsPage, createCommunityPost, toggleLike } from "@/lib/community-data";
 import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
 import {
@@ -20,6 +20,7 @@ import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 const filters = ["All", "Technical", "Showcase", "Question", "Social", "Announcement"];
 const categories = filters.slice(1);
+const PAGE_SIZE = 12;
 
 function CreatePostDialog({ open, onOpenChange, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
@@ -129,17 +130,47 @@ export default function CommunityPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [communityPosts, setCommunityPosts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
 
   useEffect(() => {
-    fetchCommunityPosts().then(setCommunityPosts).finally(() => setLoading(false));
+    fetchCommunityPostsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ posts, total }) => { setCommunityPosts(posts); setTotal(total); })
+      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
+
+  // Resumes the compose dialog after a login redirect (see
+  // handleComposeClick) instead of just dropping the user back on the feed
+  // with no memory of what they clicked.
+  useEffect(() => {
+    if (user && location.state?.reopen === "compose") setOpen(true);
+  }, [user, location.state]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const nextPage = page + 1;
+      const { posts: more, total: freshTotal } = await fetchCommunityPostsPage({ page: nextPage, limit: PAGE_SIZE });
+      setCommunityPosts((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setError("Couldn't load more posts — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleComposeClick = () => {
     if (!user) {
-      navigate("/login", { state: { from: location.pathname } });
+      navigate("/login", { state: { from: location.pathname, reopen: "compose" } });
       return;
     }
     setOpen(true);
@@ -166,9 +197,21 @@ export default function CommunityPage() {
     }
   };
 
+  const hasMore = communityPosts.length < total;
+  // Filtering only looks at posts already loaded — if a rare category has
+  // matches sitting on a later page, "Load more" first, same as the
+  // unfiltered feed.
   const visiblePosts = activeFilter === "All"
     ? communityPosts
     : communityPosts.filter(p => p.category === activeFilter);
+
+  // There's no per-user activity tracking in the DB, so "active users
+  // today" isn't something we can honestly compute — this counts real
+  // posts made today instead, off what's loaded (newest-first) so far.
+  const postsToday = communityPosts.filter(p => {
+    const days = (Date.now() - new Date(p.postedAt).getTime()) / 86400000;
+    return days >= 0 && days < 1;
+  }).length;
 
   return (
     <SectionPage
@@ -180,8 +223,8 @@ export default function CommunityPage() {
       ghostLetter="Co"
       tapeColor="rgba(167,139,250,0.72)"
       stats={[
-        { value: communityPosts.length, label: "Discussions",  rotate: 1.5,  pinColor: "#7c3aed" },
-        { value: 12,                    label: "Active today", rotate: -2,   pinColor: "#ec4899", plus: false },
+        { value: total,      label: "Discussions", rotate: 1.5,  pinColor: "#7c3aed" },
+        { value: postsToday, label: "Posts today", rotate: -2,   pinColor: "#ec4899", plus: false },
       ]}
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
@@ -219,17 +262,33 @@ export default function CommunityPage() {
               </button>
             ))}
           </div>
+          {error && (
+            <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          )}
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading posts…</p>
           ) : visiblePosts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {communityPosts.length === 0 ? "No posts yet — be the first to share something." : "No posts match this filter."}
+              {communityPosts.length === 0
+                ? "No posts yet — be the first to share something."
+                : hasMore ? "No posts match this filter yet — try loading more." : "No posts match this filter."}
             </p>
           ) : (
             <div className="space-y-5">
               {visiblePosts.map((post, i) => (
                 <CommunityPostCard key={post.id} post={post} index={i} onToggleLike={handleToggleLike} />
               ))}
+            </div>
+          )}
+          {!loading && hasMore && (
+            <div className="mt-6 text-center">
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading…" : "Load more"}
+              </Button>
             </div>
           )}
         </div>
@@ -262,7 +321,7 @@ export default function CommunityPage() {
       <CreatePostDialog
         open={open}
         onOpenChange={setOpen}
-        onCreated={(post) => setCommunityPosts((prev) => [post, ...prev])}
+        onCreated={(post) => { setCommunityPosts((prev) => [post, ...prev]); setTotal((t) => t + 1); }}
       />
     </SectionPage>
   );

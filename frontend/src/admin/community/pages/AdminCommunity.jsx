@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Eye, Trash2 } from "lucide-react";
-import { fetchCommunityPosts, deleteCommunityPost } from "@/lib/community-data";
+import { fetchCommunityPostsPage, deleteCommunityPost } from "@/lib/community-data";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
@@ -36,20 +36,45 @@ const categoryColors = {
   Announcement: "bg-red-50 text-red-600",
 };
 
+const PAGE_SIZE = 24;
+
 export default function AdminCommunity() {
   const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchCommunityPosts().then(setList).finally(() => setLoading(false));
+    fetchCommunityPostsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ posts, total }) => { setList(posts); setTotal(total); })
+      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const nextPage = page + 1;
+      const { posts: more, total: freshTotal } = await fetchCommunityPostsPage({ page: nextPage, limit: PAGE_SIZE });
+      setList((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setError("Couldn't load more posts — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const confirmDelete = async () => {
     try {
       await deleteCommunityPost(deleteTarget.id);
       setList(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setTotal(t => t - 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -62,7 +87,7 @@ export default function AdminCommunity() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Community</h1>
-          <p className="mt-1 text-sm text-gray-500">{list.length} posts</p>
+          <p className="mt-1 text-sm text-gray-500">{total} posts</p>
         </div>
       </div>
 
@@ -139,6 +164,18 @@ export default function AdminCommunity() {
         </div>
         )}
       </div>
+
+      {!loading && list.length < total && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-2 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

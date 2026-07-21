@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell, ImagePlus } from "lucide-react";
 import {
-  fetchEvents, createEvent, updateEvent, deleteEvent, formatEventDateShort,
+  fetchEventsPage, createEvent, updateEvent, deleteEvent, formatEventDateShort,
   fetchEventRegistrants, sendEventReminder, removeEventRegistrant, uploadEventImage,
 } from "@/lib/events-data";
 import {
@@ -18,6 +18,8 @@ const EMPTY_FORM = {
   title: "", location: "", date: "", endDate: "",
   capacity: "", image: "", description: "",
 };
+
+const PAGE_SIZE = 24;
 
 // datetime-local <-> ISO helpers.
 function toLocalInput(iso) {
@@ -65,7 +67,10 @@ function RegistrantsDialog({ event, onOpenChange }) {
     if (!event) return;
     setLoading(true);
     setStatus("");
-    fetchEventRegistrants(event.id).then(setRegistrants).finally(() => setLoading(false));
+    fetchEventRegistrants(event.id)
+      .then(setRegistrants)
+      .catch(() => setStatus("Couldn't load registrants — please try again."))
+      .finally(() => setLoading(false));
   }, [event]);
 
   const handleRemind = async () => {
@@ -167,20 +172,43 @@ function EventCard({ event, onEdit, onDelete, onViewRegistrants }) {
 
 export default function AdminEvents() {
   const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [registrantsTarget, setRegistrantsTarget] = useState(null);
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchEvents().then(setList).finally(() => setLoading(false));
+    fetchEventsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ events, total }) => { setList(events); setTotal(total); })
+      .catch(() => setListError("Couldn't load events — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setListError("");
+    try {
+      const nextPage = page + 1;
+      const { events: more, total: freshTotal } = await fetchEventsPage({ page: nextPage, limit: PAGE_SIZE });
+      setList((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setListError("Couldn't load more events — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -244,6 +272,7 @@ export default function AdminEvents() {
       } else {
         const created = await createEvent(payload);
         setList(prev => [created, ...prev]);
+        setTotal(t => t + 1);
       }
       setFormOpen(false);
     } catch (err) {
@@ -257,6 +286,7 @@ export default function AdminEvents() {
     try {
       await deleteEvent(deleteTarget.id);
       setList(prev => prev.filter(ev => ev.id !== deleteTarget.id));
+      setTotal(t => t - 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -269,13 +299,17 @@ export default function AdminEvents() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-          <p className="mt-1 text-sm text-gray-500">{list.length} total events</p>
+          <p className="mt-1 text-sm text-gray-500">{total} total events</p>
         </div>
         <button onClick={openAdd}
           className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
           <Plus className="h-4 w-4" /> Add Event
         </button>
       </div>
+
+      {listError && (
+        <div className="mb-4 rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{listError}</div>
+      )}
 
       {loading ? (
         <p className="text-sm text-gray-400">Loading events…</p>
@@ -286,6 +320,18 @@ export default function AdminEvents() {
           {list.map(ev => (
             <EventCard key={ev.id} event={ev} onEdit={openEdit} onDelete={setDeleteTarget} onViewRegistrants={setRegistrantsTarget} />
           ))}
+        </div>
+      )}
+
+      {!loading && list.length < total && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-2 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
         </div>
       )}
 

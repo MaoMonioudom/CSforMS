@@ -42,7 +42,7 @@ router.post("/events/upload-image", requireAuth, requireRole("admin", "staff"), 
 });
 // Events are admin/staff-owned — everyone else (including logged-in
 // students) gets read-only access; writes require the admin panel.
-router.use("/events", createCrudRouter("events", { pkColumn: "event_id", ownerField: "created_by", writeRoles: ["admin", "staff"] }));
+router.use("/events", createCrudRouter("events", { pkColumn: "event_id", ownerField: "created_by", writeRoles: ["admin", "staff"], orderBy: { column: "start_date", ascending: true } }));
 // Collaboration posts have real child tables for roles/skills
 // (collaboration_roles, collaboration_skills+tags) that crudRouter can't
 // read, write, or clean up on delete — list/detail/create/delete get

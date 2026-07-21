@@ -1,172 +1,43 @@
-import { useState } from "react";
-import { Eye, UserX, UserCheck, Trash2, Plus, Coins } from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
-} from "@/components/community/ui/dialog";
-import { useAuth } from "../../../hub/AuthContext";
-import { UserActivityChart } from "../../components/UserActivityChart";
-
-const initialUsers = [
-  { id: "u1",  name: "Moni Ratha",    handle: "@moni",    year: "Year 3", major: "Computer Science",        role: "User",  status: "Active",    credits: 40,  avatar: "https://i.pravatar.cc/120?img=1",  joined: "Sep 2025" },
-  { id: "u2",  name: "Amelia Chen",   handle: "@amelia",  year: "Year 4", major: "Electrical Engineering",  role: "Admin", status: "Active",    credits: 0,   avatar: "https://i.pravatar.cc/120?img=47", joined: "Sep 2024" },
-  { id: "u3",  name: "Sora Kim",      handle: "@sora",    year: "Year 2", major: "Computer Science",        role: "User",  status: "Active",    credits: 120, avatar: "https://i.pravatar.cc/120?img=5",  joined: "Jan 2026" },
-  { id: "u4",  name: "Dev Patel",     handle: "@devp",    year: "Year 3", major: "Mechatronics",            role: "User",  status: "Suspended", credits: 0,   avatar: "https://i.pravatar.cc/120?img=12", joined: "Sep 2025" },
-  { id: "u5",  name: "Lina Torres",   handle: "@lina",    year: "Year 1", major: "Computer Science",        role: "User",  status: "Active",    credits: 15,  avatar: "https://i.pravatar.cc/120?img=9",  joined: "Jan 2026" },
-  { id: "u6",  name: "Khai Nguyen",   handle: "@khai",    year: "Year 4", major: "Software Engineering",    role: "Staff", status: "Active",    credits: 0,   avatar: "https://i.pravatar.cc/120?img=15", joined: "Sep 2023" },
-  { id: "u7",  name: "Riya Sharma",   handle: "@riya",    year: "Year 2", major: "Electrical Engineering",  role: "User",  status: "Active",    credits: 65,  avatar: "https://i.pravatar.cc/120?img=25", joined: "Sep 2025" },
-  { id: "u8",  name: "Leo Baxter",    handle: "@leo",     year: "Year 3", major: "Mechatronics",            role: "User",  status: "Active",    credits: 0,   avatar: "https://i.pravatar.cc/120?img=33", joined: "Jan 2025" },
-  { id: "u9",  name: "Nadia Souk",    handle: "@nadia",   year: "Year 1", major: "Computer Science",        role: "User",  status: "Active",    credits: 200, avatar: "https://i.pravatar.cc/120?img=44", joined: "Jan 2026" },
-  { id: "u10", name: "Taro Yamada",   handle: "@taro",    year: "Year 4", major: "Software Engineering",    role: "Staff", status: "Active",    credits: 0,   avatar: "https://i.pravatar.cc/120?img=52", joined: "Sep 2023" },
-];
-
-const roleColors = {
-  Admin: "bg-red-50 text-red-600",
-  Staff: "bg-violet-50 text-violet-600",
-  User:  "bg-gray-100 text-gray-500",
-};
-
-const statusColors = {
-  Active:    "bg-emerald-50 text-emerald-600",
-  Suspended: "bg-red-50 text-red-500",
-};
-
-// Which roles an actor is allowed to hand out when creating a new account.
-// Staff can only create plain Users — granting Staff/Admin is Admin-only,
-// decided at creation time rather than by editing an existing account.
-const CREATABLE_ROLES_BY_ACTOR = {
-  Admin: ["User", "Staff", "Admin", "Lecturer"],
-  Staff: ["User"],
-};
+import { useState, useEffect, useRef } from "react";
+import { Search, Coins, BadgeCheck, Loader2, ShieldOff, ShieldCheck } from "lucide-react";
+import { api } from "../../../lib/api/client";
 
 const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
 
-function Actions({ user, onAddCredits, onToggleStatus }) {
-  const suspended = user.status === "Suspended";
+const ROLE_BADGE = {
+  admin: "bg-red-50 text-red-600",
+  staff: "bg-violet-50 text-violet-600",
+  user: "bg-gray-100 text-gray-500",
+};
+
+function StatusPill({ isMember }) {
   return (
-    <div className="flex items-center gap-1">
-      <button onClick={onAddCredits}
-        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Add credits">
-        <Coins className="h-3.5 w-3.5" />
-      </button>
-      <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="View">
-        <Eye className="h-3.5 w-3.5" />
-      </button>
-      <button onClick={onToggleStatus}
-        className={`p-1.5 rounded-md transition-colors ${
-          suspended
-            ? "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-            : "text-gray-400 hover:text-amber-600 hover:bg-amber-50"
-        }`}
-        title={suspended ? "Reactivate" : "Suspend"}>
-        {suspended ? <UserCheck className="h-3.5 w-3.5" /> : <UserX className="h-3.5 w-3.5" />}
-      </button>
-      <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-    </div>
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+      isMember ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+    }`}>
+      {isMember ? <BadgeCheck className="h-3 w-3" /> : null}
+      {isMember ? "Active member" : "Not a member"}
+    </span>
   );
 }
 
-// Credits are only ever topped up in person at the front desk (cash/card),
-// so this is the only "purchase" flow that exists — staff key in the amount
-// after taking payment, there's no online checkout to wire up.
-function AddCreditsDialog({ user, onOpenChange, onConfirm }) {
-  const [amount, setAmount] = useState("");
-
-  const submit = (e) => {
-    e.preventDefault();
-    const value = Number(amount);
-    if (!value || value <= 0) return;
-    onConfirm(value);
-    setAmount("");
-  };
-
+function AccountStatusPill({ status }) {
+  const active = status === "active";
   return (
-    <Dialog open={!!user} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <form onSubmit={submit}>
-          <DialogHeader>
-            <DialogTitle>Add credits</DialogTitle>
-            <DialogDescription>
-              {user?.name} — current balance: {user?.credits ?? 0} credits. Enter the amount paid for at the front desk.
-            </DialogDescription>
-          </DialogHeader>
-          <input
-            type="number" min="1" autoFocus value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="e.g. 100"
-            className={`${inputCls} mt-4`}
-          />
-          <DialogFooter className="mt-4">
-            <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancel
-            </button>
-            <button type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
-              Add credits
-            </button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+      active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
+    }`}>
+      {active ? "Active account" : "Suspended"}
+    </span>
   );
 }
 
-function AddUserDialog({ open, onOpenChange, onCreate, actorRole }) {
-  const options = CREATABLE_ROLES_BY_ACTOR[actorRole] ?? ["User"];
-  const [form, setForm] = useState({ name: "", handle: "", year: "", major: "", role: options[0] });
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    onCreate({
-      name: form.name.trim(),
-      handle: form.handle.trim() || `@${form.name.trim().toLowerCase().replace(/\s+/g, "")}`,
-      year: form.year.trim() || "Year 1",
-      major: form.major.trim() || "Undeclared",
-      role: form.role,
-    });
-    setForm({ name: "", handle: "", year: "", major: "", role: options[0] });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <form onSubmit={submit}>
-          <DialogHeader>
-            <DialogTitle>Add user</DialogTitle>
-            <DialogDescription>Create a new account and assign its role directly.</DialogDescription>
-          </DialogHeader>
-          <div className="mt-4 space-y-3">
-            <input placeholder="Full name" value={form.name} onChange={set("name")} className={inputCls} autoFocus />
-            <input placeholder="Handle (e.g. @jane)" value={form.handle} onChange={set("handle")} className={inputCls} />
-            <div className="grid grid-cols-2 gap-3">
-              <input placeholder="Year (e.g. Year 2)" value={form.year} onChange={set("year")} className={inputCls} />
-              <input placeholder="Major" value={form.major} onChange={set("major")} className={inputCls} />
-            </div>
-            <select value={form.role} onChange={set("role")} className={inputCls}>
-              {options.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <DialogFooter className="mt-4">
-            <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancel
-            </button>
-            <button type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 transition-colors">
-              Create user
-            </button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function UsersTable({ title, subtitle, users, onAddCredits, onToggleStatus }) {
+// Browsable list for when the admin doesn't have a specific name/email to
+// search for — e.g. auditing "who are all my staff" or scanning for
+// recently-joined members. Clicking a row opens the same detail panel a
+// search result would.
+function UsersTable({ title, subtitle, users, onSelect, selectedId, showStudentId = true }) {
+  const colCount = showStudentId ? 4 : 3;
   return (
     <div>
       <div className="flex items-baseline justify-between mb-3">
@@ -176,7 +47,6 @@ function UsersTable({ title, subtitle, users, onAddCredits, onToggleStatus }) {
         </div>
         <span className="text-xs font-medium text-gray-400">{users.length}</span>
       </div>
-
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -185,50 +55,30 @@ function UsersTable({ title, subtitle, users, onAddCredits, onToggleStatus }) {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Role</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Year</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Major</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Credits</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Joined</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                {showStudentId && (
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Student ID</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {users.length === 0 ? (
-                <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">No accounts here.</td></tr>
-              ) : users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full object-cover shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{user.name}</p>
-                        <p className="text-xs text-gray-400">{user.handle}</p>
-                      </div>
-                    </div>
+                <tr><td colSpan={colCount} className="px-5 py-8 text-center text-sm text-gray-400">No accounts here.</td></tr>
+              ) : users.map(u => (
+                <tr key={u.user_id} onClick={() => onSelect(u)}
+                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${selectedId === u.user_id ? "bg-gray-50" : ""}`}>
+                  <td className="px-5 py-3">
+                    <p className="font-medium text-gray-900 truncate">{u.full_name}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
                   </td>
-                  <td className="px-5 py-3.5 hidden sm:table-cell">
-                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${roleColors[user.role]}`}>
-                      {user.role}
-                    </span>
+                  <td className="px-5 py-3 hidden sm:table-cell">
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-gray-100 text-gray-500"}`}>{u.role}</span>
                   </td>
-                  <td className="px-5 py-3.5 hidden sm:table-cell">
-                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColors[user.status]}`}>
-                      {user.status}
-                    </span>
+                  <td className="px-5 py-3 hidden sm:table-cell">
+                    <AccountStatusPill status={u.status} />
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{user.year}</td>
-                  <td className="px-5 py-3.5 text-gray-600 hidden lg:table-cell truncate max-w-[160px]">{user.major}</td>
-                  <td className="px-5 py-3.5 text-gray-700 font-medium tabular-nums">{user.credits}</td>
-                  <td className="px-5 py-3.5 text-gray-500 text-xs hidden sm:table-cell">{user.joined}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex justify-end">
-                      <Actions
-                        user={user}
-                        onAddCredits={() => onAddCredits(user)}
-                        onToggleStatus={() => onToggleStatus(user.id)}
-                      />
-                    </div>
-                  </td>
+                  {showStudentId && (
+                    <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{u.student_id || "—"}</td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -240,85 +90,276 @@ function UsersTable({ title, subtitle, users, onAddCredits, onToggleStatus }) {
 }
 
 export default function AdminUsers() {
-  const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState(initialUsers);
-  const [creditTarget, setCreditTarget] = useState(null);
-  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [usersError, setUsersError] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [membership, setMembership] = useState(null);
+  const [loadingMembership, setLoadingMembership] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  // Bumped on every selectUser() call so a slow response from an earlier
+  // selection can recognize it's stale and not overwrite whatever the admin
+  // has since clicked into — without this, clicking user A then quickly
+  // user B could show A's membership data under B's name if A's request
+  // happened to resolve second.
+  const selectionRef = useRef(0);
 
-  const confirmAddCredits = (amount) => {
-    setUsers(prev => prev.map(u => u.id === creditTarget.id ? { ...u, credits: u.credits + amount } : u));
-    setCreditTarget(null);
+  useEffect(() => {
+    api.get("/api/users")
+      .then(({ data }) => setUsers(data))
+      .catch(() => setUsersError("Couldn't load users — please try refreshing."))
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  const results = query.trim()
+    ? users.filter(u =>
+        u.full_name?.toLowerCase().includes(query.toLowerCase()) ||
+        u.email?.toLowerCase().includes(query.toLowerCase()) ||
+        u.student_id?.toLowerCase().includes(query.toLowerCase())
+      )
+    : [];
+
+  const selectUser = (u) => {
+    const token = ++selectionRef.current;
+    setSelected(u);
+    setQuery("");
+    setError("");
+    setTopUpOpen(false);
+    setTopUpAmount("");
+    setLoadingMembership(true);
+    api.get(`/api/membership/${u.user_id}`)
+      .then(({ data }) => {
+        if (selectionRef.current !== token) return;
+        setMembership(data);
+      })
+      .catch(() => {
+        if (selectionRef.current !== token) return;
+        setError("Couldn't load membership for this user.");
+      })
+      .finally(() => {
+        if (selectionRef.current !== token) return;
+        setLoadingMembership(false);
+      });
   };
 
-  const toggleStatus = (id) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === "Suspended" ? "Active" : "Suspended" } : u));
+  const activate = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.post(`/api/membership/${selected.user_id}/activate`, {});
+      setMembership(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const createUser = (data) => {
-    setUsers(prev => [
-      ...prev,
-      {
-        id: `u${Date.now()}`,
-        status: "Active",
-        credits: 0,
-        avatar: `https://i.pravatar.cc/120?img=${Math.floor(Math.random() * 70) + 1}`,
-        joined: "Just now",
-        ...data,
-      },
-    ]);
-    setAddUserOpen(false);
+  const submitTopUp = async (e) => {
+    e.preventDefault();
+    const credits = Number(topUpAmount);
+    if (!credits || credits <= 0) {
+      setError("Enter a positive number of credits.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.post(`/api/membership/${selected.user_id}/topup`, { credits });
+      setMembership(data);
+      setTopUpOpen(false);
+      setTopUpAmount("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const teamUsers    = users.filter(u => u.role !== "User");
-  const regularUsers = users.filter(u => u.role === "User");
+  const toggleAccountStatus = async () => {
+    if (!selected) return;
+    const nextStatus = selected.status === "active" ? "inactive" : "active";
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.patch(`/api/users/${selected.user_id}/status`, { status: nextStatus });
+      setSelected(data);
+      setUsers((prev) => prev.map((u) => (u.user_id === data.user_id ? data : u)));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const teamUsers = users.filter(u => u.role !== "user");
+  const regularUsers = users.filter(u => u.role === "user");
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="mt-1 text-sm text-gray-500">{users.length} registered accounts</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Search a student to view their account, manage membership/credits, or suspend access.
+        </p>
+      </div>
+
+      {usersError && (
+        <div className="mb-4 rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{usersError}</div>
+      )}
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={loadingUsers ? "Loading users…" : "Search by name, email, or student ID…"}
+            disabled={loadingUsers}
+            className={`${inputCls} pl-9`}
+          />
+
+          {results.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+              {results.map((u) => (
+                <button
+                  key={u.user_id}
+                  onClick={() => selectUser(u)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                  </div>
+                  <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-gray-100 text-gray-500"}`}>
+                    {u.role}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <button onClick={() => setAddUserOpen(true)}
-          className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-          <Plus className="h-4 w-4" /> Add User
-        </button>
+
+        {!selected ? (
+          <p className="text-sm text-gray-400 py-6 text-center">Search for a student above to get started.</p>
+        ) : (
+          <div className="rounded-lg border border-gray-200 p-5">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">{selected.full_name}</p>
+                <p className="text-xs text-gray-400 truncate">{selected.email}{selected.student_id ? ` · ${selected.student_id}` : ""}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[selected.role] ?? "bg-gray-100 text-gray-500"}`}>
+                    {selected.role}
+                  </span>
+                  <AccountStatusPill status={selected.status} />
+                </div>
+              </div>
+              {loadingMembership ? (
+                <Loader2 className="h-4 w-4 animate-spin text-gray-400 shrink-0" />
+              ) : membership && <StatusPill isMember={membership.isMember} />}
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5 mb-4">{error}</div>
+            )}
+
+            <div className="mb-5">
+              <button
+                onClick={toggleAccountStatus}
+                disabled={busy}
+                className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
+                  selected.status === "active"
+                    ? "border-red-200 text-red-600 hover:bg-red-50"
+                    : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                }`}
+              >
+                {selected.status === "active" ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                {selected.status === "active" ? "Suspend account" : "Reactivate account"}
+              </button>
+            </div>
+
+            {!loadingMembership && membership && (
+              <>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="p-2 rounded-lg bg-emerald-50">
+                    <Coins className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900 leading-none">{membership.credits}</p>
+                    <p className="text-[11px] text-gray-400">credits available</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {!membership.isMember && (
+                    <button
+                      onClick={activate}
+                      disabled={busy}
+                      className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                    >
+                      <BadgeCheck className="h-4 w-4" /> Activate Membership
+                    </button>
+                  )}
+
+                  {membership.isMember && !topUpOpen && (
+                    <button
+                      onClick={() => setTopUpOpen(true)}
+                      className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <Coins className="h-4 w-4" /> Add Credits
+                    </button>
+                  )}
+                </div>
+
+                {topUpOpen && (
+                  <form onSubmit={submitTopUp} className="flex items-center gap-2 mt-4">
+                    <input
+                      type="number" min="1" autoFocus value={topUpAmount}
+                      onChange={(e) => setTopUpAmount(e.target.value)}
+                      placeholder="Credits to add"
+                      className={`${inputCls} max-w-[160px]`}
+                    />
+                    <button type="submit" disabled={busy}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                      Add
+                    </button>
+                    <button type="button" onClick={() => { setTopUpOpen(false); setTopUpAmount(""); }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                      Cancel
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="mb-8">
-        <UserActivityChart />
-      </div>
-
-      <div className="mb-8">
-        <UsersTable
-          title="Team"
-          subtitle="Admins & staff with admin panel access"
-          users={teamUsers}
-          onAddCredits={setCreditTarget}
-          onToggleStatus={toggleStatus}
-        />
-      </div>
-
-      <UsersTable
-        title="Users"
-        subtitle="Registered makerspace members"
-        users={regularUsers}
-        onAddCredits={setCreditTarget}
-        onToggleStatus={toggleStatus}
-      />
-
-      <AddCreditsDialog
-        user={creditTarget}
-        onOpenChange={(open) => !open && setCreditTarget(null)}
-        onConfirm={confirmAddCredits}
-      />
-
-      <AddUserDialog
-        open={addUserOpen}
-        onOpenChange={setAddUserOpen}
-        onCreate={createUser}
-        actorRole={currentUser?.role}
-      />
+      {!loadingUsers && (
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <UsersTable
+            title="Team"
+            subtitle="Admins & staff with admin panel access"
+            users={teamUsers}
+            onSelect={selectUser}
+            selectedId={selected?.user_id}
+            showStudentId={false}
+          />
+          <UsersTable
+            title="Users"
+            subtitle="Registered makerspace members"
+            users={regularUsers}
+            onSelect={selectUser}
+            selectedId={selected?.user_id}
+          />
+        </div>
+      )}
     </div>
   );
 }

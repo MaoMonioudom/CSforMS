@@ -43,13 +43,16 @@ function mapPost(row) {
   };
 }
 
-// Mutable, live-bound export — see events-data.js for why.
-export let communityPosts = [];
-
 export async function fetchCommunityPosts() {
   const { data } = await api.get("/api/community/posts");
-  communityPosts = data.map(mapPost);
-  return communityPosts;
+  return data.map(mapPost);
+}
+
+// Paginated variant for the Connect list page — fetchCommunityPosts() above
+// stays full-list for HomePage, which needs everything in memory for search.
+export async function fetchCommunityPostsPage({ page = 1, limit = 12 } = {}) {
+  const { data, total } = await api.get(`/api/community/posts?page=${page}&limit=${limit}`);
+  return { posts: data.map(mapPost), total };
 }
 
 export async function fetchCommunityPostById(id) {

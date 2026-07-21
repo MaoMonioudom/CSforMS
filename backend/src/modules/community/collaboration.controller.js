@@ -1,6 +1,7 @@
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 import { resolveTagIds } from "../../shared/tagResolver.js";
+import { parsePagination } from "../../shared/pagination.js";
 
 // collaboration_posts has real child tables for its list fields —
 // collaboration_roles (one row per role) and collaboration_skills, a join
@@ -26,12 +27,17 @@ function flattenRelations(row) {
 export async function listCollabPosts(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const { data, error } = await supabaseAdmin
+    const pagination = parsePagination(req.query);
+    let query = supabaseAdmin
       .from("collaboration_posts")
-      .select(SELECT_WITH_RELATIONS)
+      .select(SELECT_WITH_RELATIONS, pagination ? { count: "exact" } : undefined)
       .order("created_at", { ascending: false });
+    if (pagination) query = query.range(pagination.from, pagination.to);
+    const { data, error, count } = await query;
     if (error) throw error;
-    res.json({ data: data.map(flattenRelations) });
+    const body = { data: data.map(flattenRelations) };
+    if (pagination) body.total = count;
+    res.json(body);
   } catch (err) {
     next(err);
   }
@@ -44,8 +50,9 @@ export async function getCollabPost(req, res, next) {
       .from("collaboration_posts")
       .select(SELECT_WITH_RELATIONS)
       .eq("collab_id", req.params.id)
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Not found" });
     res.json({ data: flattenRelations(data) });
   } catch (err) {
     next(err);

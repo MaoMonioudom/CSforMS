@@ -29,18 +29,23 @@ function mapEvent(row, countsById = {}) {
   };
 }
 
-// Mutable, live-bound export — modules that `import { events }` (e.g.
-// search.js) see updates once fetchEvents() has run, since ES module
-// bindings re-read the current value at call time.
-export let events = [];
-
 export async function fetchEvents() {
   const [{ data }, counts] = await Promise.all([
     api.get("/api/community/events"),
     fetchEventRegistrationCounts(),
   ]);
-  events = data.map((row) => mapEvent(row, counts));
-  return events;
+  return data.map((row) => mapEvent(row, counts));
+}
+
+// Paginated variant for the Events list page, so a growing events table
+// doesn't mean downloading every row on every visit — fetchEvents() above
+// stays full-list for HomePage, which needs everything in memory for search.
+export async function fetchEventsPage({ page = 1, limit = 12 } = {}) {
+  const [{ data, total }, counts] = await Promise.all([
+    api.get(`/api/community/events?page=${page}&limit=${limit}`),
+    fetchEventRegistrationCounts(),
+  ]);
+  return { events: data.map((row) => mapEvent(row, counts)), total };
 }
 
 export async function fetchEventById(id) {

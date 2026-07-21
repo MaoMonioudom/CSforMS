@@ -201,24 +201,31 @@ function StatPin({ value, label, color, rotate, pinColor }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  // Failures here just leave a preview section empty rather than surfacing
+  // an error banner on the landing page — the real errors already show up
+  // on each section's own list page (EventsPage/CollaborationPage/
+  // CommunityPage), this just avoids an unhandled promise rejection.
   const [events, setEvents] = useState([]);
-  useEffect(() => { fetchEvents().then(setEvents); }, []);
+  useEffect(() => { fetchEvents().then(setEvents).catch(() => {}); }, []);
 
   const [collabPosts, setCollabPosts] = useState([]);
-  useEffect(() => { fetchCollabPosts().then(setCollabPosts); }, []);
+  useEffect(() => { fetchCollabPosts().then(setCollabPosts).catch(() => {}); }, []);
 
   const [communityPosts, setCommunityPosts] = useState([]);
-  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts); }, []);
+  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts).catch(() => {}); }, []);
 
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
-  const searchResults = useMemo(() => (query ? searchCommunity(query) : []), [query]);
+  const searchResults = useMemo(
+    () => (query ? searchCommunity(query, { events, collabPosts, communityPosts }) : []),
+    [query, events, collabPosts, communityPosts]
+  );
   // Strict title matches can be sparse — fill the grid with broader
   // (tag/body/skill) matches when there are too few to avoid an empty-looking page.
   const suggestions = useMemo(() => {
     if (!query || searchResults.length >= 6) return [];
-    return suggestRelated(query, searchResults.map(resultKey), 8);
-  }, [query, searchResults]);
+    return suggestRelated(query, { events, collabPosts, communityPosts }, searchResults.map(resultKey), 8);
+  }, [query, searchResults, events, collabPosts, communityPosts]);
 
   const featuredEvents  = events.slice(0, 4);
   const featuredCollab  = collabPosts.slice(0, 4);

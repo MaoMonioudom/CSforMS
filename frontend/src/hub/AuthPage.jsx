@@ -131,6 +131,11 @@ export default function AuthPage() {
   // Where to send the user after signing in — wherever they were trying to
   // reach (e.g. /inventory) takes priority over the generic role destination.
   const from = location.state?.from;
+  // Carried through unchanged so the destination page can resume whatever
+  // the user was doing (e.g. reopen a create dialog) instead of just
+  // dropping them back on the page with no memory of what they clicked.
+  const reopen = location.state?.reopen;
+  const destState = reopen ? { reopen } : undefined;
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [regForm, setRegForm]     = useState({ name: "", email: "", password: "", confirm: "" });
@@ -164,8 +169,8 @@ export default function AuthPage() {
   // instead of showing a stale auth form. Uses replace so it doesn't add
   // yet another entry for "back" to trip over.
   useEffect(() => {
-    if (user) navigate(destinationFor(user.role, from), { replace: true });
-  }, [user, navigate, from]);
+    if (user) navigate(destinationFor(user.role, from), { replace: true, state: destState });
+  }, [user, navigate, from, destState]);
 
   const switchTo = (mode) => navigate(mode === "register" ? "/register" : "/login");
 
@@ -176,7 +181,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const loggedInUser = await login(loginForm.email, loginForm.password);
-      navigate(destinationFor(loggedInUser.role, from), { replace: true });
+      navigate(destinationFor(loggedInUser.role, from), { replace: true, state: destState });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);
@@ -192,7 +197,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const newUser = await signup({ name: regForm.name, email: regForm.email, password: regForm.password });
-      navigate(destinationFor(newUser.role, from), { replace: true });
+      navigate(destinationFor(newUser.role, from), { replace: true, state: destState });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);

@@ -13,12 +13,17 @@ export default function CollabDetailPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setLoadFailed(false);
     fetchCollabPostById(postId)
       .then(setPost)
-      .catch(() => setPost(null))
+      .catch((err) => {
+        setPost(null);
+        if (err.status !== 404) setLoadFailed(true);
+      })
       .finally(() => setLoading(false));
   }, [postId]);
 
@@ -29,9 +34,11 @@ export default function CollabDetailPage() {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">Post not found</h1>
+        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
-          This collaboration post doesn't exist or has been removed.
+          {loadFailed
+            ? "Something went wrong loading this page — please try again."
+            : "This collaboration post doesn't exist or has been removed."}
         </p>
         <Link to="/community/collabspace" className="mt-6 inline-block text-collaboration underline">
           Back to collaboration
@@ -40,7 +47,8 @@ export default function CollabDetailPage() {
     );
   }
 
-  const pct = Math.round((post.teamSize.current / post.teamSize.target) * 100);
+  const pct = post.teamSize.target ? Math.min(100, Math.round((post.teamSize.current / post.teamSize.target) * 100)) : 0;
+  const spotsOpen = Math.max(0, post.teamSize.target - post.teamSize.current);
 
   return (
     <main className="bg-background">
@@ -127,8 +135,7 @@ export default function CollabDetailPage() {
               </div>
               <div className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Users className="size-3.5" />
-                {post.teamSize.target - post.teamSize.current} spot
-                {post.teamSize.target - post.teamSize.current === 1 ? "" : "s"} open
+                {spotsOpen} spot{spotsOpen === 1 ? "" : "s"} open
               </div>
             </div>
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -163,9 +170,6 @@ export default function CollabDetailPage() {
               >
                 <a href={`mailto:${post.contact.email}`}>Send an email</a>
               </Button>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Demo only — contact info is mock data.
-              </p>
             </div>
           </aside>
         </div>
