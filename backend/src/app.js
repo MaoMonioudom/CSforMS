@@ -7,6 +7,10 @@ import inventoryRoutes from "./modules/inventory/inventory.routes.js";
 import learningRoutes from "./modules/learning/learning.routes.js";
 import membershipRoutes from "./modules/membership/membership.routes.js";
 import notificationsRoutes from "./modules/notifications/notifications.routes.js";
+import workspaceRoutes from "./modules/workspace/workspace.routes.js";
+import analyticsRoutes from "./modules/analytics/analytics.routes.js";
+import achievementsRoutes from "./modules/achievements/achievements.routes.js";
+import profileRoutes from "./modules/profile/profile.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -28,6 +32,10 @@ export function createApp() {
   app.use("/api/learning", learningRoutes);
   app.use("/api/membership", membershipRoutes);
   app.use("/api/notifications", notificationsRoutes);
+  app.use("/api/workspace", workspaceRoutes);
+  app.use("/api/analytics", analyticsRoutes);
+  app.use("/api/achievements", achievementsRoutes);
+  app.use("/api/profile", profileRoutes);
 
   app.use((req, res) => res.status(404).json({ error: "Not found" }));
   app.use(errorHandler);

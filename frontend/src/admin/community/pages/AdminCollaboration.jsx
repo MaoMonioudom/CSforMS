@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Eye, Trash2 } from "lucide-react";
-import { fetchCollabPosts, deleteCollabPost } from "@/lib/collaboration-data";
+import { fetchCollabPostsPage, deleteCollabPost } from "@/lib/collaboration-data";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
@@ -33,20 +33,45 @@ const typeColors = {
   "looking-for-team": "bg-blue-50 text-blue-600",
 };
 
+const PAGE_SIZE = 24;
+
 export default function AdminCollaboration() {
   const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchCollabPosts().then(setList).finally(() => setLoading(false));
+    fetchCollabPostsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ posts, total }) => { setList(posts); setTotal(total); })
+      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const nextPage = page + 1;
+      const { posts: more, total: freshTotal } = await fetchCollabPostsPage({ page: nextPage, limit: PAGE_SIZE });
+      setList((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setError("Couldn't load more posts — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const confirmDelete = async () => {
     try {
       await deleteCollabPost(deleteTarget.id);
       setList(prev => prev.filter(p => p.id !== deleteTarget.id));
+      setTotal(t => t - 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -59,7 +84,7 @@ export default function AdminCollaboration() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Collaboration</h1>
-          <p className="mt-1 text-sm text-gray-500">{list.length} open posts</p>
+          <p className="mt-1 text-sm text-gray-500">{total} open posts</p>
         </div>
       </div>
 
@@ -89,7 +114,7 @@ export default function AdminCollaboration() {
               {list.map(post => (
                 <tr key={post.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3.5">
-                    <p className="font-medium text-gray-900 truncate max-w-200px">{post.projectTitle}</p>
+                    <p className="font-medium text-gray-900 truncate max-w-[200px]">{post.projectTitle}</p>
                     <p className="text-xs text-gray-400">{post.category}</p>
                   </td>
                   <td className="px-5 py-3.5 hidden sm:table-cell">
@@ -100,7 +125,7 @@ export default function AdminCollaboration() {
                   <td className="px-5 py-3.5 hidden md:table-cell">
                     <div className="flex items-center gap-2">
                       <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-6 w-6 shrink-0 text-[10px]" />
-                      <span className="text-gray-700 truncate max-w-120px">{post.author.name}</span>
+                      <span className="text-gray-700 truncate max-w-[120px]">{post.author.name}</span>
                     </div>
                   </td>
                   <td className="px-5 py-3.5 hidden lg:table-cell">
@@ -132,6 +157,18 @@ export default function AdminCollaboration() {
         </div>
         )}
       </div>
+
+      {!loading && list.length < total && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-2 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

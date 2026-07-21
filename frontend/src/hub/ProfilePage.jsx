@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  LogOut, MessageSquare, BookOpen, Package, ArrowRight, Settings,
-  Award, GraduationCap, Flame, Lock, Sparkles, Users,
+  LogOut, Settings, Award, Lock, Phone, FileText, Mail, CalendarDays, ShieldCheck, ShieldOff,
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { SignOutConfirmDialog } from "../components/SignOutConfirmDialog";
 import { TopNav } from "../components/TopNav";
 import { BackBar } from "../components/BackBar";
+import { fetchMyAchievements, MODULE_BY_REQUIREMENT, MODULE_COLORS } from "../lib/achievements-data";
+import { fetchProfileSummary, formatActivityDate } from "../lib/profile-data";
 
 const D = {
   bg:     "#eef5fc",
@@ -20,51 +21,96 @@ const D = {
   text:   "#16324a",
 };
 
-const MODULES = [
-  { label: "Community", sub: "Bulletin Board",    color: "#c9a86c", icon: MessageSquare, to: "/community",  stat: "3 spaces"          },
-  { label: "Learning",  sub: "Digital Library",   color: "#c0392b", icon: BookOpen,      to: "/learning",   stat: "6 courses"         },
-  { label: "Inventory", sub: "Resource Manager",  color: "#0891b2", icon: Package,       to: "/inventory",  stat: "12 items tracked"  },
-];
-
-const ACTIVITY = [
-  { action: "Registered for",    target: "Intro to Electronics Workshop", time: "Just now",   color: "#c9a86c" },
-  { action: "Enrolled in",       target: "Python for Makers",             time: "2 days ago", color: "#c0392b" },
-  { action: "Requested",         target: "Arduino Uno R3 × 2",           time: "3 days ago", color: "#0891b2" },
-  { action: "Posted in",         target: "Community Space",               time: "5 days ago", color: "#c9a86c" },
-];
-
-const BADGES = [
-  { id: "workshop-1", title: "Workshop Rookie",  desc: "Joined your first workshop",        icon: Users,          color: "#c9a86c", earned: true,  date: "Jun 12" },
-  { id: "course-1",   title: "Course Finisher",  desc: "Completed a full course",            icon: GraduationCap,  color: "#c0392b", earned: true,  date: "Jun 20" },
-  { id: "collector",  title: "Resourceful",      desc: "Requested 5 items from Inventory",   icon: Package,        color: "#0891b2", earned: true,  date: "Jun 25" },
-  { id: "streak",     title: "On a Roll",        desc: "7-day activity streak",              icon: Flame,          color: "#f59e0b", earned: true,  date: "Jul 1"  },
-  { id: "quest-1",    title: "Quest Master",     desc: "Complete 5 quests",                  icon: Sparkles,       color: "#6366f1", earned: false },
-  { id: "social",     title: "Community Voice",  desc: "Post 10 times in Community",         icon: MessageSquare,  color: "#c9a86c", earned: false },
-];
-
-function Avatar({ name, size = 56 }) {
+// Shows the real uploaded photo (profile_img_url) when one exists, falling
+// back to initials-on-gradient otherwise — previously this always ignored
+// a real avatar even when the user had uploaded one.
+function Avatar({ name, avatar, size = 56 }) {
   const initials = name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
+  if (avatar) {
+    return <img src={avatar} alt={name} className="rounded-full object-cover shrink-0" style={{ width: size, height: size }} />;
+  }
   return (
     <div
       className="rounded-full flex items-center justify-center font-extrabold text-white shrink-0"
-      style={{ width: size, height: size, background: "linear-gradient(135deg,#6366f1,#a855f7)", fontSize: size * 0.34 }}>
+      style={{ width: size, height: size, background: `linear-gradient(135deg, ${MODULE_COLORS.community}, ${MODULE_COLORS.inventory})`, fontSize: size * 0.34 }}>
       {initials}
     </div>
   );
 }
 
+// Shows the admin-uploaded icon_url directly, full-size, rather than
+// shrinking it into a tiny overlay on a placeholder shape — the coded medal
+// (drawn as SVG, no image asset) only kicks in as a fallback for badges
+// that don't have a real image uploaded yet. Locked badges show the same
+// image desaturated + dimmed rather than hidden, so there's something to
+// work toward, matching the "shelf full of silhouettes" gamification look.
+function BadgeMedal({ achievement }) {
+  const module = MODULE_BY_REQUIREMENT[achievement.requirement_type] || "community";
+  const color = MODULE_COLORS[module];
+  const { earned, icon_url } = achievement;
+  return (
+    <div className="flex flex-col items-center text-center gap-1"
+      title={earned
+        ? `${achievement.title} — earned ${new Date(achievement.earned_at).toLocaleDateString()}`
+        : `${achievement.title} — ${achievement.progress}/${achievement.requirement_value}`}>
+      <div className="relative flex items-center justify-center" style={{ width: 52, height: 59 }}>
+        {icon_url ? (
+          <img src={icon_url} alt=""
+            className="w-full h-full object-contain"
+            style={!earned ? { filter: "grayscale(1)", opacity: 0.45 } : undefined} />
+        ) : (
+          <svg viewBox="0 0 60 68" width="52" height="59">
+            <path d="M30 2 L56 15 V40 C56 54 44 62 30 66 C16 62 4 54 4 40 V15 Z"
+              fill={earned ? color : "none"}
+              stroke={earned ? "none" : color}
+              strokeWidth={earned ? 0 : 2}
+              strokeDasharray={earned ? "none" : "4 3"}
+              opacity={earned ? 1 : 0.45} />
+          </svg>
+        )}
+        {!earned && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Lock size={14} style={{ color: D.faint, filter: "drop-shadow(0 0 2px white)" }} />
+          </div>
+        )}
+      </div>
+      <p className="text-[10px] font-bold leading-tight max-w-[64px]" style={{ color: earned ? D.text : D.faint }}>{achievement.title}</p>
+      {!earned && (
+        <p className="text-[9px]" style={{ color: D.faint }}>{achievement.progress}/{achievement.requirement_value}</p>
+      )}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [achievements, setAchievements] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Wait for AuthContext to finish confirming a stored token before
+  // deciding the user is logged out — otherwise a refresh bounces someone
+  // who's genuinely still logged in through /login and out to /inventory.
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) navigate("/login");
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    if (!user) return;
+    Promise.all([fetchMyAchievements(), fetchProfileSummary()])
+      .then(([badges, sum]) => { setAchievements(badges); setSummary(sum); })
+      .catch(() => setError("Couldn't load your profile data — please try refreshing."))
+      .finally(() => setLoading(false));
+  }, [user]);
 
   if (!user) return null;
 
-  const earnedCount = BADGES.filter(b => b.earned).length;
+  const activity = summary?.activity ?? [];
+  const earnedCount = achievements.filter(a => a.earned).length;
 
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
@@ -75,140 +121,135 @@ export default function ProfilePage() {
       <TopNav />
       <BackBar />
 
-      <main className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 py-12">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-12">
+        {error && (
+          <div className="rounded-xl px-4 py-3 mb-6 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#dc2626" }}>
+            {error}
+          </div>
+        )}
 
-        {/* Profile hero */}
-        <div className="rounded-2xl p-8 mb-4 relative overflow-hidden"
-          style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
-          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#6366f1,#a855f7,transparent)" }} />
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <Avatar name={user.name} size={64} />
-            <div className="flex-1">
-              <h1 className="text-2xl font-extrabold" style={{ color: D.text }}>{user.name}</h1>
-              <p className="text-sm mt-0.5" style={{ color: D.muted }}>{user.email}</p>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {MODULES.map(m => (
-                  <span key={m.label} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${m.color}15`, color: m.color, border: `1px solid ${m.color}28` }}>
-                    {m.label}
-                  </span>
-                ))}
+        {/* Top row — profile identity on one side, badges & achievements on the other */}
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+          {/* Left — profile img + info (no cover photo) */}
+          <div className="lg:sticky lg:top-6 flex flex-col gap-6">
+            <div className="rounded-2xl p-6 flex flex-col items-center text-center"
+              style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
+              <Avatar name={user.name} avatar={user.avatar} size={96} />
+              <h1 className="text-lg font-extrabold mt-3" style={{ color: D.text }}>{user.name}</h1>
+
+              {/* Detail info */}
+              <div className="w-full mt-4 pt-5 text-left" style={{ borderTop: `1px solid ${D.border}` }}>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: D.muted }}>Details</p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="shrink-0" style={{ color: D.faint }} />
+                    <p className="text-xs break-all" style={{ color: D.text }}>{user.email}</p>
+                  </div>
+                  {user.createdAt && (
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={14} className="shrink-0" style={{ color: D.faint }} />
+                      <p className="text-xs" style={{ color: D.text }}>
+                        Member since {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {user.isMember
+                      ? <ShieldCheck size={14} className="shrink-0" style={{ color: "#16a34a" }} />
+                      : <ShieldOff size={14} className="shrink-0" style={{ color: D.faint }} />}
+                    {user.isMember ? (
+                      <p className="text-xs font-semibold" style={{ color: "#16a34a" }}>Active member</p>
+                    ) : (
+                      <p className="text-xs" style={{ color: D.faint }}>
+                        Not a member yet — <Link to="/membership" className="font-semibold underline" style={{ color: D.muted }}>activate</Link>
+                      </p>
+                    )}
+                  </div>
+                  {user.bio ? (
+                    <div className="flex items-start gap-2">
+                      <FileText size={14} className="mt-0.5 shrink-0" style={{ color: D.faint }} />
+                      <p className="text-xs leading-relaxed" style={{ color: D.text }}>{user.bio}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs italic" style={{ color: D.faint }}>No bio yet — add one to tell others about yourself.</p>
+                  )}
+                  {user.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone size={14} className="shrink-0" style={{ color: D.faint }} />
+                      <p className="text-xs" style={{ color: D.text }}>{user.phone}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 w-full mt-5">
+                <Link to="/hub/settings"
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+                  style={{ color: D.text, border: `1px solid ${D.border}`, background: D.card }}>
+                  <Settings size={14} /> Edit Details
+                </Link>
+                <button onClick={() => setConfirmOpen(true)}
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+                  style={{ color: "#dc2626", border: "1px solid rgba(239,68,68,0.28)", background: "rgba(239,68,68,0.06)" }}>
+                  <LogOut size={14} /> Sign Out
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Edit profile / sign out */}
-        <div className="flex gap-3 mb-8">
-          <Link to="/hub/settings"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-            style={{ color: D.text, border: `1px solid ${D.border}`, background: D.card }}>
-            <Settings size={14} /> Edit Profile
-          </Link>
-          <button onClick={() => setConfirmOpen(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-            style={{ color: "#dc2626", border: "1px solid rgba(239,68,68,0.28)", background: "rgba(239,68,68,0.06)" }}>
-            <LogOut size={14} /> Sign Out
-          </button>
-        </div>
+          <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} />
 
-        <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} />
-
-        {/* Badges & Achievements */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5" style={{ color: D.muted }}>
-              <Award size={12} /> Badges &amp; Achievements
-            </p>
-            <span className="text-[11px] font-semibold" style={{ color: D.muted }}>{earnedCount}/{BADGES.length} earned</span>
-          </div>
-          <div className="rounded-2xl p-6" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-              {BADGES.map(b => {
-                const Icon = b.icon;
-                return (
-                  <div key={b.id} className="flex flex-col items-center text-center gap-2"
-                    title={b.earned ? `${b.title} — earned ${b.date}` : `${b.title} — locked`}>
-                    <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={b.earned
-                        ? { background: `${b.color}15`, border: `1.5px solid ${b.color}40` }
-                        : { background: "rgba(15,50,80,0.04)", border: "1.5px dashed rgba(15,50,80,0.18)" }}>
-                      <Icon size={20} style={{ color: b.earned ? b.color : D.faint }} />
-                      {!b.earned && (
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                          style={{ background: D.card, border: `1px solid ${D.border}` }}>
-                          <Lock size={9} style={{ color: D.faint }} />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold leading-tight" style={{ color: b.earned ? D.text : D.faint }}>{b.title}</p>
-                      <p className="text-[9px] mt-0.5 leading-tight" style={{ color: D.faint }}>{b.earned ? b.date : "Locked"}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-6">
-
-          {/* Module access */}
+          {/* Right — badges & achievements */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Your Modules</p>
-            <div className="flex flex-col gap-3">
-              {MODULES.map(m => {
-                const Icon = m.icon;
-                return (
-                  <Link key={m.label} to={m.to}
-                    className="group flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-[1.01]"
-                    style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${m.color}15`, border: `1px solid ${m.color}28` }}>
-                      <Icon size={18} style={{ color: m.color }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm" style={{ color: D.text }}>{m.label}</p>
-                      <p className="text-[11px]" style={{ color: D.muted }}>{m.sub} · {m.stat}</p>
-                    </div>
-                    <ArrowRight size={14} style={{ color: m.color }}
-                      className="shrink-0 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                  </Link>
-                );
-              })}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5" style={{ color: D.muted }}>
+                <Award size={12} /> Badges &amp; Achievements
+              </p>
+              {!loading && <span className="text-[11px] font-semibold" style={{ color: D.muted }}>{earnedCount}/{achievements.length} earned</span>}
             </div>
-          </div>
-
-          {/* Recent activity */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
-            <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
-              {ACTIVITY.map((a, i) => (
-                <div key={i}
-                  className="flex items-start gap-3 px-4 py-3.5"
-                  style={{ borderBottom: i < ACTIVITY.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
-                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: a.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs" style={{ color: D.text }}><span style={{ color: D.muted }}>{a.action}</span> {a.target}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{a.time}</p>
+            <div className="rounded-2xl p-6" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+              {loading ? (
+                <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
+              ) : achievements.length === 0 ? (
+                <p className="text-xs" style={{ color: D.muted }}>No badges have been set up yet — check back soon.</p>
+              ) : (
+                <>
+                  {earnedCount === 0 && (
+                    <p className="text-xs mb-4" style={{ color: D.muted }}>
+                      You haven't earned a badge yet — join an event, borrow an item, or enroll in a course to get started!
+                    </p>
+                  )}
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+                    {achievements.map(a => <BadgeMedal key={a.achievement_id} achievement={a} />)}
                   </div>
-                </div>
-              ))}
+                </>
+              )}
             </div>
 
-            {/* Stats strip */}
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {[
-                { v: "2",  l: "Events joined"   },
-                { v: "1",  l: "Course started"  },
-                { v: "3",  l: "Items requested" },
-              ].map(s => (
-                <div key={s.l} className="rounded-xl p-3 text-center" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
-                  <p className="text-xl font-extrabold" style={{ color: D.text }}>{s.v}</p>
-                  <p className="text-[9px] mt-0.5 leading-tight" style={{ color: D.muted }}>{s.l}</p>
-                </div>
-              ))}
+            {/* Recent activity — directly under badges & achievements */}
+            <div className="mt-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
+              <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+                {loading ? (
+                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Loading…</p>
+                ) : activity.length === 0 ? (
+                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Nothing yet — get involved to see your activity here.</p>
+                ) : activity.map((a, i) => {
+                  const module = a.type === "course" ? "learning" : a.type === "borrow" ? "inventory" : "community";
+                  return (
+                    <div key={i}
+                      className="flex items-start gap-3 px-4 py-3.5"
+                      style={{ borderBottom: i < activity.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
+                      <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: MODULE_COLORS[module] }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs" style={{ color: D.text }}>{a.label}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{formatActivityDate(a.date)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

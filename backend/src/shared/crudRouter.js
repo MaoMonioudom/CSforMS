@@ -2,6 +2,7 @@ import { Router } from "express";
 import { supabaseAdmin, assertSupabaseConfigured } from "../config/supabaseClient.js";
 import { requireAuth, requireRole } from "../middleware/requireAuth.js";
 import { normalizeRow } from "./normalizeTimestamps.js";
+import { parsePagination } from "./pagination.js";
 
 // Generic REST router for a single table. These tables have RLS enabled
 // with no anon policy (same as `courses` — see learning.controller.js), so
@@ -63,11 +64,15 @@ export function createCrudRouter(table, { pkColumn = "id", ownerField, writeRole
   router.get("/", async (req, res, next) => {
     if (!assertSupabaseConfigured(res)) return;
     try {
-      let query = supabaseAdmin.from(table).select(selectClause);
+      const pagination = parsePagination(req.query);
+      let query = supabaseAdmin.from(table).select(selectClause, pagination ? { count: "exact" } : undefined);
       if (orderBy) query = query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
-      const { data, error } = await query;
+      if (pagination) query = query.range(pagination.from, pagination.to);
+      const { data, error, count } = await query;
       if (error) throw error;
-      res.json({ data: data.map(normalizeRow) });
+      const body = { data: data.map(normalizeRow) };
+      if (pagination) body.total = count;
+      res.json(body);
     } catch (err) {
       next(err);
     }
@@ -76,8 +81,9 @@ export function createCrudRouter(table, { pkColumn = "id", ownerField, writeRole
   router.get("/:id", async (req, res, next) => {
     if (!assertSupabaseConfigured(res)) return;
     try {
-      const { data, error } = await supabaseAdmin.from(table).select(selectClause).eq(pkColumn, req.params.id).single();
+      const { data, error } = await supabaseAdmin.from(table).select(selectClause).eq(pkColumn, req.params.id).maybeSingle();
       if (error) throw error;
+      if (!data) return res.status(404).json({ error: "Not found" });
       res.json({ data: normalizeRow(data) });
     } catch (err) {
       next(err);

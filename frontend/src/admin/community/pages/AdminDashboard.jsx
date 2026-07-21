@@ -4,9 +4,13 @@ import { Calendar, Users, MessageSquare, UserCog, ArrowUpRight } from "lucide-re
 import { fetchEvents } from "@/lib/events-data";
 import { fetchCollabPosts } from "@/lib/collaboration-data";
 import { fetchCommunityPosts } from "@/lib/community-data";
+import { fetchDailyPageViews } from "@/lib/analytics-data";
+import { api } from "@/lib/api/client";
 import { ChartCard, LegendDot, HBar } from "../../components/charts";
 
-const MOCK_USERS = 48;
+function formatShortDate(iso) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
 
 // --- Derived chart data ---
 function deriveCommunityDonutData(communityPosts) {
@@ -62,15 +66,19 @@ function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
 
 // --- Chart components ---
 
+// Events with no capacity set (max_participants left blank) would otherwise
+// divide by zero — treated as 0% full rather than NaN/Infinity.
+function fillRate(ev) {
+  return ev.capacity ? ev.participants / ev.capacity : 0;
+}
+
 function EventFillChart({ events }) {
-  const sorted = [...events].sort(
-    (a, b) => b.participants / b.capacity - a.participants / a.capacity
-  );
+  const sorted = [...events].sort((a, b) => fillRate(b) - fillRate(a));
   return (
     <ChartCard title="Event Capacity" subtitle="Fill rate — sorted highest first">
       <div className="px-5 py-4 space-y-3 max-h-72 overflow-y-auto">
         {sorted.map(ev => {
-          const pct = Math.round((ev.participants / ev.capacity) * 100);
+          const pct = Math.round(Math.min(1, fillRate(ev)) * 100);
           const color = pct >= 90 ? "#f87171" : pct >= 70 ? "#fb923c" : "#34d399";
           return (
             <div key={ev.id}>
@@ -187,20 +195,55 @@ function SkillsDemandChart({ topSkills }) {
   );
 }
 
+function SiteVisitsChart({ series }) {
+  const total = series.reduce((s, d) => s + d.count, 0);
+  const maxCount = Math.max(1, ...series.map(d => d.count));
+  return (
+    <ChartCard title="Site Visits" subtitle={`Last ${series.length} days — real traffic, admin usage excluded`}>
+      <div className="px-5 py-4">
+        <p className="mb-4">
+          <span className="text-3xl font-bold text-gray-900">{total}</span>
+          <span className="text-sm font-medium text-gray-400 ml-2">total visits</span>
+        </p>
+        <div className="flex items-end gap-[3px] h-24">
+          {series.map((d) => (
+            <div key={d.date}
+              className="flex-1 min-w-[2px] rounded-t bg-blue-400 hover:bg-blue-500 transition-colors"
+              style={{ height: `${Math.max(2, (d.count / maxCount) * 100)}%` }}
+              title={`${formatShortDate(d.date)}: ${d.count} visit${d.count === 1 ? "" : "s"}`}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2 text-[10px] text-gray-400">
+          <span>{series[0] && formatShortDate(series[0].date)}</span>
+          <span>{series.length > 0 && formatShortDate(series[series.length - 1].date)}</span>
+        </div>
+      </div>
+    </ChartCard>
+  );
+}
+
 // --- Page ---
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]);
-  useEffect(() => { fetchEvents().then(setEvents); }, []);
+  const [error, setError] = useState("");
+  useEffect(() => { fetchEvents().then(setEvents).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
 
   const [collabPosts, setCollabPosts] = useState([]);
-  useEffect(() => { fetchCollabPosts().then(setCollabPosts); }, []);
+  useEffect(() => { fetchCollabPosts().then(setCollabPosts).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
   const topSkills = deriveTopSkills(collabPosts);
 
   const [communityPosts, setCommunityPosts] = useState([]);
-  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts); }, []);
+  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
   const communityDonutData = deriveCommunityDonutData(communityPosts);
   const topCommunityPosts = deriveTopCommunityPosts(communityPosts);
+
+  const [userCount, setUserCount] = useState(0);
+  useEffect(() => { api.get("/api/users").then(({ data }) => setUserCount(data.length)).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+
+  const [pageViews, setPageViews] = useState([]);
+  useEffect(() => { fetchDailyPageViews(30).then(setPageViews).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
 
   return (
     <div>
@@ -209,11 +252,19 @@ export default function AdminDashboard() {
         <p className="mt-1 text-sm text-gray-500">Overview of the CADT Community platform.</p>
       </div>
 
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/community/events" />
         <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/community/collaboration" />
         <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community/posts" />
-        <StatCard label="Users"           value={MOCK_USERS}            icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/users" />
+        <StatCard label="Users"           value={userCount}              icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/users" />
+      </div>
+
+      <div className="mb-6">
+        <SiteVisitsChart series={pageViews} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

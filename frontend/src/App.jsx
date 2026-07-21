@@ -17,8 +17,8 @@ import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
 import AdminCommunity from "./admin/community/pages/AdminCommunity";
 import AdminUsers from "./admin/community/pages/AdminUsers";
-import AdminMembership from "./admin/community/pages/AdminMembership";
 import AdminWorkspace from "./admin/community/pages/AdminWorkspace";
+import AdminAchievements from "./admin/community/pages/AdminAchievements";
 import AdminLearningDashboard from "./admin/learning/pages/AdminDashboard";
 import AdminCourses from "./admin/learning/adminSide/AdminCourses";
 import AdminCourseEditor from "./admin/learning/adminSide/AdminCourseEditor";
@@ -29,6 +29,7 @@ import LecturerDashboard from "./admin/learning/lecturersSide/LecturerDashboard"
 import LecturerCourseEditor from "./admin/learning/lecturersSide/LecturerCourseEditor";
 import LecturerCourseStudents from "./admin/learning/lecturersSide/LecturerCourseStudents";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { PageViewTracker } from "./components/PageViewTracker";
 import { AppFooter } from "./components/AppFooter";
 import HubLandingPage from "./hub/LandingPage";
 import HubAboutPage from "./hub/AboutPage";
@@ -38,6 +39,7 @@ import ResetPasswordPage from "./hub/ResetPasswordPage";
 import CompleteSignupPage from "./hub/CompleteSignupPage";
 import MicrosoftCallbackPage from "./hub/MicrosoftCallbackPage";
 import ProfilePage from "./hub/ProfilePage";
+import EditProfilePage from "./hub/EditProfilePage";
 import NotificationsPage from "./hub/NotificationsPage";
 import MembershipPage from "./hub/MembershipPage";
 import CreditsPage from "./hub/CreditsPage";
@@ -81,6 +83,7 @@ export default function App() {
     <InventoryProvider>
     <BrowserRouter>
       <ScrollToTop />
+      <PageViewTracker />
       <Routes>
         {/* Hub landing — default root, standalone (no TopNav/Footer) */}
         <Route path="/" element={<HubLandingPage />} />
@@ -92,6 +95,7 @@ export default function App() {
         <Route path="/complete-signup" element={<CompleteSignupPage />} />
         <Route path="/auth/callback" element={<MicrosoftCallbackPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/hub/settings" element={<EditProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/membership" element={<MembershipPage />} />
         <Route path="/credits" element={<CreditsPage />} />
@@ -128,8 +132,10 @@ export default function App() {
             <Route path="collaboration" element={<AdminCollaboration />} />
             <Route path="community" element={<AdminCommunity />} />
             <Route path="users" element={<AdminUsers />} />
-            <Route path="membership" element={<AdminMembership />} />
+            {/* Merged into Users — kept as a redirect so old links/bookmarks still land somewhere. */}
+            <Route path="membership" element={<Navigate to="/admin/users" replace />} />
             <Route path="workspace" element={<AdminWorkspace />} />
+            <Route path="achievements" element={<AdminAchievements />} />
             <Route path="learning" element={<AdminLearningDashboard />} />
             <Route path="learning/courses" element={<AdminCourses />} />
             <Route path="learning/courses/new" element={<AdminCourseEditor />} />

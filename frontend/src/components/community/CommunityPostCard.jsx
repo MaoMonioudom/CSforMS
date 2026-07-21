@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Check } from "lucide-react";
 import { formatRelativeTime } from "@/lib/community-data";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 
@@ -24,6 +25,18 @@ function Pushpin() {
 
 export function CommunityPostCard({ post, index = 0, onToggleLike }) {
   const rotate = tilts[index % tilts.length];
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/community/communityspace/${post.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable (unsupported browser/permissions) — nothing to fall back to
+    }
+  };
 
   return (
     <div
@@ -109,9 +122,11 @@ export function CommunityPostCard({ post, index = 0, onToggleLike }) {
         </Link>
         <button
           type="button"
+          onClick={handleShare}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community"
+          style={copied ? { color: "#16a34a" } : undefined}
         >
-          <Share2 className="size-4" />
+          {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
         </button>
       </div>
     </article>

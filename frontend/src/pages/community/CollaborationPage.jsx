@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SectionPage } from "@/components/community/SectionPage";
 import { CollabCard } from "@/components/community/CollabCard";
-import { fetchCollabPosts, createCollabPost } from "@/lib/collaboration-data";
+import { fetchCollabPostsPage, createCollabPost } from "@/lib/collaboration-data";
 import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
 import {
@@ -26,6 +26,8 @@ const filters = [
   { id: "looking-for-team", label: "Looking for Team" },
   { id: "recruiting", label: "Recruiting" },
 ];
+
+const PAGE_SIZE = 12;
 
 // author-profile (year/major) has nowhere to live yet — no per-user academic
 // fields on `users` — so that one's still left out (see collaboration-data.js).
@@ -55,7 +57,7 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
       description: form.get("description")?.trim() || null,
       roles_needed: parseList(form.get("rolesNeeded")),
       skills,
-      team_size_current: Number(form.get("currentSize")) || 1,
+      team_size_current: Number(form.get("currentSize")),
       team_size_target: Number(form.get("targetSize")) || null,
       contact_email: form.get("contactEmail")?.trim() || null,
       contact_discord: form.get("contactDiscord")?.trim() || null,
@@ -208,24 +210,66 @@ export default function CollaborationPage() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [collabPosts, setCollabPosts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
-    fetchCollabPosts().then(setCollabPosts).finally(() => setLoading(false));
+    fetchCollabPostsPage({ page: 1, limit: PAGE_SIZE })
+      .then(({ posts, total }) => { setCollabPosts(posts); setTotal(total); })
+      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .finally(() => setLoading(false));
   }, []);
+
+  // Resumes the Create dialog after a login redirect (see handleCreateClick)
+  // instead of just dropping the user back on the list with no memory of
+  // what they clicked.
+  useEffect(() => {
+    if (user && location.state?.reopen === "create") setOpen(true);
+  }, [user, location.state]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const nextPage = page + 1;
+      const { posts: more, total: freshTotal } = await fetchCollabPostsPage({ page: nextPage, limit: PAGE_SIZE });
+      setCollabPosts((prev) => [...prev, ...more]);
+      setTotal(freshTotal);
+      setPage(nextPage);
+    } catch {
+      setError("Couldn't load more posts — please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleCreateClick = () => {
     if (!user) {
-      navigate("/login", { state: { from: location.pathname } });
+      navigate("/login", { state: { from: location.pathname, reopen: "create" } });
       return;
     }
     setOpen(true);
   };
 
+  const hasMore = collabPosts.length < total;
+  // Filtering only looks at posts already loaded — if a rare filter has
+  // matches sitting on a later page, "Load more" first, same as an
+  // unfiltered feed.
   const visiblePosts = activeFilter === "all"
     ? collabPosts
     : collabPosts.filter(p => p.type === activeFilter);
+
+  // Posts load newest-first, so this stays accurate off what's loaded so
+  // far as long as there aren't more than a page's worth of new posts in a
+  // week — same reasoning as Events' "This week" stat.
+  const newThisWeek = collabPosts.filter(p => {
+    const days = (Date.now() - new Date(p.postedAt).getTime()) / 86400000;
+    return days >= 0 && days <= 7;
+  }).length;
 
   return (
     <SectionPage
@@ -237,8 +281,8 @@ export default function CollaborationPage() {
       ghostLetter="C"
       tapeColor="rgba(52,211,153,0.72)"
       stats={[
-        { value: collabPosts.length, label: "Open posts",       rotate: 2,    pinColor: "#6366f1" },
-        { value: 5,                  label: "New this week",    rotate: -1.5, pinColor: "#16a34a", plus: false },
+        { value: total,       label: "Open posts",    rotate: 2,    pinColor: "#6366f1" },
+        { value: newThisWeek, label: "New this week", rotate: -1.5, pinColor: "#16a34a", plus: false },
       ]}
     >
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -269,11 +313,16 @@ export default function CollaborationPage() {
           </button>
         ))}
       </div>
+      {error && (
+        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+      )}
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading posts…</p>
       ) : visiblePosts.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {collabPosts.length === 0 ? "No posts yet — be the first to create one." : "No posts match this filter."}
+          {collabPosts.length === 0
+            ? "No posts yet — be the first to create one."
+            : hasMore ? "No posts match this filter yet — try loading more." : "No posts match this filter."}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -282,10 +331,21 @@ export default function CollaborationPage() {
           ))}
         </div>
       )}
+      {!loading && hasMore && (
+        <div className="mt-8 text-center">
+          <Button
+            variant="outline"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </Button>
+        </div>
+      )}
       <CreateCollabDialog
         open={open}
         onOpenChange={setOpen}
-        onCreated={(post) => setCollabPosts((prev) => [post, ...prev])}
+        onCreated={(post) => { setCollabPosts((prev) => [post, ...prev]); setTotal((t) => t + 1); }}
       />
     </SectionPage>
   );

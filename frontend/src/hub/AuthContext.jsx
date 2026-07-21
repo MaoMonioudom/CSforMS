@@ -16,6 +16,10 @@ function toFrontendUser(row) {
     email: row.email,
     role: ROLE_MAP[row.role] || "User",
     avatar: row.profile_img_url || null,
+    phone: row.phone_number || "",
+    bio: row.bio || "",
+    // Real account-creation date — for "Member since" on the Profile page.
+    createdAt: row.created_at,
     // Filled in separately by loadMembership() — membership/credits live in
     // their own table, fetched after identity so a slow membership lookup
     // never blocks login.
@@ -47,9 +51,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!getToken()) { setLoading(false); return; }
     api.get("/api/auth/session")
-      .then(({ user: row }) => {
+      .then(async ({ user: row }) => {
         setUser(toFrontendUser(row));
-        refreshMembership();
+        // Awaited (not fire-and-forget) — toFrontendUser() only sets a
+        // placeholder isMember:false, so pages that gate on `loading` to
+        // decide "do we actually know this user's membership yet" would
+        // otherwise see loading flip to false before the real value lands.
+        await refreshMembership();
       })
       .catch(() => setToken(null))
       .finally(() => setLoading(false));

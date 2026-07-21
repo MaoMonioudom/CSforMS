@@ -2,7 +2,7 @@
 // real backend (/api/inventory/*) through the shared hub API client; the
 // mappers translate DB rows (snake_case, DB vocab) into the UI shapes the
 // components were built around, mirroring toFrontendUser in hub/AuthContext.
-import { api } from '../api/client'
+import { api, BASE_URL, getToken } from '../api/client'
 import { CATEGORIES } from './data'
 
 // ── Mappers: DB row → UI shape ───────────────────────────────────────────
@@ -219,10 +219,9 @@ export const deleteFilament = (id) => api.del(`/api/inventory/filaments/${id}`)
 // Multipart upload — the JSON client can't carry files, so this goes through
 // fetch directly with the same bearer token. Returns the public image URL.
 export async function uploadItemImage(file) {
-  const { getToken } = await import('../api/client')
   const form = new FormData()
   form.append('image', file)
-  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/inventory/items/upload-image`, {
+  const res = await fetch(`${BASE_URL}/api/inventory/items/upload-image`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getToken()}` },
     body: form,

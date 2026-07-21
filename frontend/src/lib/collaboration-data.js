@@ -37,13 +37,16 @@ function mapCollab(row) {
   };
 }
 
-// Mutable, live-bound export — see events-data.js for why.
-export let collabPosts = [];
-
 export async function fetchCollabPosts() {
   const { data } = await api.get("/api/community/collaborations");
-  collabPosts = data.map(mapCollab);
-  return collabPosts;
+  return data.map(mapCollab);
+}
+
+// Paginated variant for the Find Team list page — fetchCollabPosts() above
+// stays full-list for HomePage, which needs everything in memory for search.
+export async function fetchCollabPostsPage({ page = 1, limit = 12 } = {}) {
+  const { data, total } = await api.get(`/api/community/collaborations?page=${page}&limit=${limit}`);
+  return { posts: data.map(mapCollab), total };
 }
 
 export async function fetchCollabPostById(id) {

@@ -1,0 +1,154 @@
+// ============================================================
+// CADT Hub — Community module schema (DBML for dbdiagram.io)
+// ============================================================
+// Scope: community bulletin board, events, "find a team" board, and the
+// shared tag dictionary. Code-grounded from backend/src/modules/* — the
+// `users` table is included as a minimal reference target only (full
+// membership/credit/inventory/learning tables are out of scope here).
+//
+// How to use: go to https://dbdiagram.io/d, create a new diagram, and
+// paste this whole file into the DBML editor on the left.
+// ============================================================
+
+Table users {
+  user_id integer [pk]
+  full_name varchar
+  email varchar
+  role varchar
+
+  Note: 'Reference only — full column list lives in the users/membership module, out of scope here.'
+}
+
+Table events {
+  event_id integer [pk]
+  created_by integer [ref: > users.user_id]
+  title varchar [not null]
+  description text
+  location varchar
+  start_date timestamp [not null]
+  end_date timestamp [not null]
+  max_participants integer
+  credit_reward integer [default: 0]
+  status varchar [note: "upcoming | ongoing | completed | cancelled"]
+  image_url text
+  created_at timestamp
+
+  Note: 'Community calendar entries.'
+}
+
+Table event_registrations {
+  registration_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  event_id integer [ref: > events.event_id]
+  participant_status varchar [note: "registered | cancelled"]
+  registration_date timestamp
+
+  indexes {
+    (user_id, event_id) [unique]
+  }
+
+  Note: 'One row per user per event.'
+}
+
+Table community_posts {
+  post_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  title varchar
+  content text [not null]
+  category varchar
+  created_at timestamp
+
+  Note: 'Bulletin board posts.'
+}
+
+Table post_comments {
+  comment_id integer [pk]
+  post_id integer [ref: > community_posts.post_id]
+  user_id integer [ref: > users.user_id]
+  content text [not null]
+  created_at timestamp
+}
+
+Table post_votes {
+  vote_id integer [pk]
+  post_id integer [ref: > community_posts.post_id]
+  user_id integer [ref: > users.user_id]
+  vote_type varchar [note: "upvote | downvote (only 'upvote' is ever inserted by the UI)"]
+  created_at timestamp
+
+  indexes {
+    (post_id, user_id) [unique]
+  }
+}
+
+Table tags {
+  tag_id integer [pk]
+  tag_name varchar [not null, note: 'stored lowercase']
+
+  Note: 'Flat shared dictionary, designed to serve 3 spaces: events, community posts, and collaboration posts (see event_tags below — that third space is not actually wired up yet). backend/supabase/System_Full_DB.sql instead models tags as a single polymorphic table (entity_type/entity_id) — the live code uses this simpler dictionary + junction-table shape instead, so treat this version as the source of truth for what is implemented.'
+}
+
+Table post_tags {
+  post_id integer [ref: > community_posts.post_id]
+  tag_id integer [ref: > tags.tag_id]
+
+  Note: 'Junction: tags attached to a community post. NOT created by any migration file — code-only table (confirmed live via community controller queries).'
+}
+
+Table event_tags {
+  event_id integer [ref: > events.event_id]
+  tag_id integer [ref: > tags.tag_id]
+
+  Note: 'NOT IMPLEMENTED — no query anywhere in backend/src ever creates or reads this table. Only referenced in code comments (e.g. tagResolver.js, community.routes.js) as the planned third sibling of post_tags/collaboration_skills, so events currently cannot be tagged at all. Included here to show the full 3-space design intent; drop this table if you want the diagram to match only what actually runs today.'
+}
+
+Table collaboration_posts {
+  collab_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  project_title varchar [not null]
+  category varchar
+  short_pitch text
+  description text
+  post_type varchar [note: "recruiting | looking_for_team"]
+  team_size_current integer [default: 1]
+  team_size_target integer
+  contact_email varchar
+  contact_discord varchar
+  contact_telegram varchar
+  status varchar [note: "open | closed"]
+  created_at timestamp
+
+  Note: '"Find a team" board — a contact-info post, no join/apply workflow or membership tracking.'
+}
+
+Table collaboration_roles {
+  role_id integer [pk]
+  collab_id integer [ref: > collaboration_posts.collab_id]
+  role_name varchar [not null]
+
+  Note: 'Roles a collab post is recruiting for.'
+}
+
+Table collaboration_skills {
+  collab_id integer [ref: > collaboration_posts.collab_id]
+  tag_id integer [ref: > tags.tag_id]
+
+  Note: 'Junction: skill tags on a collab post. Same as post_tags — code-only, not in any migration file.'
+}
+
+// ------------------------------------------------------------
+// Visual grouping in dbdiagram.io
+// ------------------------------------------------------------
+TableGroup community_module {
+  events
+  event_registrations
+  community_posts
+  post_comments
+  post_votes
+  tags
+  post_tags
+  event_tags
+  collaboration_posts
+  collaboration_roles
+  collaboration_skills
+}

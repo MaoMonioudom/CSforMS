@@ -1,6 +1,7 @@
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 import { resolveTagIds } from "../../shared/tagResolver.js";
+import { parsePagination } from "../../shared/pagination.js";
 
 // community_posts has a real child table for tags — post_tags, a join table
 // into the shared `tags` dictionary (the same table collaboration_skills/
@@ -55,13 +56,18 @@ async function attachVotes(posts, currentUserId) {
 export async function listCommunityPosts(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const { data, error } = await supabaseAdmin
+    const pagination = parsePagination(req.query);
+    let query = supabaseAdmin
       .from("community_posts")
-      .select(SELECT_WITH_RELATIONS)
+      .select(SELECT_WITH_RELATIONS, pagination ? { count: "exact" } : undefined)
       .order("created_at", { ascending: false });
+    if (pagination) query = query.range(pagination.from, pagination.to);
+    const { data, error, count } = await query;
     if (error) throw error;
     const posts = await attachVotes(data.map(flattenRelations), req.user?.user_id);
-    res.json({ data: posts });
+    const body = { data: posts };
+    if (pagination) body.total = count;
+    res.json(body);
   } catch (err) {
     next(err);
   }
@@ -74,8 +80,9 @@ export async function getCommunityPost(req, res, next) {
       .from("community_posts")
       .select(SELECT_WITH_RELATIONS)
       .eq("post_id", req.params.id)
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Not found" });
     const [post] = await attachVotes([flattenRelations(data)], req.user?.user_id);
     res.json({ data: post });
   } catch (err) {

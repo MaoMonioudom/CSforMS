@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight, Heart, MessageCircle, Share2 } from "lucide-react";
+import { ChevronRight, Heart, MessageCircle, Share2, Check } from "lucide-react";
 import { formatRelativeTime, fetchCommunityPostById, toggleLike, createComment } from "@/lib/community-data";
 import { Button } from "@/components/community/ui/button";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
@@ -13,15 +13,21 @@ export default function CommunityDetailPage() {
   const location = useLocation();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setLoadFailed(false);
     fetchCommunityPostById(postId)
       .then(setPost)
-      .catch(() => setPost(null))
+      .catch((err) => {
+        setPost(null);
+        if (err.status !== 404) setLoadFailed(true);
+      })
       .finally(() => setLoading(false));
   }, [postId]);
 
@@ -40,6 +46,16 @@ export default function CommunityDetailPage() {
       setPost(p => ({ ...p, likes, likedByMe }));
     } catch {
       setPost(snapshot);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable (unsupported browser/permissions) — nothing to fall back to
     }
   };
 
@@ -72,9 +88,11 @@ export default function CommunityDetailPage() {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">Post not found</h1>
+        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
-          This community post doesn't exist or has been removed.
+          {loadFailed
+            ? "Something went wrong loading this page — please try again."
+            : "This community post doesn't exist or has been removed."}
         </p>
         <Link to="/community/communityspace" className="mt-6 inline-block text-community underline">
           Back to community
@@ -146,9 +164,11 @@ export default function CommunityDetailPage() {
             </span>
             <button
               type="button"
+              onClick={handleShare}
               className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community"
+              style={copied ? { color: "#16a34a" } : undefined}
             >
-              <Share2 className="size-4" /> Share
+              {copied ? <Check className="size-4" /> : <Share2 className="size-4" />} {copied ? "Copied!" : "Share"}
             </button>
           </div>
         </article>
