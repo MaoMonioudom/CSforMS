@@ -4,6 +4,7 @@ import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell, ImagePlus } f
 import {
   fetchEventsPage, createEvent, updateEvent, deleteEvent, formatEventDateShort,
   fetchEventRegistrants, sendEventReminder, removeEventRegistrant, uploadEventImage,
+  getEventStatus,
 } from "@/lib/events-data";
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
@@ -136,7 +137,22 @@ function RegistrantsDialog({ event, onOpenChange }) {
   );
 }
 
+// event.status in the DB is set once at creation and never transitions on
+// its own (no cron/trigger updates it) — so it only ever reflects an actual
+// admin action (e.g. "cancelled"). Everything else (upcoming/ongoing/ended)
+// has to be derived from the clock, same as the public Events pages.
+const STATUS_STYLES = {
+  upcoming: "bg-white/95 text-gray-700",
+  ongoing: "bg-red-100 text-red-700",
+  ended: "bg-gray-200 text-gray-500",
+  cancelled: "bg-red-100 text-red-700",
+};
+function liveStatus(event) {
+  return event.status === "cancelled" ? "cancelled" : getEventStatus(event);
+}
+
 function EventCard({ event, onEdit, onDelete, onViewRegistrants }) {
+  const status = liveStatus(event);
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-sm transition-all flex flex-col">
       <div className="relative h-32 bg-gray-100 shrink-0">
@@ -150,8 +166,8 @@ function EventCard({ event, onEdit, onDelete, onViewRegistrants }) {
         <span className="absolute top-2 left-2 bg-white/95 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm">
           {formatEventDateShort(event.date)}
         </span>
-        <span className="absolute top-2 right-2 bg-white/95 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm capitalize">
-          {event.status}
+        <span className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm capitalize ${STATUS_STYLES[status] || STATUS_STYLES.upcoming}`}>
+          {status}
         </span>
       </div>
 

@@ -16,17 +16,32 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 // decision, not an oversight.
 const router = Router();
 
+// Validation + capacity check + insert all happen in one DB transaction via
+// register_for_event() (backend/supabase/009_atomic_event_registration.sql)
+// — a plain JS "count, then check, then insert" can't be made race-free
+// against two truly concurrent requests for the same event; the SQL
+// function locks the event row instead, so a second concurrent call for the
+// same event waits for the first instead of reading a stale count.
+const REGISTER_ERROR_RESPONSES = {
+  EVENT_NOT_FOUND: [404, "Event not found"],
+  EVENT_CANCELLED: [400, "This event has been cancelled."],
+  EVENT_STARTED: [400, "Registration is closed — this event has already started."],
+  EVENT_FULL: [409, "This event is full."],
+};
+
 router.post("/:id/register", requireAuth, async (req, res, next) => {
   if (!assertSupabaseConfigured(res)) return;
   try {
     const eventId = Number(req.params.id);
-    const { error } = await supabaseAdmin
-      .from("event_registrations")
-      .upsert(
-        { event_id: eventId, user_id: req.user.user_id, participant_status: "registered" },
-        { onConflict: "user_id,event_id" }
-      );
-    if (error) throw error;
+    const { error } = await supabaseAdmin.rpc("register_for_event", {
+      p_event_id: eventId,
+      p_user_id: req.user.user_id,
+    });
+    if (error) {
+      const [status, message] = REGISTER_ERROR_RESPONSES[error.message] || [];
+      if (status) return res.status(status).json({ error: message });
+      throw error;
+    }
     res.status(201).json({ data: { eventId, registered: true } });
   } catch (err) {
     next(err);

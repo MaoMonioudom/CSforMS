@@ -6,6 +6,12 @@ import { fetchEventsPage, getEventStatus, formatEventDateShort } from "@/lib/eve
 
 const PAGE_SIZE = 12;
 
+const FILTERS = [
+  { key: "upcoming", label: "Upcoming" },
+  { key: "ongoing",  label: "Ongoing" },
+  { key: "all",      label: "All" },
+];
+
 function OngoingBanner({ event }) {
   return (
     <div className="relative inline-block mb-6" style={{ transform: "rotate(-2deg)" }}>
@@ -81,6 +87,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState("upcoming");
 
   useEffect(() => {
     fetchEventsPage({ page: 1, limit: PAGE_SIZE })
@@ -106,7 +113,13 @@ export default function EventsPage() {
   };
 
   const hasMore = events.length < total;
-  const ongoing = events.find(e => getEventStatus(e) === "ongoing");
+  const ongoingEvents = events.filter(e => getEventStatus(e) === "ongoing");
+  const upcomingOnly  = events.filter(e => getEventStatus(e) === "upcoming");
+  const ongoing = ongoingEvents[0];
+  // The spotlighted ongoing event above only ever shows one at a time — the
+  // filter tabs are what let a second overlapping ongoing event (or past
+  // events) actually be reachable instead of silently disappearing.
+  const visibleEvents = filter === "ongoing" ? ongoingEvents : filter === "all" ? events : upcomingOnly;
   // Events load soonest-first (see community.routes.js's orderBy), so as
   // long as there aren't more than a page's worth of events happening in
   // the next 7 days, this stays accurate even before every page is loaded.
@@ -130,9 +143,33 @@ export default function EventsPage() {
         { value: thisWeek, label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
       ]}
     >
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+              filter === f.key
+                ? "bg-foreground text-background"
+                : "bg-black/5 text-muted-foreground hover:bg-black/10"
+            }`}
+          >
+            {f.label}
+            {f.key === "ongoing" && ongoingEvents.length > 0 && (
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {ongoingEvents.length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-8 flex items-end justify-between">
-        <h2 className="text-2xl font-semibold tracking-tight">Upcoming</h2>
-        <p className="text-sm text-muted-foreground">{total} events</p>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {filter === "ongoing" ? "Ongoing" : filter === "all" ? "All events" : "Upcoming"}
+        </h2>
+        <p className="text-sm text-muted-foreground">{visibleEvents.length} events</p>
       </div>
 
       {error && (
@@ -141,11 +178,17 @@ export default function EventsPage() {
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading events…</p>
-      ) : events.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No events yet — check back soon.</p>
+      ) : visibleEvents.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {filter === "ongoing"
+            ? "Nothing happening right now — check back soon."
+            : filter === "all"
+            ? "No events yet — check back soon."
+            : "No upcoming events yet — check back soon."}
+        </p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((event, i) => (
+          {visibleEvents.map((event, i) => (
             <div
               key={event.id}
               className="animate-pin-in"

@@ -55,12 +55,14 @@ const SPACE_ROOTS = { community: "/community", learning: "/learning", inventory:
 
 // Remembers whichever of the 3 module spaces was last visited, so the logo
 // and back button on account pages (Profile, Notifications, ...) can return
-// to that space's homepage instead of a generic hub root.
+// to that space's homepage instead of a generic hub root. Falls back to the
+// landing page ("/") when no module has been visited yet this session —
+// e.g. right after logging in, before going into Community/Learning/Inventory.
 function useLastSpace(mod) {
   useEffect(() => {
     if (SPACE_ROOTS[mod]) sessionStorage.setItem(LAST_SPACE_KEY, SPACE_ROOTS[mod]);
   }, [mod]);
-  return sessionStorage.getItem(LAST_SPACE_KEY) || "/community";
+  return sessionStorage.getItem(LAST_SPACE_KEY) || "/";
 }
 
 // Hub (account) pages get their own labeled box in place of the module box.

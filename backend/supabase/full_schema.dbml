@@ -1,0 +1,636 @@
+// ============================================================
+// CADT Hub — FULL database schema (DBML for dbdiagram.io)
+// ============================================================
+// Scope: every table actually queried by backend/src today, across all
+// modules (auth/users, membership, achievements, notifications, analytics,
+// events/community/collaboration, learning, inventory, workspace).
+//
+// Source of truth: this is code-grounded, not migration-file-grounded.
+// backend/supabase/System_Full_DB.sql is an earlier design draft and has
+// drifted from what's actually live — several of its tables were either
+// never created or were superseded by a different shape created directly
+// in Supabase (not captured in any .sql file here). Every table/column
+// below was cross-checked against a real `.from("table")` / `.select(...)`
+// / `.insert(...)` call in backend/src, not copied from the SQL files.
+//
+// Deliberately EXCLUDED (present in System_Full_DB.sql / early migrations,
+// but no code anywhere reads or writes them — dead or superseded):
+//   - profiles, courses (uuid PK)   -> 001_profiles_and_courses.sql; courses
+//                                      was explicitly DROPped in 005; the
+//                                      old auth.users/Supabase-Auth design
+//                                      the app no longer uses.
+//   - attendances                   -> defined in System_Full_DB.sql, no
+//                                      check-in feature exists in the API.
+//   - borrows, payments (flat)      -> superseded by borrow_transactions /
+//                                      invoices+payments(invoice-linked)+
+//                                      purchase_items (see INVENTORY below).
+//   - requests (id/type shape)      -> superseded by the request_id/
+//                                      request_type shape 003 created.
+//   - notifications (id/type/read/date shape) -> a second, conflicting
+//                                      CREATE TABLE later in the same file;
+//                                      the live table matches the FIRST
+//                                      definition (notification_id/
+//                                      notification_type/is_read) + 003's
+//                                      added dedup_key.
+//   - tags (entity_type/entity_id, polymorphic) -> superseded by a plain
+//                                      tag_id/tag_name dictionary + a
+//                                      junction table per feature (see
+//                                      TAGS below) — confirmed in
+//                                      tagResolver.js / post_tags /
+//                                      collaboration_skills usage.
+//   - event_tags                    -> planned (mentioned in code comments
+//                                      as the 3rd sibling of post_tags /
+//                                      collaboration_skills) but no endpoint
+//                                      or query anywhere creates/reads it.
+//                                      Events currently cannot be tagged.
+//
+// How to use: go to https://dbdiagram.io/d, create a new diagram, and
+// paste this whole file into the DBML editor on the left.
+// ============================================================
+
+
+// ------------------------------------------------------------
+// USERS & AUTH
+// ------------------------------------------------------------
+// Custom bcrypt + JWT auth against this table — NOT Supabase Auth
+// (auth.users / 001's `profiles` are unused legacy).
+
+Table users {
+  user_id integer [pk]
+  student_id varchar [unique]
+  full_name varchar [not null]
+  user_name varchar [not null, unique]
+  email varchar [not null, unique]
+  phone_number varchar
+  password_hash text [not null]
+  profile_img_url text
+  microsoft_id varchar [unique, note: 'Links a "Continue with Microsoft" identity — added by 002_microsoft_auth.sql']
+  microsoft_linked_at timestamp
+  role varchar [not null, default: 'user', note: "user | staff | admin | lecturer (lecturer added by 004_alter_user_role.sql)"]
+  bio text
+  status varchar [not null, default: 'active', note: "active | inactive"]
+  created_at timestamp
+  updated_at timestamp
+  last_login_at timestamp
+
+  Note: 'One row per account. Every other module FKs into user_id.'
+}
+
+// ------------------------------------------------------------
+// MEMBERSHIP & CREDITS
+// ------------------------------------------------------------
+// Credits live ONLY on memberships.credits; every change is logged to
+// credit_transactions by the shared adjustCredits() helper (shared/credits.js)
+// so inventory and membership modules can't drift on the rules.
+
+Table memberships {
+  membership_id integer [pk]
+  user_id integer [ref: > users.user_id, note: 'One row per user (not enforced by a DB UNIQUE — enforced by app logic always looking up/updating the single existing row).']
+  membership_status varchar [not null, default: 'inactive', note: "active | inactive | expired"]
+  credits integer [not null, default: 0, note: '>= 0']
+  start_date date [not null]
+  expired_date date [not null]
+  approved_by integer [ref: > users.user_id, note: 'Staff member who activated/renewed it.']
+  created_at timestamp
+
+  Note: 'Membership is front-desk-actioned (cash/QR in person) — no pending/approval-queue state, unlike inventory requests.'
+}
+
+Table credit_transactions {
+  transaction_id integer [pk]
+  membership_id integer [ref: > memberships.membership_id]
+  transaction_type varchar [note: "earn | spend"]
+  source_type varchar [note: "event | inventory | membership"]
+  source_id integer [note: 'Points at a row in a different table depending on source_type — no DB-enforced FK, app-managed.']
+  amount integer [not null, note: '> 0 — always positive; transaction_type carries the direction.']
+  description text
+  created_at timestamp
+
+  Note: 'Append-only ledger. Every credits change anywhere in the app writes exactly one row here.'
+}
+
+// ------------------------------------------------------------
+// ACHIEVEMENTS
+// ------------------------------------------------------------
+
+Table achievements {
+  achievement_id integer [pk]
+  title varchar [not null]
+  description text
+  icon_url text
+  requirement_type varchar [not null, note: "event_registrations | course_enrollments | borrows | workspace_bookings | community_posts | collaboration_posts — a real, countable action (see achievements.controller.js REQUIREMENT_TYPES)"]
+  requirement_value integer [not null]
+  created_at timestamp
+}
+
+Table user_achievements {
+  user_achievement_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  achievement_id integer [ref: > achievements.achievement_id]
+  earned_at timestamp
+
+  indexes {
+    (user_id, achievement_id) [unique]
+  }
+
+  Note: 'Awarded lazily: checked (and inserted here) whenever /achievements/me is read, not on every triggering action.'
+}
+
+// ------------------------------------------------------------
+// NOTIFICATIONS
+// ------------------------------------------------------------
+
+Table notifications {
+  notification_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  notification_type varchar [note: "e.g. approved | denied | request | overdue | event_reminder | workspace_booking"]
+  message text [not null]
+  is_read boolean [default: false]
+  dedup_key varchar [note: 'Added by 003 for idempotent re-generation of due-date/overdue alerts.']
+  created_at timestamp
+
+  indexes {
+    (user_id, dedup_key) [unique]
+  }
+}
+
+// ------------------------------------------------------------
+// ANALYTICS
+// ------------------------------------------------------------
+
+Table page_views {
+  view_id integer [pk]
+  path varchar [not null]
+  user_id integer [ref: > users.user_id, note: 'Nullable — guests are tracked too (path/viewed_at only).']
+  viewed_at timestamp
+
+  Note: 'Real visit tracking behind the admin Dashboard chart. One row per page load.'
+}
+
+// ------------------------------------------------------------
+// EVENTS
+// ------------------------------------------------------------
+
+Table events {
+  event_id integer [pk]
+  created_by integer [ref: > users.user_id]
+  title varchar [not null]
+  description text
+  location varchar
+  start_date timestamp [not null, note: 'Stored as naive UTC — see normalizeTimestamps.js.']
+  end_date timestamp [not null]
+  max_participants integer
+  credit_reward integer [default: 0]
+  status varchar [note: "upcoming | ongoing | completed | cancelled"]
+  image_url text [note: 'Added by 009.']
+  created_at timestamp
+}
+
+Table event_registrations {
+  registration_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  event_id integer [ref: > events.event_id]
+  participant_status varchar [default: 'registered', note: "registered | cancelled — one-way for the registrant; only an admin removes a registrant (sets 'cancelled')."]
+  registration_date timestamp
+
+  indexes {
+    (user_id, event_id) [unique]
+  }
+
+  Note: 'Writes go through the register_for_event() SQL function (009_atomic_event_registration.sql), which locks the event row (FOR UPDATE) so concurrent registrations cannot over-fill max_participants.'
+}
+
+// ------------------------------------------------------------
+// COMMUNITY (bulletin board)
+// ------------------------------------------------------------
+
+Table community_posts {
+  post_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  title varchar
+  content text [not null]
+  category varchar
+  created_at timestamp
+
+  Note: 'Deleting a post also explicitly clears post_tags/post_votes/post_comments in application code (not relied on FK cascade).'
+}
+
+Table post_comments {
+  comment_id integer [pk]
+  post_id integer [ref: > community_posts.post_id]
+  user_id integer [ref: > users.user_id]
+  content text [not null]
+  created_at timestamp
+}
+
+Table post_votes {
+  vote_id integer [pk]
+  post_id integer [ref: > community_posts.post_id]
+  user_id integer [ref: > users.user_id]
+  vote_type varchar [note: "upvote | downvote — the UI only has a single Heart button, so every row inserted is 'upvote'; toggling deletes the row instead of ever writing 'downvote'."]
+  created_at timestamp
+
+  indexes {
+    (post_id, user_id) [unique]
+  }
+}
+
+// ------------------------------------------------------------
+// TAGS — shared dictionary + one junction table per feature
+// ------------------------------------------------------------
+// Deliberately NOT the polymorphic entity_type/entity_id design from
+// System_Full_DB.sql — the live code uses a plain dictionary (tags) plus a
+// dedicated junction table per feature, resolved through the shared
+// resolveTagIds() helper (shared/tagResolver.js).
+
+Table tags {
+  tag_id integer [pk]
+  tag_name varchar [not null, note: 'Stored lowercase, trimmed, trailing-period stripped (see normalizeTagName).']
+
+  Note: 'One flat dictionary shared by post_tags and collaboration_skills (and, in design intent only, event_tags — never implemented).'
+}
+
+Table post_tags {
+  post_id integer [ref: > community_posts.post_id]
+  tag_id integer [ref: > tags.tag_id]
+
+  Note: 'Junction: tags on a community post. Code-only table — not created by any file in backend/supabase.'
+}
+
+// ------------------------------------------------------------
+// COLLABORATION ("find a team" board)
+// ------------------------------------------------------------
+// Just a contact-info post board — no join/apply workflow, no membership
+// tracking. team_size_current/target are numbers the poster sets/updates
+// themselves, not derived from any membership table.
+
+Table collaboration_posts {
+  collab_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  project_title varchar [not null]
+  category varchar
+  short_pitch text
+  description text
+  post_type varchar [default: 'recruiting', note: "recruiting | looking_for_team"]
+  team_size_current integer [default: 1]
+  team_size_target integer
+  contact_email varchar
+  contact_discord varchar
+  contact_telegram varchar
+  status varchar [default: 'open', note: "open | closed"]
+  created_at timestamp
+}
+
+Table collaboration_roles {
+  role_id integer [pk]
+  collab_id integer [ref: > collaboration_posts.collab_id]
+  role_name varchar [not null]
+
+  Note: 'Roles a post is recruiting for (e.g. "Frontend Developer").'
+}
+
+Table collaboration_skills {
+  collab_id integer [ref: > collaboration_posts.collab_id]
+  tag_id integer [ref: > tags.tag_id]
+
+  Note: 'Junction: skill tags on a collab post (the "skills[]" list on the frontend). Code-only, same pattern as post_tags.'
+}
+
+// ------------------------------------------------------------
+// LEARNING
+// ------------------------------------------------------------
+// Real tables (005/006) replacing the frontend's old localStorage course
+// store. Superseded the uuid-based `courses` table from 001 (dropped).
+
+Table courses {
+  course_id integer [pk]
+  instructor_id integer [ref: > users.user_id, note: 'A user with role = lecturer.']
+  title varchar [not null]
+  subtitle varchar
+  description text
+  category varchar
+  level varchar [default: 'Beginner', note: "Beginner | Intermediate | Advanced"]
+  duration varchar
+  cover_color varchar
+  spine_color varchar
+  paths "text[]" [default: `'{basic}'`, note: "subset of {basic, stepByStep, interactive}"]
+  interactive_price decimal
+  ai_agent_url varchar [note: 'Added by 006. Empty = built-in demo chat.']
+  tags "text[]" [default: `'{}'`]
+  rating decimal [default: 0, note: 'Seed/fallback value — real average comes from course_ratings once any exist.']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table lessons {
+  lesson_id integer [pk]
+  course_id integer [ref: > courses.course_id]
+  sort_order integer [default: 0, note: 'Position within the course; rewritten wholesale on every course save.']
+  title varchar [not null]
+  duration varchar
+  lesson_type varchar [default: 'video', note: "video | reading | lab | project"]
+  body text [note: 'HTML, rendered by BookReader — the "basic" path content.']
+  steps_body text [note: 'Added by 006 — one step per line, the "step-by-step" path.']
+  interactive_body text [note: 'Added by 006 — falls back to body when empty.']
+  points "text[]" [default: `'{}'`]
+  created_at timestamp
+}
+
+Table course_enrollments {
+  enrollment_id integer [pk]
+  course_id integer [ref: > courses.course_id]
+  user_id integer [ref: > users.user_id]
+  enrolled_at timestamp
+
+  indexes {
+    (course_id, user_id) [unique]
+  }
+
+  Note: 'The "students" count on a course card is COUNT(*) here, never a stored counter.'
+}
+
+Table course_unlocks {
+  unlock_id integer [pk]
+  course_id integer [ref: > courses.course_id]
+  user_id integer [ref: > users.user_id]
+  path varchar [default: 'interactive', note: "only value currently allowed"]
+  price_paid decimal [note: 'Price at time of unlock — later course price changes do not rewrite history.']
+  created_at timestamp
+
+  indexes {
+    (course_id, user_id, path) [unique]
+  }
+
+  Note: 'Mock purchase — no real payment provider wired up yet.'
+}
+
+Table course_ratings {
+  rating_id integer [pk]
+  course_id integer [ref: > courses.course_id]
+  user_id integer [ref: > users.user_id]
+  stars integer [not null, note: '1–5']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (course_id, user_id) [unique]
+  }
+
+  Note: 'One rating per enrolled student per course; re-rating overwrites (upsert on course_id,user_id).'
+}
+
+// ------------------------------------------------------------
+// INVENTORY — catalog
+// ------------------------------------------------------------
+// NOTE ON PROVENANCE: inventory_items / borrow_transactions / invoices /
+// maintenance_logs have NO CREATE TABLE statement anywhere in
+// backend/supabase — 003_inventory_requests.sql only ALTERs them (adding
+// columns), meaning the base tables were created directly in Supabase and
+// never captured in a migration file. Columns below are reconstructed
+// entirely from what inventory.controller.js actually selects/inserts.
+
+Table categories {
+  category_id integer [pk]
+  category_name varchar [unique, not null]
+  description text
+  created_at timestamp
+}
+
+Table location_items {
+  location_id integer [pk]
+  location_name varchar
+  zone_name varchar
+  shelf_code varchar
+  created_at timestamp
+}
+
+Table inventory_items {
+  item_id integer [pk]
+  item_name varchar [not null]
+  description text
+  category_id integer [ref: > categories.category_id]
+  location_id integer [ref: > location_items.location_id]
+  current_stock integer [default: 0]
+  min_stock integer [default: 0, note: 'Added by 003 — low-stock threshold for the admin manager.']
+  unit_credit integer [note: 'Credits charged per unit when purchased.']
+  is_returnable boolean [default: true, note: 'true = borrow/return flow; false = consumable, self-serve purchase only.']
+  status varchar [note: "available | borrowed | maintenance | unavailable"]
+  condition varchar
+  image_url text [note: 'Added by 003 — public URL in the item-images storage bucket.']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table filaments {
+  filament_id integer [pk]
+  name varchar [not null, note: "'PLA', 'PETG', 'ABS', ..."]
+  color varchar
+  hex varchar [note: 'Swatch color shown in the UI.']
+  stock_grams integer [not null, default: 0]
+  rate integer [not null, default: 4, note: 'Credits charged per gram.']
+  status varchar [not null, default: 'available', note: "available | unavailable"]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ------------------------------------------------------------
+// INVENTORY — requests, borrow/return, maintenance
+// ------------------------------------------------------------
+
+Table requests {
+  request_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  request_type varchar [not null, note: "borrow | credit_topup | printing | 3d_printing"]
+  status varchar [not null, default: 'pending', note: "pending | approved | denied"]
+
+  // borrow fields
+  item_id integer [ref: > inventory_items.item_id]
+  quantity integer [default: 1]
+  due_date date
+
+  // credit_topup fields
+  amount_usd decimal
+
+  // printing / 3d_printing fields
+  credits integer [note: 'Charge — computed at approval for 3D printing.']
+  pages integer [note: 'printing only.']
+  grams integer [note: '3d_printing only — staff fills in at weigh-in.']
+  filament_id integer [ref: > filaments.filament_id]
+
+  note text
+  order_id varchar [note: 'Groups a multi-item cart checkout into one order.']
+  approved_by integer [ref: > users.user_id]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'The staff approval queue — borrow_transactions only records already-approved borrows.'
+}
+
+Table borrow_transactions {
+  borrow_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  item_id integer [ref: > inventory_items.item_id]
+  quantity_borrow integer
+  borrow_date date [note: 'Defaults to today — the "date" a borrow was approved/checked out.']
+  due_date date [not null]
+  status varchar [note: "borrowed | returned"]
+  approved_by integer [ref: > users.user_id]
+  order_id varchar [note: 'Added by 003 — groups rows from one cart checkout / counter sale.']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table return_transactions {
+  return_id integer [pk]
+  borrow_id integer [ref: > borrow_transactions.borrow_id]
+  quantity_returned integer
+  is_damaged boolean [default: false]
+  notes text
+  received_by integer [ref: > users.user_id]
+  created_at timestamp
+}
+
+Table maintenance_logs {
+  maintenance_id integer [pk]
+  item_id integer [ref: > inventory_items.item_id]
+  reported_by integer [ref: > users.user_id]
+  quantity_damaged integer [default: 1]
+  notes text
+  reported_at timestamp
+  resolved_at timestamp [note: 'Added by 003.']
+  resolved_by integer [ref: > users.user_id, note: 'Added by 003.']
+
+  Note: 'Opened when a return is marked damaged, or via the standalone report-maintenance endpoint. Item status flips back to available once every open log for it is resolved.'
+}
+
+// ------------------------------------------------------------
+// INVENTORY — billing (invoices / payments / purchase lines)
+// ------------------------------------------------------------
+// One paid invoice + its payment row (+ optional purchase_items lines) per
+// charge — created by createPaidInvoice() for every credit top-up,
+// membership activation, printing/3D charge, and item purchase. Everything
+// created through this path is already settled, so status is always 'paid'.
+
+Table invoices {
+  invoice_id integer [pk]
+  user_id integer [ref: > users.user_id]
+  invoice_type varchar [note: "item_purchase | credit_topup | membership | printing | 3d_printing | fee — added by 003"]
+  total_credit integer [default: 0]
+  total_amount integer [default: 0]
+  status varchar [note: "paid | cancelled (only 'paid' is ever written)"]
+  payment_method varchar
+  verified_by integer [ref: > users.user_id, note: 'Staff member who processed it; null for self-serve student purchases.']
+  created_at timestamp
+}
+
+Table purchase_items {
+  purchase_item_id integer [pk]
+  invoice_id integer [ref: > invoices.invoice_id]
+  item_id integer [ref: > inventory_items.item_id]
+  quantity integer
+  unit_price integer
+  subtotal integer
+}
+
+Table payments {
+  payment_id integer [pk]
+  invoice_id integer [ref: > invoices.invoice_id]
+  payment_method varchar
+  amount_paid integer
+  payment_status varchar [note: "paid (only value written)"]
+  paid_at timestamp
+  transaction_id varchar [note: 'Generated label like "INV-42", not a payment gateway reference — no real payment provider is wired up.']
+
+  Note: '1:1 with invoices in practice — kept as a separate table rather than columns on invoices.'
+}
+
+// ------------------------------------------------------------
+// WORKSPACE BOOKING
+// ------------------------------------------------------------
+// Desk/room time-slot booking — modeled separately from inventory_items
+// because it's a slot booking, not countable stock. Reuses location_items
+// rather than inventing a second location concept.
+
+Table workspaces {
+  workspace_id integer [pk]
+  workspace_name varchar [not null]
+  workspace_type varchar [note: "free text — also doubles as the display 'zone' (e.g. 'Quiet Zone'), not a desk/bench/room category"]
+  location_id integer [ref: > location_items.location_id]
+  capacity integer [default: 1]
+  status varchar [not null, default: 'available', note: "available | unavailable — soft on/off switch; never hard-deleted, since workspace_bookings cascades on delete"]
+  created_at timestamp
+}
+
+Table workspace_bookings {
+  booking_id integer [pk]
+  workspace_id integer [ref: > workspaces.workspace_id]
+  user_id integer [ref: > users.user_id]
+  start_time timestamp [not null]
+  end_time timestamp [not null]
+  status varchar [not null, default: 'pending', note: "pending | approved | rejected | cancelled | completed"]
+  approved_by integer [ref: > users.user_id]
+  created_at timestamp
+
+  Note: 'A desk can be double-booked up to its capacity for the same slot — enforced in application code (count of pending+approved rows), not a DB constraint.'
+}
+
+
+// ------------------------------------------------------------
+// Visual grouping in dbdiagram.io
+// ------------------------------------------------------------
+
+TableGroup users_and_access {
+  users
+}
+
+TableGroup membership_and_achievements {
+  memberships
+  credit_transactions
+  achievements
+  user_achievements
+}
+
+TableGroup notifications_and_analytics {
+  notifications
+  page_views
+}
+
+TableGroup community_module {
+  events
+  event_registrations
+  community_posts
+  post_comments
+  post_votes
+  tags
+  post_tags
+  collaboration_posts
+  collaboration_roles
+  collaboration_skills
+}
+
+TableGroup learning_module {
+  courses
+  lessons
+  course_enrollments
+  course_unlocks
+  course_ratings
+}
+
+TableGroup inventory_module {
+  categories
+  location_items
+  inventory_items
+  filaments
+  requests
+  borrow_transactions
+  return_transactions
+  maintenance_logs
+  invoices
+  purchase_items
+  payments
+}
+
+TableGroup workspace_module {
+  workspaces
+  workspace_bookings
+}

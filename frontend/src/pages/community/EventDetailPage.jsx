@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Calendar, MapPin, Users } from "lucide-react";
 import {
-  fetchEventById, formatEventDate,
+  fetchEventById, formatEventDate, getEventStatus,
   fetchMyEventRegistrations, registerForEvent,
 } from "@/lib/events-data";
 import { useAuth } from "@/hub/AuthContext";
@@ -80,6 +80,13 @@ export default function EventDetailPage() {
   const participants = event.participants;
   const pct = event.capacity ? Math.min(100, Math.round((participants / event.capacity) * 100)) : 0;
 
+  // Mirrors the backend's own gate (eventRegistrations.routes.js): once the
+  // event has started, or every spot is taken, registration closes — this
+  // just reflects that in the UI instead of letting a click round-trip fail.
+  const status = getEventStatus(event);
+  const isFull = event.capacity > 0 && participants >= event.capacity;
+  const canRegister = status === "upcoming" && !isFull;
+
   return (
     <main className="bg-background">
       {/* Hero image — sits entirely behind/above the content, never overlaps it.
@@ -123,7 +130,10 @@ export default function EventDetailPage() {
             </h1>
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <Calendar className="size-4" /> {formatEventDate(event.date)}
+                <Calendar className="size-4" />
+                {event.endDate && event.endDate !== event.date
+                  ? <>{formatEventDate(event.date)} <span className="opacity-60">→</span> {formatEventDate(event.endDate)}</>
+                  : formatEventDate(event.date)}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="size-4" /> {event.location}
@@ -161,15 +171,35 @@ export default function EventDetailPage() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <Button
-                className={registered
-                  ? "mt-5 w-full border border-events text-events bg-transparent"
-                  : "mt-5 w-full bg-events text-events-foreground hover:bg-events/90"}
-                disabled={working || registered}
-                onClick={handleRegister}
-              >
-                {registered ? "Registered ✓" : working ? "…" : "Register for this event"}
-              </Button>
+              {registered ? (
+                <Button className="mt-5 w-full border border-events text-events bg-transparent" disabled>
+                  Registered ✓
+                </Button>
+              ) : canRegister ? (
+                <Button
+                  className="mt-5 w-full bg-events text-events-foreground hover:bg-events/90"
+                  disabled={working}
+                  onClick={handleRegister}
+                >
+                  {working ? "…" : "Register for this event"}
+                </Button>
+              ) : status === "ongoing" ? (
+                <div className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2.5">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                  <span className="text-sm font-semibold text-red-700">Ongoing — registration closed</span>
+                </div>
+              ) : status === "ended" ? (
+                <div className="mt-5 w-full rounded-lg border border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-muted-foreground">
+                  Event ended
+                </div>
+              ) : (
+                <div className="mt-5 w-full rounded-lg border border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-muted-foreground">
+                  Event is full
+                </div>
+              )}
               {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
               {registered && (
                 <p className="mt-3 text-xs text-muted-foreground">

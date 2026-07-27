@@ -145,18 +145,6 @@ export default function AuthPage() {
 
   useEffect(() => { setError(""); setLoading(false); }, [isRegister]);
 
-  // Admin/Staff always land in the admin panel, Lecturers in their own
-  // panel — regardless of what page they clicked "Sign In" from, they're
-  // here to manage things, not to resume browsing. Members signing in from
-  // anywhere in the inventory side land on the inventory home page first
-  // (never deep-linked into catalog/checkout); everyone else returns to
-  // wherever they came from, falling back to the inventory home.
-  const destinationFor = (role, from) => {
-    if (role === "Admin" || role === "Staff") return "/admin";
-    if (role === "Lecturer") return "/lecturer";
-    if (from?.startsWith("/inventory")) return "/inventory";
-    return from || "/inventory";
-  };
   // Surfaces failures redirected back from the Microsoft OAuth callback
   // (e.g. /login?error=inactive) as the same ErrorBox a failed form submit uses.
   useEffect(() => {

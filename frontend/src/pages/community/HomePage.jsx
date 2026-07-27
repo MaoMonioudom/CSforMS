@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, Calendar, Users, MessageSquare, MapPin } from "lucide-react";
-import { fetchEvents, formatEventDateShort } from "@/lib/events-data";
+import { fetchEvents, formatEventDateShort, getEventStatus } from "@/lib/events-data";
 import { fetchCommunityPosts, formatRelativeTime } from "@/lib/community-data";
 import { fetchCollabPosts } from "@/lib/collaboration-data";
 import { searchCommunity, suggestRelated, resultKey } from "@/lib/search";
@@ -181,6 +181,33 @@ function CommunityCard({ post, rotate }) {
   );
 }
 
+// ── Happening now sticky ──────────────────────────────────────────────────────
+// Same "ongoing" rule the Events list page's banner and the registration
+// gate use (getEventStatus): started but not yet ended.
+function OngoingNote({ event }) {
+  return (
+    <Pinned rotate={-2} pinColor="#dc2626">
+      <Link
+        to={`/community/eventspace/${event.id}`}
+        className="flex flex-col p-4"
+        style={{ minHeight: "140px", background: "white", boxShadow: "3px 5px 18px rgba(0,0,0,0.2)" }}
+      >
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+          </span>
+          <span className="text-[9px] font-extrabold uppercase tracking-widest text-red-600">Happening now</span>
+        </div>
+        <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
+          {event.title}
+        </p>
+        <p className="mt-2 text-[10px] text-muted-foreground">Ends {formatEventDateShort(event.endDate)}</p>
+      </Link>
+    </Pinned>
+  );
+}
+
 // ── Stats mini sticky ─────────────────────────────────────────────────────────
 function StatPin({ value, label, color, rotate, pinColor }) {
   return (
@@ -227,7 +254,10 @@ export default function HomePage() {
     return suggestRelated(query, { events, collabPosts, communityPosts }, searchResults.map(resultKey), 8);
   }, [query, searchResults, events, collabPosts, communityPosts]);
 
-  const featuredEvents  = events.slice(0, 4);
+  const ongoingEvent = events.find((e) => getEventStatus(e) === "ongoing");
+  // Already surfaced via the "Happening now" note above — don't also list
+  // it under Upcoming Events below.
+  const featuredEvents  = events.filter((e) => getEventStatus(e) !== "ongoing").slice(0, 4);
   const featuredCollab  = collabPosts.slice(0, 4);
   const featuredCommunity = communityPosts.slice(0, 5);
 
@@ -344,6 +374,9 @@ export default function HomePage() {
 
           {/* Middle pinned notes cluster */}
           <div className="hidden lg:flex flex-col gap-7 pt-14 flex-1 max-w-52.5">
+            {/* Happening now — only appears while an event is actually live */}
+            {ongoingEvent && <OngoingNote event={ongoingEvent} />}
+
             {/* Hot discussion sticky */}
             {communityPosts.length > 0 && (
               <Pinned rotate={2} pinColor="#dc2626">

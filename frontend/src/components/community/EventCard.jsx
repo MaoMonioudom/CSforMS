@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Users } from "lucide-react";
-import { formatEventDate } from "@/lib/events-data";
+import { formatEventDate, getEventStatus } from "@/lib/events-data";
 import { Button } from "@/components/community/ui/button";
 
 const tilts = [-1.5, 0.8, -0.6, 1.2, -1, 0.5, 1.5, -0.4];
@@ -25,6 +25,8 @@ function Pushpin() {
 
 export function EventCard({ event, index = 0 }) {
   const rotate = tilts[index % tilts.length];
+  const status = getEventStatus(event);
+  const isFull = event.capacity > 0 && event.participants >= event.capacity;
 
   return (
     <div
@@ -58,10 +60,20 @@ export function EventCard({ event, index = 0 }) {
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-events px-3 py-1 text-xs font-bold text-events-foreground shadow">
-          <Calendar className="size-3.5" />
-          {formatEventDate(event.date)}
-        </div>
+        {status === "ongoing" ? (
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white shadow">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+            </span>
+            Ongoing
+          </div>
+        ) : (
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-events px-3 py-1 text-xs font-bold text-events-foreground shadow">
+            <Calendar className="size-3.5" />
+            {formatEventDate(event.date)}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -97,9 +109,12 @@ export function EventCard({ event, index = 0 }) {
           </div>
           <Button
             size="sm"
-            className="rounded-full bg-events text-events-foreground hover:bg-events/90 font-bold shadow-sm"
+            disabled={status !== "upcoming" || isFull}
+            className={status === "upcoming" && !isFull
+              ? "rounded-full bg-events text-events-foreground hover:bg-events/90 font-bold shadow-sm"
+              : "rounded-full bg-muted text-muted-foreground font-bold shadow-sm"}
           >
-            Register
+            {status === "ongoing" ? "Ongoing" : status === "ended" ? "Ended" : isFull ? "Full" : "Register"}
           </Button>
         </div>
       </div>

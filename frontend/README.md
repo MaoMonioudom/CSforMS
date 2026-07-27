@@ -70,3 +70,70 @@ npm run preview
 - The `@` alias resolves to `./src` (configured in `vite.config.js`)
 - This project uses **Tailwind CSS v4** — no `tailwind.config.js` needed; config lives in `styles.css`
 - Route files use TanStack Router's `createFileRoute` convention
+
+```
+Community/
+├── backend/
+│   ├── src/
+│   │   ├── app.js              
+│   │   ├── server.js               
+│   │   ├── config/
+│   │   │   └── supabaseClient.js
+│   │   ├── middleware/
+│   │   │   ├── errorHandler.js
+│   │   │   ├── optionalAuth.js
+│   │   │   └── requireAuth.js
+│   │   ├── modules/             
+│   │   │   ├── achievements/
+│   │   │   ├── analytics/
+│   │   │   ├── auth/               
+│   │   │   ├── community/           
+│   │   │   ├── inventory/
+│   │   │   ├── learning/
+│   │   │   ├── membership/
+│   │   │   ├── notifications/
+│   │   │   ├── profile/
+│   │   │   ├── users/
+│   │   │   └── workspace/
+│   │   ├── shared/              
+│   │   └── utils/
+│   │       └── jwt.js
+│   ├── supabase/                 
+│   ├── scripts/
+│   │   └── seedLearning.js
+│   ├── postman_collection.json / postman_inventory_collection.json / requests.http
+│   ├── .env / .env.example
+│   └── package.json
+│
+└── frontend/
+    ├── src/
+    │   ├── App.jsx, main.jsx, index.css
+    │   ├── admin/                
+    │   │   ├── community/pages/     
+    │   │   ├── inventory/pages/      
+    │   │   ├── learning/adminSide/ & lecturersSide/
+    │   │   ├── components/    
+    │   │   └── layouts/           
+    │   ├── components/
+    │   │   ├── community/            
+    │   │   │   └── ui/                
+    │   │   ├── inventory/            
+    │   │   ├── learning/ui/          
+    │   │   └── TopNav, AppFooter ...
+    │   ├── hub/                      
+    │   ├── pages/
+    │   │   ├── community/            
+    │   │   ├── inventory/             
+    │   │   └── learning/              
+    │   ├── lib/
+    │   │   ├── api/                  
+    │   │   ├── inventory/            
+    │   │   └── *-data.js            
+    │   ├── hooks/                   
+    │   ├── data/                 
+    │   ├── utils/format.js
+    │   └── assets/                    
+    ├── index.html, vite.config.js, eslint.config.js
+    ├── .env / .env.example
+    └── package.json
+    ```
