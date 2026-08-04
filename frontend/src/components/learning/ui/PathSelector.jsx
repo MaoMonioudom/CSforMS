@@ -24,18 +24,18 @@ export default function PathSelector({ course, activePath, unlocked, onSelect })
             type="button"
             className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-4 py-3 text-left font-body transition-[border-color,transform,background] duration-150 hover:-translate-y-px max-[560px]:w-full ${
               isActive
-                ? "border-[#E8A33D] bg-[#E8A33D]/[0.08]"
-                : "border-[#F7F5F0]/[0.12] bg-[#1B2430] hover:border-[#E8A33D]/50"
+                ? "border-oxblood bg-oxblood/[0.08]"
+                : "border-ink/[0.12] bg-paper-deep hover:border-oxblood/50"
             }`}
             onClick={() => onSelect(id)}
           >
             <span className="shrink-0 text-xl" aria-hidden="true">{path.icon}</span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-sm font-semibold text-[#F7F5F0]">{path.label}</span>
-              <span className="whitespace-nowrap text-xs text-[#B9C2CE]">{path.tagline}</span>
+              <span className="text-sm font-semibold text-ink">{path.label}</span>
+              <span className="whitespace-nowrap text-xs text-ink-soft">{path.tagline}</span>
             </span>
             {showPrice && (
-              <span className="ml-1 shrink-0 text-[13px] font-bold text-[#E8A33D]">
+              <span className="ml-1 shrink-0 text-[13px] font-bold text-oxblood">
                 ${course.interactivePrice.toFixed(2)}
               </span>
             )}

@@ -21,8 +21,8 @@ export default function LessonDetail() {
 
   if (loading || !loaded || !enrolled) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy-deep font-body">
-        <p className="text-sm text-navy-muted">Opening the book…</p>
+      <div className="flex min-h-screen items-center justify-center bg-paper font-body">
+        <p className="text-sm text-ink-soft">Opening the book…</p>
       </div>
     );
   }
@@ -32,16 +32,16 @@ export default function LessonDetail() {
   if (!lesson) return <NotFound />;
 
   return (
-    <div className="min-h-screen bg-navy-deep pb-16 font-body">
+    <div className="min-h-screen bg-paper pb-16 font-body">
       {/* Back link */}
       <div className={`${CONTAINER} flex items-center gap-4 pb-4 pt-6 max-sm:pt-4`}>
         <button
-          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-navy-muted opacity-70 transition-opacity duration-300 hover:text-gold hover:opacity-100"
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-ink-soft opacity-70 transition-opacity duration-300 hover:text-oxblood hover:opacity-100"
           onClick={() => navigate(`/learning/course/${course.id}`)}
         >
           ← Back to {course.title}
         </button>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap font-display text-[0.9rem] italic text-parchment/45 max-sm:hidden">
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap font-display text-[0.9rem] italic text-ink/45 max-sm:hidden">
           {lesson.title}
         </span>
       </div>
