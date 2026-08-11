@@ -10,11 +10,11 @@ const TOPICS = [
 
 const INITIAL_FORM = { name: "", email: "", topic: "", message: "" };
 
-const WRAPPER = "min-h-[80vh] bg-navy-deep py-20 font-body max-sm:py-12";
+const WRAPPER = "min-h-[80vh] bg-paper py-20 font-body max-sm:py-12";
 const INNER = "mx-auto w-full max-w-[600px] px-8 max-sm:px-4";
-const LABEL = "text-[0.76rem] font-semibold uppercase tracking-[0.08em] text-navy-muted";
+const LABEL = "text-[0.76rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
 const INPUT =
-  "w-full rounded border border-gold/20 bg-navy px-3.5 py-3 text-[0.9rem] text-parchment outline-none transition-colors duration-300 focus:border-gold";
+  "w-full rounded border border-ink/20 bg-paper-deep px-3.5 py-3 text-[0.9rem] text-ink outline-none transition-colors duration-300 focus:border-oxblood";
 
 export default function Contact() {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -42,10 +42,10 @@ export default function Contact() {
     return (
       <div className={WRAPPER}>
         <div className={INNER}>
-          <div className="rounded border border-sage/35 bg-navy p-8 text-center">
+          <div className="rounded border border-sage/35 bg-paper-deep p-8 text-center">
             <div className="mb-3 text-[2.5rem]">📬</div>
-            <h3 className="mb-2 font-display text-parchment">Message Received</h3>
-            <p className="text-[0.9rem] text-navy-muted">
+            <h3 className="mb-2 font-display text-ink">Message Received</h3>
+            <p className="text-[0.9rem] text-ink-soft">
               Thank you, {form.name}. We'll get back to you within 2 business days.
             </p>
           </div>
@@ -57,13 +57,13 @@ export default function Contact() {
   return (
     <div className={WRAPPER}>
       <div className={INNER}>
-        <span className="mb-3 block text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-gold">
+        <span className="mb-3 block text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-oxblood">
           Reach Out
         </span>
-        <h1 className="mb-3 mt-2 font-display text-[clamp(2rem,4vw,2.8rem)] leading-tight text-parchment">
+        <h1 className="mb-3 mt-2 font-display text-[clamp(2rem,4vw,2.8rem)] leading-tight text-ink">
           Get in Touch
         </h1>
-        <p className="mb-10 text-[0.9rem] leading-[1.75] text-navy-muted">
+        <p className="mb-10 text-[0.9rem] leading-[1.75] text-ink-soft">
           Have a question about a course, want to suggest a topic, or just say
           hello? We read every message.
         </p>
@@ -97,7 +97,7 @@ export default function Contact() {
             <label className={LABEL} htmlFor="topic">Topic</label>
             <select
               id="topic" name="topic"
-              className={`${INPUT} [&>option]:bg-navy [&>option]:text-parchment`}
+              className={`${INPUT} [&>option]:bg-paper [&>option]:text-ink`}
               value={form.topic}
               onChange={update}
             >
@@ -119,7 +119,7 @@ export default function Contact() {
           </div>
 
           <button
-            className="mt-2 w-full cursor-pointer rounded bg-gold p-3.5 text-base font-semibold text-navy transition-colors duration-300 hover:bg-gold-light"
+            className="mt-2 w-full cursor-pointer rounded bg-oxblood p-3.5 text-base font-semibold text-paper transition-colors duration-300 hover:bg-oxblood-deep"
             onClick={submit}
           >
             Send Message
