@@ -1,18 +1,22 @@
 import { api, getToken, BASE_URL } from "./api/client";
 
-// Real events (from the `events` table) don't carry a photo/tag list or a
+// Real events (from the `events` table) don't carry a tag list or a
 // per-event organizer profile yet — those need their own tables/routes we
 // haven't built. Fall back to something reasonable instead of leaving the
 // existing card/detail UI with blank images and an empty author card.
-const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop";
+export const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop";
 const PLACEHOLDER_AUTHOR = { name: "Community Team", role: "Event Organizer", avatar: "https://i.pravatar.cc/120?img=68" };
 
 // countsById is the { [event_id]: count } map from /registrations/counts —
 // passed in so a single bulk fetch covers every card instead of N calls.
 function mapEvent(row, countsById = {}) {
+  const images = row.images?.length ? row.images : row.image_url ? [row.image_url] : [PLACEHOLDER_IMAGE];
   return {
     id: row.event_id,
-    image: row.image_url || PLACEHOLDER_IMAGE,
+    image: images[0],
+    images,
+    registrationUrl: row.registration_url || null,
+    galleryUrl: row.gallery_url || null,
     title: row.title,
     date: row.start_date,
     endDate: row.end_date,
@@ -121,6 +125,14 @@ export async function fetchEventRegistrants(id) {
 // Admin/staff only — removes a specific registrant (e.g. a no-show).
 export async function removeEventRegistrant(eventId, userId) {
   await api.del(`/api/community/events/${eventId}/registrants/${userId}`);
+}
+
+// Admin/staff only — manually logs someone who registered off-site (e.g.
+// through an externally-hosted event's own link) by email, so capacity/
+// registrant tracking still works for events using registrationUrl.
+export async function addEventRegistrant(eventId, email) {
+  const { data } = await api.post(`/api/community/events/${eventId}/registrants`, { email });
+  return data;
 }
 
 // Admin/staff only — sends every active registrant an in-app notification.

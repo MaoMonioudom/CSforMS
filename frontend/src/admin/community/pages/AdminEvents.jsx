@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell, ImagePlus } from "lucide-react";
+import { Eye, Pencil, Trash2, Plus, Calendar, MapPin, Users, Bell, ImagePlus, ChevronUp, ChevronDown, UserPlus } from "lucide-react";
 import {
   fetchEventsPage, createEvent, updateEvent, deleteEvent, formatEventDateShort,
-  fetchEventRegistrants, sendEventReminder, removeEventRegistrant, uploadEventImage,
-  getEventStatus,
+  fetchEventRegistrants, sendEventReminder, removeEventRegistrant, addEventRegistrant, uploadEventImage,
+  getEventStatus, PLACEHOLDER_IMAGE,
 } from "@/lib/events-data";
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
@@ -17,7 +17,7 @@ import { Button } from "@/components/community/ui/button";
 
 const EMPTY_FORM = {
   title: "", location: "", date: "", endDate: "",
-  capacity: "", image: "", description: "",
+  capacity: "", images: [], registrationUrl: "", galleryUrl: "", description: "",
 };
 
 const PAGE_SIZE = 24;
@@ -58,21 +58,91 @@ function Actions({ event, onEdit, onDelete, onViewRegistrants }) {
   );
 }
 
+// Ordered thumbnail list — add/reorder/remove, first item is the cover
+// shown on cards. Mirrors LessonEditor's move-up/move-down/remove pattern
+// (frontend/src/admin/learning/adminSide/CourseEditorForm.jsx).
+function ImageListEditor({ images, onAdd, onRemove, onMove, uploading }) {
+  const fileInputRef = useRef(null);
+
+  const handleSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) onAdd(file);
+  };
+
+  return (
+    <div>
+      <label className={labelCls}>Images <span className="font-normal text-gray-400">(first = cover, optional — shown at 2:1 on cards and the event page, e.g. 1600×800px)</span></label>
+      <div className="space-y-2">
+        {images.map((url, i) => (
+          <div key={url + i} className="flex items-center gap-2 rounded-lg border border-gray-200 p-2">
+            <div className="flex aspect-[2/1] w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-50">
+              <img src={url} alt={`Image ${i + 1}`} className="h-full w-full object-contain" />
+            </div>
+            <span className="text-xs font-semibold text-gray-500 flex-1 truncate">
+              {i === 0 ? "Cover" : `Image ${i + 1}`}
+            </span>
+            <button type="button" onClick={() => onMove(i, -1)} disabled={i === 0}
+              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+              <ChevronUp className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" onClick={() => onMove(i, 1)} disabled={i === images.length - 1}
+              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" onClick={() => onRemove(i)}
+              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleSelect} />
+      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+        <ImagePlus className="h-3.5 w-3.5" /> {uploading ? "Uploading…" : "Add image"}
+      </button>
+    </div>
+  );
+}
+
 function RegistrantsDialog({ event, onOpenChange }) {
   const [registrants, setRegistrants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     if (!event) return;
     setLoading(true);
     setStatus("");
+    setAddEmail("");
     fetchEventRegistrants(event.id)
       .then(setRegistrants)
       .catch(() => setStatus("Couldn't load registrants — please try again."))
       .finally(() => setLoading(false));
   }, [event]);
+
+  // For events using an external registration link (event.registrationUrl),
+  // sign-ups happen off-site — this is how staff keep the registrant list
+  // and capacity accurate for those without an automatic pipeline back in.
+  const handleAddRegistrant = async () => {
+    const email = addEmail.trim();
+    if (!email) return;
+    setAdding(true);
+    setStatus("");
+    try {
+      const added = await addEventRegistrant(event.id, email);
+      setRegistrants((prev) => prev.some((r) => r.userId === added.userId) ? prev : [{ ...added }, ...prev]);
+      setAddEmail("");
+    } catch (err) {
+      setStatus(err.message);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const handleRemind = async () => {
     setSending(true);
@@ -110,6 +180,21 @@ function RegistrantsDialog({ event, onOpenChange }) {
         <Button onClick={handleRemind} disabled={sending || loading} className="w-full bg-gray-900 text-white hover:bg-gray-700">
           <Bell className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send reminder"}
         </Button>
+
+        {event?.registrationUrl && (
+          <div className="flex items-center gap-2">
+            <input
+              type="email"
+              value={addEmail}
+              onChange={(e) => setAddEmail(e.target.value)}
+              placeholder="Add registrant by email…"
+              className={inputCls}
+            />
+            <Button onClick={handleAddRegistrant} disabled={adding || !addEmail.trim()} className="shrink-0 bg-gray-900 text-white hover:bg-gray-700">
+              <UserPlus className="h-3.5 w-3.5" /> {adding ? "Adding…" : "Add"}
+            </Button>
+          </div>
+        )}
         {status && <p className="text-xs text-gray-500">{status}</p>}
 
         {loading ? (
@@ -201,7 +286,6 @@ export default function AdminEvents() {
   const [listError, setListError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchEventsPage({ page: 1, limit: PAGE_SIZE })
@@ -226,22 +310,31 @@ export default function AdminEvents() {
     }
   };
 
-  const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  const handleAddImage = async (file) => {
     if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
     setUploading(true);
     setError("");
     try {
       const url = await uploadEventImage(file);
-      setForm((prev) => ({ ...prev, image: url }));
+      setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
     } catch (err) {
       setError(err.message || "Upload failed.");
     } finally {
       setUploading(false);
     }
   };
+
+  const handleRemoveImage = (index) =>
+    setForm((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+
+  const handleMoveImage = (index, dir) =>
+    setForm((prev) => {
+      const next = [...prev.images];
+      const target = index + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...prev, images: next };
+    });
 
   const updateField = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
 
@@ -260,7 +353,9 @@ export default function AdminEvents() {
       date: toLocalInput(ev.date),
       endDate: ev.endDate ? toLocalInput(ev.endDate) : "",
       capacity: String(ev.capacity || ""),
-      image: ev.image || "",
+      images: (ev.images || []).filter((url) => url !== PLACEHOLDER_IMAGE),
+      registrationUrl: ev.registrationUrl || "",
+      galleryUrl: ev.galleryUrl || "",
       description: ev.description || "",
     });
     setError("");
@@ -275,7 +370,9 @@ export default function AdminEvents() {
       start_date: toIso(form.date),
       end_date: form.endDate ? toIso(form.endDate) : null,
       max_participants: form.capacity ? Number(form.capacity) : null,
-      image_url: form.image.trim() || null,
+      images: form.images,
+      registration_url: form.registrationUrl.trim() || null,
+      gallery_url: form.galleryUrl.trim() || null,
       description: form.description.trim(),
     };
 
@@ -351,9 +448,11 @@ export default function AdminEvents() {
         </div>
       )}
 
-      {/* Add / Edit form */}
+      {/* Add / Edit form — wide two-column layout, admin panel is desktop-only
+          in practice, so there's no need to cram everything into one narrow
+          stacked column like a mobile form would. */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit event" : "Add event"}</DialogTitle>
             <DialogDescription>
@@ -361,62 +460,84 @@ export default function AdminEvents() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="grid gap-4">
+          <form onSubmit={handleSubmit} className="grid gap-5">
             {error && (
               <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{error}</div>
             )}
 
-            <div>
-              <label className={labelCls}>Title</label>
-              <input className={inputCls} value={form.title} onChange={updateField("title")} required />
-            </div>
-
-            <div>
-              <label className={labelCls}>Location</label>
-              <input className={inputCls} value={form.location} onChange={updateField("location")} required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Starts</label>
-                <input type="datetime-local" className={inputCls} value={form.date} onChange={updateField("date")} required />
-              </div>
-              <div>
-                <label className={labelCls}>Ends <span className="font-normal text-gray-400">(optional)</span></label>
-                <input type="datetime-local" className={inputCls} value={form.endDate} onChange={updateField("endDate")} />
-              </div>
-            </div>
-
-            <div>
-              <label className={labelCls}>Capacity <span className="font-normal text-gray-400">(optional)</span></label>
-              <input type="number" min="0" className={inputCls} value={form.capacity} onChange={updateField("capacity")} />
-            </div>
-
-            <div>
-              <label className={labelCls}>Cover image <span className="font-normal text-gray-400">(optional)</span></label>
-              <div className="flex items-center gap-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                  {form.image
-                    ? <img src={form.image} alt="Event cover" className="h-full w-full object-cover" />
-                    : <ImagePlus className="h-5 w-5 text-gray-300" />}
+            <div className="grid gap-5 lg:grid-cols-2 lg:gap-x-8">
+              {/* Left column — the essentials */}
+              <div className="grid gap-4 content-start">
+                <div>
+                  <label className={labelCls}>Title</label>
+                  <input className={inputCls} value={form.title} onChange={updateField("title")} required />
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleImageSelect} />
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
-                  <ImagePlus className="h-3.5 w-3.5" /> {uploading ? "Uploading…" : form.image ? "Change image" : "Upload image"}
-                </button>
-                {form.image && (
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
-                    className="text-sm font-medium text-red-500 hover:text-red-600">
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
 
-            <div>
-              <label className={labelCls}>Description</label>
-              <textarea className={inputCls} rows={4} value={form.description} onChange={updateField("description")} />
+                <div>
+                  <label className={labelCls}>Location</label>
+                  <input className={inputCls} value={form.location} onChange={updateField("location")} required />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Starts</label>
+                    <input type="datetime-local" className={inputCls} value={form.date} onChange={updateField("date")} required />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Ends <span className="font-normal text-gray-400">(optional)</span></label>
+                    <input type="datetime-local" className={inputCls} value={form.endDate} onChange={updateField("endDate")} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Capacity <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input type="number" min="0" className={inputCls} value={form.capacity} onChange={updateField("capacity")} />
+                </div>
+
+                <div>
+                  <label className={labelCls}>Description</label>
+                  <textarea className={inputCls} rows={6} value={form.description} onChange={updateField("description")} />
+                </div>
+              </div>
+
+              {/* Right column — media and outbound links */}
+              <div className="grid gap-4 content-start">
+                <ImageListEditor
+                  images={form.images}
+                  onAdd={handleAddImage}
+                  onRemove={handleRemoveImage}
+                  onMove={handleMoveImage}
+                  uploading={uploading}
+                />
+
+                <div>
+                  <label className={labelCls}>Registration link <span className="font-normal text-gray-400">(optional — leave blank for in-app registration)</span></label>
+                  <input
+                    type="url"
+                    className={inputCls}
+                    value={form.registrationUrl}
+                    onChange={updateField("registrationUrl")}
+                    placeholder="https://forms.gle/…"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">
+                    If set, "Register" sends people to this link instead of registering in-app. Capacity and the registrant list still work — add registrants manually from the Registrants panel.
+                  </p>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Photo gallery link <span className="font-normal text-gray-400">(optional — add after the event, e.g. a Google Drive folder)</span></label>
+                  <input
+                    type="url"
+                    className={inputCls}
+                    value={form.galleryUrl}
+                    onChange={updateField("galleryUrl")}
+                    placeholder="https://drive.google.com/…"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">
+                    Shown as a "View event gallery" button once the event ends. Leave blank until photos are ready — attendees see "coming soon" until then.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <DialogFooter className="mt-2">

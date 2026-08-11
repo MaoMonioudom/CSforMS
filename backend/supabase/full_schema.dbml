@@ -182,8 +182,20 @@ Table events {
   max_participants integer
   credit_reward integer [default: 0]
   status varchar [note: "upcoming | ongoing | completed | cancelled"]
-  image_url text [note: 'Added by 009.']
+  image_url text [note: 'Added by 009. Legacy single-image column — kept in sync as a copy of event_images sort_order 0 (the cover) once 010 adds the gallery table.']
+  registration_url text [note: 'Added by 010. When set, "Register" links out to this URL instead of the in-app register_for_event() flow.']
+  gallery_url text [note: 'Added by 011. Outbound link (e.g. Google Drive) to the event\'s full photo dump, added by staff after the event ends. Shown in a sidebar box once the event has ended — "coming soon" until set.']
   created_at timestamp
+}
+
+Table event_images {
+  image_id integer [pk]
+  event_id integer [ref: > events.event_id]
+  image_url text [not null]
+  sort_order integer [default: 0, note: 'Position within the event; 0 = cover image. Rewritten wholesale on every event save, same convention as lessons.sort_order.']
+  created_at timestamp
+
+  Note: 'Added by 010_event_images.sql.'
 }
 
 Table event_registrations {

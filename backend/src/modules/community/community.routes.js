@@ -5,6 +5,7 @@ import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseCl
 import { requireAuth, requireRole } from "../../middleware/requireAuth.js";
 import { optionalAuth } from "../../middleware/optionalAuth.js";
 import eventRegistrationsRoutes from "./eventRegistrations.routes.js";
+import { listEvents, getEvent, createEvent, updateEvent, deleteEvent } from "./events.controller.js";
 import { listCollabPosts, getCollabPost, createCollabPost, deleteCollabPost } from "./collaboration.controller.js";
 import { listCommunityPosts, getCommunityPost, createCommunityPost, deleteCommunityPost, toggleLike, createComment } from "./communityPost.controller.js";
 
@@ -41,8 +42,15 @@ router.post("/events/upload-image", requireAuth, requireRole("admin", "staff"), 
   }
 });
 // Events are admin/staff-owned — everyone else (including logged-in
-// students) gets read-only access; writes require the admin panel.
-router.use("/events", createCrudRouter("events", { pkColumn: "event_id", ownerField: "created_by", writeRoles: ["admin", "staff"], orderBy: { column: "start_date", ascending: true } }));
+// students) gets read-only access; writes require the admin panel. Events
+// have a real child table (event_images, for the gallery) that crudRouter
+// can't read/write/clean up, so — like collaborations/posts below — list/
+// detail/create/update/delete all get dedicated handlers (events.controller.js).
+router.get("/events", listEvents);
+router.get("/events/:id", getEvent);
+router.post("/events", requireAuth, requireRole("admin", "staff"), createEvent);
+router.put("/events/:id", requireAuth, requireRole("admin", "staff"), updateEvent);
+router.delete("/events/:id", requireAuth, requireRole("admin", "staff"), deleteEvent);
 // Collaboration posts have real child tables for roles/skills
 // (collaboration_roles, collaboration_skills+tags) that crudRouter can't
 // read, write, or clean up on delete — list/detail/create/delete get

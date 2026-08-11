@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SectionPage, PushPin } from "@/components/community/SectionPage";
 import { EventCard } from "@/components/community/EventCard";
-import { fetchEventsPage, getEventStatus, formatEventDateShort } from "@/lib/events-data";
+import { fetchEvents, fetchEventsPage, fetchMyEventRegistrations, getEventStatus, formatEventDateShort } from "@/lib/events-data";
+import { useAuth } from "@/hub/AuthContext";
 
 const PAGE_SIZE = 12;
 
 const FILTERS = [
+  { key: "all",      label: "All" },
   { key: "upcoming", label: "Upcoming" },
   { key: "ongoing",  label: "Ongoing" },
-  { key: "all",      label: "All" },
+  { key: "ended",    label: "Ended" },
 ];
 
 function OngoingBanner({ event }) {
@@ -81,20 +83,33 @@ function MoreStack({ count, onClick, loading }) {
 }
 
 export default function EventsPage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
+  const [registeredIds, setRegisteredIds] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("upcoming");
+  const [filter, setFilter] = useState("all");
+  // Separate from the paginated grid below — the grid only ever holds the
+  // pages loaded so far, which isn't enough to say how many events overall
+  // are actually upcoming (total from fetchEventsPage counts every event,
+  // ended ones included).
+  const [allEvents, setAllEvents] = useState([]);
 
   useEffect(() => {
     fetchEventsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ events, total }) => { setEvents(events); setTotal(total); })
       .catch(() => setError("Couldn't load events — please try refreshing."))
       .finally(() => setLoading(false));
+    fetchEvents().then(setAllEvents).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user) { setRegisteredIds([]); return; }
+    fetchMyEventRegistrations().then(setRegisteredIds).catch(() => {});
+  }, [user?.id]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -115,15 +130,19 @@ export default function EventsPage() {
   const hasMore = events.length < total;
   const ongoingEvents = events.filter(e => getEventStatus(e) === "ongoing");
   const upcomingOnly  = events.filter(e => getEventStatus(e) === "upcoming");
+  const endedEvents   = events.filter(e => getEventStatus(e) === "ended");
   const ongoing = ongoingEvents[0];
   // The spotlighted ongoing event above only ever shows one at a time — the
   // filter tabs are what let a second overlapping ongoing event (or past
-  // events) actually be reachable instead of silently disappearing.
-  const visibleEvents = filter === "ongoing" ? ongoingEvents : filter === "all" ? events : upcomingOnly;
-  // Events load soonest-first (see community.routes.js's orderBy), so as
-  // long as there aren't more than a page's worth of events happening in
-  // the next 7 days, this stays accurate even before every page is loaded.
-  const thisWeek = events.filter(e => {
+  // events) actually be reachable instead of silently disappearing. "Ended"
+  // exists mainly so people can browse past events and reach their photo
+  // galleries (see EventCard's gallery button).
+  const visibleEvents = filter === "ongoing" ? ongoingEvents
+    : filter === "ended" ? endedEvents
+    : filter === "all" ? events
+    : upcomingOnly;
+  const upcomingCount = allEvents.filter(e => getEventStatus(e) === "upcoming").length;
+  const thisWeek = allEvents.filter(e => {
     const days = (new Date(e.date) - new Date()) / 86400000;
     return days >= 0 && days <= 7;
   }).length;
@@ -139,7 +158,7 @@ export default function EventsPage() {
       tapeColor="rgba(249,115,22,0.78)"
       banner={ongoing ? <OngoingBanner event={ongoing} /> : null}
       stats={[
-        { value: total,    label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
+        { value: upcomingCount, label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
         { value: thisWeek, label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
       ]}
     >
@@ -167,7 +186,7 @@ export default function EventsPage() {
 
       <div className="mb-8 flex items-end justify-between">
         <h2 className="text-2xl font-semibold tracking-tight">
-          {filter === "ongoing" ? "Ongoing" : filter === "all" ? "All events" : "Upcoming"}
+          {filter === "ongoing" ? "Ongoing" : filter === "ended" ? "Ended" : filter === "all" ? "All events" : "Upcoming"}
         </h2>
         <p className="text-sm text-muted-foreground">{visibleEvents.length} events</p>
       </div>
@@ -182,6 +201,8 @@ export default function EventsPage() {
         <p className="text-sm text-muted-foreground">
           {filter === "ongoing"
             ? "Nothing happening right now — check back soon."
+            : filter === "ended"
+            ? "No ended events yet."
             : filter === "all"
             ? "No events yet — check back soon."
             : "No upcoming events yet — check back soon."}
@@ -194,7 +215,7 @@ export default function EventsPage() {
               className="animate-pin-in"
               style={{ animationDelay: `${(i % PAGE_SIZE) * 70}ms` }}
             >
-              <EventCard event={event} index={i} />
+              <EventCard event={event} index={i} registered={registeredIds.includes(event.id)} />
             </div>
           ))}
 

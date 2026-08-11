@@ -82,6 +82,43 @@ router.get("/registrations/counts", async (req, res, next) => {
   }
 });
 
+// Admin/staff-only: manually record someone who registered off-site (e.g.
+// through an externally-hosted event's own form/link — see events.registration_url)
+// so capacity/registrant tooling still reflects reality even though the
+// sign-up itself happened outside this app. Looked up by email rather than
+// user_id since that's what staff have on hand from an external form.
+// Upsert (not insert) so re-adding someone who was previously removed
+// (participant_status: "cancelled") reactivates their row instead of
+// hitting the (user_id, event_id) unique constraint.
+router.post("/:id/registrants", requireAuth, requireRole("admin", "staff"), async (req, res, next) => {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const eventId = Number(req.params.id);
+    const email = (req.body.email || "").trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: "email is required" });
+
+    const { data: user, error: userErr } = await supabaseAdmin
+      .from("users")
+      .select("user_id, full_name, email, user_name")
+      .ilike("email", email)
+      .maybeSingle();
+    if (userErr) throw userErr;
+    if (!user) return res.status(404).json({ error: "No user found with that email" });
+
+    const { error: upsertErr } = await supabaseAdmin
+      .from("event_registrations")
+      .upsert(
+        { event_id: eventId, user_id: user.user_id, participant_status: "registered" },
+        { onConflict: "user_id,event_id" }
+      );
+    if (upsertErr) throw upsertErr;
+
+    res.status(201).json({ data: { userId: user.user_id, name: user.full_name, email: user.email } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Admin/staff-only: who's registered for one event, for the admin panel.
 router.get("/:id/registrants", requireAuth, requireRole("admin", "staff"), async (req, res, next) => {
   if (!assertSupabaseConfigured(res)) return;

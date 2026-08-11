@@ -255,9 +255,10 @@ export default function HomePage() {
   }, [query, searchResults, events, collabPosts, communityPosts]);
 
   const ongoingEvent = events.find((e) => getEventStatus(e) === "ongoing");
-  // Already surfaced via the "Happening now" note above — don't also list
-  // it under Upcoming Events below.
-  const featuredEvents  = events.filter((e) => getEventStatus(e) !== "ongoing").slice(0, 4);
+  // Only truly-upcoming events — ongoing is already surfaced via the
+  // "Happening now" note above, and ended events don't belong under
+  // "Upcoming Events" at all.
+  const featuredEvents  = events.filter((e) => getEventStatus(e) === "upcoming").slice(0, 4);
   const featuredCollab  = collabPosts.slice(0, 4);
   const featuredCommunity = communityPosts.slice(0, 5);
 

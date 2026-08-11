@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, Camera } from "lucide-react";
 import { formatEventDate, getEventStatus } from "@/lib/events-data";
 import { Button } from "@/components/community/ui/button";
 
@@ -23,10 +23,28 @@ function Pushpin() {
   );
 }
 
-export function EventCard({ event, index = 0 }) {
+export function EventCard({ event, index = 0, registered = false }) {
   const rotate = tilts[index % tilts.length];
   const status = getEventStatus(event);
   const isFull = event.capacity > 0 && event.participants >= event.capacity;
+  const canRegister = status === "upcoming" && !isFull && !registered;
+  const hasGallery = status === "ended" && !!event.galleryUrl;
+
+  // The card is one big <Link> to the detail page — an external-link event's
+  // Register button needs to open that link directly instead, so it stops
+  // the click from also navigating into the card (can't nest an <a> inside
+  // the outer <Link>'s <a>, hence window.open rather than a real anchor).
+  const handleRegisterClick = (e) => {
+    if (canRegister && event.registrationUrl) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(event.registrationUrl, "_blank", "noopener,noreferrer");
+    } else if (hasGallery) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(event.galleryUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <div
@@ -41,6 +59,8 @@ export function EventCard({ event, index = 0 }) {
       <Pushpin />
     <Link
       to={`/community/eventspace/${event.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
       className="group relative flex flex-col overflow-hidden rounded-none text-card-foreground paper"
       style={{
         boxShadow: paperShadow,
@@ -53,12 +73,12 @@ export function EventCard({ event, index = 0 }) {
       <div className="h-2 bg-events w-full shrink-0" />
 
       {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden">
+      <div className="relative aspect-[2/1] overflow-hidden bg-muted">
         <img
           src={event.image}
           alt={event.title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
         />
         {status === "ongoing" ? (
           <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white shadow">
@@ -109,12 +129,29 @@ export function EventCard({ event, index = 0 }) {
           </div>
           <Button
             size="sm"
-            disabled={status !== "upcoming" || isFull}
-            className={status === "upcoming" && !isFull
+            onClick={handleRegisterClick}
+            disabled={!hasGallery && (registered || status !== "upcoming" || isFull)}
+            className={status === "upcoming" && !isFull && !registered
               ? "rounded-full bg-events text-events-foreground hover:bg-events/90 font-bold shadow-sm"
+              : registered
+              ? "rounded-full border border-events text-events bg-transparent font-bold shadow-sm"
+              : hasGallery
+              ? "rounded-full border border-events text-events bg-transparent font-bold shadow-sm hover:bg-events/10"
               : "rounded-full bg-muted text-muted-foreground font-bold shadow-sm"}
           >
-            {status === "ongoing" ? "Ongoing" : status === "ended" ? "Ended" : isFull ? "Full" : "Register"}
+            {registered
+              ? "Registered"
+              : status === "ongoing"
+              ? "Ongoing"
+              : hasGallery
+              ? <span className="inline-flex items-center gap-1"><Camera className="size-3.5" /> Gallery ↗</span>
+              : status === "ended"
+              ? "Ended"
+              : isFull
+              ? "Full"
+              : canRegister && event.registrationUrl
+              ? "Register ↗"
+              : "Register"}
           </Button>
         </div>
       </div>
