@@ -64,10 +64,7 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
 
   return (
     <div style={{ padding: '2rem' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.charcoal }}>Lab Services</h1>
-        <p style={{ margin: '4px 0 0', fontSize: 13, color: T.faint }}>Fulfill walk-up print and 3D print jobs — find a student, charge credits directly.</p>
-      </div>
+      {/* Page title/subtitle live in the shared teal top bar (PAGE_META). */}
 
       {/* ── What the service lab offers ─────────────────────────────────────── */}
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">

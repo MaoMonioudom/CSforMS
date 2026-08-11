@@ -4,14 +4,15 @@ import GradientStatCard from '../../../components/inventory/ui/GradientStatCard'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const PAGE_SIZE = 10
 const AVATAR_COLORS = [T.accent, T.teal, T.amber, T.purple, T.blue, T.red]
 const avatarColor = (name) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
 
-const METHOD_FILTERS = ['All', 'Cash', 'QR', 'Credit', 'Borrow']
+const METHOD_FILTERS = ['All', 'Cash', 'Credit']
 
-export default function PaymentsPage({ payments, setPayments, items = [] }) {
+export default function PaymentsPage({ payments, setPayments, items = [], requests = [], users = [] }) {
   const [search,     setSearch]     = useState('')
   const [methodTab,  setMethodTab]  = useState('All')
   const [dateFilter, setDateFilter] = useState('')
@@ -19,18 +20,21 @@ export default function PaymentsPage({ payments, setPayments, items = [] }) {
   const [expanded,   setExpanded]   = useState(null)
 
   const completed = payments.filter(p => p.status === 'Completed')
-  const pending   = payments.filter(p => p.status === 'Pending')
+  // "Pending Payments" isn't a payment record at all yet — it's a credit
+  // top-up request still awaiting staff approval in Requests.
+  const pendingTopups = requests.filter(r => r.type === 'credit_topup' && r.status === 'pending')
 
-  // Totals breakdown — cash and QR are both USD in-person payments, credit/loan are
-  // internal balance transactions, so each is tracked separately rather than summed together.
+  // Totals breakdown — cash is the USD in-person payments, credit is the
+  // internal balance transactions.
   const sumBy = (method, currency) => completed.filter(p => p.method === method && p.currency === currency).reduce((s, p) => s + p.amount, 0)
   const totalCash   = sumBy('Cash', 'USD')
-  const totalQR     = sumBy('QR', 'USD')
   const totalCredit = completed.filter(p => p.currency === 'CR').reduce((s, p) => s + p.amount, 0)
-  const totalUSD    = totalCash + totalQR
+  // 40 credits per $1 (see CREDIT_RATE) — revenue is cash paid plus the
+  // dollar-equivalent of credits spent.
+  const totalRevenue = totalCash + totalCredit / 40
 
   const filtered = payments.filter(p =>
-    (methodTab === 'All' || p.method === methodTab || (methodTab === 'Borrow' && p.method === 'Loan')) &&
+    (methodTab === 'All' || p.method === methodTab) &&
     (!dateFilter || p.date === dateFilter) &&
     (p.customerName.toLowerCase().includes(search.toLowerCase()) ||
      p.orderId.toLowerCase().includes(search.toLowerCase()) ||
@@ -50,13 +54,12 @@ export default function PaymentsPage({ payments, setPayments, items = [] }) {
       </div>
 
       {/* All six stats in one row on desktop — wraps 3+3 on tablet, 2×3 on phone */}
-      <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+      <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         <GradientStatCard label="Completed Payments" value={completed.length} period="All time" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
-        <GradientStatCard label="Pending Payments" value={pending.length} period="All time" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
+        <GradientStatCard label="Pending Payments" value={pendingTopups.length} period="Awaiting approval" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
         <GradientStatCard label="Total Cash" value={`$${totalCash}`} period="Completed" gradient="linear-gradient(135deg,#DBEAFE,#EEF2FF)" />
-        <GradientStatCard label="Total QR / Bank" value={`$${totalQR}`} period="Completed" gradient="linear-gradient(135deg,#EDE9FE,#F5F3FF)" />
         <GradientStatCard label="Total Credit" value={`${totalCredit} cr`} period="Completed" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
-        <GradientStatCard label="Total Revenue" value={`$${totalUSD}`} period="Cash + QR" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
+        <GradientStatCard label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} period="Cash + Credit÷40" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
       </div>
 
       {/* List */}
@@ -112,7 +115,7 @@ export default function PaymentsPage({ payments, setPayments, items = [] }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="m-0 truncate text-[13px] font-semibold text-ink sm:text-sm">{p.customerName}</p>
-                  <p className="m-0 mt-0.5 truncate text-[11px] text-faint sm:text-xs">{p.type} · {p.date}</p>
+                  <p className="m-0 mt-0.5 truncate text-[11px] text-faint sm:text-xs">{p.type} · {fmtDateTime(p.dateTime || p.date)}</p>
                 </div>
                 <span className="hidden flex-shrink-0 text-sm font-bold text-charcoal sm:block">
                   {isBorrow ? '0 cr' : (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} cr`)}

@@ -7,12 +7,15 @@ import {
 import { T } from '../../../lib/inventory/theme'
 import { OVERDUE_RATE, CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const DAY = 86400000
 const today = () => new Date().toISOString().split('T')[0]
 const daysOverdue = (dueDate) => Math.max(0, Math.floor((Date.now() - new Date(dueDate).getTime()) / DAY))
 const daysLeft    = (dueDate) => Math.ceil((new Date(dueDate).getTime() - Date.now()) / DAY)
-const fmt = (iso) => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+// Borrow dates are full timestamps now; due dates stay date-only — the shared
+// formatter renders each accordingly, in Cambodia time.
+const fmt = fmtDateTime
 
 const TONE_STYLE = {
   green:  { bg: T.greenLight, fg: T.green },
@@ -127,7 +130,7 @@ function TransactionDetail({ r }) {
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: T.charcoal }}>{h.action}</div>
-                <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {h.date}</div>
+                <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {fmt(h.date)}</div>
               </div>
             </div>
           ))}
@@ -293,10 +296,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
         }
       `}</style>
 
-      <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Borrow Tracker</h1>
-        <p className="m-0 mt-0.5 text-sm text-faint">Track all active loans and returns — click any row for full transaction details.</p>
-      </div>
+      {/* Page title/subtitle live in the shared teal top bar (PAGE_META). */}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, margin: '18px 0 12px', flexWrap: 'wrap' }}>
         <div className="bt-chip-scroll" style={{ flex: '1 1 auto', minWidth: 0 }}>

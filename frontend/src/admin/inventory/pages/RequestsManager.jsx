@@ -7,6 +7,7 @@ import {
 import { T } from '../../../lib/inventory/theme'
 import { CREDIT_RATE, PRINT_SERVICES, CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
+import { fmtDateTime } from '../../../lib/inventory/datetime'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 const PAGE_SIZE = 10
@@ -75,6 +76,15 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     tryAction(() => ctx.approveBorrowGroup(group.map(r => r.id)),
       group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
 
+  // Purchases charge the student at approval time — this is where credits
+  // are actually deducted and stock reduced, so precheck the balance.
+  const approvePurchase = (e) => {
+    const student = getUser(e.first.userId)
+    const total = e.group.reduce((s, r) => s + ((items.find(i => i.id === r.itemId)?.credits ?? 0) * (r.qty || 1)), 0)
+    if (student && student.credits < total) { showToast('Student has insufficient credits for this purchase.', 'error'); return }
+    return tryAction(() => ctx.approvePurchaseGroup(e.group.map(r => r.id)), `Approved purchase — ${total} cr deducted`)
+  }
+
   const denyGroup = (group) =>
     tryAction(() => ctx.denyRequests(group.map(r => r.id)), 'Declined request')
 
@@ -117,19 +127,19 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     return { icon: <Package2 size={14} color={T.blue} />, title: req.itemName, category: getCategory(req.itemId) }
   }
 
-  // Group every borrow request sharing an orderId into one transaction entry
-  // (pending AND handled, so the same grouping applies everywhere); credit
-  // top-up / printing / 3D print requests stay as individual entries.
+  // Group every borrow/purchase request sharing an orderId into one
+  // transaction entry (pending AND handled, so the same grouping applies
+  // everywhere); credit top-up / print requests stay as individual entries.
   const entries = useMemo(() => {
     const groups = []
     const index = new Map()
     const others = []
     requests.forEach(req => {
-      if (req.type === 'borrow') {
-        const key = req.orderId || `single-${req.id}`
+      if (req.type === 'borrow' || req.type === 'purchase') {
+        const key = `${req.type}-${req.orderId || `single-${req.id}`}`
         if (index.has(key)) { groups[index.get(key)].group.push(req); return }
         index.set(key, groups.length)
-        groups.push({ kind: 'borrow', key, group: [req], date: req.date })
+        groups.push({ kind: req.type, key, group: [req], date: req.date })
       } else {
         others.push({ kind: 'other', key: `req-${req.id}`, req, date: req.date })
       }
@@ -140,16 +150,25 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const statusLabel = (raw) => raw === 'approved' ? 'Approved' : raw === 'denied' ? 'Declined' : 'Pending'
 
   const withMeta = entries.map(entry => {
+    const isGroup = entry.kind === 'borrow' || entry.kind === 'purchase'
     const isBorrow = entry.kind === 'borrow'
-    const first = isBorrow ? entry.group[0] : entry.req
+    const first = isGroup ? entry.group[0] : entry.req
     const student = getUser(first.userId)
     const status = statusLabel(first.status)
-    const itemsList = isBorrow
+    const itemsList = isGroup
       ? entry.group.map(r => ({ id: r.id, name: r.itemName, qty: r.qty || 1, category: getCategory(r.itemId) }))
       : [{ id: first.id, name: rowMeta(first).title, qty: first.qty || 1, category: rowMeta(first).category }]
     const totalQty = itemsList.reduce((s, it) => s + it.qty, 0)
-    return { ...entry, isBorrow, first, student, status, itemsList, totalQty }
+    return { ...entry, isGroup, isBorrow, first, student, status, itemsList, totalQty }
   })
+
+  // One place decides how each entry kind is approved/declined.
+  const approveEntry = (e) => {
+    if (e.kind === 'borrow') return approveGroup(e.group)
+    if (e.kind === 'purchase') return approvePurchase(e)
+    return approve(e.first)
+  }
+  const denyEntry = (e) => e.isGroup ? denyGroup(e.group) : deny(e.first)
 
   const filtered = withMeta.filter(e =>
     (statusFilter === 'All' || e.status === statusFilter) &&
@@ -203,10 +222,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         }
       `}</style>
 
-      <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Borrow Request Management</h1>
-        <p className="m-0 mt-0.5 text-sm text-faint">Review and approve student requests — borrow items, credit top-ups, and print jobs.</p>
-      </div>
+      {/* Page title/subtitle live in the shared teal top bar (PAGE_META). */}
 
       {/* toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, margin: '18px 0', flexWrap: 'wrap' }}>
@@ -264,35 +280,41 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 </div>
                 <span style={{ fontSize: 12, color: T.muted }}>{e.totalQty}</span>
                 <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5 }}>
-                  <div className="req-truncate">{e.first.date}</div>
-                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {e.first.dueDate}</div>}
+                  <div className="req-truncate">{fmtDateTime(e.first.date)}</div>
+                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {fmtDateTime(e.first.dueDate)}</div>}
                 </div>
                 <div><StatusPill status={e.status} /></div>
-                <div className="req-actions" onClick={ev => ev.stopPropagation()}>
-                  {e.status === 'Pending' && !needsWeight && (
+                {/* 3D print jobs need a weight entered before they can be charged —
+                    that control lives here in Actions only, not as a separate
+                    full-width strip under the row. */}
+                <div className="req-actions" onClick={ev => ev.stopPropagation()} style={needsWeight ? { flexDirection: 'column', alignItems: 'flex-end', gap: 4 } : undefined}>
+                  {needsWeight ? (
                     <>
-                      <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                      <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input type="number" min="0" step="0.1" placeholder="Grams" value={gramsInput[e.first.id] || ''}
+                          onChange={ev => setGramsInput(p => ({ ...p, [e.first.id]: ev.target.value }))}
+                          style={{ width: 70, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 7, padding: '6px 8px', fontSize: 12, outline: 'none' }} />
+                        <button className="req-btn req-btn-approve" title="Confirm weight & charge" onClick={() => confirm3DWeight(e.first)}><Check size={12} /></button>
+                        <button className="req-btn req-btn-decline" title="Decline" onClick={() => deny(e.first)}><Ban size={12} /></button>
+                      </div>
+                      {gramsInput[e.first.id] > 0 && (() => {
+                        const rate = filaments.find(f => f.id === e.first.filamentId)?.rate ?? 4
+                        return <span style={{ fontSize: 10.5, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[e.first.id] * rate)} cr</strong></span>
+                      })()}
+                    </>
+                  ) : (
+                    <>
+                      {e.status === 'Pending' && (
+                        <>
+                          <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                          <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                        </>
+                      )}
+                      <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
                     </>
                   )}
-                  <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
                 </div>
               </div>
-
-              {/* 3D print jobs — weigh the finished print, then charge */}
-              {needsWeight && (
-                <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', borderBottom: `1px solid ${T.stone}` }}>
-                  <input type="number" min="0" step="0.1" placeholder="Weight in grams" value={gramsInput[e.first.id] || ''}
-                    onChange={ev => setGramsInput(p => ({ ...p, [e.first.id]: ev.target.value }))}
-                    style={{ width: 140, background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, outline: 'none' }} />
-                  {gramsInput[e.first.id] > 0 && (() => {
-                    const rate = filaments.find(f => f.id === e.first.filamentId)?.rate ?? 4
-                    return <span style={{ fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{Math.round(gramsInput[e.first.id] * rate)} cr</strong> at {rate}cr/g</span>
-                  })()}
-                  <button className="req-btn req-btn-decline" onClick={() => deny(e.first)}><Ban size={12} /> Decline</button>
-                  <button className="req-btn req-btn-approve" onClick={() => confirm3DWeight(e.first)}><Check size={12} /> Confirm Weight &amp; Charge</button>
-                </div>
-              )}
             </div>
           )
         })}
@@ -311,12 +333,12 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               <div style={{ marginBottom: 6 }}>
                 <span className="req-items-pill"><Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'} · Qty {e.totalQty}</span>
               </div>
-              <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{e.first.date}{e.first.dueDate ? ` → ${e.first.dueDate}` : ''}</div>
+              <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{fmtDateTime(e.first.date)}{e.first.dueDate ? ` → ${fmtDateTime(e.first.dueDate)}` : ''}</div>
               <div className="req-actions">
                 {e.status === 'Pending' && !(!e.isBorrow && e.first.type === '3d_printing') && (
                   <>
-                    <button className="req-btn req-btn-decline" onClick={() => e.isBorrow ? denyGroup(e.group) : deny(e.first)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                    <button className="req-btn req-btn-approve" onClick={() => e.isBorrow ? approveGroup(e.group) : approve(e.first)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                    <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
+                    <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
                   </>
                 )}
                 <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
@@ -361,8 +383,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5 }}>
                   <InfoRow label="Name" value={detail.student?.name || `User #${detail.first.userId}`} />
                   <InfoRow label="Student ID" value={detail.student?.studentId || '—'} />
-                  <InfoRow label="Request Date" value={detail.first.date} />
-                  <InfoRow label="Return Date" value={detail.first.dueDate || '—'} />
+                  <InfoRow label="Request Date" value={fmtDateTime(detail.first.date)} />
+                  <InfoRow label="Return Date" value={detail.first.dueDate ? fmtDateTime(detail.first.dueDate) : '—'} />
                 </div>
               </div>
 
@@ -386,7 +408,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               </div>
 
               <div>
-                <SectionLabel icon={FileText} text="Borrow Notes" />
+                <SectionLabel icon={FileText} text={detail.isBorrow ? 'Borrow Notes' : 'Notes'} />
                 <p style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, background: T.cream, borderRadius: 8, padding: '10px 12px', margin: 0 }}>
                   {detail.first.note || 'No notes provided.'}
                 </p>
@@ -400,7 +422,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0891b2', marginTop: 5, flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: T.charcoal }}>{h.action}</div>
-                        <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {h.date}</div>
+                        <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {fmtDateTime(h.date)}</div>
                       </div>
                     </div>
                   ))}
@@ -410,11 +432,11 @@ export default function RequestsManager({ requests, borrows, items, users, user,
               {detail.status === 'Pending' && !(!detail.isBorrow && detail.first.type === '3d_printing') && (
                 <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
                   <button className="req-btn req-btn-approve" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
-                    onClick={() => { (detail.isBorrow ? approveGroup(detail.group) : approve(detail.first)); setDetail(null) }}>
+                    onClick={() => { (approveEntry(detail)); setDetail(null) }}>
                     <Check size={13} /> Approve
                   </button>
                   <button className="req-btn req-btn-decline" style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
-                    onClick={() => { (detail.isBorrow ? denyGroup(detail.group) : deny(detail.first)); setDetail(null) }}>
+                    onClick={() => { (denyEntry(detail)); setDetail(null) }}>
                     <Ban size={13} /> Decline
                   </button>
                 </div>

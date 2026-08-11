@@ -51,7 +51,6 @@ const FOLDERS = [
           { label: "Payment List",   to: "/admin/inventory/payments", icon: CreditCard },
         ],
       },
-      { label: "Users & Roles", to: "/admin/inventory/users", icon: UserCog },
     ],
   },
   {

@@ -58,6 +58,26 @@ export function toDbItem(ui, categories = [], locations = []) {
   }
 }
 
+export const createLocation = (loc) => api.post('/api/inventory/locations', loc)
+
+// Shelf codes only get saved if they match an existing location_items row —
+// the Add/Edit Item form lets staff type any room + shelf code combination,
+// so this creates the location on the fly the first time a new one is used,
+// instead of silently dropping it (which showed "—" for zone/room).
+export async function resolveLocation({ room, zone }, locations = []) {
+  if (!zone?.trim()) return locations.find((l) => l.location_name === room) || null
+  const code = zone.trim()
+  const existing = locations.find((l) => l.shelf_code === code)
+  if (existing) return existing
+  const zonePrefix = code.match(/^[A-Za-z]+/)?.[0] || code
+  const { data } = await createLocation({
+    location_name: room || 'Makerspace Room',
+    zone_name: `Zone ${zonePrefix}`,
+    shelf_code: code,
+  })
+  return data
+}
+
 export function toUiBorrow(row) {
   const ret = Array.isArray(row.return_transactions) ? row.return_transactions[0] : null
   return {
@@ -179,12 +199,23 @@ export const submitPrintingRequest = ({ pages, credits, note }) =>
 export const submit3DPrintRequest = ({ filamentId, note }) =>
   api.post('/api/inventory/requests', { request_type: '3d_printing', filament_id: filamentId, note: note || null })
 
-// cart: [{ itemId, qty }] — consumables only, charged to own credits.
-export const purchaseItems = (cart) => api.post('/api/inventory/purchase', { cart })
+// cart: [{ itemId, qty }] — consumables only. No longer charged instantly:
+// each line becomes a pending 'purchase' request (shared order id) and
+// credits/stock only move when staff approve it in Request Management.
+export async function purchaseItems(cart) {
+  const orderId = `ORD-${Date.now()}`
+  for (const l of cart) {
+    await api.post('/api/inventory/requests', {
+      request_type: 'purchase', item_id: l.itemId, quantity: l.qty || 1, order_id: orderId,
+    })
+  }
+  return orderId
+}
 
 // ── Staff actions ────────────────────────────────────────────────────────
 
 export const approveBorrowGroup = (requestIds) => api.post('/api/inventory/requests/approve-borrow', { requestIds })
+export const approvePurchaseGroup = (requestIds) => api.post('/api/inventory/requests/approve-purchase', { requestIds })
 export const denyRequests = (requestIds) => api.post('/api/inventory/requests/deny', { requestIds })
 export const approveTopUp = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-topup`)
 export const approvePrinting = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-printing`)
@@ -209,6 +240,11 @@ export const deleteItem = (itemId) => api.del(`/api/inventory/items/${itemId}`)
 export const reportMaintenance = (itemId, { notes, quantityDamaged } = {}) =>
   api.post(`/api/inventory/items/${itemId}/report-maintenance`, { notes, quantityDamaged })
 export const completeMaintenance = (itemId) => api.post(`/api/inventory/items/${itemId}/maintenance-complete`)
+// { itemId -> { notes, quantityDamaged, reportedAt } } — the open issue
+// behind each item currently flagged unavailable/Maintenance.
+export const fetchOpenMaintenance = () =>
+  api.get('/api/inventory/maintenance-open').then((r) =>
+    Object.fromEntries(r.data.map((l) => [l.item_id, { notes: l.notes, quantityDamaged: l.quantity_damaged, reportedAt: l.reported_at }])))
 
 export const createFilament = (f) =>
   api.post('/api/inventory/filaments', { name: f.name, color: f.color, hex: f.hex, stock_grams: f.stockGrams ?? 0, rate: f.rate ?? 4 })

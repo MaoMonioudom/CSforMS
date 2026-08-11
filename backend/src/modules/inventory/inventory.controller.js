@@ -135,6 +135,7 @@ export async function listPayments(req, res, next) {
       customerName: inv.users?.full_name || "—",
       customerId: inv.users?.student_id || null,
       date: (inv.created_at || "").slice(0, 10),
+      dateTime: inv.created_at || null,
       amount: inv.total_amount > 0 ? inv.total_amount : inv.total_credit,
       currency: inv.total_amount > 0 ? "USD" : "CR",
       method: inv.payment_method ? inv.payment_method[0].toUpperCase() + inv.payment_method.slice(1) : "—",
@@ -179,6 +180,11 @@ export async function createRequest(req, res, next) {
     const { request_type } = req.body;
     const allowed = REQUEST_FIELDS[request_type];
     if (!allowed) return res.status(400).json({ error: "Invalid request_type" });
+    // Document printing is walk-up only — staff charge it instantly at the
+    // counter (chargePrintingNow) once the student is physically present, so
+    // there's no remote request queue for it (unlike 3D printing, which is
+    // dropped off and picked up later).
+    if (request_type === "printing") return res.status(400).json({ error: "Document printing must be requested in person at the makerspace." });
 
     const payload = { user_id: req.user.user_id, request_type, status: "pending" };
     for (const f of allowed) if (req.body[f] !== undefined) payload[f] = req.body[f];

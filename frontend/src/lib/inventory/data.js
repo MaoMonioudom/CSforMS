@@ -19,14 +19,17 @@ export const TEAM_CONTACT = {
   telegram: 'https://t.me/cadtmakerspace',
 }
 
+// Only two physical rooms exist at the makerspace — Makerspace Room and
+// Mechanic Room. Every category is assigned to whichever one actually
+// houses that kind of equipment.
 export const CATEGORIES = [
   { id: 'electronic_equipment', label: 'Electronic Equipment', Icon: Zap,           room: 'Makerspace Room', color: T.amberLight,  iconColor: T.amber  },
   { id: 'electronic_component', label: 'Electronic Components', Icon: CircuitBoard,  room: 'Makerspace Room', color: T.blueLight,   iconColor: T.blue   },
-  { id: 'cnc_machines',         label: 'CNC Machines',          Icon: Cog,           room: 'Fabrication Lab', color: T.redLight,    iconColor: T.red    },
+  { id: 'cnc_machines',         label: 'CNC Machines',          Icon: Cog,           room: 'Mechanic Room',   color: T.redLight,    iconColor: T.red    },
   { id: 'manual_mechanical',    label: 'Mechanical Tools',       Icon: Wrench,        room: 'Mechanic Room',   color: T.purpleLight, iconColor: T.purple },
   { id: 'mechanical_fasteners', label: 'Fasteners & Hardware',   Icon: Settings,      room: 'Mechanic Room',   color: T.tealLight,   iconColor: T.teal   },
-  { id: 'digital_device',       label: 'Digital Devices',        Icon: Monitor,       room: 'Digital Lab',     color: T.greenLight,  iconColor: T.green  },
-  { id: 'raw_material',         label: 'Raw Materials',          Icon: Layers,        room: 'Storage Room',    color: '#F5F0E8',     iconColor: '#8B6914'},
+  { id: 'digital_device',       label: 'Digital Devices',        Icon: Monitor,       room: 'Makerspace Room', color: T.greenLight,  iconColor: T.green  },
+  { id: 'raw_material',         label: 'Raw Materials',          Icon: Layers,        room: 'Makerspace Room', color: '#F5F0E8',     iconColor: '#8B6914'},
   { id: 'electronic_tool',      label: 'Electronic Tools',       Icon: Hammer,        room: 'Makerspace Room', color: '#F0EBF8',     iconColor: '#7B3FA0'},
 ]
 
@@ -75,6 +78,12 @@ export const MEMBERSHIP_PLAN = { price: 20, bonusCredits: 200 }
 export const OVERDUE_RATE = 5
 export const CREDIT_RATE = 40 // credits granted per $1 topped up
 export const CREDIT_TIERS = [[40, 1], [200, 5], [400, 10], [1000, 25]]
+
+// Fixed stock-status threshold — applies to every item regardless of its own
+// Min Stock field (that field is no longer used for the Low Stock badge).
+export const LOW_STOCK_THRESHOLD = 5
+export const isLowStock = (stock) => stock > 0 && stock < LOW_STOCK_THRESHOLD
+export const isOutOfStock = (stock) => stock <= 0
 
 export const INITIAL_USERS = [
   { id: 1, name: 'Admin User', email: 'admin@cadt.edu.kh',              role: 'admin', studentId: null,          membership: null,     credits: 999, permissions: [] },

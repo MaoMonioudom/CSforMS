@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import * as inv from './api'
 import { useAuth } from '../../hub/AuthContext'
 
@@ -99,10 +99,12 @@ export function InventoryProvider({ children }) {
     submitTopUpRequest:   (p) => run(() => inv.submitTopUpRequest(p), [refreshRequests]),
     submitPrintingRequest:(p) => run(() => inv.submitPrintingRequest(p), [refreshRequests]),
     submit3DPrintRequest: (p) => run(() => inv.submit3DPrintRequest(p), [refreshRequests]),
-    purchaseItems:        (cart) => run(() => inv.purchaseItems(cart), [refreshCatalog, creditsChanged]),
+    // Purchases are requests now — nothing is charged until staff approve.
+    purchaseItems:        (cart) => run(() => inv.purchaseItems(cart), [refreshRequests]),
 
     // staff — requests
     approveBorrowGroup: (ids) => run(() => inv.approveBorrowGroup(ids), [refreshRequests, refreshBorrows, refreshCatalog]),
+    approvePurchaseGroup: (ids) => run(() => inv.approvePurchaseGroup(ids), [refreshRequests, refreshPayments, refreshCatalog, refreshUsers, creditsChanged]),
     denyRequests:       (ids) => run(() => inv.denyRequests(ids), [refreshRequests]),
     approveTopUp:       (id) => run(() => inv.approveTopUp(id), [refreshRequests, refreshPayments, refreshUsers, creditsChanged]),
     approvePrinting:    (id) => run(() => inv.approvePrinting(id), [refreshRequests, refreshPayments, refreshUsers, creditsChanged]),
@@ -117,10 +119,13 @@ export function InventoryProvider({ children }) {
     topUpCounter:  (p) => run(() => inv.topUpCounter(p), [refreshPayments, refreshUsers, creditsChanged]),
 
     // staff — item/filament CRUD
-    saveItem: (ui) => {
-      const payload = inv.toDbItem(ui, categories, locations)
-      return run(() => (ui.id ? inv.updateItem(ui.id, payload) : inv.createItem(payload)), [refreshCatalog])
-    },
+    saveItem: (ui) => run(async () => {
+      // Any room + shelf code the form is submitted with gets a real
+      // location row if one doesn't already exist — see resolveLocation.
+      const location = await inv.resolveLocation({ room: ui.room, zone: ui.zone }, locations)
+      const payload = inv.toDbItem({ ...ui, locationId: location?.location_id ?? null }, categories, locations)
+      return ui.id ? inv.updateItem(ui.id, payload) : inv.createItem(payload)
+    }, [refreshCatalog]),
     deleteItem:     (id) => run(() => inv.deleteItem(id), [refreshCatalog]),
     saveFilament:   (f) => run(() => (f.id ? inv.updateFilament(f.id, f) : inv.createFilament(f)), [refreshCatalog]),
     deleteFilament: (id) => run(() => inv.deleteFilament(id), [refreshCatalog]),
@@ -132,6 +137,20 @@ export function InventoryProvider({ children }) {
     markAllNotificationsRead: () => run(() => inv.markAllNotificationsRead(), [refreshNotifications]),
   }
 
+  // Every one of the actions above is a "click to submit" mutation — this
+  // guards ALL of them (student and staff alike) against rapid repeat clicks
+  // firing the same request multiple times (e.g. "Complete Sale" clicked 3x
+  // creating 3 transactions). One action name in flight at a time; extra
+  // clicks while it's pending are silently ignored rather than queued.
+  const pendingActions = useRef(new Set())
+  const guardedActions = Object.fromEntries(
+    Object.entries(actions).map(([name, fn]) => [name, (...args) => {
+      if (pendingActions.current.has(name)) return Promise.resolve()
+      pendingActions.current.add(name)
+      return Promise.resolve(fn(...args)).finally(() => pendingActions.current.delete(name))
+    }])
+  )
+
   const value = {
     user, loading,
     items, filaments, categories, locations,
@@ -139,7 +158,7 @@ export function InventoryProvider({ children }) {
     // raw setters kept for optimistic tweaks; prefer the actions
     setItems, setUsers, setBorrows, setRequests, setNotifications, setPayments, setFilaments,
     refreshCatalog, refreshBorrows, refreshRequests, refreshNotifications, refreshPayments, refreshUsers,
-    ...actions,
+    ...guardedActions,
     toast, setToast, showToast,
     cart, setCart, cartOpen, setCartOpen,
   }

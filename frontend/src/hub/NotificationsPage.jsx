@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package } from 'lucide-react'
+import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package, ArrowLeft } from 'lucide-react'
 import { T } from '../lib/inventory/theme'
 import { CATEGORIES } from '../lib/inventory/data'
 import { useInventory } from '../lib/inventory/InventoryContext'
 import { useAuth } from './AuthContext'
 import { TopNav } from '../components/TopNav'
+import { AppFooter } from '../components/AppFooter'
 import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll } from '../lib/notifications-data'
+import { fmtDateTime } from '../lib/inventory/datetime'
 
 // One notification feed for all three modules (Community, Learning,
 // Inventory) — same page whether you land here from the top-nav bell or
@@ -52,36 +54,28 @@ const ACTIVITY_META = {
 // /inventory/my-borrows redirect for how you land here from that module).
 const FEED_FILTERS = [
   { id: 'all',       label: 'All',        Icon: Boxes },
+  { id: 'system',    label: 'System',     Icon: Bell },
   { id: 'community', label: 'Community',  Icon: MessageSquare },
   { id: 'learning',  label: 'Learning',   Icon: BookOpen },
   { id: 'inventory', label: 'Inventory',  Icon: Package },
-  { id: 'system',    label: 'System',     Icon: Bell },
 ]
 
-// Second-level tabs, shown only when the Inventory tab is active.
+// Second-level tabs, shown only when the Inventory tab is active. There's no
+// All/Alerts here — inventory alert notifications live under the top-level
+// "All" filter; this row is purely the student's own activity records.
 const INVENTORY_SUB_FILTERS = [
-  { id: 'all',       label: 'All',       Icon: Boxes },
-  { id: 'alerts',    label: 'Alerts',    Icon: Bell },
-  { id: 'borrows',   label: 'My Borrows', Icon: RotateCcw },
-  { id: 'purchases', label: 'Purchases',  Icon: ShoppingBag },
-  { id: 'history',   label: 'History',    Icon: Clock },
-  { id: 'requested', label: 'Requests',   Icon: ClipboardList },
+  { id: 'borrows',   label: 'My Borrows',   Icon: RotateCcw },
+  { id: 'purchases', label: 'My Purchases', Icon: ShoppingBag },
+  { id: 'requested', label: 'My Requests',  Icon: ClipboardList },
+  { id: 'history',   label: 'History',      Icon: Clock },
 ]
 
 // Every entry kind (notification, borrow/purchase, request, credit top-up)
-// carries a real timestamp, not just a date — show the time: "9:12 AM"
-// today/yesterday, a full date otherwise. dueDate is deliberately excluded
-// — that's a day-level deadline, not a moment, so it's rendered separately
-// without a time. Module-scope (not just inside NotificationsPage) since
-// DetailModal's itemList rendering (returnDate) needs it too.
-function formatEntryDateTime(dateStr) {
-  const d = new Date(dateStr)
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const startOfDay = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
-  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000)
-  if (diffDays <= 1) return time
-  return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · ${time}`
-}
+// carries a real timestamp — always shown in full ("2:09 PM, 7-16-2026"),
+// in Cambodia time, regardless of how recent it is. Module-scope (not just
+// inside NotificationsPage) since DetailModal's itemList rendering
+// (returnDate) needs it too.
+const formatEntryDateTime = fmtDateTime
 
 function DetailModal({ title, rows, status, onClose, itemList }) {
   return (
@@ -158,7 +152,7 @@ export default function NotificationsPage() {
   const isUser = user?.role === 'user'
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
-  const [invSubFilter, setInvSubFilter] = useState('all')
+  const [invSubFilter, setInvSubFilter] = useState('borrows')
 
   // Wait for AuthContext to finish restoring the session before deciding
   // no one's logged in — otherwise a page refresh here always bounces
@@ -226,7 +220,11 @@ export default function NotificationsPage() {
   // (now redundant top-level ids are gone) nothing else — kept as named
   // functions since "history" needs two conditions and reads better named.
   const isBorrowsEntry   = (e) => e.kind === 'transaction' && !isPurchaseGroup(e.raw) && !isFinishedGroup(e.raw)
-  const isPurchasesEntry = (e) => e.kind === 'transaction' && isPurchaseGroup(e.raw)
+  // My Purchases covers both completed purchases (transactions) and purchase
+  // requests still waiting for staff approval.
+  const isPurchasesEntry = (e) =>
+    (e.kind === 'transaction' && isPurchaseGroup(e.raw)) ||
+    (e.kind === 'request' && e.raw[0]?.type === 'purchase')
   const isHistoryEntry   = (e) => e.kind === 'transaction' && !isPurchaseGroup(e.raw) && isFinishedGroup(e.raw)
   const isRequestedEntry = (e) => e.kind === 'request' || e.kind === 'credit_topup'
   // Everything that "belongs to Inventory": its own alert types, plus every
@@ -242,13 +240,14 @@ export default function NotificationsPage() {
       return e.kind === 'notification' && notifModule(e.raw.type) === filter
     }
     if (filter === 'inventory') {
-      if (!isInventoryEntry(e)) return false
-      if (invSubFilter === 'alerts')    return e.kind === 'notification'
+      // Only the student's own activity records — inventory alert
+      // notifications appear under the top-level "All" filter instead.
+      if (!isInventoryEntry(e) || e.kind === 'notification') return false
       if (invSubFilter === 'borrows')   return isBorrowsEntry(e)
       if (invSubFilter === 'purchases') return isPurchasesEntry(e)
       if (invSubFilter === 'history')   return isHistoryEntry(e)
       if (invSubFilter === 'requested') return isRequestedEntry(e)
-      return true // 'all' (within Inventory)
+      return false
     }
     return false
   })
@@ -323,7 +322,7 @@ export default function NotificationsPage() {
           <div className="px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
             <button onClick={() => navigate(-1)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              ← Back
+              <ArrowLeft size={14} /> Back
             </button>
             <h1 style={{ margin: 0, fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Notifications
@@ -339,7 +338,7 @@ export default function NotificationsPage() {
       {!isUser && (
         <button onClick={() => navigate(-1)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: T.white, border: `1px solid ${T.border}`, color: T.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          ← Back
+          <ArrowLeft size={14} /> Back
         </button>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -352,11 +351,11 @@ export default function NotificationsPage() {
       </div>
 
       {isUser && (
-        <div className="inv-hscroll mb-2 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+        <div className="inv-hscroll mb-4 flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {FEED_FILTERS.map(f => {
             const active = filter === f.id
             return (
-              <button key={f.id} onClick={() => { setFilter(f.id); setInvSubFilter('all') }}
+              <button key={f.id} onClick={() => { setFilter(f.id); setInvSubFilter('borrows') }}
                 className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
                 style={{ border: active ? 'none' : `1px solid ${T.border}`, background: active ? '#0891b2' : T.white, color: active ? '#fff' : T.muted }}>
                 <f.Icon size={12} color={active ? '#fff' : T.faint} />
@@ -364,23 +363,26 @@ export default function NotificationsPage() {
               </button>
             )
           })}
-        </div>
-      )}
 
-      {isUser && (
-        <div className="inv-hscroll mb-4 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
-          style={{ visibility: filter === 'inventory' ? 'visible' : 'hidden' }}>
-          {INVENTORY_SUB_FILTERS.map(f => {
-            const active = invSubFilter === f.id
-            return (
-              <button key={f.id} onClick={() => setInvSubFilter(f.id)}
-                className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
-                style={{ border: `1px solid ${active ? T.teal : T.border}`, background: active ? T.tealLight : 'transparent', color: active ? T.teal : T.faint }}>
-                <f.Icon size={11} color={active ? T.teal : T.faint} />
-                {f.label}
-              </button>
-            )
-          })}
+          {/* Inventory's own borrow/purchase/request/history breakdown — shown
+              inline on the same row right after the module tabs, only once
+              Inventory is the active filter, instead of a separate row below. */}
+          {filter === 'inventory' && (
+            <>
+              <div style={{ width: 1, height: 18, background: T.border, flexShrink: 0, margin: '0 2px' }} />
+              {INVENTORY_SUB_FILTERS.map(f => {
+                const active = invSubFilter === f.id
+                return (
+                  <button key={f.id} onClick={() => setInvSubFilter(f.id)}
+                    className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                    style={{ border: `1px solid ${active ? T.teal : T.border}`, background: active ? T.tealLight : 'transparent', color: active ? T.teal : T.faint }}>
+                    <f.Icon size={11} color={active ? T.teal : T.faint} />
+                    {f.label}
+                  </button>
+                )
+              })}
+            </>
+          )}
         </div>
       )}
 
@@ -389,7 +391,7 @@ export default function NotificationsPage() {
           <p style={{ margin: 0, fontSize: 15 }}>Loading…</p>
         </div>
       ) : visibleFeed.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '5rem', color: T.faint }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '5rem 1rem', color: T.faint }}>
           <Bell size={48} strokeWidth={1} color={T.borderDark} style={{ marginBottom: 16 }} />
           <p style={{ margin: 0, fontSize: 15 }}>Nothing here yet.</p>
         </div>
@@ -441,8 +443,10 @@ export default function NotificationsPage() {
 
             if (e.kind === 'request') {
               const group = e.raw
-              const meta = ACTIVITY_META.request
-              const title = group.length === 1 ? group[0].itemName : `${group.length} item borrow request`
+              const isPurchaseReq = group[0]?.type === 'purchase'
+              const meta = isPurchaseReq ? ACTIVITY_META.transaction : ACTIVITY_META.request
+              const reqLabel = isPurchaseReq ? 'Purchase Request' : 'Borrow Request'
+              const title = group.length === 1 ? group[0].itemName : `${group.length} item ${reqLabel.toLowerCase()}`
               return (
                 <div key={e.id} onClick={() => openEntry(e)}
                   style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
@@ -451,7 +455,7 @@ export default function NotificationsPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>Borrow Request · {formatEntryDateTime(e.date)}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{reqLabel} · {formatEntryDateTime(e.date)}</p>
                   </div>
                   <Badge status={group[0].status} />
                 </div>
@@ -491,19 +495,24 @@ export default function NotificationsPage() {
           ]}
         />
       )}
-      {selected && selected.kind === 'request' && (
-        <DetailModal
-          title={selected.raw.length === 1 ? selected.raw[0].itemName : `Borrow Request — ${selected.raw.length} items`}
-          status={selected.raw[0].status}
-          onClose={() => setSelected(null)}
-          itemList={selected.raw.map(r => enrich({ itemName: r.itemName, itemId: r.itemId, action: 'borrowed', dueDate: r.dueDate, qty: r.qty }))}
-          rows={[
-            ['Requested', formatEntryDateTime(selected.raw[0].date)],
-            ['Approved', selected.raw[0].approvedAt ? formatEntryDateTime(selected.raw[0].approvedAt) : null],
-            ['Note', selected.raw[0].note],
-          ]}
-        />
-      )}
+      {selected && selected.kind === 'request' && (() => {
+        const isPurchaseReq = selected.raw[0]?.type === 'purchase'
+        return (
+          <DetailModal
+            title={selected.raw.length === 1
+              ? selected.raw[0].itemName
+              : `${isPurchaseReq ? 'Purchase' : 'Borrow'} Request — ${selected.raw.length} items`}
+            status={selected.raw[0].status}
+            onClose={() => setSelected(null)}
+            itemList={selected.raw.map(r => enrich({ itemName: r.itemName, itemId: r.itemId, action: isPurchaseReq ? 'purchased' : 'borrowed', dueDate: r.dueDate, qty: r.qty }))}
+            rows={[
+              ['Requested', formatEntryDateTime(selected.raw[0].date)],
+              ['Approved', selected.raw[0].approvedAt ? formatEntryDateTime(selected.raw[0].approvedAt) : null],
+              ['Purpose', isPurchaseReq ? null : selected.raw[0].note],
+            ]}
+          />
+        )
+      })()}
       {selected && selected.kind === 'credit_topup' && (
         <DetailModal
           title="Credit Top-Up Request"
@@ -533,6 +542,7 @@ export default function NotificationsPage() {
         )
       })()}
       </div>
+      {isUser && <AppFooter />}
     </div>
   )
 }

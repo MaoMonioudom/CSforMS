@@ -29,6 +29,7 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
         await submitBorrowRequests(borrowItems.map(ci => ({
           itemId: ci.item.id, qty: ci.qty,
           dueDate: ci.dueDate || fallbackDue.toISOString().split('T')[0],
+          note: ci.purpose || null,
         })))
       }
       if (buyItems.length > 0) {
@@ -36,7 +37,8 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
       }
       setCart([])
       onClose()
-      showToast(borrowItems.length > 0 ? `${borrowItems.length} borrow request(s) submitted for staff approval.` : 'Purchase complete!')
+      // Both flows are requests now — nothing is charged until staff approve.
+      showToast('Request submitted for staff approval — credits are only deducted once approved.')
     } catch (err) {
       showToast(err.message || 'Checkout failed. Please try again.', 'error')
     } finally {
