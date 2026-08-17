@@ -68,14 +68,14 @@ export default function InventoryAdminArea() {
       {/* Full-width top bar — spans the whole area right of the sidebar.
           Shows the page title and the signed-in profile (dropdown → sign out). */}
       <div className="sticky top-0 z-40" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, #0c4a6e 0%, #0e7490 55%, #0891b2 100%)',
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)',
         backgroundSize: '40px 40px, 40px 40px, cover',
-        borderBottom: '1px solid rgba(8,145,178,0.25)',
+        borderBottom: '1px solid color-mix(in oklch, var(--color-inv-accent) 25%, transparent)',
       }}>
         <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-8">
           <div className="min-w-0">
             <h1 className="m-0 truncate text-lg font-bold text-white sm:text-xl" style={{ letterSpacing: '-0.02em' }}>{meta.title}</h1>
-            <p className="m-0 mt-0.5 hidden truncate text-xs sm:block" style={{ color: 'rgba(255,255,255,0.55)' }}>{meta.subtitle}</p>
+            <p className="m-0 mt-0.5 hidden truncate text-xs sm:block" style={{ color: 'var(--on-dark-muted)' }}>{meta.subtitle}</p>
           </div>
 
           {/* Profile chip + dropdown */}
@@ -84,25 +84,25 @@ export default function InventoryAdminArea() {
               className="flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-3"
               style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#67e8f9,#0891b2)', color: '#083344' }}>
+                style={{ background: 'linear-gradient(135deg,color-mix(in oklch, var(--color-inv-accent) 55%, white),var(--color-inv-accent))', color: 'var(--color-charcoal)' }}>
                 {user.name[0].toUpperCase()}
               </span>
               <span className="hidden text-left sm:block">
                 <span className="block text-xs font-bold leading-tight text-white">{user.name}</span>
-                <span className="block text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>{user.role}</span>
+                <span className="block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--on-dark-muted)' }}>{user.role}</span>
               </span>
-              <ChevronDown size={13} color="rgba(255,255,255,0.7)" style={{ transition: 'transform .15s', transform: profileOpen ? 'rotate(180deg)' : 'none' }} />
+              <ChevronDown size={13} color="var(--on-dark-muted)" style={{ transition: 'transform .15s', transform: profileOpen ? 'rotate(180deg)' : 'none' }} />
             </button>
             {profileOpen && (
               <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl bg-white"
-                style={{ border: `1px solid #e2e8f0`, boxShadow: '0 12px 32px rgba(15,23,42,0.14)' }}>
-                <div className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <p className="m-0 text-[13px] font-bold text-charcoal">{user.name}</p>
-                  <p className="m-0 mt-0.5 text-[11px] text-faint">{user.email}</p>
+                style={{ border: `1px solid var(--border)`, boxShadow: '0 12px 32px rgba(15,23,42,0.14)' }}>
+                <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--muted)' }}>
+                  <p className="m-0 text-sm font-bold text-charcoal">{user.name}</p>
+                  <p className="m-0 mt-0.5 text-xs text-faint">{user.email}</p>
                 </div>
                 <button onClick={() => { setProfileOpen(false); setSignOutOpen(true) }}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[13px] font-semibold"
-                  style={{ background: 'none', border: 'none', color: '#e11d48', cursor: 'pointer' }}>
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold"
+                  style={{ background: 'none', border: 'none', color: 'var(--color-red)', cursor: 'pointer' }}>
                   <LogOut size={13} /> Sign out
                 </button>
               </div>

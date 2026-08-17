@@ -55,11 +55,11 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
 
       {/* All six stats in one row on desktop — wraps 3+3 on tablet, 2×3 on phone */}
       <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        <GradientStatCard label="Completed Payments" value={completed.length} period="All time" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
-        <GradientStatCard label="Pending Payments" value={pendingTopups.length} period="Awaiting approval" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
-        <GradientStatCard label="Total Cash" value={`$${totalCash}`} period="Completed" gradient="linear-gradient(135deg,#DBEAFE,#EEF2FF)" />
-        <GradientStatCard label="Total Credit" value={`${totalCredit} cr`} period="Completed" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
-        <GradientStatCard label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} period="Cash + Credit÷40" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
+        <GradientStatCard label="Completed Payments" value={completed.length} period="All time" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
+        <GradientStatCard label="Pending Payments" value={pendingTopups.length} period="Awaiting approval" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
+        <GradientStatCard label="Total Cash" value={`$${totalCash}`} period="Completed" gradient="linear-gradient(135deg,var(--color-blue-light),var(--color-inv-accent-light))" />
+        <GradientStatCard label="Total Credit" value={`${totalCredit} cr`} period="Completed" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
+        <GradientStatCard label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} period="Cash + Credit÷40" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
       </div>
 
       {/* List */}
@@ -114,8 +114,8 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
                   {p.customerName[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="m-0 truncate text-[13px] font-semibold text-ink sm:text-sm">{p.customerName}</p>
-                  <p className="m-0 mt-0.5 truncate text-[11px] text-faint sm:text-xs">{p.type} · {fmtDateTime(p.dateTime || p.date)}</p>
+                  <p className="m-0 truncate text-sm font-semibold text-ink sm:text-sm">{p.customerName}</p>
+                  <p className="m-0 mt-0.5 truncate text-xs text-faint sm:text-xs">{p.type} · {fmtDateTime(p.dateTime || p.date)}</p>
                 </div>
                 <span className="hidden flex-shrink-0 text-sm font-bold text-charcoal sm:block">
                   {isBorrow ? '0 cr' : (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} cr`)}
@@ -130,17 +130,17 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
                     <div className="mb-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                       {[['Transaction ID', `#TXN${String(p.id).slice(-6)}`], ['Method', p.method], ['Order ID', p.orderId]].filter(([, v]) => v).map(([k, v]) => (
                         <div key={k} className="rounded-md p-2" style={{ background: T.cream }}>
-                          <p className="m-0 text-[10px] uppercase tracking-wide text-faint">{k}</p>
-                          <p className="m-0 mt-0.5 truncate text-[12px] font-semibold text-charcoal">{v}</p>
+                          <p className="m-0 text-xs uppercase tracking-wide text-faint">{k}</p>
+                          <p className="m-0 mt-0.5 truncate text-xs font-semibold text-charcoal">{v}</p>
                         </div>
                       ))}
                     </div>
 
                     <div className="overflow-hidden rounded-lg border border-stone">
-                      <div className="grid gap-2 bg-cream px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-faint" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
+                      <div className="grid gap-2 bg-cream px-3 py-2 text-xs font-semibold uppercase tracking-wide text-faint" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
                         <span>Item</span><span>Category</span><span>Qty</span><span>Unit Credit</span><span>Total</span>
                       </div>
-                      <div className="grid gap-2 px-3 py-2.5 text-[12px]" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
+                      <div className="grid gap-2 px-3 py-2.5 text-xs" style={{ gridTemplateColumns: '2fr 1.3fr 0.6fr 0.9fr 0.9fr' }}>
                         <span className="truncate font-semibold text-charcoal">{p.itemName || p.type}</span>
                         <span className="truncate text-inv-muted">{category || '—'}</span>
                         <span className="text-inv-muted">1</span>

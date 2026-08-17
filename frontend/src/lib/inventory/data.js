@@ -65,7 +65,7 @@ export const PRINT_SERVICES = [
 export const INITIAL_FILAMENTS = [
   { id: 1, name: 'PLA', color: 'White',  hex: '#F8FAFC', stockGrams: 1000, rate: 4 },
   { id: 2, name: 'PLA', color: 'Black',  hex: '#0F172A', stockGrams: 800,  rate: 4 },
-  { id: 3, name: 'PETG', color: 'Clear', hex: '#CBD5E1', stockGrams: 500,  rate: 5 },
+  { id: 3, name: 'PETG', color: 'Clear', hex: 'var(--border)', stockGrams: 500,  rate: 5 },
   { id: 4, name: 'ABS', color: 'Red',    hex: '#E11D48', stockGrams: 350,  rate: 5 },
 ]
 

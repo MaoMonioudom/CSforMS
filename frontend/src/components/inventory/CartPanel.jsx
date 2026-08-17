@@ -122,7 +122,8 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
               )}
 
               <button onClick={placeOrder} disabled={busy}
-                style={{ width: '100%', background: T.charcoal, color: '#fff', border: 'none', borderRadius: 10, padding: 13, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: busy ? 0.6 : 1 }}>
+                className="btn-primary"
+                style={{ width: '100%', justifyContent: 'center', background: T.charcoal, color: '#fff', border: 'none', opacity: busy ? 0.6 : 1 }}>
                 {borrowItems.length > 0 && buyItems.length === 0 ? 'Submit Borrow Requests' : buyItems.length > 0 && borrowItems.length === 0 ? 'Confirm Purchase' : 'Submit All'}
                 <ArrowRight size={16} />
               </button>

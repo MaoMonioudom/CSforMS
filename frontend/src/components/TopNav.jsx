@@ -9,36 +9,33 @@ import bbg_logo from "../assets/ms_bbg_logo.png";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hub/AuthContext";
 import { useInventory } from "../lib/inventory/InventoryContext";
+import { fetchNotifications } from "../lib/notifications-data";
 import { SignOutConfirmDialog } from "./SignOutConfirmDialog";
 import { MembershipPromoDialog } from "./MembershipPromoDialog";
 
 // ── Module config ─────────────────────────────────────────────────────────────
 const MODULE_CFG = {
   community: {
-    accent:      "#c9a86c",
+    accent:      "var(--community-gold-light-foreground)",
     placeholder: "Search events, posts, collabs…",
     root:        "/community",
-    dark:        false,
   },
   learning: {
-    accent:      "#c0392b",
+    accent:      "var(--color-oxblood)",
     placeholder: "Search courses and lessons…",
     root:        "/learning",
-    dark:        true,
   },
   inventory: {
-    accent:      "#0891b2",
+    accent:      "var(--color-inv-accent)",
     placeholder: "Search items and equipment…",
     root:        "/inventory",
-    dark:        true,
   },
   // Account pages (Profile, Notifications, ...) aren't tied to a module —
   // no search bar, and the info box shows the page name instead of a module.
   hub: {
-    accent:      "#6366f1",
+    accent:      "var(--color-inv-accent)",
     placeholder: "",
     root:        "/",
-    dark:        false,
   },
 };
 
@@ -77,16 +74,16 @@ const HUB_PAGES = {
 // ── Nav data ─────────────────────────────────────────────────────────────────
 const COMMUNITY_LINKS = [
   { label: "Community Home", to: "/community",                 featured: true, desc: "Announcements & activity feed" },
-  { label: "Events",         to: "/community/eventspace"     },
+  { label: "Find Events",         to: "/community/eventspace"     },
   { label: "Find Team",      to: "/community/collabspace"    },
   { label: "Connect",        to: "/community/communityspace" },
 ];
 
 const LEARNING_LINKS = [
-  { label: "Library",        to: "/learning",  featured: true, desc: "Browse all courses"        },
-  { label: "Home",       to: "/learning"  },
-  { label: "Guidelines",          to: "/learning/about"  },
-  { label: "Courses",        to: "/learning/courses"  },
+  { label: "Learning Home",        to: "/learning",  featured: true, desc: "Browse all courses"        },
+//   { label: "Home",       to: "/learning"  },
+  { label: "Guidelines for Learning",          to: "/learning/about"  },
+  { label: "View Courses",        to: "/learning/courses"  },
   // { label: "Progress",       to: "/learning"  },
   // { label: "Bookmarks",      to: "/learning"  },
   // { label: "Announcements",  to: "/learning"  },
@@ -98,8 +95,8 @@ const LEARNING_LINKS = [
 // this list — it's unified across all 3 modules and reachable from the
 // bell icon, same as Community/Learning don't list it either.
 const INVENTORY_LINKS = [
-  { label: "Home",   to: "/inventory",         featured: true, desc: "Your makerspace hub" },
-  { label: "Browse", to: "/inventory/browse" },
+  { label: "Inventory Home",   to: "/inventory",         featured: true, desc: "Your makerspace hub" },
+  { label: "Borrow & Purchase", to: "/inventory/browse" },
 ];
 
 // ── Cluster label ─────────────────────────────────────────────────────────────
@@ -108,7 +105,7 @@ function ClusterLabel({ number, label, accent, icon: Icon }) {
     <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.14)" }}>
       {Icon && (
         <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-          style={{ background: `${accent}22`, border: `1px solid ${accent}32` }}>
+          style={{ background: `color-mix(in oklch, ${accent} 13%, transparent)`, border: `1px solid color-mix(in oklch, ${accent} 20%, transparent)` }}>
           <Icon size={12} style={{ color: accent }} />
         </div>
       )}
@@ -130,7 +127,7 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
       <Link
         to={featured.to} onClick={onClose}
         className="group flex items-start justify-between gap-2 rounded-xl p-3.5 mb-3 transition-all hover:scale-[1.02]"
-        style={{ background: `${accent}16`, border: `1px solid ${accent}28` }}
+        style={{ background: `color-mix(in oklch, ${accent} 9%, transparent)`, border: `1px solid color-mix(in oklch, ${accent} 16%, transparent)` }}
       >
         <div>
           <p className="font-extrabold text-white text-sm">{featured.label}</p>
@@ -141,7 +138,7 @@ function ModuleCluster({ number, label, accent, icon, links, onClose }) {
       {rest.map(l => (
         <Link key={l.label} to={l.to} onClick={onClose}
           className="group flex items-center gap-2 py-2 px-1 text-sm text-white transition-colors">
-          <ChevronRight size={11} style={{ color: `${accent}bb` }} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          <ChevronRight size={11} style={{ color: `color-mix(in oklch, ${accent} 73%, transparent)` }} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
           {l.label}
         </Link>
       ))}
@@ -273,16 +270,14 @@ function OverlayDoodles() {
 }
 
 // ── Notification bell ─────────────────────────────────────────────────────────
-const NOTIF_COUNT = 3; // mock unread count for hub pages — mirrors NotificationsPage's mock data
-
-function NotifBell({ dark, to = "/notifications", count = NOTIF_COUNT }) {
+function NotifBell({ dark, to = "/notifications", count = 0 }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const onNotifications = pathname === to;
 
   const badge = count > 0 && (
     <span
-      className="absolute top-1 right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+      className="absolute -top-0.5 -right-0.5 min-w-[19px] h-[19px] px-1 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
       style={{ background: "#ef4444", border: "1.5px solid" , borderColor: dark ? "rgba(12,16,30,0.9)" : "white" }}
     >
       {count > 9 ? "9+" : count}
@@ -292,7 +287,7 @@ function NotifBell({ dark, to = "/notifications", count = NOTIF_COUNT }) {
   const className = "relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200";
   const style = {
     color: dark ? "white" : "#1a1a2e",
-    background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+    background: dark ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
   };
 
   // Already on Notifications — clicking the bell again closes it (goes back)
@@ -324,7 +319,7 @@ function CartButton({ dark, count, onClick }) {
       className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
       style={{
         color: dark ? "white" : "#1a1a2e",
-        background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+        background: dark ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
       }}
     >
       <ShoppingCart size={17} />
@@ -348,8 +343,8 @@ function InfoBox({ icon: Icon, label, color, dark }) {
     <div
       className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 transition-colors duration-200"
       style={{
-        background: dark ? `${color}1a` : `${color}14`,
-        border:     `1.5px solid ${color}${dark ? "40" : "28"}`,
+        background: `color-mix(in oklch, ${color} ${dark ? 10 : 8}%, transparent)`,
+        border:     `1.5px solid color-mix(in oklch, ${color} ${dark ? 25 : 16}%, transparent)`,
         color,
       }}
     >
@@ -409,7 +404,7 @@ function NavSearch({ cfg, dark }) {
             placeholder={cfg.placeholder}
             className="w-full rounded-full py-2 pl-10 pr-4 text-sm outline-none transition text-white placeholder:text-white/30 focus:ring-1"
             style={{
-              background: "rgba(255,255,255,0.08)",
+              background: "var(--nav-pill-bg)",
               border: "1px solid rgba(255,255,255,0.14)",
             }}
             onFocus={e => e.target.style.borderColor = cfg.accent}
@@ -512,17 +507,17 @@ function MobileSearchTakeover({ cfg, dark, onClose }) {
 // ── Mobile quick-menu — expandable module accordions (full sub-page access) ──
 const MOBILE_MODULES = [
   { key: "community", icon: MessageSquare, label: "Community", desc: "Bulletin board & events",      accent: "#f59e0b", links: COMMUNITY_LINKS },
-  { key: "learning",  icon: BookOpen,      label: "Learning",  desc: "Courses & digital library",     accent: "#c0392b", links: LEARNING_LINKS  },
-  { key: "inventory", icon: Package,       label: "Inventory", desc: "Resources & requests",           accent: "#0891b2", links: INVENTORY_LINKS },
+  { key: "learning",  icon: BookOpen,      label: "Learning",  desc: "Courses & digital library",     accent: "var(--color-oxblood)", links: LEARNING_LINKS  },
+  { key: "inventory", icon: Package,       label: "Inventory", desc: "Resources & requests",           accent: "var(--color-inv-accent)", links: INVENTORY_LINKS },
 ];
 
 function MobileModuleAccordion({ modKey, icon: Icon, label, desc, accent, links, expanded, onToggle, onClose }) {
   return (
     <div onClick={(e) => e.stopPropagation()}
-      className="rounded-2xl overflow-hidden transition-all" style={{ background: `${accent}18`, border: `1px solid ${accent}35` }}>
+      className="rounded-2xl overflow-hidden transition-all" style={{ background: `color-mix(in oklch, ${accent} 9%, transparent)`, border: `1px solid color-mix(in oklch, ${accent} 21%, transparent)` }}>
       <button type="button" onClick={() => onToggle(modKey)}
         className="w-full flex items-center gap-3 p-3 text-left">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accent}28` }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `color-mix(in oklch, ${accent} 16%, transparent)` }}>
           <Icon size={18} style={{ color: accent }} />
         </div>
         <div className="flex-1 min-w-0">
@@ -656,15 +651,33 @@ export function TopNav() {
   const invUnread = isInventory && inv
     ? inv.notifications.filter(n => !n.read && (n.forRoles?.includes(inv.user?.role) || n.userId === inv.user?.id)).length
     : 0;
+
+  // Real unread count for Community/Learning — fetched once per sign-in
+  // rather than mocked. Skipped entirely for Inventory (invUnread above
+  // already covers it from InventoryContext) and for signed-out visitors,
+  // who have nothing to fetch.
+  const [hubUnread, setHubUnread] = useState(0);
+  useEffect(() => {
+    if (isInventory || !user) { setHubUnread(0); return; }
+    let cancelled = false;
+    fetchNotifications()
+      .then(list => { if (!cancelled) setHubUnread(list.filter(n => !n.read).length); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isInventory, user]);
+
+  // Bell is signed-in-only — guests (hub or Inventory) have no notifications
+  // to show, so the icon shouldn't take up header space for them.
+  const loggedIn = isInventory ? !!inv?.user : !!user;
+
   const lastSpace = useLastSpace(mod);
   // Notifications keeps hub behavior (no search bar, page InfoBox) but wears
-  // the theme of whichever module space the user came from — dark chrome
-  // when arriving from Inventory, warm light chrome from Community.
+  // the accent color of whichever module space the user came from.
   const themeMod = pathname === "/notifications"
     ? (Object.keys(SPACE_ROOTS).find((k) => SPACE_ROOTS[k] === lastSpace) || "community")
     : mod;
   const cfg = pathname === "/notifications"
-    ? { ...MODULE_CFG[mod], accent: MODULE_CFG[themeMod].accent, dark: MODULE_CFG[themeMod].dark }
+    ? { ...MODULE_CFG[mod], accent: MODULE_CFG[themeMod].accent }
     : MODULE_CFG[mod];
   const logoTo = isHub ? lastSpace : cfg.root;
   const hubPage = HUB_PAGES[pathname];
@@ -699,22 +712,19 @@ export function TopNav() {
     };
   }, [open]);
 
-  // Header background: dark modules get dark header; community gets warm paper tint
-  const headerBg = open
-    ? "rgba(12,16,30,0.75)"
-    : cfg.dark
-      ? "rgba(7,10,20,0.92)"
-      : undefined; // undefined → use className (bg-background/80)
+  // Header background: one white/light frosted glass nav for all 3 modules
+  // now (previously Learning/Inventory got a separate dark-tinted header) —
+  // the mobile drawer overlay (`open`) stays its own dark treatment, that's
+  // a different kind of surface (full-screen overlay), not a module theme.
+  const headerBg = open ? "rgba(12,16,30,0.75)" : undefined; // undefined → use className (bg-background/65)
 
   const headerClass = `sticky top-0 z-[60] w-full border-b transition-all duration-200 ${
     open
       ? "border-white/10 backdrop-blur-md"
-      : cfg.dark
-        ? "border-white/[0.06] backdrop-blur-md"
-        : "border-border/60 bg-background/80 backdrop-blur-md"
+      : "border-border/60 bg-background/65 backdrop-blur-md"
   }`;
 
-  const logoLight = cfg.dark || open;  // dark logo on community, light logo elsewhere
+  const logoLight = open;  // dark logo everywhere except the open mobile drawer
 
   return (
     <>
@@ -722,7 +732,7 @@ export function TopNav() {
       <header className={headerClass} style={headerBg ? { backgroundColor: headerBg } : undefined}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           {mobileSearchOpen ? (
-            <MobileSearchTakeover cfg={cfg} dark={cfg.dark || open} onClose={() => setMobileSearchOpen(false)} />
+            <MobileSearchTakeover cfg={cfg} dark={open} onClose={() => setMobileSearchOpen(false)} />
           ) : (
             <>
               {/* 1 · Logo — on account pages, returns to whichever space was last visited */}
@@ -747,7 +757,7 @@ export function TopNav() {
               {/* 2 · Search bar — expands to fill center on sm+ (hidden on account pages) */}
               {isHub
                 ? <div className="hidden sm:flex flex-1" />
-                : <NavSearch cfg={cfg} dark={cfg.dark || open} />
+                : <NavSearch cfg={cfg} dark={open} />
               }
 
               {/* Mobile spacer (search is hidden on mobile) */}
@@ -761,8 +771,8 @@ export function TopNav() {
                   onClick={() => setMobileSearchOpen(true)}
                   className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
                   style={{
-                    color: cfg.dark || open ? "white" : "#1a1a2e",
-                    background: cfg.dark || open ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)",
+                    color: open ? "white" : "#1a1a2e",
+                    background: open ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
                   }}
                 >
                   <Search size={16} />
@@ -772,21 +782,23 @@ export function TopNav() {
               {/* 3 · Module box / account-page box — desktop/tablet only, no room on mobile */}
               <div className="hidden sm:block">
                 {isHub
-                  ? hubPage && <InfoBox icon={hubPage.icon} label={hubPage.label} color={cfg.accent} dark={cfg.dark || open} />
-                  : <ModuleBox mod={mod} cfg={cfg} dark={cfg.dark || open} />
+                  ? hubPage && <InfoBox icon={hubPage.icon} label={hubPage.label} color={cfg.accent} dark={open} />
+                  : <ModuleBox mod={mod} cfg={cfg} dark={open} />
                 }
               </div>
 
-              {/* 4 · Notifications */}
-              <NotifBell
-                dark={cfg.dark || open}
-                to={isInventory ? "/inventory/notifications" : "/notifications"}
-                count={isInventory ? invUnread : undefined}
-              />
+              {/* 4 · Notifications — signed-in only, guests have nothing to show */}
+              {loggedIn && (
+                <NotifBell
+                  dark={open}
+                  to={isInventory ? "/inventory/notifications" : "/notifications"}
+                  count={isInventory ? invUnread : hubUnread}
+                />
+              )}
 
               {/* 4b · Cart — inventory module, members only (guests have no checkout panel) */}
               {isInventory && inv?.user && (
-                <CartButton dark={cfg.dark || open} count={inv.cart.length} onClick={() => inv.setCartOpen(true)} />
+                <CartButton dark={open} count={inv.cart.length} onClick={() => inv.setCartOpen(true)} />
               )}
 
               {/* 5 · Credits — members only, desktop/tablet only. Always the real
@@ -795,7 +807,7 @@ export function TopNav() {
                   copy for now, this is just the display. */}
               {(isInventory ? inv?.user : user?.isMember) && (
                 <div className="hidden sm:block">
-                  <CreditBox credits={user?.credits} dark={cfg.dark || open} />
+                  <CreditBox credits={user?.credits} dark={open} />
                 </div>
               )}
 
@@ -864,13 +876,13 @@ export function TopNav() {
             {/* 4-cluster grid */}
             <div className="mx-auto w-full max-w-5xl grid sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
               <ModuleCluster number="01" label="Community" accent="#f59e0b" icon={MessageSquare} links={COMMUNITY_LINKS} onClose={close} />
-              <ModuleCluster number="02" label="Learning"  accent="#c0392b" icon={BookOpen} links={LEARNING_LINKS}  onClose={close} />
-              <ModuleCluster number="03" label="Inventory" accent="#0891b2" icon={Package}  links={INVENTORY_LINKS} onClose={close} />
+              <ModuleCluster number="02" label="Learning"  accent="var(--color-oxblood)" icon={BookOpen} links={LEARNING_LINKS}  onClose={close} />
+              <ModuleCluster number="03" label="Inventory" accent="var(--color-inv-accent)" icon={Package}  links={INVENTORY_LINKS} onClose={close} />
               <ProfileCluster onClose={close} />
             </div>
 
             <p className="text-center text-white text-[10px] mt-6">
-              Press <kbd className="px-1.5 py-0.5 rounded text-[9px] font-mono text-white" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.16)" }}>Esc</kbd> or click outside to close
+              Press <kbd className="px-1.5 py-0.5 rounded text-[9px] font-mono text-white" style={{ background: "var(--nav-pill-bg)", border: "1px solid rgba(255,255,255,0.16)" }}>Esc</kbd> or click outside to close
             </p>
           </div>
         </div>

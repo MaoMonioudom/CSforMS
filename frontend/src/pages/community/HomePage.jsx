@@ -9,7 +9,7 @@ import { SearchResultsFeed } from "@/components/community/SearchResultsFeed";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 
 // ── Push Pin ──────────────────────────────────────────────────────────────────
-function PushPin({ color = "#ef4444", size = 16 }) {
+function PushPin({ color = "var(--destructive)", size = 16 }) {
   return (
     <svg width={size} height={size * 1.75} viewBox="0 0 16 28" fill="none" aria-hidden>
       <circle cx="8" cy="8" r="7" fill={color} />
@@ -20,7 +20,7 @@ function PushPin({ color = "#ef4444", size = 16 }) {
 }
 
 // ── Pinned wrapper ────────────────────────────────────────────────────────────
-function Pinned({ rotate = 0, pinColor = "#ef4444", pinOffset = "left-1/2", className = "", children }) {
+function Pinned({ rotate = 0, pinColor = "var(--destructive)", pinOffset = "left-1/2", className = "", children }) {
   return (
     <div
       className={`relative transition-all duration-300 hover:scale-[1.04] hover:z-20 ${className}`}
@@ -35,7 +35,7 @@ function Pinned({ rotate = 0, pinColor = "#ef4444", pinOffset = "left-1/2", clas
 }
 
 // ── Section label (torn strip) ────────────────────────────────────────────────
-function BoardLabel({ children, rotate = -0.8, pinColor = "#c53030" }) {
+function BoardLabel({ children, rotate = -0.8, pinColor = "var(--destructive)" }) {
   return (
     <div className="relative inline-flex items-center">
       <div className="absolute -top-4 left-5 z-10">
@@ -57,7 +57,7 @@ function BoardLabel({ children, rotate = -0.8, pinColor = "#c53030" }) {
 
 
 // ── Washi tape strip ──────────────────────────────────────────────────────────
-function Tape({ color = "rgba(255,230,120,0.75)", rotate = -45, className = "" }) {
+function Tape({ color = "color-mix(in oklch, var(--community-gold) 75%, transparent)", rotate = -45, className = "" }) {
   return (
     <div
       aria-hidden
@@ -76,7 +76,7 @@ function Tape({ color = "rgba(255,230,120,0.75)", rotate = -45, className = "" }
 // ── Event Polaroid ────────────────────────────────────────────────────────────
 function EventPolaroid({ event, rotate }) {
   return (
-    <Pinned rotate={rotate} pinColor="#dc2626">
+    <Pinned rotate={rotate} pinColor="var(--events)">
       <Link
         to={`/community/eventspace/${event.id}`}
         className="block bg-white p-2.5 pb-10 select-none"
@@ -90,16 +90,16 @@ function EventPolaroid({ event, rotate }) {
               <Calendar className="h-10 w-10 text-events/40" />
             </div>
           )}
-          <span className="absolute top-2 left-2 bg-events text-events-foreground text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5">
+          <span className="absolute top-2 left-2 bg-events text-events-foreground text-xs font-extrabold uppercase tracking-wider px-2 py-0.5">
             {formatEventDateShort(event.date)}
           </span>
         </div>
         <div className="mt-3 px-1">
           <p className="text-base font-bold leading-snug text-foreground line-clamp-2">{event.title}</p>
-          <p className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
+          <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
             <MapPin className="h-2.5 w-2.5 shrink-0" /> {event.location}
           </p>
-          <p className="mt-1.5 text-[10px] text-muted-foreground flex items-center gap-1 font-semibold">
+          <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1 font-semibold">
             <Users className="h-2.5 w-2.5 shrink-0" /> {event.participants}/{event.capacity} registered
           </p>
         </div>
@@ -110,10 +110,10 @@ function EventPolaroid({ event, rotate }) {
 
 // ── Collab Sticky Note ────────────────────────────────────────────────────────
 const STICKY = [
-  { bg: "#fffde7", line: "#f9e100", pin: "#6366f1" },
-  { bg: "#fce4ec", line: "#f48fb1", pin: "#ec4899" },
-  { bg: "#e8f5e9", line: "#81c784", pin: "#16a34a" },
-  { bg: "#e3f2fd", line: "#90caf9", pin: "#2563eb" },
+  { bg: "color-mix(in oklch, var(--collaboration) 16%, white)", line: "var(--collaboration)", pin: "var(--collaboration)" },
+  { bg: "color-mix(in oklch, var(--social) 16%, white)", line: "var(--social)", pin: "var(--social)" },
+  { bg: "color-mix(in oklch, var(--technical) 16%, white)", line: "var(--technical)", pin: "var(--technical)" },
+  { bg: "color-mix(in oklch, var(--info) 16%, white)", line: "var(--info)", pin: "var(--info)" },
 ];
 
 function CollabNote({ post, rotate, idx }) {
@@ -128,7 +128,7 @@ function CollabNote({ post, rotate, idx }) {
           boxShadow: "3px 5px 18px rgba(0,0,0,0.18)",
         }}
       >
-        <span className="text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
           {post.category}
         </span>
         <p className="mt-2 text-lg font-bold text-foreground leading-snug flex-1 line-clamp-3">
@@ -136,14 +136,14 @@ function CollabNote({ post, rotate, idx }) {
         </p>
         <div className="mt-3 flex flex-wrap gap-1">
           {post.rolesNeeded.slice(0, 2).map((r) => (
-            <span key={r} className="text-[9px] bg-black/8 rounded px-1.5 py-0.5 font-semibold text-foreground/70">
+            <span key={r} className="badge badge-sm bg-black/8 text-foreground/70">
               {r}
             </span>
           ))}
         </div>
         <div className="mt-3 flex items-center gap-1.5">
-          <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-5 w-5 text-[8px]" />
-          <span className="text-[10px] text-muted-foreground font-semibold">{post.author.name}</span>
+          <InitialAvatar name={post.author.name} src={post.author.avatar} className="h-5 w-5 text-xs" />
+          <span className="text-xs text-muted-foreground font-semibold">{post.author.name}</span>
         </div>
       </Link>
     </Pinned>
@@ -153,7 +153,7 @@ function CollabNote({ post, rotate, idx }) {
 // ── Community Card (lined notepad) ────────────────────────────────────────────
 function CommunityCard({ post, rotate }) {
   return (
-    <Pinned rotate={rotate} pinColor="#7c3aed">
+    <Pinned rotate={rotate} pinColor="var(--community)">
       <Link
         to={`/community/communityspace/${post.id}`}
         className="flex flex-col bg-white p-4 min-h-45"
@@ -165,14 +165,14 @@ function CommunityCard({ post, rotate }) {
           backgroundPositionY: "32px",
         }}
       >
-        <div className="inline-flex items-center gap-1 bg-community/10 text-community text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit mb-3">
+        <div className="badge badge-sm w-fit mb-3 bg-community/10 text-community uppercase tracking-wider">
           <MessageSquare className="h-2.5 w-2.5" />
           {post.category}
         </div>
         <p className="text-base font-bold leading-snug text-foreground line-clamp-3 flex-1">
           {post.title ?? post.body}
         </p>
-        <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span className="font-semibold">{post.author.name}</span>
           <span>{formatRelativeTime(post.postedAt)}</span>
         </div>
@@ -186,7 +186,7 @@ function CommunityCard({ post, rotate }) {
 // gate use (getEventStatus): started but not yet ended.
 function OngoingNote({ event }) {
   return (
-    <Pinned rotate={-2} pinColor="#dc2626">
+    <Pinned rotate={-2} pinColor="var(--destructive)">
       <Link
         to={`/community/eventspace/${event.id}`}
         className="flex flex-col p-4"
@@ -194,15 +194,15 @@ function OngoingNote({ event }) {
       >
         <div className="flex items-center gap-1.5">
           <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
           </span>
-          <span className="text-[9px] font-extrabold uppercase tracking-widest text-red-600">Happening now</span>
+          <span className="text-xs font-extrabold uppercase tracking-widest text-destructive">Happening now</span>
         </div>
         <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
           {event.title}
         </p>
-        <p className="mt-2 text-[10px] text-muted-foreground">Ends {formatEventDateShort(event.endDate)}</p>
+        <p className="mt-2 text-xs text-muted-foreground">Ends {formatEventDateShort(event.endDate)}</p>
       </Link>
     </Pinned>
   );
@@ -220,7 +220,7 @@ function StatPin({ value, label, color, rotate, pinColor }) {
         }}
       >
         <p className="text-4xl font-extrabold text-foreground">{value}+</p>
-        <p className="mt-1 text-[11px] font-semibold text-muted-foreground leading-tight">{label}</p>
+        <p className="mt-1 text-xs font-semibold text-muted-foreground leading-tight">{label}</p>
       </div>
     </Pinned>
   );
@@ -337,37 +337,37 @@ export default function HomePage() {
         <div className="pt-10 pb-16 flex flex-col lg:flex-row gap-10 items-start">
 
           {/* Big welcome card */}
-          <Pinned rotate={-1} pinColor="#b91c1c" className="flex-1 max-w-xl">
+          <Pinned rotate={-1} pinColor="var(--destructive)" className="flex-1 max-w-xl">
             <div className="relative bg-white/96 p-5 sm:p-8 lg:p-10" style={{ boxShadow: "6px 10px 36px rgba(0,0,0,0.32)" }}>
-              <Tape color="rgba(255,210,100,0.8)" rotate={-42} className="w-12 right-5 top-3" />
-              <Tape color="rgba(180,220,255,0.7)" rotate={38} className="w-10 left-4 bottom-4" />
+              <Tape color="color-mix(in oklch, var(--community-gold) 80%, transparent)" rotate={-42} className="w-12 right-5 top-3" />
+              <Tape color="color-mix(in oklch, var(--info) 70%, transparent)" rotate={38} className="w-10 left-4 bottom-4" />
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground font-bold mb-2">
                 <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
                 <span className="mx-1.5 opacity-50">&rsaquo;</span>
                 <span className="text-foreground">Community</span>
               </p>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[0.95]">
+              <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[0.95]">
                 Community<br />
-                <span className="text-events">Hub.</span>
+                <span className="text-community-gold">Hub.</span>
               </h1>
               <p className="mt-5 text-muted-foreground leading-relaxed text-base max-w-sm">
                 A bulletin board for makers, builders &amp; curious minds at CADT —
                 find events, team up, and share what you're building.
               </p>
-              <div className="mt-7 flex flex-wrap gap-x-8 gap-y-3">
+              <div className="mt-7 flex flex-wrap gap-3">
                 <Link
                   to="/community/eventspace"
-                  className="group inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold text-foreground underline decoration-2 decoration-events/40 underline-offset-4 hover:decoration-events transition-colors"
+                  className="btn-primary bg-community-gold text-community-gold-foreground"
                 >
                   Browse Events
-                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-events transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
                   to="/community/collabspace"
-                  className="group inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold text-foreground underline decoration-2 decoration-events/40 underline-offset-4 hover:decoration-events transition-colors"
+                  className="btn-secondary border-foreground/20 text-foreground hover:border-foreground/40 hover:bg-foreground/5"
                 >
                   Find Team
-                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-events transition-transform group-hover:translate-x-1" />
+                  <Users className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
@@ -380,23 +380,23 @@ export default function HomePage() {
 
             {/* Hot discussion sticky */}
             {communityPosts.length > 0 && (
-              <Pinned rotate={2} pinColor="#dc2626">
+              <Pinned rotate={2} pinColor="var(--community-gold)">
                 <Link
                   to={`/community/communityspace/${communityPosts[0].id}`}
                   className="flex flex-col p-4"
                   style={{
                     minHeight: "160px",
-                    background: "#fffde7",
+                    background: "var(--community-gold-light)",
                     boxShadow: "3px 5px 18px rgba(0,0,0,0.2)",
                   }}
                 >
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-orange-500">Hot Discussion</span>
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-community-gold-light-foreground">Hot Discussion</span>
                   <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-3">
                     {communityPosts[0].title}
                   </p>
                   <div className="mt-3 flex items-center gap-1.5">
-                    <InitialAvatar name={communityPosts[0].author.name} src={communityPosts[0].author.avatar} className="h-5 w-5 text-[8px]" />
-                    <span className="text-[10px] text-muted-foreground font-semibold">{communityPosts[0].author.name}</span>
+                    <InitialAvatar name={communityPosts[0].author.name} src={communityPosts[0].author.avatar} className="h-5 w-5 text-xs" />
+                    <span className="text-xs text-muted-foreground font-semibold">{communityPosts[0].author.name}</span>
                   </div>
                 </Link>
               </Pinned>
@@ -404,7 +404,7 @@ export default function HomePage() {
 
             {/* Next event note */}
             {events.length > 1 && (
-              <Pinned rotate={-1.5} pinColor="#f97316">
+              <Pinned rotate={-1.5} pinColor="var(--events)">
                 <Link
                   to={`/community/eventspace/${events[1].id}`}
                   className="flex flex-col p-4"
@@ -417,11 +417,11 @@ export default function HomePage() {
                     backgroundPositionY: "32px",
                   }}
                 >
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-events">📅 Next Up</span>
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-community-gold">Next Up</span>
                   <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
                     {events[1].title}
                   </p>
-                  <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+                  <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                     <MapPin className="h-2.5 w-2.5 shrink-0" /> {events[1].location}
                   </p>
                 </Link>
@@ -434,7 +434,7 @@ export default function HomePage() {
         {/* ── Events ─────────────────────────────────────────── */}
         <section className="mb-20">
           <div className="flex items-end justify-between mb-12">
-            <BoardLabel rotate={-1} pinColor="#dc2626">📅 Upcoming Events</BoardLabel>
+            <BoardLabel rotate={-1} pinColor="var(--events)">Upcoming Events</BoardLabel>
             <Link
               to="/community/eventspace"
               className="flex items-center gap-1 text-white/75 hover:text-white font-bold text-sm transition-colors"
@@ -456,7 +456,7 @@ export default function HomePage() {
         {/* ── Collaboration ───────────────────────────────────── */}
         <section className="mb-20">
           <div className="flex items-end justify-between mb-12">
-            <BoardLabel rotate={0.8} pinColor="#6366f1">Looking for Teammates</BoardLabel>
+            <BoardLabel rotate={0.8} pinColor="var(--collaboration)">Looking for Teammates</BoardLabel>
             <Link
               to="/community/collabspace"
               className="flex items-center gap-1 text-white/75 hover:text-white font-bold text-sm transition-colors"
@@ -479,7 +479,7 @@ export default function HomePage() {
         {/* ── Community Highlights ────────────────────────────── */}
         <section>
           <div className="flex items-end justify-between mb-12">
-            <BoardLabel rotate={-0.6} pinColor="#7c3aed">💬 Community Highlights</BoardLabel>
+            <BoardLabel rotate={-0.6} pinColor="var(--community)">Community Highlights</BoardLabel>
             <Link
               to="/community/communityspace"
               className="flex items-center gap-1 text-white/75 hover:text-white font-bold text-sm transition-colors"

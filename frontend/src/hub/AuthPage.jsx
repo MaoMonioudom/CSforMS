@@ -15,9 +15,9 @@ import { destinationFor } from "./authNav";
 // the right; login is the mirror of that.
 
 // const MODULES = [
-//   { label: "Community", color: "#c9a86c" },
-//   { label: "Learning",  color: "#c0392b" },
-//   { label: "Inventory", color: "#0891b2" },
+//   { label: "Community", color: "var(--community-gold)" },
+//   { label: "Learning",  color: "var(--color-oxblood)" },
+//   { label: "Inventory", color: "var(--color-inv-accent)" },
 // ];
 
 const OAUTH_ERROR_MESSAGES = {
@@ -48,7 +48,7 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-semibold" style={{ color: D.muted }}>Password</label>
-          <Link to="/forgot-password" className="text-xs font-semibold hover:underline" style={{ color: "#6366f1" }}>
+          <Link to="/forgot-password" className="text-xs font-semibold hover:underline" style={{ color: "var(--color-inv-accent)" }}>
             Forgot password?
           </Link>
         </div>
@@ -198,13 +198,13 @@ export default function AuthPage() {
     <HubNav light />
 
       <div aria-hidden className="fixed inset-0 pointer-events-none"
-        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "40px 40px" }} />
+        style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: "40px 40px" }} />
 
       {/* <Link to="/" className="flex items-center gap-2.5 mb-8 relative z-10">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: GRADIENT }}>
           <Layers size={16} color="white" strokeWidth={2.2} />
         </div>
-        <span className="font-bold text-lg" style={{ color: D.text }}>CADT <span style={{ color: "#6366f1" }}>Hub</span></span>
+        <span className="font-bold text-lg" style={{ color: D.text }}>CADT <span style={{ color: "var(--color-inv-accent)" }}>Hub</span></span>
       </Link> */}
 
       {/* ── Desktop: sliding overlay panel ──────────────────────────── */}
@@ -249,7 +249,7 @@ export default function AuthPage() {
               <h2 className="text-2xl font-extrabold mb-3">Welcome back!</h2>
               <p className="text-sm text-white/80 mb-8 leading-relaxed">Already part of Makerclub? Sign in to pick up where you left off.</p>
               <button type="button" onClick={() => switchTo("login")}
-                className="px-7 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white transition-colors hover:bg-white hover:text-indigo-600">
+                className="px-7 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white transition-colors hover:bg-white hover:text-[var(--color-inv-accent-text)]">
                 Sign In
               </button>
             </div>
@@ -260,7 +260,7 @@ export default function AuthPage() {
               <h2 className="text-2xl font-extrabold mb-3">New here?</h2>
               <p className="text-sm text-white/80 mb-8 leading-relaxed">Create a free account and unlock Community, Learning, and Inventory.</p>
               <button type="button" onClick={() => switchTo("register")}
-                className="px-7 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white transition-colors hover:bg-white hover:text-indigo-600">
+                className="px-7 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white transition-colors hover:bg-white hover:text-[var(--color-inv-accent-text)]">
                 Sign Up
               </button>
             </div>
@@ -281,7 +281,7 @@ export default function AuthPage() {
             {isRegister ? "Join the CADT Makerspace community." : "Sign in to continue to Makerclub."}
           </p>
           <button type="button" onClick={() => switchTo(isRegister ? "login" : "register")}
-            className="px-6 py-2 rounded-full font-bold text-xs border-2 border-white text-white transition-colors hover:bg-white hover:text-indigo-600">
+            className="px-6 py-2 rounded-full font-bold text-xs border-2 border-white text-white transition-colors hover:bg-white hover:text-[var(--color-inv-accent-text)]">
             {isRegister ? "Sign In instead" : "Create an account"}
           </button>
         </div>

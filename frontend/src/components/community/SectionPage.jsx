@@ -24,7 +24,7 @@ function Breadcrumb({ items, light = false }) {
   );
 }
 
-export function PushPin({ color = "#ef4444", size = 14 }) {
+export function PushPin({ color = "var(--destructive)", size = 14 }) {
   return (
     <svg width={size} height={size * 2} viewBox="0 0 14 28" fill="none" aria-hidden>
       <circle cx="7" cy="7" r="6.5" fill={color} />
@@ -34,7 +34,7 @@ export function PushPin({ color = "#ef4444", size = 14 }) {
   );
 }
 
-function StatPinCard({ value, label, rotate = 0, pinColor = "#dc2626", plus = true }) {
+function StatPinCard({ value, label, rotate = 0, pinColor = "var(--destructive)", plus = true }) {
   return (
     <div
       className="relative transition-all duration-300 hover:scale-[1.04]"
@@ -50,7 +50,7 @@ function StatPinCard({ value, label, rotate = 0, pinColor = "#dc2626", plus = tr
         <p className="text-3xl font-extrabold text-foreground">
           {value}{plus ? "+" : ""}
         </p>
-        <p className="mt-1 text-[10px] font-semibold text-muted-foreground leading-tight">{label}</p>
+        <p className="mt-1 text-xs font-semibold text-muted-foreground leading-tight">{label}</p>
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ function TornEdge() {
       <svg viewBox="0 0 1440 56" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: "56px" }}>
         <path
           d="M0,56 L0,36 L48,22 L96,40 L144,16 L192,34 L240,10 L288,28 L336,8 L384,26 L432,6 L480,24 L528,4 L576,20 L624,2 L672,18 L720,0 L768,16 L816,4 L864,20 L912,2 L960,18 L1008,4 L1056,20 L1104,6 L1152,22 L1200,8 L1248,24 L1296,10 L1344,26 L1392,12 L1440,28 L1440,56 Z"
-          fill="#fef9f0"
+          fill="var(--background)"
         />
       </svg>
     </div>
@@ -129,7 +129,7 @@ export function SectionPage({
   bulletin = false,
   stats,
   ghostLetter,
-  tapeColor = "rgba(255,230,120,0.85)",
+  tapeColor = "color-mix(in oklch, var(--community-gold) 85%, transparent)",
   breadcrumb,
   banner,
 }) {
@@ -155,9 +155,9 @@ export function SectionPage({
                 top: "50%",
                 transform: "translateY(-50%)",
                 fontSize: "clamp(130px, 19vw, 210px)",
-                fontWeight: 900,
-                color: "rgba(255,255,255,0.13)",
-                fontFamily: "'Caveat', cursive",
+                fontWeight: 800,
+                color: "var(--on-dark-muted)",
+                fontFamily: "var(--font-heading)",
                 lineHeight: 1,
                 userSelect: "none",
                 pointerEvents: "none",
@@ -212,7 +212,7 @@ export function SectionPage({
         </section>
 
         {children ? (
-          <section className="dot-grid" style={{ backgroundColor: "#fef9f0" }}>
+          <section className="dot-grid" style={{ backgroundColor: "var(--background)" }}>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
               {children}
             </div>

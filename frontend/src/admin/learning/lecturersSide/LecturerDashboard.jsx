@@ -28,7 +28,7 @@ export default function LecturerDashboard() {
         </div>
         <button
           onClick={() => navigate("/lecturer/learning/courses/new")}
-          className="inline-flex items-center gap-2 bg-gold text-navy-deep text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gold-light transition-colors"
+          className="inline-flex items-center gap-2 bg-community-gold text-navy-deep text-sm font-semibold px-4 py-2 rounded-lg hover:bg-community-gold-light transition-colors"
         >
           <Plus className="h-4 w-4" /> New Course
         </button>
@@ -62,7 +62,7 @@ export default function LecturerDashboard() {
                   <td className="px-5 py-3.5">
                     <Link
                       to={`/lecturer/learning/courses/${c.id}/students`}
-                      className="text-parchment font-medium tabular-nums hover:text-gold hover:underline transition-colors"
+                      className="text-parchment font-medium tabular-nums hover:text-community-gold hover:underline transition-colors"
                       title="View enrolled students"
                     >
                       {(c.students || 0).toLocaleString()}

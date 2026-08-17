@@ -53,18 +53,18 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
       <div className="mb-6 grid gap-3 sm:gap-4 lg:mb-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
         {/* No trend props — we have no historical snapshots to compute real
             percentage changes from, and made-up numbers mislead. */}
-        <GradientStatCard label="Total Items" value={total} period="All time" gradient="linear-gradient(135deg,#DBEAFE,#EEF2FF)" />
-        <GradientStatCard label="Borrowed" value={borrowed} period="Today" gradient="linear-gradient(135deg,#FEF3C7,#FFF7ED)" />
-        <GradientStatCard label="Maintenance" value={maint} period="Today" gradient="linear-gradient(135deg,#FEE2E6,#FFF1F2)" />
-        <GradientStatCard label="Active Members" value={members} period="This month" gradient="linear-gradient(135deg,#DCFCE7,#F0FDF4)" />
-        <GradientStatCard label="Pending Requests" value={pending} period="Today" gradient="linear-gradient(135deg,#EDE9FE,#F5F3FF)" />
+        <GradientStatCard label="Total Items" value={total} period="All time" gradient="linear-gradient(135deg,var(--color-blue-light),var(--color-inv-accent-light))" />
+        <GradientStatCard label="Borrowed" value={borrowed} period="Today" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
+        <GradientStatCard label="Maintenance" value={maint} period="Today" gradient="linear-gradient(135deg,var(--color-red-light),color-mix(in oklch, var(--color-red-light) 50%, white))" />
+        <GradientStatCard label="Active Members" value={members} period="This month" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
+        <GradientStatCard label="Pending Requests" value={pending} period="Today" gradient="linear-gradient(135deg,var(--color-purple-light),color-mix(in oklch, var(--color-purple-light) 50%, white))" />
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr] lg:mb-6">
         {/* Weekly activity chart */}
         <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="m-0 text-[15px] font-semibold text-charcoal">Weekly Activity</h3>
+            <h3 className="m-0 text-lg font-semibold text-charcoal">Weekly Activity</h3>
             <DateRangeFilter value={range} onChange={setRange} />
           </div>
           <BarChart data={weekly} seriesA="Borrowed" seriesB="Purchased" colorA={T.blue} colorB={T.green} />
@@ -72,7 +72,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
 
         {/* Inventory by category — donut */}
         <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-          <h3 className="m-0 mb-4 text-[15px] font-semibold text-charcoal">Inventory by Category</h3>
+          <h3 className="m-0 mb-4 text-lg font-semibold text-charcoal">Inventory by Category</h3>
           <DonutChart data={catData} />
           <div className="mt-4 flex flex-col gap-1.5">
             {catData.map(d => (
@@ -90,7 +90,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
         {/* Top items table — expandable rows */}
         <div className="overflow-hidden rounded-2xl border border-border bg-white">
           <div className="border-b border-stone px-4 py-3.5 sm:px-6">
-            <h3 className="m-0 text-[15px] font-semibold text-charcoal">Top Borrowed Items</h3>
+            <h3 className="m-0 text-lg font-semibold text-charcoal">Top Borrowed Items</h3>
           </div>
           {topItems.map(item => {
             const cat = CATEGORIES.find(c => c.id === item.category)
@@ -101,8 +101,8 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                   className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cream sm:px-6">
                   <ItemThumb item={item} cat={cat} size={36} iconSize={16} />
                   <div className="min-w-0 flex-1">
-                    <p className="m-0 truncate text-[13px] font-medium text-ink">{item.name}</p>
-                    <p className="m-0 mt-0.5 truncate text-[11px] text-faint">{cat?.label}</p>
+                    <p className="m-0 truncate text-sm font-medium text-ink">{item.name}</p>
+                    <p className="m-0 mt-0.5 truncate text-xs text-faint">{cat?.label}</p>
                   </div>
                   <span className="hidden text-xs text-inv-muted sm:block">{hasRangedActivity ? (rangedCounts[item.id] || 0) : (item.borrowCount || 0)} borrows</span>
                   {/* "available" with zero stock is a lie — surface it as out of stock */}
@@ -114,8 +114,8 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                     <div className="grid grid-cols-2 gap-3 px-4 pb-4 sm:grid-cols-4 sm:px-6">
                       {[['Stock', item.stock], ['Min Stock', item.minStock], ['Credits', item.credits], ['Condition', item.condition]].map(([k, v]) => (
                         <div key={k} className="rounded-md p-2" style={{ background: T.cream }}>
-                          <p className="m-0 text-[10px] uppercase tracking-wide text-faint">{k}</p>
-                          <p className="m-0 mt-0.5 text-[13px] font-semibold text-charcoal">{String(v)}</p>
+                          <p className="m-0 text-xs uppercase tracking-wide text-faint">{k}</p>
+                          <p className="m-0 mt-0.5 text-sm font-semibold text-charcoal">{String(v)}</p>
                         </div>
                       ))}
                     </div>
@@ -129,14 +129,14 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
         <div className="flex flex-col gap-4">
           {/* Low stock */}
           <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-            <h3 className="m-0 mb-3 flex items-center gap-2 text-[15px] font-semibold text-charcoal">
+            <h3 className="m-0 mb-3 flex items-center gap-2 text-lg font-semibold text-charcoal">
               <AlertTriangle size={15} color={T.amber} /> Low Stock
             </h3>
             {lowStock.length === 0 ? (
-              <p className="text-[13px] text-faint">All items well-stocked.</p>
+              <p className="text-sm text-faint">All items well-stocked.</p>
             ) : lowStock.map(item => (
               <div key={item.id} className="flex items-center justify-between border-b border-stone py-1.5 last:border-b-0">
-                <span className="text-[13px] text-ink">{item.name}</span>
+                <span className="text-sm text-ink">{item.name}</span>
                 <span className="text-xs font-bold text-red">{item.stock} left</span>
               </div>
             ))}
@@ -144,7 +144,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
 
           {/* Recent activity */}
           <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-            <h3 className="m-0 mb-3 text-[15px] font-semibold text-charcoal">Recent Activity</h3>
+            <h3 className="m-0 mb-3 text-lg font-semibold text-charcoal">Recent Activity</h3>
             {rangedBorrows.slice(-3).reverse().map(b => {
               const actItem = items.find(i => i.id === b.itemId)
               const actCat = actItem && CATEGORIES.find(c => c.id === actItem.category)
@@ -152,7 +152,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                 <div key={b.id} className="mb-2.5 flex items-start gap-2.5 last:mb-0">
                   <ItemThumb item={actItem} cat={actCat} size={28} iconSize={13} />
                   <div className="min-w-0">
-                    <p className="m-0 truncate text-[13px] font-medium text-ink">{b.itemName}</p>
+                    <p className="m-0 truncate text-sm font-medium text-ink">{b.itemName}</p>
                     <p className="m-0 text-xs text-faint">{b.action} · {fmtDateTime(b.date)}</p>
                   </div>
                 </div>
@@ -293,7 +293,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
     <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-white lg:mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone px-4 py-4 sm:px-6">
         <div>
-          <h3 className="m-0 text-[15px] font-bold text-charcoal">Recent Transactions</h3>
+          <h3 className="m-0 text-lg font-bold text-charcoal">Recent Transactions</h3>
           <p className="m-0 mt-0.5 text-xs text-faint">Borrows &amp; purchases, credit payments, and pending/approved requests — click a row for item details.</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -301,7 +301,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
             <button key={t} onClick={() => { setTypeTab(t); setPage(1) }}
               className="rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
               style={t === typeTab
-                ? { background: '#0891b2', color: '#fff', border: 'none' }
+                ? { background: 'var(--color-inv-accent)', color: '#fff', border: 'none' }
                 : { background: '#fff', color: T.muted, border: `1px solid ${T.border}` }}>
               {t}
             </button>

@@ -5,16 +5,16 @@ import { getInitials } from "../../utils/format";
  */
 export default function InstructorCard({ name }) {
   return (
-    <div className="mt-6 flex items-center gap-3 rounded border-l-[3px] border-gold bg-black/[0.04] p-4 font-body">
+    <div className="mt-6 flex items-center gap-3 rounded border-l-[3px] border-community-gold bg-black/[0.04] p-4">
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy font-display text-base font-bold text-gold"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-base font-bold text-community-gold"
         aria-hidden="true"
       >
         {getInitials(name)}
       </div>
       <div>
-        <p className="mb-0.5 text-[0.68rem] uppercase tracking-[0.1em] text-black/40">Instructor</p>
-        <p className="text-[0.9rem] font-semibold text-ink">{name}</p>
+        <p className="mb-0.5 text-xs uppercase tracking-[0.1em] text-black/40">Instructor</p>
+        <p className="text-sm font-semibold text-ink">{name}</p>
       </div>
     </div>
   );

@@ -21,8 +21,6 @@ const TEAR_CLIP =
   "polygon(0% 60%, 3% 20%, 6% 70%, 9% 30%, 12% 80%, 15% 10%, 18% 55%, 21% 25%, 24% 75%, 27% 15%, 30% 60%, 33% 35%, 36% 85%, 39% 20%, 42% 65%, 45% 30%, 48% 75%, 51% 10%, 54% 55%, 57% 25%, 60% 80%, 63% 20%, 66% 60%, 69% 30%, 72% 85%, 75% 15%, 78% 65%, 81% 35%, 84% 75%, 87% 10%, 90% 55%, 93% 25%, 96% 70%, 100% 20%, 100% 100%, 0% 100%)";
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
-const BTN =
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded px-7 py-[13px] font-body text-[0.9rem] font-semibold transition-all duration-300";
 
 export default function Home() {
   const { courses } = useCourses();
@@ -38,7 +36,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-paper font-body">
+    <div className="bg-paper">
       {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-[linear-gradient(160deg,#F4E8CB_0%,#EAD9AC_100%)] pb-16 pt-20 max-sm:py-12">
         {/* paper grain */}
@@ -48,28 +46,28 @@ export default function Home() {
         />
         <div className={`${CONTAINER} relative z-[1] grid grid-cols-2 items-center gap-16 max-[900px]:grid-cols-1`}>
           <div>
-            <span className="mb-5 inline-block rounded-full border border-oxblood/35 bg-oxblood/[0.06] px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-oxblood">
+            <span className="badge mb-5 border border-oxblood/35 bg-oxblood/[0.06] uppercase tracking-[0.15em] text-oxblood">
               The Learning Library
             </span>
-            <h1 className="mb-5 font-display text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.15] text-ink">
+            <h1 className="font-display mb-5 text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.15] text-ink">
               Where <em className="italic text-oxblood">curious minds</em>
               <br />come to master
               <br />technology.
             </h1>
-            <p className="mb-8 max-w-[480px] text-[1.05rem] leading-[1.8] text-ink-soft">
+            <p className="mb-8 max-w-[480px] text-lg leading-[1.8] text-ink-soft">
               A curated collection of programming, robotics, and AI courses —
               presented as books in a library. Open one and start your journey.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/learning/courses"
-                className={`${BTN} border border-oxblood bg-oxblood text-paper hover:border-oxblood-deep hover:bg-oxblood-deep`}
+                className="btn-primary cursor-pointer border border-oxblood bg-oxblood text-paper hover:border-oxblood-deep hover:bg-oxblood-deep"
               >
                 Browse the Library
               </Link>
               <Link
                 to="/learning/about"
-                className={`${BTN} border border-ink/35 bg-transparent text-ink hover:border-oxblood hover:text-oxblood`}
+                className="btn-secondary cursor-pointer border-ink/35 bg-transparent text-ink hover:border-oxblood hover:text-oxblood"
               >
                 Our Guidelines
               </Link>
@@ -77,8 +75,8 @@ export default function Home() {
             <div className="mt-10 flex gap-8 border-t border-ink/[0.12] pt-8 max-sm:gap-4">
               {stats.map((s) => (
                 <div key={s.label}>
-                  <span className="block font-display text-[1.6rem] font-bold text-ink">{s.value}</span>
-                  <span className="mt-0.5 block text-[0.65rem] uppercase tracking-[0.08em] text-ink-soft">
+                  <span className="block text-2xl font-bold text-ink">{s.value}</span>
+                  <span className="mt-0.5 block text-xs uppercase tracking-[0.08em] text-ink-soft">
                     {s.label}
                   </span>
                 </div>
@@ -111,7 +109,7 @@ export default function Home() {
           <div className="mt-12 text-center">
             <Link
               to="/learning/courses"
-              className={`${BTN} border border-oxblood bg-oxblood text-paper hover:border-oxblood-deep hover:bg-oxblood-deep`}
+              className="btn-primary cursor-pointer border border-oxblood bg-oxblood text-paper hover:border-oxblood-deep hover:bg-oxblood-deep"
             >
               View All Courses →
             </Link>
@@ -130,8 +128,8 @@ export default function Home() {
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-8">
             {HOW_STEPS.map((step) => (
               <div key={step.title} className="rounded border border-ink/10 bg-paper p-6">
-                <div className="mb-3 text-[1.6rem]">{step.icon}</div>
-                <h3 className="mb-2 font-display text-ink">{step.title}</h3>
+                <div className="mb-3 text-2xl">{step.icon}</div>
+                <h3 className="mb-2 text-ink">{step.title}</h3>
                 <p className="leading-[1.7] text-ink-soft">{step.desc}</p>
               </div>
             ))}

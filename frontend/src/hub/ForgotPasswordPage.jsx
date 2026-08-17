@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
       <HubNav light />
 
       <div aria-hidden className="fixed inset-0 pointer-events-none"
-        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "40px 40px" }} />
+        style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: "40px 40px" }} />
 
       <div className="relative z-10 w-full max-w-md rounded-3xl p-8 flex flex-col gap-4"
         style={{ background: D.card, boxShadow: "0 24px 64px rgba(0,0,30,0.35)" }}>
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
           </>
         )}
 
-        <Link to="/login" className="text-sm font-semibold text-center mt-1 hover:underline" style={{ color: "#6366f1" }}>
+        <Link to="/login" className="text-sm font-semibold text-center mt-1 hover:underline" style={{ color: "var(--color-inv-accent)" }}>
           Back to sign in
         </Link>
       </div>

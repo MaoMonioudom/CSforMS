@@ -1,20 +1,24 @@
 import { Lock, Eye, EyeOff } from "lucide-react";
+import { HUB, HUB_GRADIENT } from "./hubTheme";
 
 // Shared design tokens/components for every auth-adjacent page (sign in,
 // register, forgot password, reset password) so they all match without
-// duplicating styling.
+// duplicating styling. Re-exported under this file's own key names (bg/
+// card/etc, rather than HUB's bg1/bgCard/etc) so every existing consumer
+// keeps working — only the underlying values changed, unifying with the
+// rest of the hub instead of carrying a third slightly-different palette.
 export const D = {
-  bg:     "#eef5fc",
-  bg2:    "#dbeafe",
-  card:   "#ffffff",
-  border: "rgba(99,102,241,0.18)",
-  muted:  "#5b7286",
-  text:   "#16324a",
+  bg:     HUB.bg1,
+  bg2:    HUB.bg2,
+  card:   HUB.bgCard,
+  border: HUB.border,
+  muted:  HUB.muted,
+  text:   HUB.text,
 };
-export const GRADIENT = "linear-gradient(135deg,#033e8a,#0078b7)";
+export const GRADIENT = HUB_GRADIENT;
 
 export const inputStyle = { background: "rgba(15,50,80,0.045)", border: "1px solid rgba(15,50,80,0.14)", color: D.text };
-export const focusIn  = (e) => (e.target.style.borderColor = "#6366f1");
+export const focusIn  = (e) => (e.target.style.borderColor = "var(--color-inv-accent)");
 export const focusOut = (e) => (e.target.style.borderColor = "rgba(15,50,80,0.14)");
 
 export function ErrorBox({ message }) {

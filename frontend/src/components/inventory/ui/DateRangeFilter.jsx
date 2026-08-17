@@ -73,35 +73,35 @@ export default function DateRangeFilter({ value, onChange }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10 }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 8px 24px rgba(15,23,42,0.12)', zIndex: 20, overflow: 'hidden', minWidth: 190 }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(15,23,42,0.12)', zIndex: 20, overflow: 'hidden', minWidth: 190 }}>
             {!custom ? (
               <>
                 {RANGE_OPTIONS.map(o => (
                   <button key={o.id} onClick={() => { onChange(o.id); setOpen(false) }}
                     style={{
                       display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none',
-                      background: o.id === value ? '#f0fdff' : '#fff', fontSize: 12, cursor: 'pointer',
-                      color: o.id === value ? '#0891b2' : '#334155', fontWeight: o.id === value ? 700 : 500,
+                      background: o.id === value ? 'var(--color-inv-accent-light)' : '#fff', fontSize: 12, cursor: 'pointer',
+                      color: o.id === value ? 'var(--color-inv-accent)' : 'var(--color-charcoal)', fontWeight: o.id === value ? 700 : 500,
                     }}>
                     {o.label}
                   </button>
                 ))}
                 <button onClick={() => setCustom(true)}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', borderTop: '1px solid #f1f5f9', background: '#fff', fontSize: 12, cursor: 'pointer', color: '#334155', fontWeight: 500 }}>
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', borderTop: '1px solid var(--muted)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--color-charcoal)', fontWeight: 500 }}>
                   Custom Range…
                 </button>
               </>
             ) : (
               <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>From</label>
+                <label style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600 }}>From</label>
                 <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-                  style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '5px 8px', fontSize: 12, outline: 'none' }} />
-                <label style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>To</label>
+                  style={{ border: '1px solid var(--border)', borderRadius: 6, padding: '5px 8px', fontSize: 12, outline: 'none' }} />
+                <label style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600 }}>To</label>
                 <input type="date" value={to} onChange={e => setTo(e.target.value)}
-                  style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '5px 8px', fontSize: 12, outline: 'none' }} />
+                  style={{ border: '1px solid var(--border)', borderRadius: 6, padding: '5px 8px', fontSize: 12, outline: 'none' }} />
                 <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                  <button onClick={() => setCustom(false)} style={{ flex: 1, padding: '6px 0', border: 'none', borderRadius: 6, background: '#f1f5f9', color: '#64748b', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Back</button>
-                  <button onClick={applyCustom} style={{ flex: 1, padding: '6px 0', border: 'none', borderRadius: 6, background: '#0891b2', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Apply</button>
+                  <button onClick={() => setCustom(false)} style={{ flex: 1, padding: '6px 0', border: 'none', borderRadius: 6, background: 'var(--muted)', color: 'var(--muted-foreground)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Back</button>
+                  <button onClick={applyCustom} style={{ flex: 1, padding: '6px 0', border: 'none', borderRadius: 6, background: 'var(--color-inv-accent)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Apply</button>
                 </div>
               </div>
             )}

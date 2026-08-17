@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/community/ui/dialog";
 import { Input } from "@/components/community/ui/input";
+import { Textarea } from "@/components/community/ui/textarea";
 import { Label } from "@/components/community/ui/label";
 import { TagsInput } from "@/components/community/TagsInput";
 import { Plus } from "lucide-react";
@@ -60,7 +61,6 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
       team_size_current: Number(form.get("currentSize")),
       team_size_target: Number(form.get("targetSize")) || null,
       contact_email: form.get("contactEmail")?.trim() || null,
-      contact_discord: form.get("contactDiscord")?.trim() || null,
       contact_telegram: form.get("contactTelegram")?.trim() || null,
     };
 
@@ -139,13 +139,12 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
           </div>
           <div>
             <Label htmlFor="description" className="mb-1.5 block">Description</Label>
-            <textarea
+            <Textarea
               id="description"
               name="description"
               required
               rows={4}
               placeholder="Tell people about the project, goals, and what you're looking for..."
-              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             />
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -169,14 +168,10 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
               <Input id="targetSize" name="targetSize" type="number" min={1} placeholder="3" required />
             </div>
           </div>
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <Label htmlFor="contactEmail" className="mb-1.5 block">Email</Label>
               <Input id="contactEmail" name="contactEmail" type="email" placeholder="you@example.edu" required />
-            </div>
-            <div>
-              <Label htmlFor="contactDiscord" className="mb-1.5 block">Discord (optional)</Label>
-              <Input id="contactDiscord" name="contactDiscord" placeholder="username#0000" />
             </div>
             <div>
               <Label htmlFor="contactTelegram" className="mb-1.5 block">Telegram (optional)</Label>
@@ -187,13 +182,13 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={closeAndReset}>
+            <Button type="button" variant="outline" className="btn-secondary" onClick={closeAndReset}>
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={submitting}
-              className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
+              className="btn-primary bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
             >
               {submitting ? "Posting…" : "Create Post"}
             </Button>
@@ -278,11 +273,10 @@ export default function CollaborationPage() {
       eyebrow="02 — Build together"
       title="Find Team"
       description="Find teammates, recruit members, and connect with people who want to build alongside you."
-      ghostLetter="C"
-      tapeColor="rgba(52,211,153,0.72)"
+      tapeColor="color-mix(in oklch, var(--collaboration) 72%, transparent)"
       stats={[
-        { value: total,       label: "Open posts",    rotate: 2,    pinColor: "#6366f1" },
-        { value: newThisWeek, label: "New this week", rotate: -1.5, pinColor: "#16a34a", plus: false },
+        { value: total,       label: "Open posts",    rotate: 2,    pinColor: "var(--collaboration)" },
+        { value: newThisWeek, label: "New this week", rotate: -1.5, pinColor: "var(--success)", plus: false },
       ]}
     >
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -291,9 +285,9 @@ export default function CollaborationPage() {
           <p className="text-sm text-muted-foreground">{visiblePosts.length} posts</p>
           <Button
             onClick={handleCreateClick}
-            className="bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
+            className="btn-primary bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
           >
-            <Plus className="size-4" /> Create
+            <Plus className="size-3.5" /> Create
           </Button>
         </div>
       </div>
@@ -303,7 +297,7 @@ export default function CollaborationPage() {
             key={f.id}
             type="button"
             onClick={() => setActiveFilter(f.id)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`chip ${
               activeFilter === f.id
                 ? "border-collaboration bg-collaboration text-collaboration-foreground"
                 : "border-border bg-background text-muted-foreground hover:border-collaboration hover:text-foreground"
@@ -335,6 +329,7 @@ export default function CollaborationPage() {
         <div className="mt-8 text-center">
           <Button
             variant="outline"
+            className="btn-secondary"
             onClick={handleLoadMore}
             disabled={loadingMore}
           >

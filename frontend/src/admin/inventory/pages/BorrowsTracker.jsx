@@ -87,7 +87,7 @@ function TransactionDetail({ r }) {
         </div>
         <div>
           <DetailLabel icon={Calendar}>Dates</DetailLabel>
-          <div style={{ fontSize: 12.5, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3, color: '#444' }}>
+          <div style={{ fontSize: 12.5, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3, color: 'var(--color-charcoal)' }}>
             <span>Borrowed: <strong>{fmt(r.date)}</strong></span>
             {r.stage === 'active' && <span>Due: <strong>{r.activeItems[0]?.dueDate ? fmt(r.activeItems[0].dueDate) : '—'}</strong></span>}
             {r.stage === 'returned' && <span>Returned: <strong>{fmt(r.items.map(i => i.returnDate).filter(Boolean).sort().slice(-1)[0])}</strong></span>}
@@ -125,7 +125,7 @@ function TransactionDetail({ r }) {
           {r.history.map((h, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i === r.history.length - 1 ? 0 : 14 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0891b2', marginTop: 4 }} />
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-inv-accent)', marginTop: 4 }} />
                 {i !== r.history.length - 1 && <span style={{ width: 1.5, flex: 1, background: T.border, marginTop: 3 }} />}
               </div>
               <div style={{ minWidth: 0 }}>
@@ -264,22 +264,22 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
       <style>{`
         .bt-row { transition: background .12s; cursor: pointer; }
         .bt-row:hover { background: ${T.cream}; }
-        .bt-row.expanded { background: #EEF2FF; }
+        .bt-row.expanded { background: var(--color-inv-accent-light); }
         .bt-btn { display:inline-flex; align-items:center; gap:5px; padding:7px 10px; border-radius:8px; font-size:11.5px; font-weight:700; border:none; cursor:pointer; transition:opacity .12s, transform .1s; }
         .bt-btn:hover { transform:translateY(-1px); }
-        .bt-btn-return { background:#0891b2; color:#fff; }
-        .bt-btn-deduct { background:#fff; color:${T.red}; border:1.5px solid ${T.red}33; }
+        .bt-btn-return { background:var(--color-inv-accent); color:#fff; }
+        .bt-btn-deduct { background:#fff; color:${T.red}; border:1.5px solid color-mix(in oklch, ${T.red} 20%, transparent); }
         .bt-btn-edit { background:#fff; color:${T.charcoal}; border:1.5px solid ${T.border}; }
         .bt-btn-delete { background:#fff; color:${T.red}; border:1.5px solid ${T.border}; }
         .bt-chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${T.border}; background:#fff; color:${T.muted}; cursor:pointer; transition:all .15s; white-space:nowrap; }
         .bt-chip.active { background:${T.charcoal}; color:#fff; border-color:transparent; }
         .bt-chip-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
-        .bt-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:#0891b2; background:#0891b214; padding:4px 10px; border-radius:20px; }
+        .bt-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--color-inv-accent); background:color-mix(in oklch, var(--color-inv-accent) 8%, transparent); padding:4px 10px; border-radius:20px; }
         .bt-grid { grid-template-columns: 24px 1.15fr 0.8fr 0.8fr 0.8fr 0.85fr 1fr 1.25fr; }
         .bt-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .bt-cond-chip { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1.5px solid ${T.border}; cursor:pointer; font-size:13px; font-weight:600; flex:1; justify-content:center; transition:all .15s; background:#fff; color:${T.charcoal}; }
-        .bt-cond-chip.active-good { border-color:#0891b2; background:#0891b212; color:#0891b2; }
-        .bt-cond-chip.active-bad { border-color:${T.red}; background:${T.red}12; color:${T.red}; }
+        .bt-cond-chip.active-good { border-color:var(--color-inv-accent); background:color-mix(in oklch, var(--color-inv-accent) 7%, transparent); color:var(--color-inv-accent); }
+        .bt-cond-chip.active-bad { border-color:${T.red}; background:color-mix(in oklch, ${T.red} 7%, transparent); color:${T.red}; }
         .bt-chevron { transition: transform .15s; color: ${T.faint}; }
         .bt-chevron.open { transform: rotate(180deg); color: ${T.charcoal}; }
 
@@ -391,7 +391,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
                   <Package size={11} /> {r.totalQty} {r.totalQty === 1 ? 'unit' : 'units'}
                 </span>
                 <div style={{ fontSize: 11.5, color: T.faint, margin: '8px 0' }}>Borrowed {fmt(r.date)}{r.stage === 'active' ? ` · Due ${fmt(r.activeItems[0]?.dueDate)}` : ''}</div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: r.status.tone === 'danger' ? T.red : '#555', marginBottom: 10 }}>{r.status.remaining}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: r.status.tone === 'danger' ? T.red : 'var(--color-inv-muted)', marginBottom: 10 }}>{r.status.remaining}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
                   {r.stage === 'active' && <button className="bt-btn bt-btn-return" onClick={() => setReturning(r)}><Check size={11} /> Return</button>}
                   {r.status.label === 'Overdue' && <button className="bt-btn bt-btn-deduct" onClick={() => setDeducting(r)}><Coins size={11} /> Deduct</button>}

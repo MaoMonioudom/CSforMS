@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { normalizeLessonBody } from "../../../utils/format";
 
-const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
+const inputCls = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border";
 const errorInputCls = "w-full rounded-lg border border-red-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-400";
-const labelCls = "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5";
+const labelCls = "block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5";
 const fieldErrorCls = "mt-1 text-xs text-red-500";
 
 function RequiredLabel({ children }) {
@@ -54,20 +54,20 @@ function LessonEditor({ lesson, index, paths, error, onChange, onRemove, onMove,
   const set = (field) => (e) => onChange(index, { ...lesson, [field]: e.target.value });
 
   return (
-    <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+    <div className="rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-gray-500">Lesson {index + 1}</p>
+        <p className="text-xs font-semibold text-muted-foreground">Lesson {index + 1}</p>
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => onMove(index, -1)} disabled={isFirst}
-            className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 disabled:hover:bg-transparent">
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
           <button type="button" onClick={() => onMove(index, 1)} disabled={isLast}
-            className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 disabled:hover:bg-transparent">
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <button type="button" onClick={() => onRemove(index)}
-            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+            className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -105,7 +105,7 @@ function LessonEditor({ lesson, index, paths, error, onChange, onRemove, onMove,
           <label className={labelCls}>Step-by-step — one step per line</label>
           <textarea className={inputCls} rows={4} value={lesson.stepsBody} onChange={set("stepsBody")}
             placeholder={"Install Python from python.org\nOpen VS Code and create hello.py\nRun the script from the terminal"} />
-          <p className="mt-1 text-xs text-gray-400">Each line becomes one checklist step. Empty = steps are made from the Basic content's lines.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Each line becomes one checklist step. Empty = steps are made from the Basic content's lines.</p>
         </div>
       )}
 
@@ -283,8 +283,8 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{error}</div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-        <h2 className="text-sm font-bold text-gray-800">Course details</h2>
+      <div className="bg-white rounded-xl border border-border p-5 space-y-4">
+        <h2 className="text-sm font-bold text-foreground">Course details</h2>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
@@ -324,7 +324,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                className="h-10 w-14 rounded-lg border border-gray-200 bg-white p-1"
+                className="h-10 w-14 rounded-lg border border-border bg-white p-1"
                 value={form.coverColor}
                 onChange={set("coverColor")}
                 aria-label="Cover color picker"
@@ -339,7 +339,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
             {errors.coverColor ? (
               <p className={fieldErrorCls}>{errors.coverColor}</p>
             ) : (
-              <p className="mt-1 text-xs text-gray-400">Use a hex value or the picker.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Use a hex value or the picker.</p>
             )}
             <div className="mt-2 flex flex-wrap gap-2">
               {COLOR_PRESETS.map((color) => (
@@ -347,7 +347,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
                   key={color}
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, coverColor: color }))}
-                  className="h-6 w-6 rounded-full border border-gray-200 shadow-sm"
+                  className="h-6 w-6 rounded-full border border-border shadow-sm"
                   style={{ backgroundColor: color }}
                   aria-label={`Set cover color to ${color}`}
                 />
@@ -359,7 +359,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                className="h-10 w-14 rounded-lg border border-gray-200 bg-white p-1"
+                className="h-10 w-14 rounded-lg border border-border bg-white p-1"
                 value={form.spineColor}
                 onChange={set("spineColor")}
                 aria-label="Spine color picker"
@@ -374,7 +374,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
             {errors.spineColor ? (
               <p className={fieldErrorCls}>{errors.spineColor}</p>
             ) : (
-              <p className="mt-1 text-xs text-gray-400">Use a hex value or the picker.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Use a hex value or the picker.</p>
             )}
           </div>
         </div>
@@ -401,7 +401,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
           <RequiredLabel>Learning paths</RequiredLabel>
           <div className="flex flex-wrap gap-4">
             {PATH_OPTIONS.map((p) => (
-              <label key={p.key} className="flex items-center gap-2 text-sm text-gray-700">
+              <label key={p.key} className="flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={form.paths.includes(p.key)}
@@ -409,7 +409,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
                     togglePath(p.key);
                     if (errors.paths) setErrors((er) => ({ ...er, paths: undefined }));
                   }}
-                  className="rounded border-gray-300 text-gray-900 focus:ring-gray-900/10"
+                  className="rounded border-border text-foreground focus:ring-gray-900/10"
                 />
                 {p.label}
               </label>
@@ -432,7 +432,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
               {errors.aiAgentUrl ? (
                 <p className={fieldErrorCls}>{errors.aiAgentUrl}</p>
               ) : (
-                <p className="mt-1 text-xs text-gray-400">Embedded in the AI guide panel on Interactive lessons. Empty = built-in demo chat.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Embedded in the AI guide panel on Interactive lessons. Empty = built-in demo chat.</p>
               )}
             </div>
           </div>
@@ -445,17 +445,17 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <div className="bg-white rounded-xl border border-border p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-800">Lessons ({lessons.length})</h2>
+          <h2 className="text-sm font-bold text-foreground">Lessons ({lessons.length})</h2>
           <button type="button" onClick={addLesson}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground">
             <Plus className="h-3.5 w-3.5" /> Add lesson
           </button>
         </div>
 
         {lessons.length === 0 ? (
-          <p className="text-sm text-gray-400">No lessons yet — add one above.</p>
+          <p className="text-sm text-muted-foreground">No lessons yet — add one above.</p>
         ) : (
           <div className="space-y-3">
             {lessons.map((lesson, i) => (
@@ -478,11 +478,11 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
 
       <div className="flex items-center justify-end gap-3">
         <button type="button" onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+          className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
           Cancel
         </button>
         <button type="submit"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 transition-colors">
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-foreground hover:bg-foreground transition-colors">
           {isNew ? "Create course" : "Save changes"}
         </button>
       </div>

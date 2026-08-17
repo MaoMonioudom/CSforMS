@@ -52,7 +52,7 @@ export default function UserManager({ users, setUsers }) {
       {pendingMembers.length > 0 && (
         <div className="mb-5 overflow-hidden rounded-2xl border border-border bg-white">
           <div className="border-b border-stone bg-amber-light px-6 py-3.5">
-            <h3 className="m-0 text-[15px] font-semibold text-charcoal">Pending Membership Approvals ({pendingMembers.length})</h3>
+            <h3 className="m-0 text-lg font-semibold text-charcoal">Pending Membership Approvals ({pendingMembers.length})</h3>
           </div>
           {pendingMembers.map((u) => (
             <div key={u.id} className="flex items-center justify-between gap-3 border-b border-stone px-6 py-3.5 last:border-b-0">
@@ -77,19 +77,19 @@ export default function UserManager({ users, setUsers }) {
         {/* User list */}
         <div className="overflow-hidden rounded-2xl border border-border bg-white">
           <div className="border-b border-stone bg-cream px-6 py-4">
-            <h3 className="m-0 text-[15px] font-semibold text-charcoal">All Users</h3>
+            <h3 className="m-0 text-lg font-semibold text-charcoal">All Users</h3>
           </div>
           {users.map((u) => (
             <div key={u.id} onClick={() => setSel(u)}
               className={`flex items-center gap-3 border-b border-stone px-6 py-3 ${sel?.id === u.id ? 'bg-cream' : ''}`}>
-              <div className={`flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${roleStyles[u.role].bg} ${roleStyles[u.role].text}`}>
+              <div className={`flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${roleStyles[u.role].bg} ${roleStyles[u.role].text}`}>
                 {u.name[0]}
               </div>
               <div className="flex-1">
                 <p className="m-0 text-sm font-medium text-ink">{u.name}</p>
                 <p className="m-0 text-xs text-faint">{u.email}</p>
               </div>
-              <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${roleStyles[u.role].bg} ${roleStyles[u.role].text}`}>{u.role.toUpperCase()}</span>
+              <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${roleStyles[u.role].bg} ${roleStyles[u.role].text}`}>{u.role.toUpperCase()}</span>
             </div>
           ))}
         </div>
@@ -104,12 +104,12 @@ export default function UserManager({ users, setUsers }) {
           ) : (
             <>
               <div className="mb-6 flex items-center gap-3">
-                <div className={`flex h-[46px] w-[46px] items-center justify-center rounded-full text-[17px] font-bold ${roleStyles[sel.role].bg} ${roleStyles[sel.role].text}`}>
+                <div className={`flex h-[46px] w-[46px] items-center justify-center rounded-full text-lg font-bold ${roleStyles[sel.role].bg} ${roleStyles[sel.role].text}`}>
                   {sel.name[0]}
                 </div>
                 <div>
                   <p className="m-0 text-base font-semibold text-charcoal">{sel.name}</p>
-                  <p className="m-0 text-[13px] text-faint">{sel.email}</p>
+                  <p className="m-0 text-sm text-faint">{sel.email}</p>
                 </div>
               </div>
 
@@ -118,14 +118,14 @@ export default function UserManager({ users, setUsers }) {
                   <div className="mb-1.5 flex items-center justify-between">
                     <span className="text-sm font-semibold text-ink">Membership</span>
                     <button onClick={() => toggleMembership(sel.id)}
-                      className={`rounded-md px-3 py-1 text-[13px] font-semibold ${sel.membership === 'active' ? 'bg-red-light text-red' : 'bg-green-light text-green'}`}>
+                      className={`rounded-md px-3 py-1 text-sm font-semibold ${sel.membership === 'active' ? 'bg-red-light text-red' : 'bg-green-light text-green'}`}>
                       {sel.membership === 'active' ? 'Revoke' : 'Activate'}
                     </button>
                   </div>
-                  <p className="m-0 text-[13px] text-faint">
+                  <p className="m-0 text-sm text-faint">
                     Status: <span className={`font-semibold ${sel.membership === 'active' ? 'text-green' : 'text-red'}`}>{sel.membership === 'active' ? 'Active' : sel.membership || 'Inactive'}</span>
                   </p>
-                  {sel.studentId && <p className="m-0 mt-1 text-[13px] text-faint">ID: {sel.studentId}</p>}
+                  {sel.studentId && <p className="m-0 mt-1 text-sm text-faint">ID: {sel.studentId}</p>}
                 </div>
               )}
 
@@ -136,7 +136,7 @@ export default function UserManager({ users, setUsers }) {
                     const on = sel.permissions?.includes(perm)
                     return (
                       <div key={perm} className="mb-2.5 flex items-center justify-between">
-                        <span className="text-[13px] text-inv-muted">{perm.replace(/_/g, ' ')}</span>
+                        <span className="text-sm text-inv-muted">{perm.replace(/_/g, ' ')}</span>
                         <div onClick={() => togglePerm(sel.id, perm)} className={`relative h-[22px] w-10 rounded-full transition-colors ${on ? 'bg-red' : 'bg-stone'}`}>
                           <div className={`absolute top-[3px] h-4 w-4 rounded-full bg-white transition-all ${on ? 'left-[21px]' : 'left-[3px]'}`} />
                         </div>

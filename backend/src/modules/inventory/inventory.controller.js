@@ -330,7 +330,7 @@ export async function deductCredits(req, res, next) {
       userId, invoiceType: "fee", totalCredit: amount, method: "credit", verifiedBy: req.user.user_id,
     });
     await insertNotification({
-      userId, type: "denied",
+      userId, type: "fee_charged",
       message: reason || `${amount} credits were deducted from your account.`,
     });
 

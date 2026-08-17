@@ -34,7 +34,7 @@ export default function CollabDetailPage() {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
+        <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
           {loadFailed
             ? "Something went wrong loading this page — please try again."
@@ -64,14 +64,14 @@ export default function CollabDetailPage() {
             <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm">{post.projectTitle}</span>
           </nav>
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-collaboration px-3 py-1 text-xs font-semibold text-collaboration-foreground">
+            <span className="badge bg-collaboration text-collaboration-foreground">
               {collabTypeLabel[post.type]}
             </span>
-            <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+            <span className="badge border border-border bg-background text-muted-foreground">
               {post.category}
             </span>
           </div>
-          <h1 className="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
             {post.projectTitle}
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{post.shortPitch}</p>
@@ -99,7 +99,7 @@ export default function CollabDetailPage() {
                 {post.rolesNeeded.map((role) => (
                   <span
                     key={role}
-                    className="rounded-lg border border-collaboration/30 bg-collaboration/10 px-3 py-1.5 text-sm font-medium text-collaboration"
+                    className="badge border border-collaboration/30 bg-collaboration/10 text-collaboration"
                   >
                     {role}
                   </span>
@@ -112,7 +112,7 @@ export default function CollabDetailPage() {
                 {post.skills.map((s) => (
                   <span
                     key={s}
-                    className="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                    className="badge badge-sm bg-muted text-muted-foreground"
                   >
                     #{s}
                   </span>
@@ -165,7 +165,7 @@ export default function CollabDetailPage() {
                 )}
               </div>
               <Button
-                className="mt-5 w-full bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
+                className="btn-primary mt-5 w-full justify-center bg-collaboration text-collaboration-foreground hover:bg-collaboration/90"
                 asChild
               >
                 <a href={`mailto:${post.contact.email}`}>Send an email</a>

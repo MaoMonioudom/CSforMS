@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 
 const COLORS = [
-  "oklch(0.72 0.22 50)",
-  "oklch(0.68 0.2 160)",
-  "oklch(0.55 0.22 300)",
-  "oklch(0.74 0.2 340)",
-  "oklch(0.6 0.24 265)",
+  "var(--events)",
+  "var(--collaboration)",
+  "var(--community)",
+  "var(--social)",
+  "var(--technical)",
 ];
 
 const MAX_TRAIL = 55;

@@ -4,10 +4,10 @@ const INITIAL_FORM = { name: "", cardNumber: "", expiry: "", cvc: "" };
 
 const FIELD = "flex min-w-0 flex-col gap-1.5";
 const FIELD_LABEL =
-  "text-[0.65rem] font-semibold uppercase tracking-[0.04em] text-[#2C2C2C]/60";
+  "text-xs font-semibold uppercase tracking-[0.04em] text-[#2C2C2C]/60";
 const FIELD_INPUT =
-  "w-full rounded border border-black/15 bg-white px-3 py-2.5 font-body text-[0.9rem] text-ink focus:border-gold focus:shadow-[0_0_0_3px_rgba(201,168,76,0.2)] focus:outline-none disabled:opacity-60";
-const FIELD_ERROR = "text-[0.65rem] text-[#8B2020]";
+  "field border-black/15 bg-white text-ink focus:border-community-gold focus:shadow-[0_0_0_3px_rgba(201,168,76,0.2)] focus:outline-none disabled:opacity-60";
+const FIELD_ERROR = "text-xs text-[#8B2020]";
 
 function formatCardNumber(value) {
   return value
@@ -69,7 +69,7 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-deep/[0.72] p-4 font-body backdrop-blur-[3px]"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-deep/[0.72] p-4 backdrop-blur-[3px]"
       onClick={onClose}
     >
       <div
@@ -78,8 +78,8 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
       >
         {status === "success" ? (
           <div className="py-6 text-center">
-            <div className="mb-3 text-[40px]">✅</div>
-            <h3 className="mb-2 font-display text-ink">Payment Successful</h3>
+            <div className="mb-3 text-4xl">✅</div>
+            <h3 className="mb-2 text-ink">Payment Successful</h3>
             <p className="text-sm text-[#2C2C2C]/70">
               Interactive path unlocked for {course.title}.
             </p>
@@ -87,24 +87,24 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
         ) : (
           <>
             <button
-              className="absolute right-3.5 top-3 cursor-pointer p-1 text-[22px] leading-none text-black/40 hover:text-black/70"
+              className="absolute right-3.5 top-3 cursor-pointer p-1 text-2xl leading-none text-black/40 hover:text-black/70"
               onClick={onClose}
               aria-label="Close"
             >
               ×
             </button>
 
-            <span className="mb-3 inline-block rounded-full bg-gold/[0.18] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-gold-dark">
+            <span className="badge mb-3 bg-community-gold/[0.18] uppercase tracking-[0.08em] text-community-gold-light-foreground">
               🤖 Interactive Path
             </span>
-            <h3 className="mb-1.5 font-display text-[1.35rem] text-ink">
+            <h3 className="mb-1.5 text-2xl text-ink">
               Unlock {course.title}
             </h3>
             <p className="mb-4 text-sm leading-relaxed text-[#2C2C2C]/[0.72]">
               Get an AI guide alongside every lesson to explain concepts,
               answer questions, and keep you unstuck.
             </p>
-            <div className="mb-5 font-display text-[2.2rem] font-bold text-ink">
+            <div className="mb-5 text-4xl font-bold text-ink">
               ${price.toFixed(2)}
             </div>
 
@@ -169,12 +169,12 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
 
               <button
                 type="submit"
-                className="mt-2 cursor-pointer rounded bg-navy px-5 py-[13px] text-[0.9rem] font-semibold text-gold transition-colors duration-300 hover:bg-[#253a50] disabled:cursor-default disabled:opacity-70"
+                className="btn-primary mt-2 w-full cursor-pointer justify-center bg-navy text-community-gold hover:bg-[#253a50] disabled:cursor-default disabled:opacity-70"
                 disabled={status === "processing"}
               >
                 {status === "processing" ? "Processing…" : `Pay $${price.toFixed(2)}`}
               </button>
-              <p className="text-center text-[0.65rem] text-[#2C2C2C]/45">
+              <p className="text-center text-xs text-[#2C2C2C]/45">
                 Simulated checkout — no real payment is processed.
               </p>
             </form>

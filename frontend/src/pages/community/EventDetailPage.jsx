@@ -92,7 +92,7 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this event" : "Event not found"}</h1>
+        <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this event" : "Event not found"}</h1>
         <p className="mt-2 text-muted-foreground">
           {loadFailed ? "Something went wrong loading this page — please try again." : "This event doesn't exist or has been removed."}
         </p>
@@ -159,14 +159,14 @@ export default function EventDetailPage() {
               >
                 <img src={event.images[coverIndex]} alt={event.title} className="h-full w-full object-contain" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100">
-                  <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white">
+                  <span className="badge bg-black/60 text-white">
                     <Maximize2 className="size-3.5" /> View {event.images.length > 1 ? "photos" : "photo"}
                   </span>
                 </div>
               </button>
 
               {event.images.length > 1 && (
-                <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
+                <span className="badge badge-sm pointer-events-none absolute bottom-3 right-3 bg-black/60 text-white">
                   <Camera className="size-3.5" /> {coverIndex + 1} / {event.images.length}
                 </span>
               )}
@@ -219,13 +219,13 @@ export default function EventDetailPage() {
               {event.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-events/15 px-3 py-1 text-xs font-medium text-events"
+                  className="badge bg-events/15 text-events"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
-            <h1 className="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight">
               {event.title}
             </h1>
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -272,18 +272,18 @@ export default function EventDetailPage() {
                 />
               </div>
               {registered ? (
-                <Button className="mt-5 w-full border border-events text-events bg-transparent" disabled>
+                <Button className="btn-secondary mt-5 w-full border-events text-events bg-transparent" disabled>
                   Registered ✓
                 </Button>
               ) : canRegister && event.registrationUrl ? (
-                <Button asChild className="mt-5 w-full bg-events text-events-foreground hover:bg-events/90">
+                <Button asChild className="btn-primary mt-5 w-full bg-events text-events-foreground hover:bg-events/90">
                   <a href={event.registrationUrl} target="_blank" rel="noreferrer">
                     Register (external form) ↗
                   </a>
                 </Button>
               ) : canRegister ? (
                 <Button
-                  className="mt-5 w-full bg-events text-events-foreground hover:bg-events/90"
+                  className="btn-primary mt-5 w-full bg-events text-events-foreground hover:bg-events/90"
                   disabled={working}
                   onClick={handleRegister}
                 >
@@ -321,9 +321,9 @@ export default function EventDetailPage() {
               <div className="mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Photos</p>
                 {event.galleryUrl ? (
-                  <Button asChild className="mt-3 w-full bg-events text-events-foreground hover:bg-events/90">
+                  <Button asChild className="btn-primary mt-3 w-full bg-events text-events-foreground hover:bg-events/90">
                     <a href={event.galleryUrl} target="_blank" rel="noreferrer">
-                      <Camera className="size-4" /> View event gallery ↗
+                      <Camera className="size-3.5" /> View event gallery ↗
                     </a>
                   </Button>
                 ) : (

@@ -14,11 +14,11 @@ function Pushpin() {
       <div
         className="w-5 h-5 rounded-full shadow-md"
         style={{
-          background: "radial-gradient(circle at 35% 30%, #ff8a80, #c62828)",
+          background: "radial-gradient(circle at 35% 30%, color-mix(in oklch, var(--events) 55%, white), var(--events))",
           boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
         }}
       />
-      <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+      <div className="w-0.5 h-2 bg-muted-foreground rounded-b" style={{ marginTop: "-1px" }} />
     </div>
   );
 }
@@ -81,7 +81,7 @@ export function EventCard({ event, index = 0, registered = false }) {
           className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
         />
         {status === "ongoing" ? (
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white shadow">
+          <div className="badge absolute left-3 top-3 bg-red-600 text-white shadow">
             <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
@@ -89,7 +89,7 @@ export function EventCard({ event, index = 0, registered = false }) {
             Ongoing
           </div>
         ) : (
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-events px-3 py-1 text-xs font-bold text-events-foreground shadow">
+          <div className="badge absolute left-3 top-3 bg-events text-events-foreground shadow">
             <Calendar className="size-3.5" />
             {formatEventDate(event.date)}
           </div>
@@ -128,16 +128,15 @@ export function EventCard({ event, index = 0, registered = false }) {
             </span>
           </div>
           <Button
-            size="sm"
             onClick={handleRegisterClick}
             disabled={!hasGallery && (registered || status !== "upcoming" || isFull)}
             className={status === "upcoming" && !isFull && !registered
-              ? "rounded-full bg-events text-events-foreground hover:bg-events/90 font-bold shadow-sm"
+              ? "btn-primary bg-events text-events-foreground hover:bg-events/90 shadow-sm"
               : registered
-              ? "rounded-full border border-events text-events bg-transparent font-bold shadow-sm"
+              ? "btn-secondary border-events text-events bg-transparent shadow-sm"
               : hasGallery
-              ? "rounded-full border border-events text-events bg-transparent font-bold shadow-sm hover:bg-events/10"
-              : "rounded-full bg-muted text-muted-foreground font-bold shadow-sm"}
+              ? "btn-secondary border-events text-events bg-transparent shadow-sm hover:bg-events/10"
+              : "btn-primary bg-muted text-muted-foreground shadow-sm"}
           >
             {registered
               ? "Registered"

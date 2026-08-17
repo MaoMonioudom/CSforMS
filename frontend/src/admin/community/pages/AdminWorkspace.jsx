@@ -13,7 +13,7 @@ const STATUS_STYLE = {
   denied:    { label: "Denied",    cls: "bg-red-50 text-red-500" },
   // Member cancelled their own still-pending request — not one of the
   // filter tabs (nothing to action), but still shows correctly under "All".
-  cancelled: { label: "Cancelled", cls: "bg-gray-100 text-gray-500" },
+  cancelled: { label: "Cancelled", cls: "bg-muted text-muted-foreground" },
 };
 
 const FILTERS = ["pending", "approved", "denied", "all"];
@@ -78,14 +78,14 @@ function DesksPanel() {
   const typeSuggestions = [...new Set([...DEFAULT_DESK_TYPES, ...desks.map((d) => d.type).filter(Boolean)])];
 
   return (
-    <div className="mt-8 bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div className="mt-8 bg-white rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
-          <h2 className="text-sm font-bold text-gray-900">Desks &amp; Rooms</h2>
-          <p className="text-xs text-gray-500 mt-0.5">What members can pick from when requesting a space.</p>
+          <h2 className="text-sm font-bold text-foreground">Desks &amp; Rooms</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">What members can pick from when requesting a space.</p>
         </div>
         <button onClick={() => setFormOpen((v) => !v)}
-          className="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+          className="inline-flex items-center gap-1.5 bg-foreground text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-foreground transition-colors">
           <Plus className="h-3.5 w-3.5" /> Add desk
         </button>
       </div>
@@ -95,20 +95,20 @@ function DesksPanel() {
       )}
 
       {formOpen && (
-        <form onSubmit={handleAdd} className="px-5 py-4 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <form onSubmit={handleAdd} className="px-5 py-4 border-b border-border grid grid-cols-1 sm:grid-cols-5 gap-3">
           <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="Name (e.g. Quiet Desk 3)" required
-            className="sm:col-span-2 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400" />
+            className="sm:col-span-2 rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border" />
           <div>
             <input value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
               list="workspace-type-suggestions" placeholder="Type (e.g. Meeting desk)"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400" />
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border" />
             <datalist id="workspace-type-suggestions">
               {typeSuggestions.map((t) => <option key={t} value={t} />)}
             </datalist>
           </div>
           <select value={form.locationId} onChange={(e) => setForm((f) => ({ ...f, locationId: e.target.value }))}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400">
+            className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border">
             <option value="">No location set</option>
             {locations.map((l) => (
               <option key={l.id} value={l.id}>{l.label}</option>
@@ -117,9 +117,9 @@ function DesksPanel() {
           <div className="flex gap-2">
             <input value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
               type="number" min="1" placeholder="Capacity"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400" />
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border" />
             <button type="submit" disabled={saving}
-              className="shrink-0 bg-gray-900 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50">
+              className="shrink-0 bg-foreground text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-foreground transition-colors disabled:opacity-50">
               {saving ? "…" : "Add"}
             </button>
           </div>
@@ -130,25 +130,25 @@ function DesksPanel() {
         <table className="w-full text-sm">
           <tbody className="divide-y divide-gray-50">
             {loading ? (
-              <tr><td className="px-5 py-6 text-center text-sm text-gray-400">Loading…</td></tr>
+              <tr><td className="px-5 py-6 text-center text-sm text-muted-foreground">Loading…</td></tr>
             ) : desks.length === 0 ? (
-              <tr><td className="px-5 py-6 text-center text-sm text-gray-400">No desks yet — add one above.</td></tr>
+              <tr><td className="px-5 py-6 text-center text-sm text-muted-foreground">No desks yet — add one above.</td></tr>
             ) : desks.map((desk) => (
-              <tr key={desk.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={desk.id} className="hover:bg-muted transition-colors">
                 <td className="px-5 py-3">
-                  <p className="font-medium text-gray-900">{desk.label}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="font-medium text-foreground">{desk.label}</p>
+                  <p className="text-xs text-muted-foreground">
                     {desk.type || "—"} · {desk.locationLabel || "no location set"} · capacity {desk.capacity}
                   </p>
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mr-3 ${
-                    desk.status === "available" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+                  <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mr-3 ${
+                    desk.status === "available" ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground"
                   }`}>
                     {desk.status === "available" ? "Available" : "Unavailable"}
                   </span>
                   <button onClick={() => handleToggle(desk)} disabled={togglingId === desk.id}
-                    className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-50"
                     title={desk.status === "available" ? "Mark unavailable" : "Mark available"}>
                     <Power className="h-3.5 w-3.5" />
                   </button>
@@ -219,8 +219,8 @@ export default function AdminWorkspace() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Workspace Requests</h1>
-        <p className="mt-1 text-sm text-gray-500">Approve or deny member requests for a personal desk or bench.</p>
+        <h1 className="text-2xl font-bold text-foreground">Workspace Requests</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Approve or deny member requests for a personal desk or bench.</p>
       </div>
 
       {error && (
@@ -231,30 +231,30 @@ export default function AdminWorkspace() {
         {FILTERS.map(key => (
           <button key={key} onClick={() => setFilter(key)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-              filter === key ? "bg-gray-900 text-white" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
+              filter === key ? "bg-foreground text-white" : "bg-white text-muted-foreground border border-border hover:bg-muted"
             }`}>
             {key.charAt(0).toUpperCase() + key.slice(1)} ({counts[key]})
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Seat</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date &amp; time</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-border bg-muted">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Member</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seat</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date &amp; time</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-gray-400">Loading…</td></tr>
+                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
               ) : visible.length === 0 ? (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-gray-400">No requests here.</td></tr>
+                <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-muted-foreground">No requests here.</td></tr>
               ) : visible.map(r => {
                 const dateLabel = DATES.find(d => d.key === r.date)?.label ?? r.date;
                 const s = STATUS_STYLE[r.status];
@@ -262,27 +262,27 @@ export default function AdminWorkspace() {
                 const approvedCount = approvedCountFor(requests, r);
                 const isFull = r.status !== "approved" && approvedCount >= r.capacity;
                 return (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={r.id} className="hover:bg-muted transition-colors">
                     <td className="px-5 py-3.5">
-                      <p className="font-medium text-gray-900">{r.userName}</p>
-                      <p className="text-xs text-gray-400">{r.userEmail}</p>
+                      <p className="font-medium text-foreground">{r.userName}</p>
+                      <p className="text-xs text-muted-foreground">{r.userEmail}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-700">
+                    <td className="px-5 py-3.5 text-foreground">
                       <p>{r.seatLabel}</p>
                       {r.capacity > 1 && (
-                        <p className={`text-[11px] ${isFull ? "text-red-500 font-semibold" : "text-gray-400"}`}>
+                        <p className={`text-xs ${isFull ? "text-red-500 font-semibold" : "text-muted-foreground"}`}>
                           {approvedCount}/{r.capacity} approved{isFull ? " · Full" : ""}
                         </p>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-gray-600 text-xs">{dateLabel} · {r.slot}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground text-xs">{dateLabel} · {r.slot}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
+                      <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex justify-end gap-2">
                         {r.status === "cancelled" ? (
-                          <span className="text-xs text-gray-400 italic">Withdrawn by member</span>
+                          <span className="text-xs text-muted-foreground italic">Withdrawn by member</span>
                         ) : (
                           <>
                             {r.status !== "approved" && (

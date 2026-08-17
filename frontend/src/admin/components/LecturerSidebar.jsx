@@ -7,7 +7,7 @@ import {
 import { useAuth } from "../../hub/AuthContext";
 
 const ROLE_BADGE = {
-  Lecturer: "bg-gold/15 text-gold-light",
+  Lecturer: "bg-community-gold/15 text-community-gold-light",
 };
 
 // One shared admin sidebar for all three modules. Each module is a collapsible
@@ -38,7 +38,7 @@ function NavItem({ label, to, icon: Icon, end }) {
     >
       {({ isActive }) => (
         <>
-          <Icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-gold-light" : "text-navy-muted"}`} />
+          <Icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-community-gold-light" : "text-navy-muted"}`} />
           {label}
         </>
       )}
@@ -101,8 +101,8 @@ export function LecturerSidebar({ width = 224 }) {
                 }`}
               >
                 {isOpen
-                  ? <FolderOpen className="h-4 w-4 shrink-0 text-gold" />
-                  : <Folder className="h-4 w-4 shrink-0 text-gold" />
+                  ? <FolderOpen className="h-4 w-4 shrink-0 text-community-gold" />
+                  : <Folder className="h-4 w-4 shrink-0 text-community-gold" />
                 }
                 <span className="flex-1 text-left truncate">{folder.label}</span>
                 <ChevronDown
@@ -123,8 +123,8 @@ export function LecturerSidebar({ width = 224 }) {
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-navy-muted hover:text-parchment hover:bg-white/5 transition-colors"
                       >
                         {subIsOpen(entry.group)
-                          ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-gold-light" />
-                          : <Folder className="h-3.5 w-3.5 shrink-0 text-gold-light" />
+                          ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-community-gold-light" />
+                          : <Folder className="h-3.5 w-3.5 shrink-0 text-community-gold-light" />
                         }
                         <span className="flex-1 text-left truncate">{entry.group}</span>
                         <ChevronDown className={`h-3 w-3 shrink-0 text-navy-muted transition-transform duration-200 ${subIsOpen(entry.group) ? "rotate-0" : "-rotate-90"}`} />

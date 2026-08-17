@@ -2,18 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Coins, BadgeCheck, Loader2, ShieldOff, ShieldCheck } from "lucide-react";
 import { api } from "../../../lib/api/client";
 
-const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
+const inputCls = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border";
 
 const ROLE_BADGE = {
   admin: "bg-red-50 text-red-600",
   staff: "bg-violet-50 text-violet-600",
-  user: "bg-gray-100 text-gray-500",
+  user: "bg-muted text-muted-foreground",
 };
 
 function StatusPill({ isMember }) {
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
-      isMember ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+      isMember ? "bg-emerald-50 text-emerald-600" : "bg-muted text-muted-foreground"
     }`}>
       {isMember ? <BadgeCheck className="h-3 w-3" /> : null}
       {isMember ? "Active member" : "Not a member"}
@@ -24,7 +24,7 @@ function StatusPill({ isMember }) {
 function AccountStatusPill({ status }) {
   const active = status === "active";
   return (
-    <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+    <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${
       active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
     }`}>
       {active ? "Active account" : "Suspended"}
@@ -42,42 +42,42 @@ function UsersTable({ title, subtitle, users, onSelect, selectedId, showStudentI
     <div>
       <div className="flex items-baseline justify-between mb-3">
         <div>
-          <h2 className="text-sm font-bold text-gray-800">{title}</h2>
-          <p className="text-xs text-gray-400">{subtitle}</p>
+          <h2 className="text-sm font-bold text-foreground">{title}</h2>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
-        <span className="text-xs font-medium text-gray-400">{users.length}</span>
+        <span className="text-xs font-medium text-muted-foreground">{users.length}</span>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Role</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
+              <tr className="border-b border-border bg-muted">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">User</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Role</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Status</th>
                 {showStudentId && (
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Student ID</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Student ID</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {users.length === 0 ? (
-                <tr><td colSpan={colCount} className="px-5 py-8 text-center text-sm text-gray-400">No accounts here.</td></tr>
+                <tr><td colSpan={colCount} className="px-5 py-8 text-center text-sm text-muted-foreground">No accounts here.</td></tr>
               ) : users.map(u => (
                 <tr key={u.user_id} onClick={() => onSelect(u)}
-                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${selectedId === u.user_id ? "bg-gray-50" : ""}`}>
+                  className={`cursor-pointer hover:bg-muted transition-colors ${selectedId === u.user_id ? "bg-muted" : ""}`}>
                   <td className="px-5 py-3">
-                    <p className="font-medium text-gray-900 truncate">{u.full_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                    <p className="font-medium text-foreground truncate">{u.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                   </td>
                   <td className="px-5 py-3 hidden sm:table-cell">
-                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-gray-100 text-gray-500"}`}>{u.role}</span>
+                    <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-muted text-muted-foreground"}`}>{u.role}</span>
                   </td>
                   <td className="px-5 py-3 hidden sm:table-cell">
                     <AccountStatusPill status={u.status} />
                   </td>
                   {showStudentId && (
-                    <td className="px-5 py-3 text-gray-500 hidden md:table-cell">{u.student_id || "—"}</td>
+                    <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{u.student_id || "—"}</td>
                   )}
                 </tr>
               ))}
@@ -203,8 +203,8 @@ export default function AdminUsers() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Users</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Search a student to view their account, manage membership/credits, or suspend access.
         </p>
       </div>
@@ -213,9 +213,9 @@ export default function AdminUsers() {
         <div className="mb-4 rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{usersError}</div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white rounded-xl border border-border p-5">
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -225,18 +225,18 @@ export default function AdminUsers() {
           />
 
           {results.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+            <div className="absolute z-10 mt-1 w-full bg-white rounded-lg border border-border shadow-lg overflow-hidden max-h-64 overflow-y-auto">
               {results.map((u) => (
                 <button
                   key={u.user_id}
                   onClick={() => selectUser(u)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-muted transition-colors"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{u.full_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{u.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                   </div>
-                  <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-gray-100 text-gray-500"}`}>
+                  <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[u.role] ?? "bg-muted text-muted-foreground"}`}>
                     {u.role}
                   </span>
                 </button>
@@ -246,22 +246,22 @@ export default function AdminUsers() {
         </div>
 
         {!selected ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Search for a student above to get started.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">Search for a student above to get started.</p>
         ) : (
-          <div className="rounded-lg border border-gray-200 p-5">
+          <div className="rounded-lg border border-border p-5">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">{selected.full_name}</p>
-                <p className="text-xs text-gray-400 truncate">{selected.email}{selected.student_id ? ` · ${selected.student_id}` : ""}</p>
+                <p className="text-sm font-bold text-foreground truncate">{selected.full_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{selected.email}{selected.student_id ? ` · ${selected.student_id}` : ""}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[selected.role] ?? "bg-gray-100 text-gray-500"}`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[selected.role] ?? "bg-muted text-muted-foreground"}`}>
                     {selected.role}
                   </span>
                   <AccountStatusPill status={selected.status} />
                 </div>
               </div>
               {loadingMembership ? (
-                <Loader2 className="h-4 w-4 animate-spin text-gray-400 shrink-0" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
               ) : membership && <StatusPill isMember={membership.isMember} />}
             </div>
 
@@ -291,8 +291,8 @@ export default function AdminUsers() {
                     <Coins className="h-4 w-4 text-emerald-500" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-gray-900 leading-none">{membership.credits}</p>
-                    <p className="text-[11px] text-gray-400">credits available</p>
+                    <p className="text-lg font-bold text-foreground leading-none">{membership.credits}</p>
+                    <p className="text-xs text-muted-foreground">credits available</p>
                   </div>
                 </div>
 
@@ -301,7 +301,7 @@ export default function AdminUsers() {
                     <button
                       onClick={activate}
                       disabled={busy}
-                      className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors disabled:opacity-50"
                     >
                       <BadgeCheck className="h-4 w-4" /> Activate Membership
                     </button>
@@ -310,7 +310,7 @@ export default function AdminUsers() {
                   {membership.isMember && !topUpOpen && (
                     <button
                       onClick={() => setTopUpOpen(true)}
-                      className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors"
                     >
                       <Coins className="h-4 w-4" /> Add Credits
                     </button>
@@ -330,7 +330,7 @@ export default function AdminUsers() {
                       Add
                     </button>
                     <button type="button" onClick={() => { setTopUpOpen(false); setTopUpAmount(""); }}
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
                       Cancel
                     </button>
                   </form>

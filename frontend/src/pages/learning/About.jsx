@@ -25,16 +25,16 @@ const VALUES = [
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 const EYEBROW =
-  "mb-3 block text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-oxblood";
+  "mb-3 block text-xs font-semibold uppercase tracking-[0.15em] text-oxblood";
 
 export default function About() {
   return (
-    <div className="bg-paper font-body">
+    <div className="bg-paper">
       {/* Hero */}
       <div className="border-b border-oxblood/15 bg-paper-deep pb-16 pt-20">
         <div className={`${CONTAINER} !max-w-[720px]`}>
           <span className={EYEBROW}>Our Story</span>
-          <h1 className="mb-4 mt-2 font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">
+          <h1 className="mb-4 mt-2 text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">
             Learning should feel like discovery, not obligation.
           </h1>
           <p className="text-base leading-[1.8] text-ink-soft">
@@ -50,26 +50,26 @@ export default function About() {
         <div className={`${CONTAINER} grid grid-cols-2 items-start gap-12 max-[900px]:grid-cols-1`}>
           {/* Story text */}
           <div>
-            <h2 className="mb-4 font-display text-[1.6rem] text-ink">Why we built this</h2>
-            <p className="mb-4 text-[0.9rem] leading-[1.8] text-ink-soft">
+            <h2 className="mb-4 text-2xl text-ink">Why we built this</h2>
+            <p className="mb-4 text-sm leading-[1.8] text-ink-soft">
               Most online learning platforms overwhelm learners with endless
               lists and fragmented content. We believed there was a better
               way, one inspired by the quiet focus of a library.
             </p>
-            <p className="mb-4 text-[0.9rem] leading-[1.8] text-ink-soft">
+            <p className="mb-4 text-sm leading-[1.8] text-ink-soft">
               Each course is structured like a well-written book: with a clear
               beginning, a narrative arc, and a satisfying conclusion. You
               always know where you are, how far you've come, and what comes
               next.
             </p>
-            <p className="mb-4 text-[0.9rem] leading-[1.8] text-ink-soft">
+            <p className="mb-4 text-sm leading-[1.8] text-ink-soft">
               Our instructors are practitioners who have built real things,
               robots, web applications, machine learning models, and they
               teach from that experience.
             </p>
             <Link
               to="/learning/courses"
-              className="mt-8 inline-flex cursor-pointer items-center justify-center gap-2 rounded bg-oxblood px-7 py-[13px] text-[0.9rem] font-semibold text-paper transition-all duration-300 hover:-translate-y-px hover:bg-oxblood-deep"
+              className="btn-primary mt-8 cursor-pointer justify-center bg-oxblood text-paper hover:bg-oxblood-deep"
             >
               Explore the Library
             </Link>
@@ -80,7 +80,7 @@ export default function About() {
             {VALUES.map((v) => (
               <div key={v.title} className="rounded border border-ink/10 bg-paper-deep p-5">
                 <div className="mb-2 text-2xl">{v.icon}</div>
-                <h3 className="mb-1 font-display text-base text-ink">{v.title}</h3>
+                <h3 className="mb-1 text-base text-ink">{v.title}</h3>
                 <p className="text-sm leading-[1.65] text-ink-soft">{v.desc}</p>
               </div>
             ))}

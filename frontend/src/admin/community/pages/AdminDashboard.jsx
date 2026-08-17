@@ -19,11 +19,11 @@ function deriveCommunityDonutData(communityPosts) {
     return acc;
   }, {});
   return [
-    { label: "Technical",    value: communityCategories.Technical    || 0, color: "#f97316" },
-    { label: "Showcase",     value: communityCategories.Showcase     || 0, color: "#8b5cf6" },
-    { label: "Social",       value: communityCategories.Social       || 0, color: "#06b6d4" },
-    { label: "Question",     value: communityCategories.Question     || 0, color: "#3b82f6" },
-    { label: "Announcement", value: communityCategories.Announcement || 0, color: "#10b981" },
+    { label: "Technical",    value: communityCategories.Technical    || 0, color: "var(--technical)" },
+    { label: "Showcase",     value: communityCategories.Showcase     || 0, color: "var(--chart-5)" },
+    { label: "Social",       value: communityCategories.Social       || 0, color: "var(--social)" },
+    { label: "Question",     value: communityCategories.Question     || 0, color: "var(--info)" },
+    { label: "Announcement", value: communityCategories.Announcement || 0, color: "var(--collaboration)" },
   ].filter(d => d.value > 0);
 }
 
@@ -46,18 +46,18 @@ function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
   return (
     <Link
       to={to}
-      className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all"
+      className="group bg-white rounded-xl border border-border p-5 hover:border-border hover:shadow-sm transition-all"
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
         </div>
         <div className={`p-2 rounded-lg ${bg}`}>
           <Icon className={`h-5 w-5 ${iconColor}`} />
         </div>
       </div>
-      <p className="mt-4 text-xs text-gray-400 flex items-center gap-1 group-hover:text-gray-600 transition-colors">
+      <p className="mt-4 text-xs text-muted-foreground flex items-center gap-1 group-hover:text-muted-foreground transition-colors">
         Manage <ArrowUpRight className="h-3 w-3" />
       </p>
     </Link>
@@ -79,26 +79,26 @@ function EventFillChart({ events }) {
       <div className="px-5 py-4 space-y-3 max-h-72 overflow-y-auto">
         {sorted.map(ev => {
           const pct = Math.round(Math.min(1, fillRate(ev)) * 100);
-          const color = pct >= 90 ? "#f87171" : pct >= 70 ? "#fb923c" : "#34d399";
+          const color = pct >= 90 ? "var(--destructive)" : pct >= 70 ? "var(--warning)" : "var(--success)";
           return (
             <div key={ev.id}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-700 truncate flex-1 min-w-0 pr-2">{ev.title}</span>
+                <span className="text-xs text-foreground truncate flex-1 min-w-0 pr-2">{ev.title}</span>
                 <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color }}>
                   {ev.participants}/{ev.capacity}
                 </span>
               </div>
-              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
               </div>
             </div>
           );
         })}
       </div>
-      <div className="px-5 py-3 flex gap-4 border-t border-gray-50">
-        <LegendDot color="#f87171" label="≥ 90% full" />
-        <LegendDot color="#fb923c" label="70–89%" />
-        <LegendDot color="#34d399" label="< 70%" />
+      <div className="px-5 py-3 flex gap-4 border-t border-border">
+        <LegendDot color="var(--destructive)" label="≥ 90% full" />
+        <LegendDot color="var(--warning)" label="70–89%" />
+        <LegendDot color="var(--success)" label="< 70%" />
       </div>
     </ChartCard>
   );
@@ -123,7 +123,7 @@ function CommunityDonutChart({ communityDonutData }) {
       <div className="px-5 py-5 flex items-center gap-6">
         <div className="relative shrink-0" style={{ width: 88, height: 88 }}>
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r={radius} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
+            <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
             {segments.map(seg => (
               <circle
                 key={seg.label}
@@ -137,16 +137,16 @@ function CommunityDonutChart({ communityDonutData }) {
             ))}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-lg font-bold text-gray-800 leading-none">{total}</span>
-            <span className="text-[9px] text-gray-400 mt-0.5">posts</span>
+            <span className="text-lg font-bold text-foreground leading-none">{total}</span>
+            <span className="text-xs text-muted-foreground mt-0.5">posts</span>
           </div>
         </div>
         <div className="space-y-2 flex-1 min-w-0">
           {communityDonutData.map(d => (
             <div key={d.label} className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-              <span className="text-xs text-gray-600 flex-1 truncate">{d.label}</span>
-              <span className="text-xs font-semibold text-gray-700 tabular-nums">{d.value}</span>
+              <span className="text-xs text-muted-foreground flex-1 truncate">{d.label}</span>
+              <span className="text-xs font-semibold text-foreground tabular-nums">{d.value}</span>
             </div>
           ))}
         </div>
@@ -166,7 +166,7 @@ function TopPostsChart({ topCommunityPosts }) {
             label={post.title ?? post.body}
             value={post.likes}
             maxValue={maxLikes}
-            color="#a78bfa"
+            color="var(--community)"
             suffix=" ♥"
           />
         ))}
@@ -186,7 +186,7 @@ function SkillsDemandChart({ topSkills }) {
             label={name}
             value={count}
             maxValue={maxCount}
-            color="#60a5fa"
+            color="var(--info)"
             suffix={count === 1 ? " post" : " posts"}
           />
         ))}
@@ -202,8 +202,8 @@ function SiteVisitsChart({ series }) {
     <ChartCard title="Site Visits" subtitle={`Last ${series.length} days — real traffic, admin usage excluded`}>
       <div className="px-5 py-4">
         <p className="mb-4">
-          <span className="text-3xl font-bold text-gray-900">{total}</span>
-          <span className="text-sm font-medium text-gray-400 ml-2">total visits</span>
+          <span className="text-3xl font-bold text-foreground">{total}</span>
+          <span className="text-sm font-medium text-muted-foreground ml-2">total visits</span>
         </p>
         <div className="flex items-end gap-[3px] h-24">
           {series.map((d) => (
@@ -214,7 +214,7 @@ function SiteVisitsChart({ series }) {
             />
           ))}
         </div>
-        <div className="flex justify-between mt-2 text-[10px] text-gray-400">
+        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
           <span>{series[0] && formatShortDate(series[0].date)}</span>
           <span>{series.length > 0 && formatShortDate(series[series.length - 1].date)}</span>
         </div>
@@ -248,8 +248,8 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">Overview of the CADT Community platform.</p>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Overview of the CADT Community platform.</p>
       </div>
 
       {error && (

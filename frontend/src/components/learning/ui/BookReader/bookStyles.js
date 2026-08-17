@@ -17,7 +17,7 @@ export const SCENE =
 export const BOOK =
   "relative flex h-[560px] rounded-[5px] shadow-[0_28px_90px_rgba(0,0,0,0.7),0_0_0_1px_rgba(201,168,76,0.12)]";
 
-// Single-page (mobile / lesson view) shell; left gold spine strip via ::before
+// Single-page (mobile / lesson view) shell; left community-gold spine strip via ::before
 export const BOOK_SINGLE =
   "relative flex h-auto min-h-[520px] rounded-[3px_8px_8px_3px] shadow-[0_28px_90px_rgba(0,0,0,0.7),0_0_0_1px_rgba(201,168,76,0.12)] before:absolute before:inset-y-0 before:left-0 before:z-[5] before:w-2 before:rounded-l-[3px] before:bg-[linear-gradient(180deg,#4A2E08_0%,#C9A84C_25%,#E8C96A_50%,#C9A84C_75%,#4A2E08_100%)] before:shadow-[2px_0_6px_rgba(0,0,0,0.3)] before:content-['']";
 
@@ -83,20 +83,19 @@ export const FLIP_BACK = `${FACE_BASE} bg-[#C8BC96] [transform:rotateY(180deg)] 
 /* ── Navigation bar ── */
 export const NAV = "mt-[18px] flex items-center justify-between gap-2.5";
 export const NAV_ARROW =
-  "flex h-[42px] w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-gold/30 bg-navy/55 text-lg text-gold transition-all duration-200 hover:border-gold hover:bg-gold/20 disabled:cursor-default disabled:opacity-20 disabled:hover:border-gold/30 disabled:hover:bg-navy/55 max-[699px]:h-[46px] max-[699px]:w-[46px] max-[699px]:text-xl";
+  "flex h-[42px] w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-community-gold/30 bg-navy/55 text-lg text-community-gold transition-all duration-200 hover:border-community-gold hover:bg-community-gold/20 disabled:cursor-default disabled:opacity-20 disabled:hover:border-community-gold/30 disabled:hover:bg-navy/55 max-[699px]:h-[46px] max-[699px]:w-[46px] max-[699px]:text-xl";
 export const NAV_DOTS =
   "flex max-w-[calc(100%-120px)] flex-1 items-center justify-center gap-1.5 overflow-x-auto px-0.5 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 export const NAV_DOT =
-  "h-[7px] w-[7px] shrink-0 cursor-pointer rounded-full border-none bg-gold/[0.22] transition-all duration-200 hover:bg-gold/50 max-[699px]:h-2 max-[699px]:w-2";
+  "h-[7px] w-[7px] shrink-0 cursor-pointer rounded-full border-none bg-community-gold/[0.22] transition-all duration-200 hover:bg-community-gold/50 max-[699px]:h-2 max-[699px]:w-2";
 export const NAV_DOT_ACTIVE =
-  "h-[7px] w-[7px] shrink-0 cursor-pointer scale-[1.4] rounded-full border-none bg-gold transition-all duration-200 max-[699px]:h-2 max-[699px]:w-2";
+  "h-[7px] w-[7px] shrink-0 cursor-pointer scale-[1.4] rounded-full border-none bg-community-gold transition-all duration-200 max-[699px]:h-2 max-[699px]:w-2";
 export const NAV_LABEL =
   "mt-2 text-center font-display text-[11px] tracking-[0.05em] text-parchment/[0.38]";
 export const NAV_HINT = "mt-[5px] text-center text-[10.5px] text-parchment/20";
 
 /* ── Lesson-type badges ── */
-const TYPE_BADGE =
-  "inline-flex w-fit items-center rounded-sm px-[7px] py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.09em]";
+const TYPE_BADGE = "badge badge-sm w-fit uppercase tracking-[0.09em]";
 export const TYPE_BADGE_CLASS = {
   video:   `${TYPE_BADGE} bg-[#1B2A3B]/[0.12] text-[#1B2A3B]`,
   reading: `${TYPE_BADGE} bg-[#286432]/[0.12] text-[#2D6A30]`,
@@ -115,8 +114,8 @@ export const LESSON_DUR =
 export const LESSON_BODY =
   "flex-1 overflow-hidden text-xs leading-[1.9] text-[#2C2C2C]/80 max-[699px]:text-[13px] [&_p]:mb-[9px] [&_ul]:mb-[9px] [&_ul]:pl-[15px] [&_li]:mb-1 [&_li]:list-disc [&_code]:rounded-sm [&_code]:bg-black/[0.09] [&_code]:px-1 [&_code]:py-px [&_code]:font-mono [&_code]:text-[11px]";
 export const LESSON_POINTS =
-  "mt-3 rounded-r-[3px] border-l-2 border-gold bg-gold/10 px-3 py-[9px]";
+  "mt-3 rounded-r-[3px] border-l-2 border-community-gold bg-community-gold/10 px-3 py-[9px]";
 export const LESSON_POINTS_TITLE =
-  "mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.1em] text-gold-dark";
+  "mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.1em] text-community-gold-light-foreground";
 export const LESSON_POINTS_LIST =
   "pl-3.5 [&>li]:mb-[3px] [&>li]:list-disc [&>li]:text-[11.5px] [&>li]:text-[#2C2C2C]/[0.72]";

@@ -10,11 +10,11 @@ const TOPICS = [
 
 const INITIAL_FORM = { name: "", email: "", topic: "", message: "" };
 
-const WRAPPER = "min-h-[80vh] bg-paper py-20 font-body max-sm:py-12";
+const WRAPPER = "min-h-[80vh] bg-paper py-20 max-sm:py-12";
 const INNER = "mx-auto w-full max-w-[600px] px-8 max-sm:px-4";
-const LABEL = "text-[0.76rem] font-semibold uppercase tracking-[0.08em] text-ink-soft";
+const LABEL = "text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft";
 const INPUT =
-  "w-full rounded border border-ink/20 bg-paper-deep px-3.5 py-3 text-[0.9rem] text-ink outline-none transition-colors duration-300 focus:border-oxblood";
+  "field border-ink/20 bg-paper-deep text-ink outline-none focus:border-oxblood focus:ring-2 focus:ring-oxblood/20";
 
 export default function Contact() {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -43,9 +43,9 @@ export default function Contact() {
       <div className={WRAPPER}>
         <div className={INNER}>
           <div className="rounded border border-sage/35 bg-paper-deep p-8 text-center">
-            <div className="mb-3 text-[2.5rem]">📬</div>
-            <h3 className="mb-2 font-display text-ink">Message Received</h3>
-            <p className="text-[0.9rem] text-ink-soft">
+            <div className="mb-3 text-4xl">📬</div>
+            <h3 className="mb-2 text-ink">Message Received</h3>
+            <p className="text-sm text-ink-soft">
               Thank you, {form.name}. We'll get back to you within 2 business days.
             </p>
           </div>
@@ -57,13 +57,13 @@ export default function Contact() {
   return (
     <div className={WRAPPER}>
       <div className={INNER}>
-        <span className="mb-3 block text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-oxblood">
+        <span className="mb-3 block text-xs font-semibold uppercase tracking-[0.15em] text-oxblood">
           Reach Out
         </span>
-        <h1 className="mb-3 mt-2 font-display text-[clamp(2rem,4vw,2.8rem)] leading-tight text-ink">
+        <h1 className="mb-3 mt-2 text-[clamp(2rem,4vw,2.8rem)] leading-tight text-ink">
           Get in Touch
         </h1>
-        <p className="mb-10 text-[0.9rem] leading-[1.75] text-ink-soft">
+        <p className="mb-10 text-sm leading-[1.75] text-ink-soft">
           Have a question about a course, want to suggest a topic, or just say
           hello? We read every message.
         </p>
@@ -78,7 +78,7 @@ export default function Contact() {
               onChange={update}
               placeholder="Your name"
             />
-            {errors.name && <span className="mt-[3px] text-[0.65rem] text-[#e06060]">{errors.name}</span>}
+            {errors.name && <span className="mt-[3px] text-xs text-[#e06060]">{errors.name}</span>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -90,7 +90,7 @@ export default function Contact() {
               onChange={update}
               placeholder="your@email.com"
             />
-            {errors.email && <span className="mt-[3px] text-[0.65rem] text-[#e06060]">{errors.email}</span>}
+            {errors.email && <span className="mt-[3px] text-xs text-[#e06060]">{errors.email}</span>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -115,11 +115,11 @@ export default function Contact() {
               onChange={update}
               placeholder="What's on your mind?"
             />
-            {errors.message && <span className="mt-[3px] text-[0.65rem] text-[#e06060]">{errors.message}</span>}
+            {errors.message && <span className="mt-[3px] text-xs text-[#e06060]">{errors.message}</span>}
           </div>
 
           <button
-            className="mt-2 w-full cursor-pointer rounded bg-oxblood p-3.5 text-base font-semibold text-paper transition-colors duration-300 hover:bg-oxblood-deep"
+            className="btn-primary mt-2 w-full cursor-pointer justify-center bg-oxblood text-paper hover:bg-oxblood-deep"
             onClick={submit}
           >
             Send Message

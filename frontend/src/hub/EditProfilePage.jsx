@@ -25,7 +25,7 @@ function Avatar({ name, avatar, size = 76 }) {
   }
   return (
     <div className="rounded-full flex items-center justify-center font-extrabold text-white shrink-0"
-      style={{ width: size, height: size, background: "linear-gradient(135deg,#c9a86c,#0891b2)", fontSize: size * 0.34 }}>
+      style={{ width: size, height: size, background: "linear-gradient(135deg,var(--community-gold),var(--color-inv-accent))", fontSize: size * 0.34 }}>
       {initials}
     </div>
   );
@@ -150,7 +150,7 @@ export default function EditProfilePage() {
               </button>
               <button type="submit" disabled={saving}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg,#c9a86c,#0891b2)" }}>
+                style={{ background: "linear-gradient(135deg,var(--community-gold),var(--color-inv-accent))" }}>
                 {saving ? "Saving…" : "Save changes"}
               </button>
             </div>

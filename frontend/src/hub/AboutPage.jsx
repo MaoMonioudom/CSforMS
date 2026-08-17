@@ -8,26 +8,7 @@ import {
 import { HubNav } from "./HubNav";
 import { CurtainWallDecoration } from "./LandingPage";
 import { AppFooter } from "../components/AppFooter";
-
-// ── Sky & Cloud palette — matches Landing / Login / Register / Profile ────────
-const T = {
-  bg1:      "#f4f8fc",
-  bg2:      "#eaf2fa",
-  bg3:      "#e3edf7",
-  bgCard:   "#ffffff",
-  text:     "#16324a",
-  muted:    "#4a6478",
-  faint:    "#7a93a8",
-  border:   "rgba(91,170,216,0.22)",
-  borderBr: "rgba(91,170,216,0.38)",
-  accent:   "#6366f1",
-  shadow:   "0 2px 20px rgba(15,50,80,0.08)",
-  shadowLg: "0 8px 48px rgba(15,50,80,0.14)",
-};
-
-const GRADIENT = "linear-gradient(135deg,#6366f1,#a855f7)";
-const SKY_TOP  = "#5baad8";
-const SKY_BOT  = "#b8daf2";
+import { HUB as T, HUB_GRADIENT as GRADIENT, SKY_TOP, SKY_BOT } from "./hubTheme";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -72,13 +53,13 @@ function RuledCard({ icon: Icon, title, body, accent = T.accent }) {
         backgroundPosition: "0 14px",
       }}
     >
-      <div className="absolute inset-y-0" style={{ left: 34, width: 1.5, background: `${accent}66` }} />
+      <div className="absolute inset-y-0" style={{ left: 34, width: 1.5, background: `color-mix(in oklch, ${accent} 40%, transparent)` }} />
       <div className="absolute rounded-full" style={{ left: 13, top: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
       <div className="absolute rounded-full" style={{ left: 13, bottom: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
 
       <div className="relative p-6 pl-12">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-          style={{ background: `${accent}14`, border: `1px solid ${accent}28` }}>
+          style={{ background: `color-mix(in oklch, ${accent} 8%, transparent)`, border: `1px solid color-mix(in oklch, ${accent} 16%, transparent)` }}>
           <Icon size={18} style={{ color: accent }} />
         </div>
         <h4 className="font-bold mb-2" style={{ color: T.text }}>{title}</h4>
@@ -116,11 +97,11 @@ function FaqItem({ q, a, open, onToggle }) {
 
 const GUIDELINES = [
   { icon: ShieldCheck,   accent: T.accent,  title: "Membership & access", body: "You need an active CADT Makerspace membership to book equipment or workspace. Sign up once — it covers all three modules." },
-  { icon: Wrench,        accent: "#c9a86c", title: "Safety first",        body: "Some equipment (like the laser cutter) requires a certification workshop before solo use. Never operate tools you haven't been trained on." },
-  { icon: Package,       accent: "#0891b2", title: "Borrow & return",     body: "Return borrowed items by the due date shown in your request. Report damage or loss right away rather than staying quiet about it." },
-  { icon: Users,         accent: "#c0392b", title: "Respect the space",   body: "Clean up after yourself, put tools back where they belong, and flag anything broken so the next person isn't caught off guard." },
-  { icon: MessageCircle, accent: "#6366f1", title: "Code of conduct",     body: "Keep Community and Find Team posts respectful and on-topic. Harassment or spam isn't tolerated and may result in account action." },
-  { icon: Target,        accent: "#c9a86c", title: "Event registration", body: "Register ahead when you can, and cancel your spot if plans change — it frees the seat up for someone on the waitlist." },
+  { icon: Wrench,        accent: "var(--community-gold)", title: "Safety first",        body: "Some equipment (like the laser cutter) requires a certification workshop before solo use. Never operate tools you haven't been trained on." },
+  { icon: Package,       accent: "var(--color-inv-accent)", title: "Borrow & return",     body: "Return borrowed items by the due date shown in your request. Report damage or loss right away rather than staying quiet about it." },
+  { icon: Users,         accent: "var(--color-oxblood)", title: "Respect the space",   body: "Clean up after yourself, put tools back where they belong, and flag anything broken so the next person isn't caught off guard." },
+  { icon: MessageCircle, accent: T.accent, title: "Code of conduct",     body: "Keep Community and Find Team posts respectful and on-topic. Harassment or spam isn't tolerated and may result in account action." },
+  { icon: Target,        accent: "var(--community-gold)", title: "Event registration", body: "Register ahead when you can, and cancel your spot if plans change — it frees the seat up for someone on the waitlist." },
 ];
 
 const FAQS = [
@@ -162,7 +143,7 @@ export default function AboutPage() {
             CADT MakerClub — Hub
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight" style={{ color: "#0f2033" }}>
+          <h1 className="font-display text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight" style={{ color: "#0f2033" }}>
             One hub for every
             <br />
             <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
@@ -176,13 +157,13 @@ export default function AboutPage() {
 
           <div className="flex flex-wrap gap-3 justify-center mt-10">
             <Link to="/register"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-85"
+              className="btn-primary text-white hover:opacity-85"
               style={{ background: GRADIENT }}>
               Join MakerClub <ArrowRight size={14} />
             </Link>
             <Link to="/hub"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-opacity hover:opacity-70"
-              style={{ color: "#1a3350", background: "rgba(255,255,255,0.30)", border: "1px solid rgba(74,88,112,0.22)", backdropFilter: "blur(8px)" }}>
+              className="btn-secondary hover:opacity-70"
+              style={{ color: "#1a3350", background: "rgba(255,255,255,0.30)", borderColor: "rgba(74,88,112,0.22)", backdropFilter: "blur(8px)" }}>
               Explore the Hub
             </Link>
           </div>
@@ -216,8 +197,8 @@ export default function AboutPage() {
             <div className="grid grid-cols-3 gap-4 mt-8">
               {[
                 { label: "Modules",  value: "3",       accent: T.accent },
-                { label: "Access",   value: "CADT",     accent: "#c9a86c" },
-                { label: "Cost",     value: "Free",     accent: "#c0392b" },
+                { label: "Access",   value: "CADT",     accent: "var(--community-gold)" },
+                { label: "Cost",     value: "Free",     accent: "var(--color-oxblood)" },
               ].map((f) => (
                 <div key={f.label} className="rounded-xl p-4 text-center" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                   <div className="text-2xl font-extrabold mb-1" style={{ color: f.accent }}>{f.value}</div>
@@ -235,16 +216,16 @@ export default function AboutPage() {
               <line x1="50%" y1="50%" x2="50%" y2="82%" stroke={T.border} strokeWidth="1.5" strokeDasharray="5 4" />
             </svg>
             <div className="absolute w-20 h-20 rounded-2xl flex items-center justify-center z-10"
-              style={{ background: GRADIENT, boxShadow: "0 0 40px rgba(99,102,241,0.35)" }}>
+              style={{ background: GRADIENT, boxShadow: "0 0 40px color-mix(in oklch, var(--color-inv-accent) 35%, transparent)" }}>
               <span className="text-white font-extrabold text-base">Hub</span>
             </div>
             {[
-              { Icon: MessageSquare, color: "#c9a86c", style: { top: "8%",    left: "16%" } },
-              { Icon: BookOpen,      color: "#c0392b", style: { top: "8%",    right: "16%" } },
-              { Icon: Package,       color: "#0891b2", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)" } },
+              { Icon: MessageSquare, color: "var(--community-gold)", style: { top: "8%",    left: "16%" } },
+              { Icon: BookOpen,      color: "var(--color-oxblood)", style: { top: "8%",    right: "16%" } },
+              { Icon: Package,       color: "var(--color-inv-accent)", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)" } },
             ].map(({ Icon, color, style }, i) => (
               <div key={i} className="absolute w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: `${color}14`, border: `2px solid ${color}40`, boxShadow: `0 0 24px ${color}20`, ...style }}>
+                style={{ background: `color-mix(in oklch, ${color} 8%, transparent)`, border: `2px solid color-mix(in oklch, ${color} 25%, transparent)`, boxShadow: `0 0 24px color-mix(in oklch, ${color} 13%, transparent)`, ...style }}>
                 <Icon size={20} style={{ color }} />
               </div>
             ))}
@@ -264,7 +245,7 @@ export default function AboutPage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="rounded-2xl p-8" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-                style={{ background: `${T.accent}14`, border: `1px solid ${T.accent}28` }}>
+                style={{ background: "color-mix(in oklch, var(--color-inv-accent) 8%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 16%, transparent)" }}>
                 <Compass size={20} style={{ color: T.accent }} />
               </div>
               <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Vision</h3>
@@ -276,7 +257,7 @@ export default function AboutPage() {
             <div className="rounded-2xl p-8" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
                 style={{ background: "rgba(192,57,43,0.14)", border: "1px solid rgba(192,57,43,0.28)" }}>
-                <Target size={20} style={{ color: "#c0392b" }} />
+                <Target size={20} style={{ color: "var(--color-oxblood)" }} />
               </div>
               <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Mission</h3>
               <p className="text-base leading-relaxed" style={{ color: T.muted }}>
@@ -331,7 +312,7 @@ export default function AboutPage() {
             <div className="grid sm:grid-cols-3 gap-8">
               <div>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `${T.accent}14`, border: `1px solid ${T.accent}28` }}>
+                  style={{ background: "color-mix(in oklch, var(--color-inv-accent) 8%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 16%, transparent)" }}>
                   <MapPin size={18} style={{ color: T.accent }} />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Address</p>
@@ -345,7 +326,7 @@ export default function AboutPage() {
               <div>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: "rgba(201,168,108,0.14)", border: "1px solid rgba(201,168,108,0.28)" }}>
-                  <Mail size={18} style={{ color: "#c9a86c" }} />
+                  <Mail size={18} style={{ color: "var(--community-gold)" }} />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Email</p>
                 <p className="text-sm leading-relaxed" style={{ color: T.faint }}>Makerspace@cadt.edu.kh</p>
@@ -353,8 +334,8 @@ export default function AboutPage() {
 
               <div>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: "rgba(8,145,178,0.14)", border: "1px solid rgba(8,145,178,0.28)" }}>
-                  <Clock size={18} style={{ color: "#0891b2" }} />
+                  style={{ background: "color-mix(in oklch, var(--color-inv-accent) 14%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 28%, transparent)" }}>
+                  <Clock size={18} style={{ color: "var(--color-inv-accent)" }} />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Hours</p>
                 <p className="text-sm leading-relaxed" style={{ color: T.faint }}>9:00 AM - 5:00 PM</p>
@@ -371,12 +352,12 @@ export default function AboutPage() {
             style={{ background: T.bgCard, border: `1px solid ${T.borderBr}`, boxShadow: T.shadowLg }}>
             <div style={{
               position: "absolute", top: 0, left: "20%", right: "20%", height: 3,
-              background: "linear-gradient(90deg, transparent, #6366f1, #a855f7, transparent)",
+              background: "linear-gradient(90deg, transparent, var(--color-inv-accent-text), var(--color-inv-accent), transparent)",
             }} />
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.18em] mb-6"
-                style={{ background: "#6366f114", color: T.accent, border: "1px solid rgba(99,102,241,0.25)" }}>
+                style={{ background: "color-mix(in oklch, var(--color-inv-accent) 8%, transparent)", color: T.accent, border: "1px solid color-mix(in oklch, var(--color-inv-accent) 25%, transparent)" }}>
                 Free for CADT Students
               </div>
               <h2 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight" style={{ color: T.text }}>
@@ -391,13 +372,13 @@ export default function AboutPage() {
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link to="/register"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-85"
+                  className="btn-primary text-white hover:opacity-85"
                   style={{ background: GRADIENT }}>
                   Create Free Account <ArrowRight size={15} />
                 </Link>
                 <Link to="/hub"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-70"
-                  style={{ color: T.muted, border: `1px solid ${T.border}`, background: "none" }}>
+                  className="btn-secondary hover:opacity-70"
+                  style={{ color: T.muted, borderColor: T.border, background: "none" }}>
                   Back to Home
                 </Link>
               </div>

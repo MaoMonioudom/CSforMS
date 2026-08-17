@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LogOut, Settings, Award, Lock, Phone, FileText, Mail, CalendarDays, ShieldCheck, ShieldOff,
+  Calendar, BookOpen, Package, Armchair, MessageSquare, Coins, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { SignOutConfirmDialog } from "../components/SignOutConfirmDialog";
@@ -9,17 +10,25 @@ import { TopNav } from "../components/TopNav";
 import { BackBar } from "../components/BackBar";
 import { fetchMyAchievements, MODULE_BY_REQUIREMENT, MODULE_COLORS } from "../lib/achievements-data";
 import { fetchProfileSummary, formatActivityDate } from "../lib/profile-data";
+import { HUB as D } from "./hubTheme";
 
-const D = {
-  bg:     "#eef5fc",
-  bg2:    "#dceafa",
-  card:   "#ffffff",
-  card2:  "#f3f8fd",
-  border: "rgba(91,170,216,0.22)",
-  muted:  "#5b7286",
-  faint:  "#8aa0b2",
-  text:   "#16324a",
-};
+// Stat tiles pull straight from the same per-user counts the achievement
+// award-check uses (see getUserActionCounts on the backend) — so these
+// numbers and badge progress never disagree. community_posts +
+// collaboration_posts are merged into one "Posts" tile to keep the row to
+// 5 tiles, matching the badges grid below it.
+const STATS = [
+  { key: "event_registrations", label: "Events", icon: Calendar, module: "community" },
+  { key: "course_enrollments", label: "Courses", icon: BookOpen, module: "learning" },
+  { key: "borrows", label: "Borrows", icon: Package, module: "inventory" },
+  { key: "workspace_bookings", label: "Workspace", icon: Armchair, module: "community" },
+  { key: "posts", label: "Posts", icon: MessageSquare, module: "community" },
+];
+
+// Recent-activity entries carry a `link` from the backend (a specific
+// event/course detail page, or a module list page when there's no single
+// item to land on) — fall back to the module root if it's ever missing.
+const MODULE_FALLBACK_LINK = { learning: "/learning", inventory: "/inventory", community: "/community" };
 
 // Shows the real uploaded photo (profile_img_url) when one exists, falling
 // back to initials-on-gradient otherwise — previously this always ignored
@@ -110,13 +119,14 @@ export default function ProfilePage() {
   if (!user) return null;
 
   const activity = summary?.activity ?? [];
+  const counts = summary?.counts ?? {};
   const earnedCount = achievements.filter(a => a.earned).length;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` }}>
 
       <div aria-hidden className="fixed inset-0 pointer-events-none"
-        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+        style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
       <TopNav />
       <BackBar />
@@ -128,13 +138,31 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* Stats strip — real per-module counts, same numbers the badges below track */}
+        <div className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5">
+          {STATS.map((s) => {
+            const value = s.key === "posts"
+              ? (counts.community_posts ?? 0) + (counts.collaboration_posts ?? 0)
+              : counts[s.key] ?? 0;
+            const color = MODULE_COLORS[s.module];
+            return (
+              <div key={s.key} className="rounded-2xl p-4 text-center"
+                style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+                <s.icon size={16} className="mx-auto mb-1.5" style={{ color }} />
+                <p className="text-xl font-extrabold" style={{ color: D.text }}>{loading ? "—" : value}</p>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: D.muted }}>{s.label}</p>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Top row — profile identity on one side, badges & achievements on the other */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
           {/* Left — profile img + info (no cover photo) */}
           <div className="lg:sticky lg:top-6 flex flex-col gap-6">
             <div className="rounded-2xl p-6 flex flex-col items-center text-center"
-              style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
+              style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
               <Avatar name={user.name} avatar={user.avatar} size={96} />
               <h1 className="text-lg font-extrabold mt-3" style={{ color: D.text }}>{user.name}</h1>
 
@@ -185,16 +213,35 @@ export default function ProfilePage() {
 
               <div className="flex flex-col gap-2 w-full mt-5">
                 <Link to="/hub/settings"
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-                  style={{ color: D.text, border: `1px solid ${D.border}`, background: D.card }}>
+                  className="btn-secondary justify-center hover:opacity-80"
+                  style={{ color: D.text, borderColor: D.border, background: D.bgCard }}>
                   <Settings size={14} /> Edit Details
                 </Link>
                 <button onClick={() => setConfirmOpen(true)}
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-                  style={{ color: "#dc2626", border: "1px solid rgba(239,68,68,0.28)", background: "rgba(239,68,68,0.06)" }}>
+                  className="btn-secondary justify-center hover:opacity-80"
+                  style={{ color: "#dc2626", borderColor: "rgba(239,68,68,0.28)", background: "rgba(239,68,68,0.06)" }}>
                   <LogOut size={14} /> Sign Out
                 </button>
               </div>
+            </div>
+
+            {/* Quick links — Workspace/Credits/Membership live on their own
+                routes today, reachable only via footer/nav; surfacing them
+                here makes Profile the actual account-hub landing spot. */}
+            <div className="rounded-2xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+              {[
+                { to: "/workspace", label: "Request a workspace", icon: Armchair },
+                ...(user.isMember ? [{ to: "/credits", label: "Manage credits", icon: Coins }] : []),
+                { to: "/membership", label: user.isMember ? "Membership details" : "Become a member", icon: ShieldCheck },
+              ].map((l, i, arr) => (
+                <Link key={l.to} to={l.to}
+                  className="flex items-center gap-2.5 px-4 py-3 text-xs font-semibold transition-colors hover:bg-black/[0.03]"
+                  style={{ color: D.text, borderBottom: i < arr.length - 1 ? `1px solid ${D.border}` : "none" }}>
+                  <l.icon size={14} className="shrink-0" style={{ color: D.muted }} />
+                  <span className="flex-1">{l.label}</span>
+                  <ChevronRight size={14} style={{ color: D.faint }} />
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -208,7 +255,7 @@ export default function ProfilePage() {
               </p>
               {!loading && <span className="text-[11px] font-semibold" style={{ color: D.muted }}>{earnedCount}/{achievements.length} earned</span>}
             </div>
-            <div className="rounded-2xl p-6" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+            <div className="rounded-2xl p-6" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
               {loading ? (
                 <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
               ) : achievements.length === 0 ? (
@@ -230,23 +277,25 @@ export default function ProfilePage() {
             {/* Recent activity — directly under badges & achievements */}
             <div className="mt-6">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
-              <div className="rounded-xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+              <div className="rounded-xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
                 {loading ? (
                   <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Loading…</p>
                 ) : activity.length === 0 ? (
                   <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Nothing yet — get involved to see your activity here.</p>
                 ) : activity.map((a, i) => {
                   const module = a.type === "course" ? "learning" : a.type === "borrow" ? "inventory" : "community";
+                  const to = a.link || MODULE_FALLBACK_LINK[module];
                   return (
-                    <div key={i}
-                      className="flex items-start gap-3 px-4 py-3.5"
+                    <Link key={i} to={to}
+                      className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-black/[0.03]"
                       style={{ borderBottom: i < activity.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
                       <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: MODULE_COLORS[module] }} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs" style={{ color: D.text }}>{a.label}</p>
                         <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{formatActivityDate(a.date)}</p>
                       </div>
-                    </div>
+                      <ChevronRight size={13} className="shrink-0 mt-0.5" style={{ color: D.faint }} />
+                    </Link>
                   );
                 })}
               </div>

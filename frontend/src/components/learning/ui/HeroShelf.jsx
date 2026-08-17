@@ -34,7 +34,7 @@ export default function HeroShelf() {
           <div className="absolute inset-y-0 left-0 w-[5px] rounded-l-[3px] bg-[linear-gradient(180deg,#C9A84C,#8B6914_45%,#C9A84C_90%)] shadow-[inset_-1px_0_1px_rgba(0,0,0,0.3)]" />
           {/* gilt bands top + bottom */}
           <div className="absolute left-[5px] right-0 top-0 h-[5px] bg-[linear-gradient(180deg,#E8D9A8,#C9A84C)]" />
-          <span className="relative z-[1] rotate-180 px-1 py-3 font-display text-[0.6rem] font-semibold leading-[1.2] tracking-[0.08em] text-[#E8D9A8] [writing-mode:vertical-rl] [text-orientation:mixed] [text-shadow:0_1px_0_rgba(0,0,0,0.5),0_0_6px_rgba(201,168,76,0.25)]">
+          <span className="relative z-[1] rotate-180 px-1 py-3 text-xs font-semibold leading-[1.2] tracking-[0.08em] text-[#E8D9A8] [writing-mode:vertical-rl] [text-orientation:mixed] [text-shadow:0_1px_0_rgba(0,0,0,0.5),0_0_6px_rgba(201,168,76,0.25)]">
             {book.title}
           </span>
           <div className="absolute bottom-0 left-[5px] right-0 h-[5px] bg-[linear-gradient(180deg,#E8D9A8,#C9A84C)]" />

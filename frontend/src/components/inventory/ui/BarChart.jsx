@@ -20,7 +20,7 @@ export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = 
             style={{ height: '100%' }}
             onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
             {hover === i && (
-              <div className="absolute -top-9 z-10 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold text-white shadow-lg" style={{ background: T.charcoal }}>
+              <div className="absolute -top-9 z-10 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-white shadow-lg" style={{ background: T.charcoal }}>
                 {d.a} {seriesA} · {d.b} {seriesB}
               </div>
             )}
@@ -30,7 +30,7 @@ export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = 
               <div className="w-2.5 rounded-t-[3px] transition-all duration-300 sm:w-3"
                 style={{ height: Math.max(d.b > 0 ? 3 : 0, Math.round((d.b / max) * plotHeight)), background: colorB, opacity: hover === null || hover === i ? 1 : 0.5 }} />
             </div>
-            <span className="text-[10px] text-faint sm:text-[11px]">{d.label}</span>
+            <span className="text-xs text-faint sm:text-xs">{d.label}</span>
           </div>
         ))}
       </div>

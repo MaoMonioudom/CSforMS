@@ -36,7 +36,7 @@ export default function MicrosoftCallbackPage() {
       style={{ background: `linear-gradient(160deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
       <div className="flex flex-col items-center gap-3">
         <span className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: "rgba(15,50,80,0.15)", borderTopColor: "#6366f1" }} />
+          style={{ borderColor: "rgba(15,50,80,0.15)", borderTopColor: "var(--color-inv-accent)" }} />
         <p className="text-sm font-medium" style={{ color: D.muted }}>Signing you in…</p>
       </div>
     </div>

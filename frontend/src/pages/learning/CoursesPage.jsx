@@ -8,11 +8,11 @@ export default function CoursesPage() {
   const { active, setActive, filtered, loading } = useCourseFilter();
 
   return (
-    <div className="bg-paper font-body">
+    <div className="bg-paper">
       {/* Page header */}
       <div className="border-b border-oxblood/15 bg-paper-deep pb-8 pt-16">
         <div className={CONTAINER}>
-          <h1 className="mb-3 font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">
+          <h1 className="mb-3 text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">
             The Course Library
           </h1>
           <p className="mb-6 text-base text-ink-soft">
@@ -28,7 +28,7 @@ export default function CoursesPage() {
             {COURSE_CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                className={`cursor-pointer rounded-full border px-4 py-1.5 text-sm transition-colors duration-150 ${
+                className={`chip ${
                   active === cat
                     ? "border-oxblood bg-oxblood text-paper"
                     : "border-ink/25 bg-transparent text-ink-soft hover:border-oxblood hover:text-oxblood"

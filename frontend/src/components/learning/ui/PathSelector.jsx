@@ -22,7 +22,7 @@ export default function PathSelector({ course, activePath, unlocked, onSelect })
           <button
             key={id}
             type="button"
-            className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-4 py-3 text-left font-body transition-[border-color,transform,background] duration-150 hover:-translate-y-px max-[560px]:w-full ${
+            className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-4 py-3 text-left transition-[border-color,transform,background] duration-150 hover:-translate-y-px max-[560px]:w-full ${
               isActive
                 ? "border-oxblood bg-oxblood/[0.08]"
                 : "border-ink/[0.12] bg-paper-deep hover:border-oxblood/50"
@@ -35,12 +35,12 @@ export default function PathSelector({ course, activePath, unlocked, onSelect })
               <span className="whitespace-nowrap text-xs text-ink-soft">{path.tagline}</span>
             </span>
             {showPrice && (
-              <span className="ml-1 shrink-0 text-[13px] font-bold text-oxblood">
+              <span className="ml-1 shrink-0 text-sm font-bold text-oxblood">
                 ${course.interactivePrice.toFixed(2)}
               </span>
             )}
             {isPaid && unlocked && (
-              <span className="ml-1 shrink-0 whitespace-nowrap text-[11px] font-semibold text-[#4A9E5C]">
+              <span className="ml-1 shrink-0 whitespace-nowrap text-xs font-semibold text-[#4A9E5C]">
                 ✓ Unlocked
               </span>
             )}

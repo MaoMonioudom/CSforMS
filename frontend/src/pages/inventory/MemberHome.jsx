@@ -11,16 +11,16 @@ import CreditInfoModal from '../../components/inventory/ui/CreditInfoModal'
 import { useAuth } from '../../hub/AuthContext'
 import { useInventory } from '../../lib/inventory/InventoryContext'
 
-const NAVY   = '#0e7490' // teal-700 — primary accent (kept name to avoid touching every usage)
-const TEAL   = '#0891b2'
-const CYAN   = '#67e8f9'
+const NAVY   = 'var(--color-inv-accent-text)' // teal-700 — primary accent (kept name to avoid touching every usage)
+const TEAL   = 'var(--color-inv-accent)'
+const CYAN   = 'color-mix(in oklch, var(--color-inv-accent) 55%, white)'
 const CREAM  = THEME.cream
 const BORDER = THEME.border
 
 // ── Small section label ────────────────────────────────────────────────────────
 function Tag({ children, color = NAVY }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${color}18`, color, fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 100 }}>
+    <span className="badge uppercase tracking-[0.1em]" style={{ background: `color-mix(in oklch, ${color} 9%, transparent)`, color }}>
       {children}
     </span>
   )
@@ -95,7 +95,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
     <div style={{ background: CREAM, minHeight: '100%' }}>
 
       {/* ── HERO — lighter teal gradient ── */}
-      <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(145deg, #0c4a6e 0%, #0e7490 55%, #0891b2 100%)' }}>
+      <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)' }}>
         {/* Grid overlay */}
         <div aria-hidden style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
@@ -112,19 +112,19 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 Welcome back,<br />
                 <span style={{ color: CYAN }}>{user.name.split(' ')[0]}.</span>
               </h1>
-              <p className="mt-4 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              <p className="mt-4 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: 'var(--on-dark-muted)' }}>
                 Your makerspace hub — borrow equipment, print documents, run 3D prints, and manage your credits all in one place.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <button onClick={() => setPage('/catalog')}
-                  className="flex items-center gap-2 rounded-[10px] px-4 py-2.5 text-xs font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-5 sm:py-3 sm:text-sm"
+                  className="btn-primary text-white"
                   style={{ background: TEAL }}>
-                  Browse Equipment <ArrowRight size={15} />
+                  Browse Equipment <ArrowRight size={14} />
                 </button>
                 <button onClick={scrollToCredits}
-                  className="flex items-center gap-2 rounded-[10px] px-4 py-2.5 text-xs font-semibold text-white transition-colors sm:px-5 sm:py-3 sm:text-sm"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)' }}>
-                  <CreditCard size={15} /> Manage Credits
+                  className="btn-secondary text-white"
+                  style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)' }}>
+                  <CreditCard size={14} /> Manage Credits
                 </button>
               </div>
 
@@ -133,30 +133,30 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 <StatPill value={user.credits} label="Credits" color={CYAN} />
                 <div className="hidden sm:block" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.2)' }} />
                 <button onClick={() => setPage('/notifications')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <StatPill value={activeLoans} label="Active borrows" color="#fbbf24" />
+                  <StatPill value={activeLoans} label="Active borrows" color="var(--color-amber)" />
                 </button>
                 <div className="hidden sm:block" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.2)' }} />
-                <StatPill value={available} label="Items available" color="#34d399" />
+                <StatPill value={available} label="Items available" color="var(--color-green)" />
                 <button onClick={() => setPage('/notifications')}
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-colors sm:ml-auto"
-                  style={{ border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)' }}>
+                  className="btn-secondary text-left sm:ml-auto"
+                  style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)' }}>
                   <Bell size={14} style={{ color: '#fff' }} />
                   <span className="text-xs font-semibold" style={{ color: '#fff' }}>{unread} unread</span>
-                  <ChevronRight size={12} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                  <ChevronRight size={12} style={{ color: 'var(--on-dark-muted)' }} />
                 </button>
               </div>
             </div>
 
             {/* Right — hero image */}
             <div className="mx-auto hidden w-full max-w-[420px] sm:block lg:max-w-[560px] xl:max-w-[640px]">
-              <img src={BROWSE_LANDING_IMAGE} alt="CADT Makerspace" className="w-full object-contain" style={{ filter: 'drop-shadow(0 16px 48px rgba(8,145,178,0.3))' }} />
+              <img src={BROWSE_LANDING_IMAGE} alt="CADT Makerspace" className="w-full object-contain" style={{ filter: 'drop-shadow(0 16px 48px color-mix(in oklch, var(--color-inv-accent) 30%, transparent))' }} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ── MAKERSPACE INFO STRIP ── */}
-      <section style={{ background: '#0c4a6e', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+      <section style={{ background: 'color-mix(in oklch, var(--color-inv-accent) 40%, black)', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-0 px-5 sm:px-8 md:grid-cols-4 lg:px-12">
           {[
             { Icon: MapPin,  label: 'Location',    value: 'CADT Campus, Room MS-01' },
@@ -165,9 +165,9 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
             { Icon: Star,    label: 'Membership',  value: user.membership === 'active' ? 'Active ✓' : 'Inactive — renew' },
           ].map(({ Icon, label, value }) => (
             <div key={label} className="flex items-center gap-3 px-4 py-5" style={{ borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-              <Icon size={18} color="rgba(255,255,255,0.7)" strokeWidth={1.5} />
+              <Icon size={18} color="var(--on-dark-muted)" strokeWidth={1.5} />
               <div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</div>
+                <div style={{ fontSize: 10, color: 'var(--on-dark-muted)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</div>
                 <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, marginTop: 2 }}>{value}</div>
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Tag color={THEME.purple}>Services</Tag>
-            <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl lg:text-[44px]">What We Offer</h2>
+            <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">What We Offer</h2>
             <p className="mt-2 max-w-lg text-sm text-inv-muted">Submit a request and our staff will handle the rest — pay with your makerspace credits.</p>
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: THEME.blueLight }}>
                   <Printer size={22} color={THEME.blue} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: THEME.blue, background: THEME.blueLight, padding: '4px 10px', borderRadius: 100 }}>Document</span>
+                <span className="badge" style={{ color: THEME.blue, background: THEME.blueLight }}>Document</span>
               </div>
               <h3 className="text-lg font-bold text-charcoal">Document Printing</h3>
               <p className="mt-1 text-sm leading-relaxed text-inv-muted">Black & white or color printing at the makerspace front desk. Staff will print your file on request.</p>
@@ -214,7 +214,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
               {/* Walk-up only — staff charge this instantly at the front desk,
                   so there's no remote request to submit. */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.blueLight, color: THEME.blue, border: `1px solid ${THEME.blue}33`, justifyContent: 'center' }}>
+              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.blueLight, color: THEME.blue, border: `1px solid color-mix(in oklch, ${THEME.blue} 20%, transparent)`, justifyContent: 'center' }}>
                 <MapPin size={13} /> Available at the front desk — visit in makerspace
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: THEME.purpleLight }}>
                   <Box size={22} color={THEME.purple} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: THEME.purple, background: THEME.purpleLight, padding: '4px 10px', borderRadius: 100 }}>3D Print</span>
+                <span className="badge" style={{ color: THEME.purple, background: THEME.purpleLight }}>3D Print</span>
               </div>
               <h3 className="text-lg font-bold text-charcoal">3D Printing</h3>
               <p className="mt-1 text-sm leading-relaxed text-inv-muted">Submit your model file and choose a filament. Staff will print and weigh it — you pay based on filament used.</p>
@@ -249,7 +249,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
               {/* Filament swatches */}
               {filaments.length > 0 && (
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-semibold text-inv-muted uppercase tracking-wider">Available:</span>
+                  <span className="text-xs font-semibold text-inv-muted uppercase tracking-wider">Available:</span>
                   {filaments.map(f => (
                     <div key={f.id} title={`${f.name} ${f.color} · ${f.stockGrams}g`}
                       style={{ width: 18, height: 18, borderRadius: '50%', background: f.hex, border: `2px solid ${BORDER}` }} />
@@ -259,7 +259,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
               {/* Walk-up only, same as document printing — staff run and weigh
                   the print at the counter, so no remote request either. */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.purpleLight, color: THEME.purple, border: `1px solid ${THEME.purple}33`, justifyContent: 'center' }}>
+              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.purpleLight, color: THEME.purple, border: `1px solid color-mix(in oklch, ${THEME.purple} 20%, transparent)`, justifyContent: 'center' }}>
                 <MapPin size={13} /> Available at the front desk — visit in makerspace
               </div>
             </div>
@@ -273,20 +273,20 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <Tag color={THEME.amber}>Equipment</Tag>
-              <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl lg:text-[44px]">Browse by Category</h2>
+              <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">Browse by Category</h2>
               <p className="mt-2 text-sm text-inv-muted">{totalItems} items across {CATEGORIES.length} categories — borrow with your membership credits.</p>
             </div>
             <button onClick={() => setPage('/catalog')}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-cream"
+              className="btn-secondary shrink-0 hover:bg-cream"
               style={{ borderColor: BORDER, color: NAVY }}>
-              View All <ArrowRight size={13} />
+              View All <ArrowRight size={14} />
             </button>
           </div>
 
           {/* Item type explainer — Returnable vs Consumable */}
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
-              { Icon: RotateCcw,   label: 'Returnable', color: TEAL,           bg: '#e0f9fe', desc: "Borrow and return by your due date — no charge unless it's late or damaged." },
+              { Icon: RotateCcw,   label: 'Returnable', color: TEAL,           bg: 'var(--color-inv-accent-light)', desc: "Borrow and return by your due date — no charge unless it's late or damaged." },
               { Icon: ShoppingBag, label: 'Consumable',  color: THEME.green,   bg: THEME.greenLight, desc: 'Materials you keep — purchased outright with your credits.' },
             ].map(({ Icon, label, color, bg, desc }) => (
               <div key={label} className="flex items-start gap-3 rounded-xl p-3.5" style={{ border: `1px solid ${BORDER}`, background: THEME.cream }}>
@@ -304,13 +304,13 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           {/* Category filter chips */}
           <div className="mb-6 flex flex-wrap gap-2">
             <button onClick={() => setActiveCat('all')}
-              className="rounded-full border px-4 py-1.5 text-xs font-bold transition-all"
+              className="chip"
               style={{ background: activeCat === 'all' ? NAVY : '#fff', color: activeCat === 'all' ? '#fff' : THEME.charcoal, borderColor: activeCat === 'all' ? NAVY : BORDER }}>
               All Items
             </button>
             {CATEGORIES.map(c => (
               <button key={c.id} onClick={() => setActiveCat(c.id)}
-                className="flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-bold transition-all"
+                className="chip"
                 style={{ background: activeCat === c.id ? c.iconColor : '#fff', color: activeCat === c.id ? '#fff' : THEME.charcoal, borderColor: activeCat === c.id ? c.iconColor : BORDER }}>
                 <c.Icon size={12} color={activeCat === c.id ? '#fff' : c.iconColor} />
                 {c.label}
@@ -331,18 +331,18 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                   <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden"
                     style={{ background: `linear-gradient(145deg, ${cat?.color || CREAM} 0%, #fff 70%)` }}>
                     {cat && <cat.Icon size={38} color={cat.iconColor} strokeWidth={1.4} />}
-                    <span className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    <span className="badge badge-sm absolute right-2 top-2"
                       style={{ background: isAvail ? THEME.greenLight : THEME.amberLight, color: isAvail ? THEME.green : THEME.amber }}>
                       {isAvail ? 'Available' : item.status}
                     </span>
                   </div>
                   {/* Details */}
                   <div className="flex flex-1 flex-col gap-1.5 p-3">
-                    <p className="m-0 truncate text-[13px] font-semibold text-charcoal leading-snug">{item.name}</p>
-                    <p className="m-0 text-[10px] text-inv-muted truncate">{cat?.label}</p>
+                    <p className="m-0 truncate text-sm font-semibold text-charcoal leading-snug">{item.name}</p>
+                    <p className="m-0 text-xs text-inv-muted truncate">{cat?.label}</p>
                     <div className="mt-auto flex items-center justify-between pt-2" style={{ borderTop: `1px solid ${BORDER}` }}>
                       <span className="text-xs font-bold" style={{ color: NAVY }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
-                      <span className="text-[10px] text-inv-muted">{item.type}</span>
+                      <span className="text-xs text-inv-muted">{item.type}</span>
                     </div>
                   </div>
                 </button>
@@ -353,9 +353,9 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           {catItems.length > 8 && (
             <div className="mt-6 text-center">
               <button onClick={() => setPage('/catalog')}
-                className="rounded-xl border px-6 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-cream"
+                className="btn-secondary text-charcoal hover:bg-cream"
                 style={{ borderColor: BORDER }}>
-                See all {catItems.length} items <ArrowRight size={13} className="inline ml-1" />
+                See all {catItems.length} items <ArrowRight size={14} className="inline ml-1" />
               </button>
             </div>
           )}
@@ -365,7 +365,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
       {/* ── CATEGORY INFO CARDS ── */}
       <section className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
         <Tag color={THEME.teal}>What's Here</Tag>
-        <h2 className="inv-sec-h mt-3 mb-2 text-3xl font-bold text-charcoal sm:text-4xl lg:text-[44px]">Equipment Rooms</h2>
+        <h2 className="inv-sec-h mt-3 mb-2 text-3xl font-bold text-charcoal sm:text-4xl">Equipment Rooms</h2>
         <p className="mb-8 max-w-lg text-sm text-inv-muted">The makerspace is organized into dedicated rooms for each discipline. You'll need a valid membership to borrow.</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -390,10 +390,10 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                   <c.Icon size={20} color={c.iconColor} />
                 </div>
                 <h3 className="m-0 text-sm font-bold text-charcoal">{c.label}</h3>
-                <p className="m-0 mt-1 text-[11px] leading-relaxed text-inv-muted">{DESC_MAP[c.id] || c.room}</p>
+                <p className="m-0 mt-1 text-xs leading-relaxed text-inv-muted">{DESC_MAP[c.id] || c.room}</p>
                 <div className="mt-4 flex items-center justify-between" style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-                  <span className="text-[11px] font-medium text-inv-muted">{c.room}</span>
-                  <span className="text-[11px] font-bold" style={{ color: avail > 0 ? THEME.green : THEME.red }}>{avail} ready</span>
+                  <span className="text-xs font-medium text-inv-muted">{c.room}</span>
+                  <span className="text-xs font-bold" style={{ color: avail > 0 ? THEME.green : THEME.red }}>{avail} ready</span>
                 </div>
               </button>
             )
@@ -406,7 +406,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
         <div className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
           <div className="mx-auto max-w-2xl text-center">
             <Tag color={THEME.green}>Get Started</Tag>
-            <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl lg:text-[44px]">How It Works</h2>
+            <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">How It Works</h2>
           </div>
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -417,7 +417,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
             ].map(({ num, Icon, color, title, desc }) => (
               <div key={num} className="flex flex-col gap-4 rounded-2xl border p-5" style={{ borderColor: BORDER }}>
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${color}18` }}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `color-mix(in oklch, ${color} 9%, transparent)` }}>
                     <Icon size={18} color={color} />
                   </div>
                   <span style={{ fontSize: 22, fontWeight: 800, color: BORDER }}>{num}</span>
@@ -436,25 +436,25 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
       <section className="mx-auto max-w-[1280px] px-5 pb-12 pt-8 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex items-center gap-4 rounded-2xl border p-5"
-            style={{ background: user.membership === 'active' ? THEME.greenLight : THEME.redLight, borderColor: user.membership === 'active' ? THEME.green + '40' : THEME.red + '40' }}>
+            style={{ background: user.membership === 'active' ? THEME.greenLight : THEME.redLight, borderColor: user.membership === 'active' ? 'color-mix(in oklch, ' + THEME.green + ' 25%, transparent)' : 'color-mix(in oklch, ' + THEME.red + ' 25%, transparent)' }}>
             <BadgeCheck size={28} color={user.membership === 'active' ? THEME.green : THEME.red} />
             <div>
               <p className="m-0 text-sm font-bold text-charcoal">{user.membership === 'active' ? 'Membership Active' : 'Membership Inactive'}</p>
               <p className="m-0 mt-0.5 text-xs text-inv-muted">{user.membership === 'active' ? 'Full access to borrow and purchase items.' : 'Activate to start borrowing tools.'}</p>
             </div>
             {user.membership !== 'active' && (
-              <button onClick={scrollToCredits} className="ml-auto shrink-0 rounded-lg border-none px-3 py-2 text-xs font-bold text-white" style={{ background: NAVY }}>
+              <button onClick={scrollToCredits} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: NAVY }}>
                 Activate
               </button>
             )}
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border p-5" style={{ background: '#DBEAFE', borderColor: THEME.blue + '40' }}>
+          <div className="flex items-center gap-4 rounded-2xl border p-5" style={{ background: 'var(--color-blue-light)', borderColor: 'color-mix(in oklch, ' + THEME.blue + ' 25%, transparent)' }}>
             <Package2 size={28} color={THEME.blue} />
             <div>
               <p className="m-0 text-sm font-bold text-charcoal">{available} items available right now</p>
               <p className="m-0 mt-0.5 text-xs text-inv-muted">Ready to borrow or purchase with your credits.</p>
             </div>
-            <button onClick={() => setPage('/catalog')} className="ml-auto shrink-0 rounded-lg border-none px-3 py-2 text-xs font-bold text-white" style={{ background: THEME.blue }}>
+            <button onClick={() => setPage('/catalog')} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: THEME.blue }}>
               Browse
             </button>
           </div>

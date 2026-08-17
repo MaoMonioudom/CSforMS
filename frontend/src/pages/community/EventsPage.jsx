@@ -11,14 +11,14 @@ const FILTERS = [
   { key: "all",      label: "All" },
   { key: "upcoming", label: "Upcoming" },
   { key: "ongoing",  label: "Ongoing" },
-  { key: "ended",    label: "Ended" },
+  { key: "ended",    label: "Gallery" },
 ];
 
 function OngoingBanner({ event }) {
   return (
     <div className="relative inline-block mb-6" style={{ transform: "rotate(-2deg)" }}>
       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 drop-shadow">
-        <PushPin color="#dc2626" size={12} />
+        <PushPin color="var(--destructive)" size={12} />
       </div>
       <Link
         to={`/community/eventspace/${event.id}`}
@@ -27,13 +27,13 @@ function OngoingBanner({ event }) {
       >
         <div className="flex items-center gap-1.5 mb-1.5">
           <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
           </span>
-          <span className="text-[9px] font-black uppercase tracking-wider text-red-600">Happening now</span>
+          <span className="text-xs font-black uppercase tracking-wider text-destructive">Happening now</span>
         </div>
         <p className="text-sm font-bold text-foreground leading-snug">{event.title}</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Ends {formatEventDateShort(event.endDate)}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Ends {formatEventDateShort(event.endDate)}</p>
       </Link>
     </div>
   );
@@ -61,11 +61,11 @@ function MoreStack({ count, onClick, loading }) {
         <div
           className="w-5 h-5 rounded-full"
           style={{
-            background: "radial-gradient(circle at 35% 30%, #ffd54f, #f57f17)",
+            background: "radial-gradient(circle at 35% 30%, var(--community-gold), var(--events))",
             boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
           }}
         />
-        <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+        <div className="w-0.5 h-2 bg-muted-foreground rounded-b" style={{ marginTop: "-1px" }} />
       </div>
       {/* Front face */}
       <div
@@ -154,12 +154,11 @@ export default function EventsPage() {
       eyebrow="01 — Community"
       title="Events"
       description="Discover, register for, and participate in makerspace activities, workshops, competitions, and community events."
-      ghostLetter="E"
-      tapeColor="rgba(249,115,22,0.78)"
+      tapeColor="color-mix(in oklch, var(--events) 78%, transparent)"
       banner={ongoing ? <OngoingBanner event={ongoing} /> : null}
       stats={[
-        { value: upcomingCount, label: "Upcoming events", rotate: 2,    pinColor: "#dc2626" },
-        { value: thisWeek, label: "This week",       rotate: -1.5, pinColor: "#f97316", plus: false },
+        { value: upcomingCount, label: "Upcoming events", rotate: 2,    pinColor: "var(--destructive)" },
+        { value: thisWeek, label: "This week",       rotate: -1.5, pinColor: "var(--events)", plus: false },
       ]}
     >
       <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -168,15 +167,15 @@ export default function EventsPage() {
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+            className={`chip ${
               filter === f.key
-                ? "bg-foreground text-background"
-                : "bg-black/5 text-muted-foreground hover:bg-black/10"
+                ? "border-events bg-events text-events-foreground"
+                : "border-transparent bg-black/5 text-muted-foreground hover:bg-black/10"
             }`}
           >
             {f.label}
             {f.key === "ongoing" && ongoingEvents.length > 0 && (
-              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground">
                 {ongoingEvents.length}
               </span>
             )}

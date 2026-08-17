@@ -5,28 +5,11 @@ import { HubScene } from "./HubScene";
 import { useAuth } from "./AuthContext";
 import { HubNav } from "./HubNav";
 import { AppFooter } from "../components/AppFooter";
+import { HUB as D, HUB_GRADIENT, SKY_TOP, SKY_BOT } from "./hubTheme";
 
-// ── Scene palette ─────────────────────────────────────────────────────────────
-const SKY_TOP = "#5baad8";
-const SKY_BOT = "#b8daf2";
+// ── Scene palette (building-scene-only, not part of the shared accent) ────────
 const MULLION  = "#4a5870";
 const CEIL     = "#1a2433";
-
-// ── Bright below-fold palette (Sky & Cloud) ───────────────────────────────────
-const D = {
-  bg1:       "#f4f8fc",
-  bg2:       "#eaf2fa",
-  bg3:       "#e3edf7",
-  bgCard:    "#ffffff",
-  text:      "#16324a",
-  muted:     "#4a6478",
-  faint:     "#7a93a8",
-  border:    "rgba(91,170,216,0.22)",
-  borderBr:  "rgba(91,170,216,0.38)",
-  accent:    "#6366f1",
-  shadow:    "0 2px 20px rgba(15,50,80,0.08)",
-  shadowLg:  "0 8px 48px rgba(15,50,80,0.14)",
-};
 
 // ── Glass curtain wall decoration (SVG, matches the scene's glass wall) ───────
 export function CurtainWallDecoration() {
@@ -150,18 +133,18 @@ export default function HubLandingPage() {
               backdropFilter: "blur(8px)",
             }}
           >
-            <span className="w-2 h-2 rounded-full" style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: HUB_GRADIENT }} />
             CADT Makerspace Hub
           </div>
 
           <h1
-            className="text-5xl sm:text-7xl font-extrabold leading-tight tracking-tight mb-6"
+            className="font-display text-5xl sm:text-7xl font-extrabold leading-tight tracking-tight mb-6"
             style={{ color: "#0f2033" }}
           >
             Welcome to the
             <br />
             <span style={{
-              background: "linear-gradient(135deg,#033e8a,#0078b7)",
+              background: HUB_GRADIENT,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -177,17 +160,17 @@ export default function HubLandingPage() {
 
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to={user ? "/profile" : "/register"}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-85"
-              style={{ background: "linear-gradient(135deg,#033e8a,#0078b7)" }}>
+              className="btn-primary text-white hover:opacity-85"
+              style={{ background: HUB_GRADIENT }}>
               {user ? "Go to Profile" : "Get Started"} <ArrowRight size={14} />
             </Link>
             <button
               onClick={scrollToScene}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-opacity hover:opacity-70"
+              className="btn-secondary hover:opacity-70"
               style={{
                 color: "#1a3350",
                 background: "rgba(255,255,255,0.30)",
-                border: "1px solid rgba(74,88,112,0.22)",
+                borderColor: "rgba(74,88,112,0.22)",
                 backdropFilter: "blur(8px)",
               }}>
               Explore the Space

@@ -10,9 +10,9 @@ const PAGES = [
 // The page you're on is bold with an underline; no separators.
 export default function PageBreadcrumb({ current, light = true }) {
   const navigate = useNavigate()
-  const mutedColor  = light ? 'rgba(255,255,255,0.55)' : '#94a3b8'
-  const hoverColor  = light ? 'rgba(255,255,255,0.9)'  : '#334155'
-  const activeColor = light ? '#fff' : '#0f172a'
+  const mutedColor  = light ? 'var(--on-dark-muted)' : 'var(--muted-foreground)'
+  const hoverColor  = light ? 'rgba(255,255,255,0.9)'  : 'var(--color-charcoal)'
+  const activeColor = light ? '#fff' : 'var(--color-charcoal)'
 
   return (
     <nav aria-label="Pages" className="mb-4 flex items-center gap-5 sm:gap-7">

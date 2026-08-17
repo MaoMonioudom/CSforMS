@@ -21,7 +21,7 @@ export default function DonutChart({ data, size = 160, thickness = 26 }) {
   return (
     <div className="flex flex-col items-center">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#EEF2F6" strokeWidth={thickness} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-stone)" strokeWidth={thickness} />
         {segments.map((seg) => (
           <circle key={seg.i} cx={cx} cy={cy} r={r} fill="none" stroke={seg.color} strokeWidth={hover === seg.i ? thickness + 4 : thickness}
             strokeDasharray={`${seg.dash} ${circumference - seg.dash}`} strokeDashoffset={-seg.offset}

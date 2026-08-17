@@ -9,12 +9,15 @@ import { T as THEME } from "../../lib/inventory/theme";
 import { LOGO_IMAGE, BROWSE_LANDING_IMAGE, PRINT_SERVICES, MEMBERSHIP_PLAN, CREDIT_RATE, CREDIT_TIERS } from "../../lib/inventory/data.js";
 
 /* ── palette ─────────────────────────────────────────────────────────────── */
-const TEAL    = "#0891b2";
-const TEAL_DK = "#0e7490";
-const DARK    = "#0f172a";
-const CREAM   = "#f8fafc";
-const BORDER  = "#e2e8f0";
-const MUTED   = "#64748b";
+/* Reuses the shared inventory/global tokens instead of its own one-off hex —
+   TEAL is inventory's own accent (var(--inv-accent)); DARK/CREAM/MUTED map
+   1:1 onto the existing --charcoal/--cream/--inv-muted tokens. */
+const TEAL    = "var(--color-inv-accent)";
+const TEAL_DK = "var(--color-inv-accent-text)";
+const DARK    = "var(--color-charcoal)";
+const CREAM   = "var(--color-cream)";
+const BORDER  = "var(--border)";
+const MUTED   = "var(--color-inv-muted)";
 
 /* ── data ────────────────────────────────────────────────────────────────── */
 const CATEGORIES = [
@@ -36,9 +39,9 @@ const STEPS = [
 ];
 
 const HIGHLIGHTS = [
-  { icon: Compass,  title: "Browse Resources",  color: TEAL,      bg: "#e0f9fe", text: "Search 100+ tools, components, and materials by category, zone, and room — see live availability before you walk in." },
-  { icon: BookOpen, title: "Learning Resources", color: "#7c3aed", bg: "#f5f3ff", text: "Guides and safety notes for every machine, so first-timers can borrow and use equipment with confidence." },
-  { icon: Users,    title: "Community",          color: "#16a34a", bg: "#dcfce7", text: "Join a community of student makers — share projects, get help from peers, and connect with makerspace staff." },
+  { icon: Compass,  title: "Browse Resources",  color: TEAL,                 bg: "var(--color-inv-accent-light)", text: "Search 100+ tools, components, and materials by category, zone, and room — see live availability before you walk in." },
+  { icon: BookOpen, title: "Learning Resources", color: "var(--community)",   bg: "color-mix(in oklch, var(--community) 12%, white)", text: "Guides and safety notes for every machine, so first-timers can borrow and use equipment with confidence." },
+  { icon: Users,    title: "Community",          color: "var(--color-green)", bg: "var(--color-green-light)", text: "Join a community of student makers — share projects, get help from peers, and connect with makerspace staff." },
 ];
 
 /* ── scene illustration ──────────────────────────────────────────────────── */
@@ -51,16 +54,16 @@ function StorageIllustration() {
       {/* Shelving unit */}
       {[0, 1, 2].map(row => (
         <g key={row}>
-          <rect x="40" y={50 + row * 50} width="280" height="6" rx="2" fill="#0891b2" opacity="0.6" />
+          <rect x="40" y={50 + row * 50} width="280" height="6" rx="2" fill="var(--color-inv-accent)" opacity="0.6" />
           {[0, 1, 2, 3, 4].map(col => (
             <rect key={col}
               x={52 + col * 54} y={22 + row * 50} width={38} height={28} rx="3"
               fill={[
-                "rgba(8,145,178,0.45)",
-                "rgba(5,150,105,0.45)",
-                "rgba(220,38,38,0.35)",
-                "rgba(8,145,178,0.55)",
-                "rgba(5,150,105,0.35)",
+                "color-mix(in oklch, var(--color-inv-accent) 45%, transparent)",
+                "color-mix(in oklch, var(--color-green) 45%, transparent)",
+                "color-mix(in oklch, var(--color-red) 35%, transparent)",
+                "color-mix(in oklch, var(--color-inv-accent) 55%, transparent)",
+                "color-mix(in oklch, var(--color-green) 35%, transparent)",
               ][col]}
               stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
           ))}
@@ -68,19 +71,19 @@ function StorageIllustration() {
       ))}
 
       {/* Bottom shelf */}
-      <rect x="40" y="200" width="280" height="6" rx="2" fill="#0891b2" opacity="0.6" />
+      <rect x="40" y="200" width="280" height="6" rx="2" fill="var(--color-inv-accent)" opacity="0.6" />
 
       {/* Side rails */}
-      <rect x="36" y="20" width="5" height="186" rx="2" fill="#0c4a5e" />
-      <rect x="319" y="20" width="5" height="186" rx="2" fill="#0c4a5e" />
+      <rect x="36" y="20" width="5" height="186" rx="2" fill="color-mix(in oklch, var(--color-inv-accent) 60%, black)" />
+      <rect x="319" y="20" width="5" height="186" rx="2" fill="color-mix(in oklch, var(--color-inv-accent) 60%, black)" />
 
       {/* Floating label chips */}
       {[
         { x: 54,  y: 12, label: "A-1", color: TEAL },
-        { x: 108, y: 12, label: "A-2", color: "#059669" },
-        { x: 162, y: 12, label: "A-3", color: "#dc2626" },
+        { x: 108, y: 12, label: "A-2", color: "var(--color-green)" },
+        { x: 162, y: 12, label: "A-3", color: "var(--color-red)" },
         { x: 216, y: 12, label: "B-1", color: TEAL },
-        { x: 270, y: 12, label: "B-2", color: "#059669" },
+        { x: 270, y: 12, label: "B-2", color: "var(--color-green)" },
       ].map(chip => (
         <g key={chip.label}>
           <rect x={chip.x} y={chip.y - 8} width="34" height="14" rx="7" fill={chip.color} opacity="0.85" />
@@ -100,8 +103,8 @@ function StorageIllustration() {
 function Eyebrow({ label, light = false }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-      <span style={{ width: 32, height: 2, background: light ? "rgba(255,255,255,.5)" : TEAL }} />
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase", color: light ? "rgba(255,255,255,.7)" : MUTED }}>
+      <span style={{ width: 32, height: 2, background: light ? "var(--on-dark-muted)" : TEAL }} />
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase", color: light ? "var(--on-dark-muted)" : MUTED }}>
         {label}
       </span>
     </div>
@@ -121,35 +124,31 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
   ];
 
   return (
-    <div style={{ background: CREAM, color: DARK, fontFamily: "'Poppins',Inter,system-ui,sans-serif", minHeight: "100vh" }}>
+    <div style={{ background: CREAM, color: DARK, fontFamily: "var(--font-sans)", minHeight: "100vh" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         @keyframes mv-ticker { to { transform: translateX(-50%) } }
         .mv-ticker-inner { animation: mv-ticker 32s linear infinite; display: flex; width: max-content; }
         .mv-ticker-inner:hover { animation-play-state: paused; }
-        .mv-nav-link { font-size:13px;font-weight:500;color:#64748b;text-decoration:none;transition:color .15s;cursor:pointer; }
+        .mv-nav-link { font-size:13px;font-weight:500;color:var(--color-inv-muted);text-decoration:none;transition:color .15s;cursor:pointer; }
         .mv-nav-link:hover { color:${DARK}; }
         .mv-btn-teal { display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;background:${TEAL};color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:background .15s,transform .1s; }
         .mv-btn-teal:hover { background:${TEAL_DK};transform:translateY(-1px); }
         .mv-btn-ghost { display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;background:transparent;color:${DARK};font-size:13px;font-weight:600;border:1.5px solid rgba(15,23,42,.18);cursor:pointer;transition:border-color .15s,background .15s; }
         .mv-btn-ghost:hover { border-color:${DARK};background:rgba(15,23,42,.04); }
         .mv-btn-ghost-white { display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;background:transparent;color:#fff;font-size:13px;font-weight:600;border:1.5px solid rgba(255,255,255,.3);cursor:pointer;transition:border-color .15s; }
-        .mv-btn-ghost-white:hover { border-color:rgba(255,255,255,.7); }
+        .mv-btn-ghost-white:hover { border-color:var(--on-dark-muted); }
         .mv-btn-white { display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:10px;background:#fff;color:${TEAL};font-size:13px;font-weight:700;border:none;cursor:pointer;transition:transform .1s; }
         .mv-btn-white:hover { transform:translateY(-1px); }
         .mv-cat-cell { padding:28px 24px;cursor:pointer;position:relative;overflow:hidden;transition:background .15s;background:transparent; }
-        .mv-cat-cell:hover { background:#ecfeff; }
+        .mv-cat-cell:hover { background:var(--color-inv-accent-light); }
         .mv-cat-browse { transition:transform .2s;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em; }
         .mv-cat-cell:hover .mv-cat-browse { transform:translateX(4px); }
-        .mv-footer-link { font-size:12px;color:rgba(255,255,255,.45);margin-bottom:9px;cursor:pointer;transition:color .15s;display:block; }
+        .mv-footer-link { font-size:12px;color:var(--on-dark-muted);margin-bottom:9px;cursor:pointer;transition:color .15s;display:block; }
         .mv-footer-link:hover { color:#fff; }
-        /* .inv-root h1 (index.css) outranks a single class, so the hero
-           class needs the .inv-root prefix for the mono font to win. */
-        .inv-root .mv-hero-display, .mv-hero-display { font-family:'CADTMonoDisplay','Poppins','Inter',sans-serif; }
         .mv-step-card { transition:background .15s,border-color .15s,box-shadow .15s; }
-        .mv-step-card:hover { background:#fff!important;border-color:${TEAL}44!important;box-shadow:0 4px 20px rgba(8,145,178,.10); }
+        .mv-step-card:hover { background:#fff!important;border-color:color-mix(in oklch, var(--color-inv-accent) 27%, transparent)!important;box-shadow:0 4px 20px color-mix(in oklch, var(--color-inv-accent) 10%, transparent); }
         .mv-testi-card { transition:box-shadow .2s; }
-        .mv-testi-card:hover { box-shadow:0 8px 32px rgba(8,145,178,.10); }
+        .mv-testi-card:hover { box-shadow:0 8px 32px color-mix(in oklch, var(--color-inv-accent) 10%, transparent); }
         /* Section headers — Inter, larger on tablet/desktop */
         .mv-sec-h { font-family:'Inter','Poppins',sans-serif; font-weight:800; letter-spacing:-0.02em; }
         /* Buttons scale down on small screens */
@@ -161,7 +160,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
       `}</style>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section style={{ position: "relative", overflow: "hidden", background: "linear-gradient(145deg,#0c4a6e 0%,#0e7490 55%,#0891b2 100%)" }}>
+      <section style={{ position: "relative", overflow: "hidden", background: "linear-gradient(145deg,color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%,var(--color-inv-accent-text) 55%,var(--color-inv-accent) 100%)" }}>
         {/* Grid overlay */}
         <div aria-hidden style={{
           position: "absolute", inset: 0, pointerEvents: "none",
@@ -172,32 +171,32 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         <div className="grid-cols-1 gap-8 px-4 pt-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-12 lg:pt-[72px]" style={{ position: "relative", zIndex: 1, maxWidth: 1320, margin: "0 auto", display: "grid", alignItems: "center" }}>
           {/* Left — headline */}
           <div style={{ paddingBottom: 72 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 999, marginBottom: 24, background: "rgba(8,145,178,0.15)", border: "1px solid rgba(8,145,178,0.35)" }}>
-              <Package size={11} style={{ color: "#67e8f9" }} />
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", color: "#67e8f9" }}>CADT · Makerspace Inventory</span>
+            <div className="badge" style={{ marginBottom: 24, background: "color-mix(in oklch, var(--color-inv-accent) 15%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 35%, transparent)" }}>
+              <Package size={11} style={{ color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)" }} />
+              <span style={{ letterSpacing: ".2em", textTransform: "uppercase", color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)" }}>CADT · Makerspace Inventory</span>
             </div>
             <div style={{ width: "fit-content", marginBottom: 24 }}>
-              <h1 className="mv-hero-display" style={{ fontSize: "clamp(28px,3.6vw,48px)", lineHeight: 1.12, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "#fff" }}>
-                Build<br />Something <span style={{ color: "#67e8f9" }}>Great</span>
+              <h1 className="font-display" style={{ fontSize: "clamp(28px,3.6vw,48px)", lineHeight: 1.12, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "#fff" }}>
+                Build<br />Something <span style={{ color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)" }}>Great</span>
               </h1>
-              <p className="mv-hero-display" style={{ margin: "10px 0 0", fontSize: "clamp(12px,1.35vw,17px)", fontWeight: 500, color: "rgba(255,255,255,0.65)", letterSpacing: "0.02em" }}>
+              <p className="font-display" style={{ margin: "10px 0 0", fontSize: "clamp(12px,1.35vw,17px)", fontWeight: 500, color: "var(--on-dark-muted)", letterSpacing: "0.02em" }}>
                 Powered by CADT<br />Makerspace Inventory
               </p>
             </div>
-            <p style={{ fontSize: 16, lineHeight: 1.65, color: "rgba(255,255,255,0.5)", maxWidth: 460, marginBottom: 36 }}>
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--on-dark-muted)", maxWidth: 460, marginBottom: 36 }}>
               Browse tools, borrow equipment, and purchase materials — searchable by zone, shelf, category, and room. Built for the CADT community.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 }}>
               <button className="mv-btn-teal" onClick={browse}>Browse Inventory <ArrowRight size={14} /></button>
-              <button onClick={go} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 22px", borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 600, border: "1.5px solid rgba(255,255,255,0.2)", cursor: "pointer" }}>
+              <button className="mv-btn-ghost-white" onClick={go}>
                 <LogIn size={14} /> Login to Borrow
               </button>
             </div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 12, background: "rgba(8,145,178,0.10)", border: "1px solid rgba(8,145,178,0.25)" }}>
-              <DoorOpen size={15} style={{ color: "#67e8f9" }} />
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 12, background: "color-mix(in oklch, var(--color-inv-accent) 10%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 25%, transparent)" }}>
+              <DoorOpen size={15} style={{ color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)" }} />
               <div>
                 <p style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Makerspace is open today</p>
-                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>9:00 AM – 9:00 PM · Room C03</p>
+                <p style={{ fontSize: 11, color: "var(--on-dark-muted)" }}>9:00 AM – 9:00 PM · Room C03</p>
               </div>
             </div>
           </div>
@@ -209,12 +208,12 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         </div>
 
         {/* Stats strip */}
-        <div className="px-4 py-4 sm:px-12 sm:py-5" style={{ borderTop: "1px solid rgba(8,145,178,0.2)" }}>
+        <div className="px-4 py-4 sm:px-12 sm:py-5" style={{ borderTop: "1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)" }}>
           <div className="grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" style={{ maxWidth: 1320, margin: "0 auto", display: "grid", textAlign: "center" }}>
             {liveStats.map(({ value, label, icon: Icon }) => (
               <div key={label}>
-                <p style={{ fontSize: 28, fontWeight: 800, color: "#67e8f9", lineHeight: 1 }}>{value}</p>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>{label}</p>
+                <p style={{ fontSize: 28, fontWeight: 800, color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)", lineHeight: 1 }}>{value}</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "var(--on-dark-muted)", marginTop: 4 }}>{label}</p>
               </div>
             ))}
           </div>
@@ -245,12 +244,12 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         {/* Room legend */}
         <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
           {[
-            { room: "Makerspace Room", color: TEAL, bg: "#e0f9fe" },
-            { room: "Mechanic Room",   color: "#7c3aed", bg: "#f5f3ff" },
+            { room: "Makerspace Room", color: TEAL, bg: "var(--color-inv-accent-light)" },
+            { room: "Mechanic Room",   color: "var(--community)", bg: "color-mix(in oklch, var(--community) 12%, white)" },
           ].map(({ room, color, bg }) => (
-            <div key={room} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px", borderRadius: 8, background: bg, border: `1px solid ${color}22` }}>
+            <div key={room} className="badge" style={{ background: bg, border: `1px solid color-mix(in oklch, ${color} 13%, transparent)` }}>
               <MapPin size={11} style={{ color }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: ".04em" }}>{room}</span>
+              <span style={{ color, letterSpacing: ".04em" }}>{room}</span>
             </div>
           ))}
         </div>
@@ -258,8 +257,8 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         {/* Item type explainer — Returnable vs Consumable */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14, marginBottom: 32 }}>
           {[
-            { Icon: RotateCcw,   label: "Returnable", color: TEAL,      bg: "#e0f9fe", desc: "Borrow tools and equipment, then return them by your due date. No credits charged unless it's late or damaged." },
-            { Icon: ShoppingBag, label: "Consumable",  color: "#16a34a", bg: "#dcfce7", desc: "Materials you keep — filament, fasteners, solder wire. Purchased outright with makerspace credits." },
+            { Icon: RotateCcw,   label: "Returnable", color: TEAL,      bg: "var(--color-inv-accent-light)", desc: "Borrow tools and equipment, then return them by your due date. No credits charged unless it's late or damaged." },
+            { Icon: ShoppingBag, label: "Consumable",  color: "var(--color-green)", bg: "var(--color-green-light)", desc: "Materials you keep — filament, fasteners, solder wire. Purchased outright with makerspace credits." },
           ].map(({ Icon, label, color, bg, desc }) => (
             <div key={label} style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 18px", borderRadius: 14, border: `1px solid ${BORDER}`, background: "#fff" }}>
               <div style={{ width: 38, height: 38, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -279,8 +278,8 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             const isLastRow = i >= 4;
             const isLastCol = (i + 1) % 4 === 0;
             const isMechanic = cat.room === "Mechanic Room";
-            const roomColor = isMechanic ? "#7c3aed" : TEAL;
-            const roomBg    = isMechanic ? "#f5f3ff"  : "#e0f9fe";
+            const roomColor = isMechanic ? "var(--community)" : TEAL;
+            const roomBg    = isMechanic ? "color-mix(in oklch, var(--community) 12%, white)"  : "var(--color-inv-accent-light)";
             return (
               <div key={cat.id} className="mv-cat-cell border-b lg:border-b-0" onClick={browse}
                 style={{ borderRight: isLastCol ? "none" : `1px solid ${BORDER}`, borderBottomColor: BORDER }}>
@@ -291,7 +290,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                   <Icon size={20} style={{ color: roomColor }} />
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
-                  <span style={{ display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: roomColor, background: roomBg, borderRadius: 4, padding: "2px 6px" }}>
+                  <span className="badge badge-sm uppercase tracking-[0.1em]" style={{ color: roomColor, background: roomBg }}>
                     {cat.tag}
                   </span>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 600, color: roomColor, opacity: .75 }}>
@@ -308,7 +307,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
       </section>
 
       {/* ── SERVICES ─────────────────────────────────────────────────── */}
-      <section className="px-4 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20" style={{ background: "#f0fdff" }}>
+      <section className="px-4 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20" style={{ background: "var(--color-inv-accent-light)" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 40, flexWrap: "wrap", gap: 16 }}>
             <div>
@@ -325,8 +324,8 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             {PRINT_SERVICES.map(svc => {
               const Icon = svc.Icon;
               const isDoc = svc.id === "printing";
-              const accentColor = isDoc ? "#0891b2" : "#7c3aed";
-              const accentBg    = isDoc ? "#e0f9fe" : "#f5f3ff";
+              const accentColor = isDoc ? "var(--color-inv-accent)" : "var(--community)";
+              const accentBg    = isDoc ? "var(--color-inv-accent-light)" : "color-mix(in oklch, var(--community) 12%, white)";
               const feats = isDoc
                 ? ["Black & white or color", "A4 / Letter format", "Submit file + page count"]
                 : ["PLA, PETG, ABS filament", "Staff weigh finished print", "Credits charged post-print"];
@@ -340,7 +339,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                       <div style={{ width: 52, height: 52, borderRadius: 16, background: accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <Icon size={24} style={{ color: accentColor }} />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: accentColor, background: accentBg, padding: "4px 12px", borderRadius: 100, letterSpacing: ".04em" }}>
+                      <span className="badge" style={{ color: accentColor, background: accentBg, letterSpacing: ".04em" }}>
                         {isDoc ? "Document" : "3D Print"}
                       </span>
                     </div>
@@ -363,9 +362,11 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                       ))}
                     </ul>
 
-                    <button onClick={go} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 0", borderRadius: 12, border: "none", background: accentColor, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "opacity .15s", marginTop: "auto" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
-                      onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                    <button
+                      className="btn-primary"
+                      onClick={go}
+                      style={{ width: "100%", justifyContent: "center", border: "none", background: accentColor, color: "#fff", marginTop: "auto" }}
+                    >
                       Request {isDoc ? "Printing" : "3D Print"} <ArrowRight size={14} />
                     </button>
                   </div>
@@ -397,7 +398,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                   <span style={{ fontSize: 48, fontWeight: 800, color: DARK, lineHeight: 1 }}>${MEMBERSHIP_PLAN.price}</span>
                   <span style={{ fontSize: 14, fontWeight: 600, color: MUTED }}>/ year</span>
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", marginBottom: 20 }}>+{MEMBERSHIP_PLAN.bonusCredits} bonus credits included</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--color-green)", marginBottom: 20 }}>+{MEMBERSHIP_PLAN.bonusCredits} bonus credits included</p>
                 <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
                   {["Borrow any returnable tool", "Purchase consumable supplies with credits", "Priority equipment access", "Valid for 12 months from activation"].map(f => (
                     <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: MUTED }}>
@@ -413,15 +414,15 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
 
             {/* Credit top-up */}
             <div style={{ border: `1px solid ${BORDER}`, borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <div style={{ height: 4, background: "#d97706" }} />
+              <div style={{ height: 4, background: "var(--events)" }} />
               <div className="p-6 sm:p-8" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "#d97706", marginBottom: 12 }}>Credit Top-Up</p>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--events)", marginBottom: 12 }}>Credit Top-Up</p>
                 <p style={{ fontSize: 14, color: MUTED, marginBottom: 18 }}>
                   Rate: <strong style={{ color: DARK }}>{CREDIT_RATE} credits per $1</strong> — paid in cash or QR at the front desk.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {CREDIT_TIERS.map(([cr, usd]) => (
-                    <div key={cr} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 10, background: "#f8fafc", border: `1px solid ${BORDER}` }}>
+                    <div key={cr} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 10, background: "var(--color-cream)", border: `1px solid ${BORDER}` }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: DARK }}>{cr} credits</span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: MUTED }}>${usd}.00</span>
                     </div>
@@ -437,12 +438,12 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section className="px-4 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20" style={{ background: "#f8fafc", borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+      <section className="px-4 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20" style={{ background: "var(--color-cream)", borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
         <div className="grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16" style={{ maxWidth: 1320, margin: "0 auto", display: "grid", alignItems: "stretch" }}>
           <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 28, paddingBottom: 28 }}>
             <div style={{ position: "absolute", top: 0, left: 0, width: 44, height: 3, background: TEAL, borderRadius: 2 }} />
             <Eyebrow label="Getting Started" />
-            <h2 className="mv-sec-h" style={{ fontSize: "clamp(34px,5.5vw,70px)", color: DARK, lineHeight: 1.08, marginBottom: 22 }}>
+            <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,5vw,60px)", color: DARK, lineHeight: 1.08, marginBottom: 22 }}>
               User guide<br />for first-timers.
             </h2>
             <p style={{ fontSize: 17, lineHeight: 1.75, color: MUTED, maxWidth: 420 }}>
@@ -454,7 +455,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             {STEPS.map(({ n, icon: Icon, title, desc }) => (
               <div key={n} className="mv-step-card"
                 style={{ display: "flex", gap: 16, padding: "18px 20px", borderRadius: 12, background: "#fff", border: `1px solid ${BORDER}` }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e0f9fe", border: `1.5px solid ${TEAL}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--color-inv-accent-light)", border: "1.5px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Icon size={16} style={{ color: TEAL }} />
                 </div>
                 <div>
@@ -475,7 +476,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <Eyebrow label="Why MakerVault" />
-            <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,4.5vw,56px)" }}>
+            <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,5vw,60px)" }}>
               Built for the way you make.
             </h2>
           </div>
@@ -487,7 +488,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                   <Icon size={20} style={{ color }} />
                 </div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: DARK, marginBottom: 10 }}>{title}</p>
-                <p style={{ fontSize: 14, lineHeight: 1.7, color: "#374151" }}>{text}</p>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--muted-foreground)" }}>{text}</p>
               </div>
             ))}
           </div>
@@ -508,7 +509,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               ].map(({ n, label, sub }) => (
                 <div key={label} style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 16, padding: "20px 16px", textAlign: "center" }}>
                   <p style={{ fontSize: "clamp(28px,3.5vw,48px)", fontWeight: 800, lineHeight: 1, color: DARK }}>{n}</p>
-                  <p className="text-[12px] sm:text-[15px]" style={{ fontWeight: 700, marginTop: 8 }}>{label}</p>
+                  <p className="text-xs sm:text-lg" style={{ fontWeight: 700, marginTop: 8 }}>{label}</p>
                   <p className="hidden sm:block" style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{sub}</p>
                   <div style={{ width: 32, height: 2, background: TEAL, margin: "14px auto 0" }} />
                 </div>
@@ -527,7 +528,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               <h3 className="mv-sec-h" style={{ fontSize: "clamp(26px,3.5vw,48px)", color: "#fff", lineHeight: 1.15, marginBottom: 20 }}>
                 The makerspace<br />of the future, today.
               </h3>
-              <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(255,255,255,.7)", marginBottom: 32 }}>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--on-dark-muted)", marginBottom: 32 }}>
                 Real-time availability, seamless borrowing, and credit-based purchasing — all in one platform built for the CADT community.
               </p>
               {/* Buttons stay on one line — media query shrinks them on mobile */}

@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
 @import "tailwindcss" ;
 @source "../src";
 @import "tw-animate-css";
@@ -19,11 +18,48 @@
  * To add a new semantic color:
  * 1. Add the variable to :root (light value) and .dark (dark value)
  * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * SCOPE MAP — who owns which tokens
+ * ─────────────────────────────────────────────────────────────────────────
+ * GLOBAL      background/foreground/card/popover/primary/secondary/muted/
+ *             accent/destructive/success/warning/info/border/input/ring/
+ *             sidebar-*, the 5 section-accent tags (events/collaboration/
+ *             technical/social/community), --font-sans, --font-heading,
+ *             --font-mono, --font-display.
+ *             Used everywhere — hub, community, inventory, and learning all
+ *             inherit these fonts + semantic colors now. Changing these
+ *             affects the whole app. --font-display (CADTMonoDisplay) is the
+ *             shared hero-heading font — all 3 modules' home-page heroes use
+ *             it via the `font-display` utility, kept apart from
+ *             --font-heading so hero type can stay visually distinct from
+ *             regular headings.
+ *
+ * COMMUNITY   --community-gold / --community-gold-light (+ foregrounds).
+ *             Community's own module-identity accent. Lives in :root/.dark
+ *             directly since community has no scope wrapper element.
+ *
+ * INVENTORY   Everything inside the "Inventory module" block below,
+ *             namespaced --inv-* or scoped under .inv-root. Font-family no
+ *             longer scoped there (inherits global), including
+ *             --font-display which used to be an inventory-only exception.
+ *
+ * LEARNING    Color tokens (navy/parchment/oxblood/sage) inside the
+ *             "Learning module" block below, scoped under .learning-scope.
+ *             No gold token of its own — every gold-* class in Learning
+ *             uses Community's --community-gold family directly (bg-community-gold,
+ *             text-community-gold-light-foreground, etc.), one gold app-wide
+ *             instead of a second, near-duplicate hex value.
+ *             Font-family no longer scoped there either — Playfair Display
+ *             dropped module-wide in favor of the global fonts.
  */
 
 @theme inline {
-  --font-sans: 'Source Code Pro', 'Courier New', Courier, monospace;
+  /* ── GLOBAL: fonts ── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
   --font-mono: 'Source Code Pro', 'Courier New', Courier, monospace;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -31,6 +67,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* ── GLOBAL: semantic colors (background, primary, muted, etc.) ── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -47,6 +85,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -64,6 +108,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── GLOBAL: section-accent tags (post/event category colors, used
+     mainly within community but registered globally) ── */
   --color-events: var(--events);
   --color-events-foreground: var(--events-foreground);
   --color-collaboration: var(--collaboration);
@@ -74,70 +121,47 @@
   --color-social-foreground: var(--social-foreground);
   --color-community: var(--community);
   --color-community-foreground: var(--community-foreground);
-}
 
-/*
- * Learning "library" theme.
- * Tokens for the /learning section — a parchment/navy/gold "books in a
- * library" look. Generates utilities like bg-paper, text-ink, font-display.
- */
-@theme {
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-
-  /* Dark library surfaces */
-  --color-navy: #1B2A3B;
-  --color-navy-deep: #0F1A26;
-  --color-navy-muted: #8A9BB0;
-
-  /* Parchment / paper surfaces */
-  --color-parchment: #F5EDD6;
-  --color-parchment-alt: #EDE0C0;
-  --color-parchment-mid: #F0E8D0;
-  --color-paper: #F4E8CB;
-  --color-paper-deep: #EAD9AC;
-
-  /* Accents */
-  --color-gold: #C9A84C;
-  --color-gold-light: #E8C96A;
-  --color-gold-dark: #8B6914;
-  --color-oxblood: #7C2A22;
-  --color-oxblood-deep: #591C17;
-  --color-sage: #7A9E7E;
-
-  /* Ink (text on paper) */
-  --color-ink: #241608;
-  --color-ink-soft: #5B4630;
-
-  /* Shadows */
-  --shadow-book: 4px 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-card-soft: 0 4px 24px rgba(0, 0, 0, 0.25);
-  --shadow-open: 0 20px 80px rgba(0, 0, 0, 0.7);
+  /* ── COMMUNITY module: identity accent (distinct from the --community
+     category tag above — see SCOPE MAP) ── */
+  --color-community-gold: var(--community-gold);
+  --color-community-gold-foreground: var(--community-gold-foreground);
+  --color-community-gold-light: var(--community-gold-light);
+  --color-community-gold-light-foreground: var(--community-gold-light-foreground);
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.97 0.025 75);
-  --foreground: oklch(0.18 0.04 280);
-  --card: oklch(0.995 0.01 75);
-  --card-foreground: oklch(0.18 0.04 280);
+
+  /* ── GLOBAL semantic colors — light mode ── */
+  --background: oklch(0.979 0.014 93);
+  --foreground: oklch(0.237 0.007 248);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.237 0.007 248);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.04 280);
-  --primary: oklch(0.62 0.24 28);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.08 90);
-  --secondary-foreground: oklch(0.2 0.04 280);
-  --muted: oklch(0.96 0.04 90);
-  --muted-foreground: oklch(0.45 0.06 280);
-  --accent: oklch(0.85 0.18 200);
-  --accent-foreground: oklch(0.18 0.04 280);
+  --popover-foreground: oklch(0.237 0.007 248);
+  --primary: oklch(0.546 0.1 177.7);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.005 95.1);
+  --secondary-foreground: oklch(0.237 0.007 248);
+  --muted: oklch(0.985 0.003 106.4);
+  --muted-foreground: oklch(0.49 0.015 255.6);
+  --accent: oklch(0.943 0.029 185.9);
+  --accent-foreground: oklch(0.237 0.007 248);
   --destructive: oklch(0.6 0.25 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.88 0.05 90);
-  --input: oklch(0.92 0.04 90);
-  --ring: oklch(0.62 0.24 28);
+  --success: oklch(0.627 0.17 149.2);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.666 0.157 58.3);
+  --warning-foreground: oklch(0.237 0.007 248);
+  --info: oklch(0.546 0.215 262.9);
+  --info-foreground: oklch(0.99 0 0);
+  --border: oklch(0.912 0.01 93.6);
+  --input: oklch(0.955 0.005 95.1);
+  --ring: oklch(0.669 0.123 177.4);
 
-  /* Section accents */
+  /* ── GLOBAL: section-accent tags (category tags, used mainly within
+     community) ── */
   --events: oklch(0.72 0.22 50);          /* orange */
   --events-foreground: oklch(0.15 0.05 50);
   --collaboration: oklch(0.68 0.2 160);   /* emerald */
@@ -149,54 +173,94 @@
   --community: oklch(0.55 0.22 300);      /* violet */
   --community-foreground: oklch(0.99 0 0);
 
+  /* ── COMMUNITY module: identity accent — warm gold, distinct from the
+     category-tag colors above. Used for badges/highlights that mark
+     "you're in the community module", not for tagging post categories. ── */
+  --community-gold: oklch(0.853 0.152 89.4);
+  --community-gold-foreground: oklch(0.406 0.083 88.1);
+  --community-gold-light: oklch(0.954 0.054 94.7);
+  --community-gold-light-foreground: oklch(0.53 0.096 78);
+
+  /* ── GLOBAL: charts + sidebar ── */
   --chart-1: oklch(0.72 0.22 50);
   --chart-2: oklch(0.68 0.2 160);
   --chart-3: oklch(0.6 0.24 265);
   --chart-4: oklch(0.74 0.2 340);
   --chart-5: oklch(0.8 0.18 90);
-  --sidebar: oklch(0.99 0.02 90);
-  --sidebar-foreground: oklch(0.18 0.04 280);
-  --sidebar-primary: oklch(0.62 0.24 28);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.95 0.08 90);
-  --sidebar-accent-foreground: oklch(0.2 0.04 280);
-  --sidebar-border: oklch(0.88 0.05 90);
-  --sidebar-ring: oklch(0.62 0.24 28);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.237 0.007 248);
+  --sidebar-primary: oklch(0.546 0.1 177.7);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.955 0.005 95.1);
+  --sidebar-accent-foreground: oklch(0.237 0.007 248);
+  --sidebar-border: oklch(0.912 0.01 93.6);
+  --sidebar-ring: oklch(0.669 0.123 177.4);
+
+  /* ── GLOBAL: muted text sitting on a dark/colored surface (hero
+     gradients, dark nav bars) — was ~15 near-duplicate white opacities
+     (0.4–0.85) picked ad hoc across the app; consolidated to one value.
+     Not theme-dependent — these describe the surface under the text, not
+     the page's light/dark mode. ── */
+  --on-dark-muted: rgba(255, 255, 255, 0.7);
+  --on-light-muted: rgba(22, 50, 74, 0.6);
+
+  /* ── GLOBAL: nav "pill" background (search bar, notification bell, cart
+     button) — was 0.08 vs 0.10 white overlay picked independently for the
+     same role; one value now. ── */
+  --nav-pill-bg: rgba(255, 255, 255, 0.1);
+  --nav-pill-bg-light: rgba(0, 0, 0, 0.05);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  /* ── GLOBAL semantic colors — dark mode ── */
+  --background: oklch(0.204 0.007 258.4);
+  --foreground: oklch(0.94 0.008 91.5);
+  --card: oklch(0.242 0.009 255.6);
+  --card-foreground: oklch(0.94 0.008 91.5);
+  --popover: oklch(0.242 0.009 255.6);
+  --popover-foreground: oklch(0.94 0.008 91.5);
+  --primary: oklch(0.669 0.123 177.4);
+  --primary-foreground: oklch(0.204 0.007 258.4);
   --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --secondary-foreground: oklch(0.94 0.008 91.5);
   --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
+  --muted-foreground: oklch(0.706 0.012 252.1);
   --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  --accent-foreground: oklch(0.94 0.008 91.5);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.984 0.003 247.858);
+  --success: oklch(0.627 0.17 149.2);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.666 0.157 58.3);
+  --warning-foreground: oklch(0.204 0.007 258.4);
+  --info: oklch(0.546 0.215 262.9);
+  --info-foreground: oklch(0.99 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --ring: oklch(0.669 0.123 177.4);
+
+  /* ── COMMUNITY module: identity accent — dark mode (reuses the light
+     values for now; not yet contrast-checked against the dark background,
+     revisit before shipping dark mode for community) ── */
+  --community-gold: oklch(0.853 0.152 89.4);
+  --community-gold-foreground: oklch(0.406 0.083 88.1);
+  --community-gold-light: oklch(0.954 0.054 94.7);
+  --community-gold-light-foreground: oklch(0.53 0.096 78);
+
+  /* ── GLOBAL: charts + sidebar ── */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar: oklch(0.242 0.009 255.6);
+  --sidebar-foreground: oklch(0.94 0.008 91.5);
+  --sidebar-primary: oklch(0.669 0.123 177.4);
+  --sidebar-primary-foreground: oklch(0.204 0.007 258.4);
   --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent-foreground: oklch(0.94 0.008 91.5);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-ring: oklch(0.669 0.123 177.4);
 }
 
 @layer base {
@@ -214,32 +278,87 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-mono);
+    font-family: var(--font-heading);
     letter-spacing: -0.01em;
   }
 }
 
-/* Paper card surface — warm off-white, distinct from page bg */
+/* GLOBAL utility — canonical button shape, shared by all 3 modules.
+   Shape/sizing/weight only — colors (bg/text/border/hover) are supplied
+   per-instance alongside these so each module keeps its own accent. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 150ms, background-color 150ms, color 150ms, border-color 150ms;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  border-width: 1.5px;
+  border-style: solid;
+  transition: transform 150ms, background-color 150ms, color 150ms, border-color 150ms;
+}
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+/* GLOBAL utility — canonical form-field shape, shared by all 3 modules.
+   Shape only (radius/padding/font-size/border-width) — border-color,
+   background, text-color and the focus ring's color are supplied
+   per-instance so each module keeps its own accent. Deliberately does NOT
+   set a :focus rule here, so each field's own `focus:` Tailwind utilities
+   keep working normally (an unlayered :focus rule here would always beat
+   Tailwind's layered focus: utilities regardless of specificity). */
+.field {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  border-width: 1px;
+  border-style: solid;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.field-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* GLOBAL utility — paper card surface, warm off-white, distinct from page bg.
+   Used mainly by community today but not scoped to it. */
 .paper {
   background-color: oklch(0.985 0.012 78);
 }
 
-/* Dot grid background */
+/* GLOBAL utility — dot grid background */
 .dot-grid {
   background-image: radial-gradient(circle, oklch(0.6 0.04 75 / 0.25) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-/* Wavy divider */
+/* GLOBAL utility — wavy divider */
 .wavy-top {
   clip-path: ellipse(55% 100% at 50% 100%);
 }
 
-/* Keyframes */
+/* GLOBAL keyframes */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(var(--r, 0deg)); }
   50%       { transform: translateY(-12px) rotate(var(--r, 0deg)); }
@@ -312,7 +431,9 @@
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Inventory module (MakerVault) — tokens + scoped styles.
+   INVENTORY MODULE (MakerVault) — tokens + scoped styles.
+   Not part of this migration yet — untouched, still uses its own
+   pre-existing look (cream/charcoal/inv-accent, Poppins/Inter).
    All color tokens are namespaced (inv-*) where they would collide with the
    hub design system; unique names (cream, charcoal, ink, faint…) are global.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -324,8 +445,9 @@
   --color-ink: #1E293B;
   --color-faint: #94A3B8;
   --color-inv-muted: #64748B;
-  --color-inv-accent: #4F46E5;
-  --color-inv-accent-light: #EEF2FF;
+  --color-inv-accent: #2E7FB8;
+  --color-inv-accent-text: #286D9E;
+  --color-inv-accent-light: #DCEEF7;
   --color-red: #E11D48;
   --color-red-light: #FEE2E6;
   --color-red-mid: #FB7185;
@@ -340,7 +462,6 @@
   --color-teal: #0D9488;
   --color-teal-light: #CCFBF1;
   --color-border-dark: #CBD5E1;
-  --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
   --font-display: 'CADTMonoDisplay', 'Poppins', 'Inter', system-ui, sans-serif;
   --shadow-card: 0 8px 28px rgba(15, 23, 42, 0.08);
 }
@@ -352,37 +473,48 @@
   font-display: swap;
 }
 
-/* Module root — everything inside the inventory module is Poppins, overriding
-   the hub's global Source Code Pro (including the base-layer heading rule). */
-.inv-root,
-.inv-root h1, .inv-root h2, .inv-root h3, .inv-root h4, .inv-root h5, .inv-root h6,
-.inv-root button, .inv-root input, .inv-root select, .inv-root textarea {
-  font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
-}
+/* Font-family is no longer scoped here — the global --font-sans (Inter) and
+   --font-heading (Poppins) already match what this module used to set
+   locally, so .inv-root just inherits them like every other module now. */
 
-/* CADTMonoDisplay is reserved for hero headings only. */
-.inv-root .font-hero-display {
-  font-family: 'CADTMonoDisplay', 'Poppins', 'Inter', system-ui, sans-serif;
-  letter-spacing: -0.01em;
-}
-
-/* Section headers ("Browse by Category", "What We Offer", …) use Inter,
-   sized up on tablet/desktop. Overrides the .inv-root heading rule. */
+/* Section headers ("Browse by Category", "What We Offer", …) — heavier
+   weight and tighter tracking than the default heading style. */
 .inv-root .inv-sec-h {
-  font-family: 'Inter', 'Poppins', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
-/* Status badge pill (inventory Badge component) */
-.inv-root .badge, .badge {
+/* GLOBAL utility — canonical badge/chip shape, shared by all 3 modules.
+   .badge = static decorative label (status, category, count). .chip =
+   interactive filter toggle (bigger touch target, meant to sit in a button).
+   Shape only — background/text color stay per-instance. */
+.badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 3px 10px;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+}
+.badge-sm {
+  padding: 2px 8px;
+  font-size: 10px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border-width: 1px;
+  border-style: solid;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms, color 150ms, border-color 150ms;
 }
 
 /* Admin table row + sidebar link hovers */
@@ -392,7 +524,7 @@
 
 /* Input focus ring — scoped so hub forms keep their own style */
 .inv-root input:focus, .inv-root select:focus, .inv-root textarea:focus {
-  outline: 2px solid #0891b2;
+  outline: 2px solid var(--color-inv-accent);
   outline-offset: 0;
 }
 
@@ -424,16 +556,14 @@ html:has(.inv-root)::-webkit-scrollbar, body:has(.inv-root)::-webkit-scrollbar {
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Learning module — parchment/navy/gold "books in a library" tokens.
-   navy/parchment/paper/gold/oxblood/sage are new names, safe to register
-   globally. --color-ink and --font-display already exist (hub/inventory use
-   them with different values), so those two are overridden only inside
-   .learning-scope rather than redefined at the theme root.
+   LEARNING MODULE — parchment/navy/gold "books in a library" color tokens.
+   Font-family is no longer scoped here — Playfair Display/Inter dropped in
+   favor of the global --font-sans (Inter) / --font-heading (Poppins), same
+   as every other module. Colors (navy/parchment/gold/oxblood/sage) stay —
+   that's the module's identity accent, unrelated to the font decision.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-
   --color-navy: #1B2A3B;
   --color-navy-deep: #0F1A26;
   --color-navy-muted: #8A9BB0;
@@ -444,9 +574,6 @@ html:has(.inv-root)::-webkit-scrollbar, body:has(.inv-root)::-webkit-scrollbar {
   --color-paper: #F4E8CB;
   --color-paper-deep: #EAD9AC;
 
-  --color-gold: #C9A84C;
-  --color-gold-light: #E8C96A;
-  --color-gold-dark: #8B6914;
   --color-oxblood: #7C2A22;
   --color-oxblood-deep: #591C17;
   --color-sage: #7A9E7E;
@@ -458,10 +585,9 @@ html:has(.inv-root)::-webkit-scrollbar, body:has(.inv-root)::-webkit-scrollbar {
   --shadow-open: 0 20px 80px rgba(0, 0, 0, 0.7);
 }
 
-/* Scoped overrides for the two colliding token names — applied to the
-   /learning route wrapper only, so hub/inventory keep their own ink + display
-   font everywhere else. */
+/* Scoped override for the colliding --color-ink token name — applied to the
+   /learning route wrapper only, so hub/inventory keep their own ink value
+   everywhere else. */
 .learning-scope {
   --color-ink: #241608;
-  --font-display: 'Playfair Display', Georgia, serif;
 }

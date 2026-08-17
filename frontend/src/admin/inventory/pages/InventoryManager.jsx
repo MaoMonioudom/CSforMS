@@ -9,7 +9,7 @@ import { fmtDateTime } from '../../../lib/inventory/datetime'
 import ItemThumb from '../../../components/inventory/ui/ItemThumb'
 
 const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0, image: null }
-const FIL_BLANK = { name: 'PLA', color: '', hex: '#94A3B8', stockGrams: 0, rate: 4 }
+const FIL_BLANK = { name: 'PLA', color: '', hex: 'var(--muted-foreground)', stockGrams: 0, rate: 4 }
 
 const ROOMS = ['Makerspace Room', 'Mechanic Room']
 const STATUS_FILTERS = ['All', 'Available', 'Borrowed', 'Maintenance', 'Low Stock', 'Unavailable']
@@ -104,7 +104,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
           <button key={s} onClick={() => { setStatusTab(s); setPage(1) }}
             style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
               ...(s === statusTab
-                ? { background: '#0891b2', color: '#fff', border: 'none' }
+                ? { background: 'var(--color-inv-accent)', color: '#fff', border: 'none' }
                 : { background: '#fff', color: T.muted, border: `1px solid ${T.border}` }) }}>
             {s}
           </button>

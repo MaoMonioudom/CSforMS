@@ -26,11 +26,11 @@ function EnrollPromptModal({ course, signedIn, enrolling, onEnroll, onSignIn, on
         aria-modal="true"
         aria-label="Enroll in this course"
       >
-        <div className="mb-2 text-[34px]">🎓</div>
-        <h2 className="mb-2 font-display text-xl font-semibold text-ink">
+        <div className="mb-2 text-4xl">🎓</div>
+        <h2 className="mb-2 text-xl font-semibold text-ink">
           Do you want to enroll in this course?
         </h2>
-        <p className="mb-6 text-[13.5px] leading-relaxed text-ink-soft">
+        <p className="mb-6 text-sm leading-relaxed text-ink-soft">
           Enroll in <span className="font-semibold text-ink">{course.title}</span> to
           open its lessons and rate the course. It's free — paid paths are unlocked separately.
         </p>
@@ -39,21 +39,21 @@ function EnrollPromptModal({ course, signedIn, enrolling, onEnroll, onSignIn, on
             <button
               onClick={onEnroll}
               disabled={enrolling}
-              className="cursor-pointer rounded-lg bg-oxblood px-6 py-2.5 text-sm font-semibold text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
+              className="btn-primary cursor-pointer bg-oxblood text-paper hover:opacity-85 disabled:opacity-50"
             >
               {enrolling ? "Enrolling…" : "Yes, enroll me"}
             </button>
           ) : (
             <button
               onClick={onSignIn}
-              className="cursor-pointer rounded-lg bg-oxblood px-6 py-2.5 text-sm font-semibold text-paper transition-opacity hover:opacity-85"
+              className="btn-primary cursor-pointer bg-oxblood text-paper hover:opacity-85"
             >
               Sign in to enroll
             </button>
           )}
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg border border-ink/20 px-6 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:border-ink/40 hover:text-ink"
+            className="btn-secondary cursor-pointer border-ink/20 text-ink-soft hover:border-ink/40 hover:text-ink"
           >
             Just browsing
           </button>
@@ -68,7 +68,7 @@ function StarRating({ myStars, onRate, saving }) {
   const [hover, setHover] = useState(0);
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="text-[12px] text-ink-soft">{myStars ? "Your rating:" : "Rate this course:"}</span>
+      <span className="text-xs text-ink-soft">{myStars ? "Your rating:" : "Rate this course:"}</span>
       <span className="inline-flex" onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -77,7 +77,7 @@ function StarRating({ myStars, onRate, saving }) {
             disabled={saving}
             onClick={() => onRate(n)}
             onMouseEnter={() => setHover(n)}
-            className="cursor-pointer px-0.5 text-[16px] leading-none transition-transform hover:scale-110 disabled:opacity-50"
+            className="cursor-pointer px-0.5 text-lg leading-none transition-transform hover:scale-110 disabled:opacity-50"
             aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
           >
             <span className={(hover ? n <= hover : n <= myStars) ? "text-oxblood" : "text-ink/25"}>★</span>
@@ -116,7 +116,7 @@ export default function CourseDetail() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-paper font-body">
+      <div className="flex min-h-screen items-center justify-center bg-paper">
         <p className="text-sm text-ink-soft">Opening the book…</p>
       </div>
     );
@@ -179,7 +179,7 @@ export default function CourseDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-paper pb-16 font-body">
+    <div className="min-h-screen bg-paper pb-16">
       {/* Back link */}
       <div className={`${CONTAINER} flex items-center gap-4 pb-4 pt-6 max-sm:pt-4`}>
         <button
@@ -188,21 +188,21 @@ export default function CourseDetail() {
         >
           ← Back to Library
         </button>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap font-display text-[0.9rem] italic text-ink/45 max-sm:hidden">
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm italic text-ink/45 max-sm:hidden">
           {course.title}
         </span>
       </div>
 
       {/* Course intro */}
       <div className={`${CONTAINER} pb-2 pt-8`}>
-        <span className="rounded-full bg-oxblood/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-oxblood">
+        <span className="badge bg-oxblood/10 uppercase tracking-[0.06em] text-oxblood">
           {course.category}
         </span>
-        <h1 className="mb-1.5 mt-3.5 font-display text-[32px] font-semibold text-ink">
+        <h1 className="mb-1.5 mt-3.5 text-4xl font-semibold text-ink">
           {course.title}
         </h1>
-        <p className="mb-4 max-w-[640px] text-[15px] text-ink-soft">{course.subtitle}</p>
-        <div className="flex flex-wrap items-center gap-[18px] border-b border-ink/10 pb-6 text-[13px] text-ink-soft">
+        <p className="mb-4 max-w-[640px] text-lg text-ink-soft">{course.subtitle}</p>
+        <div className="flex flex-wrap items-center gap-[18px] border-b border-ink/10 pb-6 text-sm text-ink-soft">
           <span>⏱ {course.duration}</span>
           <span>📖 {lessons.length} lessons</span>
           <span>
@@ -211,14 +211,14 @@ export default function CourseDetail() {
           </span>
           <span>👥 {(course.students || 0).toLocaleString()} students</span>
           {enrolled ? (
-            <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[12px] font-semibold text-emerald-700">
+            <span className="badge bg-emerald-400/15 text-emerald-700">
               ✓ Enrolled
             </span>
           ) : (
             <button
               onClick={handleEnroll}
               disabled={enrolling}
-              className="cursor-pointer rounded-full bg-oxblood px-4 py-1.5 text-[12px] font-semibold text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
+              className="btn-primary cursor-pointer bg-oxblood text-paper hover:opacity-85 disabled:opacity-50"
             >
               {enrolling ? "Enrolling…" : signedIn ? "Enroll in this course" : "Sign in to enroll"}
             </button>
@@ -242,7 +242,7 @@ export default function CourseDetail() {
         ) : (
           <>
             {!enrolled && (
-              <p className="mb-5 text-[12.5px] text-ink-soft/70">
+              <p className="mb-5 text-xs text-ink-soft/70">
                 🔒 Lessons unlock after you enroll.
               </p>
             )}

@@ -14,11 +14,11 @@ function Pushpin() {
       <div
         className="w-5 h-5 rounded-full"
         style={{
-          background: "radial-gradient(circle at 35% 30%, #ce93d8, #6a1b9a)",
+          background: "radial-gradient(circle at 35% 30%, color-mix(in oklch, var(--community) 55%, white), var(--community))",
           boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
         }}
       />
-      <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+      <div className="w-0.5 h-2 bg-muted-foreground rounded-b" style={{ marginTop: "-1px" }} />
     </div>
   );
 }
@@ -109,8 +109,7 @@ export function CommunityPostCard({ post, index = 0, onToggleLike }) {
         <button
           type="button"
           onClick={() => onToggleLike?.(post.id)}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community"
-          style={post.likedByMe ? { color: "#dc2626" } : undefined}
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community ${post.likedByMe ? "text-destructive" : ""}`}
         >
           <Heart className="size-4" fill={post.likedByMe ? "currentColor" : "none"} /> {post.likes}
         </button>
@@ -123,8 +122,7 @@ export function CommunityPostCard({ post, index = 0, onToggleLike }) {
         <button
           type="button"
           onClick={handleShare}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community"
-          style={copied ? { color: "#16a34a" } : undefined}
+          className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold transition-colors hover:bg-community/10 hover:text-community ${copied ? "text-success" : ""}`}
         >
           {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
         </button>

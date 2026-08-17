@@ -41,7 +41,7 @@ export default function CreditInfoModal({ user, onClose, onRequestTopUp }) {
             <Clock size={28} style={{ color: T.green }} />
             <p className="m-0 text-sm font-bold text-charcoal">Request sent!</p>
             <p className="m-0 max-w-[280px] text-xs text-inv-muted">The makerspace team has been notified. You'll see it in your Notifications once it's approved.</p>
-            <button onClick={onClose} className="mt-2 rounded-lg border-none px-4 py-2 text-xs font-bold text-white" style={{ background: T.charcoal }}>Done</button>
+            <button onClick={onClose} className="btn-primary mt-2 border-none text-white" style={{ background: T.charcoal }}>Done</button>
           </div>
         ) : pendingAmount !== null ? (
           // ── Confirm step — make sure the student really wants to contact the team ──
@@ -54,14 +54,14 @@ export default function CreditInfoModal({ user, onClose, onRequestTopUp }) {
               <p className="m-0 mt-1 text-3xl font-bold text-charcoal">${pendingAmount}</p>
               <p className="m-0 mt-1 text-sm text-inv-muted">= {pendingCredits} credits at {CREDIT_RATE}cr/$1</p>
             </div>
-            <p className="m-0 mb-4 text-[13px] leading-relaxed text-inv-muted">
+            <p className="m-0 mb-4 text-sm leading-relaxed text-inv-muted">
               Confirming will notify the makerspace team to contact you and arrange payment. Make sure this is the amount you want before continuing.
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setPendingAmount(null)} className="flex-1 rounded-lg border py-2.5 text-sm font-semibold text-inv-muted" style={{ borderColor: T.border }}>
+              <button onClick={() => setPendingAmount(null)} className="btn-secondary flex-1 justify-center text-inv-muted" style={{ borderColor: T.border }}>
                 Cancel
               </button>
-              <button onClick={confirmRequest} className="flex-1 rounded-lg border-none py-2.5 text-sm font-bold text-white" style={{ background: T.green }}>
+              <button onClick={confirmRequest} className="btn-primary flex-1 justify-center border-none text-white" style={{ background: T.green }}>
                 Confirm & Notify Team
               </button>
             </div>
@@ -70,46 +70,46 @@ export default function CreditInfoModal({ user, onClose, onRequestTopUp }) {
           <>
             {/* Membership card — moved here from the home page */}
             <div className="mb-3 overflow-hidden rounded-xl" style={user.membership === 'active'
-              ? { background: 'linear-gradient(145deg, #0c4a6e 0%, #0e7490 60%, #0891b2 100%)' }
+              ? { background: 'linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 60%, var(--color-inv-accent) 100%)' }
               : { background: T.cream, border: `1px solid ${T.border}` }}>
               <div className="flex items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: user.membership === 'active' ? 'rgba(255,255,255,0.18)' : '#0891b2' }}>
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: user.membership === 'active' ? 'rgba(255,255,255,0.18)' : 'var(--color-inv-accent)' }}>
                     {user.name[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="m-0 text-[13px] font-bold" style={{ color: user.membership === 'active' ? '#fff' : T.charcoal }}>{user.name}</p>
-                    <p className="m-0 mt-0.5 text-[11px]" style={{ color: user.membership === 'active' ? 'rgba(255,255,255,0.55)' : T.faint }}>
+                    <p className="m-0 text-sm font-bold" style={{ color: user.membership === 'active' ? '#fff' : T.charcoal }}>{user.name}</p>
+                    <p className="m-0 mt-0.5 text-xs" style={{ color: user.membership === 'active' ? 'var(--on-dark-muted)' : T.faint }}>
                       {user.studentId || user.email}
                     </p>
                   </div>
                 </div>
-                <span className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold" style={user.membership === 'active'
-                  ? { background: 'rgba(103,232,249,0.2)', color: '#67e8f9' }
+                <span className="badge flex-shrink-0" style={user.membership === 'active'
+                  ? { background: 'color-mix(in oklch, var(--color-inv-accent) 20%, transparent)', color: 'color-mix(in oklch, var(--color-inv-accent) 55%, white)' }
                   : { background: T.stone, color: T.faint }}>
                   {user.membership === 'active' ? 'Active Member' : 'No Membership'}
                 </span>
               </div>
-              <div className="flex items-center justify-between px-4 pb-3.5" style={{ color: user.membership === 'active' ? 'rgba(255,255,255,0.7)' : T.muted }}>
-                <span className="text-[11px]">Student Membership · ${MEMBERSHIP_PLAN.price}/year</span>
-                <span className="text-[11px] font-bold" style={{ color: user.membership === 'active' ? '#67e8f9' : T.green }}>+{MEMBERSHIP_PLAN.bonusCredits} cr bonus</span>
+              <div className="flex items-center justify-between px-4 pb-3.5" style={{ color: user.membership === 'active' ? 'var(--on-dark-muted)' : T.muted }}>
+                <span className="text-xs">Student Membership · ${MEMBERSHIP_PLAN.price}/year</span>
+                <span className="text-xs font-bold" style={{ color: user.membership === 'active' ? 'color-mix(in oklch, var(--color-inv-accent) 55%, white)' : T.green }}>+{MEMBERSHIP_PLAN.bonusCredits} cr bonus</span>
               </div>
             </div>
 
             <div className="mb-3 rounded-xl p-3.5" style={{ background: T.accentLight }}>
               <div className="flex items-start gap-2 py-1">
                 <BadgeCheck size={14} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
-                <p className="m-0 text-[13px] leading-snug text-ink">
+                <p className="m-0 text-sm leading-snug text-ink">
                   Membership: <strong>${MEMBERSHIP_PLAN.price}/year</strong> → <strong>{MEMBERSHIP_PLAN.bonusCredits} bonus credits</strong>
                 </p>
               </div>
               <div className="flex items-start gap-2 py-1">
                 <Wallet size={14} className="mt-0.5 flex-shrink-0" style={{ color: T.accent }} />
-                <p className="m-0 text-[13px] leading-snug text-ink">Top-up rate: <strong>{CREDIT_RATE} credits per $1</strong></p>
+                <p className="m-0 text-sm leading-snug text-ink">Top-up rate: <strong>{CREDIT_RATE} credits per $1</strong></p>
               </div>
             </div>
 
-            <p className="m-0 mb-2 text-[11px] font-bold uppercase tracking-wide text-faint">Tap a tier to request it</p>
+            <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-faint">Tap a tier to request it</p>
             <div className="mb-3 flex flex-col gap-1.5">
               {CREDIT_TIERS.map(([credits, cost]) => (
                 <button key={credits} onClick={() => setPendingAmount(cost)}
@@ -120,13 +120,13 @@ export default function CreditInfoModal({ user, onClose, onRequestTopUp }) {
               ))}
             </div>
 
-            <p className="m-0 mb-2 text-[11px] font-bold uppercase tracking-wide text-faint">Or request a custom amount</p>
+            <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-faint">Or request a custom amount</p>
             <div className="mb-4 flex items-center gap-2">
               <span className="text-sm font-semibold text-faint">$</span>
               <input type="number" min="1" placeholder="Amount" value={customAmount} onChange={e => setCustomAmount(e.target.value)}
-                className="flex-1 rounded-lg border border-border bg-cream px-3 py-2 text-sm outline-none focus:border-inv-accent" />
+                className="field flex-1 border-border bg-cream outline-none focus:border-inv-accent focus:ring-2 focus:ring-inv-accent/20" />
               <button onClick={() => customAmount > 0 && setPendingAmount(Number(customAmount))} disabled={!customAmount || customAmount <= 0}
-                className="rounded-lg border-none px-3 py-2 text-xs font-bold text-white disabled:opacity-40" style={{ background: T.accent }}>
+                className="btn-primary border-none text-white disabled:opacity-40" style={{ background: T.accent }}>
                 Request
               </button>
             </div>
@@ -134,7 +134,7 @@ export default function CreditInfoModal({ user, onClose, onRequestTopUp }) {
               <p className="m-0 mb-4 -mt-2 text-xs text-inv-muted">= <strong style={{ color: T.charcoal }}>{customCredits} credits</strong> at {CREDIT_RATE}cr/$1</p>
             )}
 
-            <p className="m-0 mb-2 text-[11px] font-bold uppercase tracking-wide text-faint">Or reach the team directly</p>
+            <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-faint">Or reach the team directly</p>
             <div className="flex flex-col gap-2">
               <a href={`mailto:${TEAM_CONTACT.email}?subject=Credit%20top-up%20request&body=Hi%20team%2C%20I%27d%20like%20to%20top%20up%20my%20MakerVault%20credits.`}
                 className="flex items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm font-semibold text-ink hover:bg-cream">

@@ -9,39 +9,43 @@ const COLUMNS = [
     label:  "Quick Links",
     accent: "rgba(255,255,255,0.55)",
     links: [
-      { label: "About",       to: "/hub/about"  },
+      { label: "About Us",       to: "/hub/about"  },
       { label: "Guidelines",  to: "/hub/about#guidelines" },
       { label: "FAQ",         to: "/hub/about#faq" },
-      { label: "Contact",     to: "/hub/about#contact" },
+      { label: "Contact Our Team",     to: "/hub/about#contact" },
     ],
   },
   {
     label:  "Community",
-    accent: "#c9a86c",
+    accent: "var(--community-gold)",
     links: [
-      { label: "Home",           to: "/community"                  },
-      { label: "Events",         to: "/community/eventspace"       },
-      { label: "Find Team",      to: "/community/collabspace"      },
+      { label: "Community Home",           to: "/community"                  },
+      { label: "Find Events",         to: "/community/eventspace"       },
+      { label: "Find Your Team",      to: "/community/collabspace"      },
       { label: "Connect",        to: "/community/communityspace"   },
     ],
   },
   {
     label:  "Learning",
-    accent: "#e07060",
+    // Plain --color-oxblood(-deep) is a dark red built for use on Learning's
+    // light parchment background — against this footer's near-black bg it
+    // reads as almost no color at all. Lightened just for this on-dark spot
+    // so it's as legible as the gold/inv-accent columns next to it.
+    accent: "color-mix(in oklch, var(--color-oxblood) 65%, white)",
     links: [
-      { label: "Home",           to: "/learning" },
-      { label: "Guidelines",       to: "/learning/about" },
-      { label: "Courses",       to: "/learning/courses" },
+      { label: "Learning Home",           to: "/learning" },
+      { label: "Guidelines for Learning",       to: "/learning/about" },
+      { label: "View Courses",       to: "/learning/courses" },
       // { label: "Bookmarks",      to: "/learning" },
       // { label: "Announcements",  to: "/learning" },
     ],
   },
   {
     label:  "Inventory",
-    accent: "#38bdf8",
+    accent: "var(--color-inv-accent)",
     links: [
-      { label: "Home",   to: "/inventory" },
-      { label: "Browse", to: "/inventory/browse" },
+      { label: "Inventory Home",   to: "/inventory" },
+      { label: "Borrow & Purchase", to: "/inventory/browse" },
     ],
   },
 ];
@@ -55,7 +59,7 @@ export function AppFooter() {
     <footer style={{ background: "#07090f", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
 
       {/* Top accent line */}
-      <div style={{ height: 2, background: "linear-gradient(90deg, transparent, rgba(99,102,241,0.5), rgba(168,85,247,0.5), transparent)" }} />
+      <div style={{ height: 2, background: "linear-gradient(90deg, transparent, color-mix(in oklch, var(--color-inv-accent-text) 50%, transparent), color-mix(in oklch, var(--color-inv-accent) 50%, transparent), transparent)" }} />
 
       {/* Main grid */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
@@ -66,7 +70,7 @@ export function AppFooter() {
             <Link to="/" className="flex items-center w-fit">
               <img src={bbgLogo} alt="Makerspace" className="h-8 w-auto object-contain" />
             </Link>
-            <p className="text-xs font-medium leading-relaxed max-w-[200px]" style={{ color: "rgba(255,255,255,0.60)" }}>
+            <p className="text-xs font-medium leading-relaxed max-w-[200px]" style={{ color: "var(--on-dark-muted)" }}>
               Your makerspace community — learn, build, and collaborate at CADT.
             </p>
           </div>
@@ -84,7 +88,7 @@ export function AppFooter() {
                     <Link
                       to={l.to}
                       className="text-xs font-semibold transition-colors duration-150 hover:text-white"
-                      style={{ color: "rgba(255,255,255,0.75)" }}
+                      style={{ color: "var(--on-dark-muted)" }}
                     >
                       {l.label}
                     </Link>
@@ -99,21 +103,21 @@ export function AppFooter() {
       {/* ── Bottom bar ── */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between gap-4">
-          <p className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.50)" }}>
+          <p className="text-[11px] font-medium" style={{ color: "var(--on-dark-muted)" }}>
             © {year} CADT Makerspace · All rights reserved
           </p>
 
           {user ? (
             <Link to="/profile"
               className="inline-flex items-center gap-1.5 text-[11px] font-bold transition-colors hover:text-white"
-              style={{ color: "rgba(255,255,255,0.70)" }}>
+              style={{ color: "var(--on-dark-muted)" }}>
               <User size={11} />
               {user.name}
             </Link>
           ) : (
             <Link to="/login"
               className="inline-flex items-center gap-1.5 text-[11px] font-bold transition-colors hover:text-white"
-              style={{ color: "rgba(255,255,255,0.70)" }}>
+              style={{ color: "var(--on-dark-muted)" }}>
               <LogIn size={11} />
               Sign In
             </Link>

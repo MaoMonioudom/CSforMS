@@ -42,7 +42,7 @@ export default function AdminLayout() {
   }, [width]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-muted">
       <AdminSidebar width={width} />
 
       {/* Drag handle — VS Code style: invisible until hovered/dragged */}

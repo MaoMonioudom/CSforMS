@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import msWbgLogo from "../assets/ms_wbg_logo.png";
 import msBbgLogo from "../assets/ms_bbg_logo.png";
+import { HUB_GRADIENT } from "./hubTheme";
 
 const NAV_LINKS = [
   { label: "Home",  to: "/" },
@@ -11,9 +12,9 @@ const NAV_LINKS = [
 ];
 
 const MODULE_CHIPS = [
-  { label: "Connect", href: "/community", color: "#c9a86c" },
-  { label: "Learn",  href: "/learning",  color: "#c0392b" },
-  { label: "Build", href: "/inventory", color: "#0891b2" },
+  { label: "Connect", href: "/community", color: "var(--community-gold)" },
+  { label: "Learn",  href: "/learning",  color: "var(--color-oxblood)" },
+  { label: "Build", href: "/inventory", color: "var(--color-inv-accent)" },
 ];
 
 // light = true  → warm frosted nav for light-background pages
@@ -49,11 +50,11 @@ export function HubNav({ light = true }) {
     : scrolled ? "1px solid rgba(255,255,255,0.06)" : "none";
 
   const linkActive  = light ? "#16324a" : "#fff";
-  const linkMuted   = light ? "rgba(22,50,74,0.55)" : "rgba(255,255,255,0.48)";
+  const linkMuted   = light ? "var(--on-light-muted)" : "var(--on-dark-muted)";
   const divider     = light ? "rgba(91,170,216,0.35)" : "rgba(255,255,255,0.12)";
-  const signInColor = light ? "rgba(22,50,74,0.6)"  : "rgba(255,255,255,0.5)";
+  const signInColor = light ? "var(--on-light-muted)" : "var(--on-dark-muted)";
   const mobileToggleBg   = light ? "rgba(91,170,216,0.14)" : "rgba(255,255,255,0.07)";
-  const mobileToggleCol  = light ? "rgba(22,50,74,0.7)"    : "rgba(255,255,255,0.7)";
+  const mobileToggleCol  = light ? "var(--on-light-muted)" : "var(--on-dark-muted)";
   const drawerBg    = light ? "rgba(244,248,252,0.98)" : "rgba(8,8,14,0.98)";
   const drawerBorder = light ? "rgba(91,170,216,0.22)" : "rgba(255,255,255,0.06)";
 
@@ -101,9 +102,9 @@ export function HubNav({ light = true }) {
               href={m.href}
               className="text-[11px] font-semibold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80"
               style={{
-                background: `${m.color}1a`,
+                background: `color-mix(in oklch, ${m.color} 10%, transparent)`,
                 color: m.color,
-                border: `1px solid ${m.color}40`,
+                border: `1px solid color-mix(in oklch, ${m.color} 25%, transparent)`,
               }}
             >
               {m.label}
@@ -121,7 +122,7 @@ export function HubNav({ light = true }) {
             >
               <span
                 className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold shrink-0"
-                style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+                style={{ background: HUB_GRADIENT }}
               >
                 {initials}
               </span>
@@ -139,7 +140,7 @@ export function HubNav({ light = true }) {
               <Link
                 to="/register"
                 className="text-sm font-semibold px-4 py-2 rounded-full text-white transition-opacity hover:opacity-85"
-                style={{ background: "linear-gradient(135deg,#033e8a,#0078b7)" }}
+                style={{ background: HUB_GRADIENT }}
               >
                 Get Started
               </Link>
@@ -183,7 +184,7 @@ export function HubNav({ light = true }) {
                 key={m.label}
                 href={m.href}
                 className="text-[11px] font-semibold px-3 py-1 rounded-full"
-                style={{ background: `${m.color}1a`, color: m.color, border: `1px solid ${m.color}40` }}
+                style={{ background: `color-mix(in oklch, ${m.color} 10%, transparent)`, color: m.color, border: `1px solid color-mix(in oklch, ${m.color} 25%, transparent)` }}
                 onClick={() => setOpen(false)}
               >
                 {m.label}
@@ -199,7 +200,7 @@ export function HubNav({ light = true }) {
               <Link
                 to="/profile"
                 className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-full text-white"
-                style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+                style={{ background: HUB_GRADIENT }}
                 onClick={() => setOpen(false)}
               >
                 <span
@@ -226,7 +227,7 @@ export function HubNav({ light = true }) {
                 <Link
                   to="/register"
                   className="flex-1 text-center py-2 text-sm font-semibold rounded-full text-white"
-                  style={{ background: "linear-gradient(135deg,#6366f1,#a855f7)" }}
+                  style={{ background: HUB_GRADIENT }}
                   onClick={() => setOpen(false)}
                 >
                   Get Started

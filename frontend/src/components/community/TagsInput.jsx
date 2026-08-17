@@ -55,7 +55,7 @@ export function TagsInput({ value, onChange, noun = "tag", placeholder }) {
       {value.length > 0 && (
         <div className="mb-1.5 flex flex-wrap gap-1.5">
           {value.map(v => (
-            <span key={v} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+            <span key={v} className="badge bg-muted text-foreground">
               {v}
               <button type="button" onClick={() => removeValue(v)} className="text-muted-foreground hover:text-foreground">
                 <X className="size-3" />

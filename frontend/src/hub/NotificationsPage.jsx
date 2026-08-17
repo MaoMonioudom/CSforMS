@@ -17,13 +17,18 @@ import { fmtDateTime } from '../lib/inventory/datetime'
 // else (e.g. Community's event_reminder) gets its own entry below, with a
 // generic DEFAULT for whatever a future module adds.
 const NOTIF_META = {
-  low_stock:      { Icon: AlertTriangle, color: T.amber,  bg: T.amberLight },
-  request:        { Icon: Clock,         color: T.blue,   bg: T.blueLight  },
-  approved:       { Icon: CheckCircle2,  color: T.green,  bg: T.greenLight },
-  denied:         { Icon: XCircle,       color: T.red,    bg: T.redLight   },
-  overdue:        { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
-  event_reminder: { Icon: MessageSquare, color: T.teal,   bg: T.tealLight  },
-  DEFAULT:        { Icon: Bell,          color: T.purple, bg: T.purpleLight },
+  low_stock:        { Icon: AlertTriangle, color: T.amber,  bg: T.amberLight },
+  request:          { Icon: Clock,         color: T.blue,   bg: T.blueLight  },
+  approved:         { Icon: CheckCircle2,  color: T.green,  bg: T.greenLight },
+  denied:           { Icon: XCircle,       color: T.red,    bg: T.redLight   },
+  overdue:          { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
+  // A fee deduction isn't a "denied" request — it used to reuse that type,
+  // which rendered the red ✕ "declined" icon even though nothing was
+  // rejected. Own type/icon so it reads as "charged", not "denied".
+  fee_charged:      { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
+  event_reminder:   { Icon: MessageSquare, color: T.teal,   bg: T.tealLight  },
+  workspace_booking:{ Icon: Bell,          color: T.purple, bg: T.purpleLight },
+  DEFAULT:          { Icon: Bell,          color: T.purple, bg: T.purpleLight },
 }
 
 // Which module a notification_type came from — drives the Community/
@@ -31,12 +36,14 @@ const NOTIF_META = {
 // a new notification_type is introduced; anything unlisted falls to
 // 'system' rather than silently disappearing from every module filter.
 const NOTIF_MODULE = {
-  event_reminder: 'community',
-  low_stock:      'inventory',
-  request:        'inventory',
-  approved:       'inventory',
-  denied:         'inventory',
-  overdue:        'inventory',
+  event_reminder:    'community',
+  workspace_booking: 'community',
+  low_stock:         'inventory',
+  request:           'inventory',
+  approved:          'inventory',
+  denied:            'inventory',
+  overdue:           'inventory',
+  fee_charged:       'inventory',
 }
 const notifModule = (type) => NOTIF_MODULE[type] || 'system'
 
@@ -265,12 +272,14 @@ export default function NotificationsPage() {
   }
 
   const NOTIF_TYPE_LABEL = {
-    low_stock:      'Low Stock Alert',
-    request:        'Request Update',
-    approved:       'Approved',
-    denied:         'Declined',
-    overdue:        'Overdue Item',
-    event_reminder: 'Event Reminder',
+    low_stock:         'Low Stock Alert',
+    request:           'Request Update',
+    approved:          'Approved',
+    denied:            'Declined',
+    overdue:           'Overdue Item',
+    fee_charged:       'Fee Charged',
+    event_reminder:    'Event Reminder',
+    workspace_booking: 'Workspace Booking',
   }
 
   // "Today" / "Yesterday" / actual date — visibleFeed is already sorted
@@ -315,19 +324,19 @@ export default function NotificationsPage() {
       {isUser && (
         <div style={{
           position: 'relative', overflow: 'hidden',
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, #0c4a6e 0%, #0e7490 55%, #0891b2 100%)',
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)',
           backgroundSize: '40px 40px, 40px 40px, cover',
-          borderBottom: '1px solid rgba(8,145,178,0.2)',
+          borderBottom: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)',
         }}>
           <div className="px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
             <button onClick={() => navigate(-1)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--on-dark-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               <ArrowLeft size={14} /> Back
             </button>
             <h1 style={{ margin: 0, fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Notifications
             </h1>
-            <p style={{ margin: '6px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>
+            <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--on-dark-muted)' }}>
               Alerts, requests, and your borrow & purchase history.
             </p>
           </div>
@@ -345,7 +354,7 @@ export default function NotificationsPage() {
         {!isUser
           ? <h1 className="m-0 font-heading text-lg font-bold text-charcoal">Notifications</h1>
           : <span />}
-        <button onClick={markAll} style={{ background: 'none', border: 'none', color: '#0e7490', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={markAll} style={{ background: 'none', border: 'none', color: 'var(--color-inv-accent-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           Mark all as read
         </button>
       </div>
@@ -357,7 +366,7 @@ export default function NotificationsPage() {
             return (
               <button key={f.id} onClick={() => { setFilter(f.id); setInvSubFilter('borrows') }}
                 className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
-                style={{ border: active ? 'none' : `1px solid ${T.border}`, background: active ? '#0891b2' : T.white, color: active ? '#fff' : T.muted }}>
+                style={{ border: active ? 'none' : `1px solid ${T.border}`, background: active ? 'var(--color-inv-accent)' : T.white, color: active ? '#fff' : T.muted }}>
                 <f.Icon size={12} color={active ? '#fff' : T.faint} />
                 {f.label}
               </button>

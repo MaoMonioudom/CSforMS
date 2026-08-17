@@ -15,7 +15,7 @@ export default function AdminCourseEditor() {
   const [error, setError] = useState("");
 
   if (!isNew && loading) {
-    return <p className="text-sm text-gray-400">Loading course…</p>;
+    return <p className="text-sm text-muted-foreground">Loading course…</p>;
   }
   if (!isNew && !course) return <NotFound />;
 
@@ -32,8 +32,8 @@ export default function AdminCourseEditor() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{isNew ? "New Course" : `Edit: ${course.title}`}</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">{isNew ? "New Course" : `Edit: ${course.title}`}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {isNew ? "Add a new course to the Learning platform." : "Update course details and lessons."}
         </p>
       </div>

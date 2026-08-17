@@ -7,12 +7,12 @@ export default function SectionHeader({ eyebrow, title, subtitle, tone = "dark" 
   return (
     <div className="mb-12 text-center">
       {eyebrow && (
-        <span className="mb-3 block font-body text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-gold">
+        <span className="mb-3 block text-xs font-semibold uppercase tracking-[0.15em] text-community-gold">
           {eyebrow}
         </span>
       )}
       <h2
-        className={`mb-4 font-display text-[clamp(1.6rem,4vw,2.2rem)] leading-tight ${
+        className={`mb-4 text-[clamp(1.6rem,4vw,2.2rem)] leading-tight ${
           onDark ? "text-parchment" : "text-ink"
         }`}
       >
@@ -20,7 +20,7 @@ export default function SectionHeader({ eyebrow, title, subtitle, tone = "dark" 
       </h2>
       {subtitle && (
         <p
-          className={`mx-auto max-w-[540px] font-body text-base leading-[1.75] ${
+          className={`mx-auto max-w-[540px] text-base leading-[1.75] ${
             onDark ? "text-navy-muted" : "text-ink-soft"
           }`}
         >

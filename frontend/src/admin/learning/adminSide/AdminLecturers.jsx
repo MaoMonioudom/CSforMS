@@ -6,7 +6,7 @@ import {
 import { useCourses } from "../../../hooks/learning/useCourses";
 import { useLecturers } from "../../../hooks/learning/useLecturers";
 
-const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
+const inputCls = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border";
 
 const statusColors = {
   Active:      "bg-emerald-50 text-emerald-600",
@@ -49,11 +49,11 @@ function AddLecturerDialog({ open, onOpenChange, onCreate }) {
           </div>
           <DialogFooter className="mt-4">
             <button type="button" onClick={() => onOpenChange(false)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+              className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
               Cancel
             </button>
             <button type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 transition-colors">
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-foreground hover:bg-foreground transition-colors">
               Create lecturer
             </button>
           </DialogFooter>
@@ -91,41 +91,41 @@ export default function AdminLecturers() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lecturers</h1>
-          <p className="mt-1 text-sm text-gray-500">{lecturers.length} lecturer accounts</p>
+          <h1 className="text-2xl font-bold text-foreground">Lecturers</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{lecturers.length} lecturer accounts</p>
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors"
         >
           <Plus className="h-4 w-4" /> Add Lecturer
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Email</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Courses</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-border bg-muted">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Email</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Courses</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {lecturers.length === 0 ? (
-                <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">No lecturers yet.</td></tr>
+                <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No lecturers yet.</td></tr>
               ) : lecturers.map((l) => {
                 const status = l.active ? "Active" : "Deactivated";
                 return (
-                  <tr key={l.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{l.name}</td>
-                    <td className="px-5 py-3.5 text-gray-500 hidden sm:table-cell">{l.email}</td>
-                    <td className="px-5 py-3.5 text-gray-700 tabular-nums">{courseCountFor(l.id)}</td>
+                  <tr key={l.id} className="hover:bg-muted transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-foreground">{l.name}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground hidden sm:table-cell">{l.email}</td>
+                    <td className="px-5 py-3.5 text-foreground tabular-nums">{courseCountFor(l.id)}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColors[status]}`}>
+                      <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${statusColors[status]}`}>
                         {status}
                       </span>
                     </td>
@@ -135,8 +135,8 @@ export default function AdminLecturers() {
                           onClick={() => toggleActive(l)}
                           className={`p-1.5 rounded-md transition-colors ${
                             l.active
-                              ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50"
-                              : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                              ? "text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+                              : "text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
                           }`}
                           title={l.active ? "Deactivate" : "Activate"}
                         >

@@ -9,9 +9,9 @@ export default function StatCard({ label, value, sub, Icon, iconColor, iconBg })
         {Icon && <Icon size={18} color={iconColor || T.red} className="sm:!h-5 sm:!w-5" />}
       </div>
       <div className="min-w-0">
-        <p className="m-0 truncate text-[10px] font-semibold uppercase tracking-wide sm:text-[11px]" style={{ color: T.faint }}>{label}</p>
-        <p className="m-0 mt-0.5 text-xl font-bold tracking-tight sm:mt-1 sm:text-[26px]" style={{ color: T.charcoal }}>{value}</p>
-        {sub && <p className="m-0 truncate text-[11px] sm:text-xs" style={{ color: T.faint }}>{sub}</p>}
+        <p className="m-0 truncate text-xs font-semibold uppercase tracking-wide sm:text-xs" style={{ color: T.faint }}>{label}</p>
+        <p className="m-0 mt-0.5 text-xl font-bold tracking-tight sm:mt-1 sm:text-2xl" style={{ color: T.charcoal }}>{value}</p>
+        {sub && <p className="m-0 truncate text-xs sm:text-xs" style={{ color: T.faint }}>{sub}</p>}
       </div>
     </div>
   )

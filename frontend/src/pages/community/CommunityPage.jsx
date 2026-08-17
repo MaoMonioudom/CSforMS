@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@/components/community/ui/dialog";
 import { Input } from "@/components/community/ui/input";
+import { Textarea } from "@/components/community/ui/textarea";
 import { Label } from "@/components/community/ui/label";
 import { TagsInput } from "@/components/community/TagsInput";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
@@ -78,7 +79,7 @@ function CreatePostDialog({ open, onOpenChange, onCreated }) {
               id="category"
               name="category"
               defaultValue={categories[0]}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="field border-input bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -91,13 +92,12 @@ function CreatePostDialog({ open, onOpenChange, onCreated }) {
           </div>
           <div>
             <Label htmlFor="content" className="mb-1.5 block">What's on your mind?</Label>
-            <textarea
+            <Textarea
               id="content"
               name="content"
               required
               rows={5}
               placeholder="Share the details…"
-              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             />
           </div>
           <div>
@@ -108,13 +108,13 @@ function CreatePostDialog({ open, onOpenChange, onCreated }) {
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={closeAndReset}>
+            <Button type="button" variant="outline" className="btn-secondary" onClick={closeAndReset}>
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={submitting}
-              className="bg-community text-community-foreground hover:opacity-90"
+              className="btn-primary bg-community text-community-foreground hover:opacity-90"
             >
               {submitting ? "Posting…" : "Post"}
             </Button>
@@ -220,11 +220,10 @@ export default function CommunityPage() {
       eyebrow="03 — Hang out"
       title="Connect"
       description="One feed for everything — technical questions, project showcases, casual chatter, and announcements from the makerspace."
-      ghostLetter="Co"
-      tapeColor="rgba(167,139,250,0.72)"
+      tapeColor="color-mix(in oklch, var(--community) 72%, transparent)"
       stats={[
-        { value: total,      label: "Discussions", rotate: 1.5,  pinColor: "#7c3aed" },
-        { value: postsToday, label: "Posts today", rotate: -2,   pinColor: "#ec4899", plus: false },
+        { value: total,      label: "Discussions", rotate: 1.5,  pinColor: "var(--community)" },
+        { value: postsToday, label: "Posts today", rotate: -2,   pinColor: "var(--social)", plus: false },
       ]}
     >
       <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
@@ -241,9 +240,9 @@ export default function CommunityPage() {
             <button
               type="button"
               onClick={handleComposeClick}
-              className="inline-flex items-center gap-1.5 rounded-full bg-community px-4 py-2 text-sm font-medium text-community-foreground hover:opacity-90"
+              className="btn-primary bg-community text-community-foreground hover:opacity-90"
             >
-              <Pencil className="size-4" /> Post
+              <Pencil className="size-3.5" /> Post
             </button>
           </div>
           <div className="mb-6 flex flex-wrap gap-2">
@@ -252,7 +251,7 @@ export default function CommunityPage() {
                 key={f}
                 type="button"
                 onClick={() => setActiveFilter(f)}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                className={`chip ${
                   activeFilter === f
                     ? "border-community bg-community text-community-foreground"
                     : "border-border bg-background text-muted-foreground hover:border-community hover:text-foreground"
@@ -284,6 +283,7 @@ export default function CommunityPage() {
             <div className="mt-6 text-center">
               <Button
                 variant="outline"
+                className="btn-secondary"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
               >
@@ -299,7 +299,7 @@ export default function CommunityPage() {
               {["esp32", "3d-printing", "pcb", "raspberry-pi", "low-power", "meetup"].map((t) => (
                 <span
                   key={t}
-                  className="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                  className="badge badge-sm bg-muted text-muted-foreground"
                 >
                   #{t}
                 </span>

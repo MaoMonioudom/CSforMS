@@ -198,13 +198,13 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         .req-btn { display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; border:none; cursor:pointer; transition:opacity .12s, transform .1s; }
         .req-btn:hover { transform:translateY(-1px); }
         .req-btn-approve { background:${T.green}; color:#fff; }
-        .req-btn-decline { background:#fff; color:${T.red}; border:1.5px solid ${T.red}33; }
+        .req-btn-decline { background:#fff; color:${T.red}; border:1.5px solid color-mix(in oklch, ${T.red} 20%, transparent); }
         .req-btn-view { background:#fff; color:${T.charcoal}; border:1.5px solid ${T.border}; }
         .req-chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${T.border}; background:#fff; color:${T.muted}; cursor:pointer; transition:all .15s; }
         .req-chip.active { background:${T.charcoal}; color:#fff; border-color:transparent; }
         .req-grid { grid-template-columns: 1.4fr 1.8fr 0.5fr 1.2fr 0.9fr 1.4fr; }
         .req-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .req-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:#0891b2; background:#0891b214; padding:4px 10px; border-radius:20px; }
+        .req-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--color-inv-accent); background:color-mix(in oklch, var(--color-inv-accent) 8%, transparent); padding:4px 10px; border-radius:20px; }
 
         .req-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
 
@@ -279,7 +279,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                   </span>
                 </div>
                 <span style={{ fontSize: 12, color: T.muted }}>{e.totalQty}</span>
-                <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-charcoal)', lineHeight: 1.5 }}>
                   <div className="req-truncate">{fmtDateTime(e.first.date)}</div>
                   {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {fmtDateTime(e.first.dueDate)}</div>}
                 </div>
@@ -409,7 +409,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
 
               <div>
                 <SectionLabel icon={FileText} text={detail.isBorrow ? 'Borrow Notes' : 'Notes'} />
-                <p style={{ fontSize: 12.5, color: '#444', lineHeight: 1.6, background: T.cream, borderRadius: 8, padding: '10px 12px', margin: 0 }}>
+                <p style={{ fontSize: 12.5, color: 'var(--color-charcoal)', lineHeight: 1.6, background: T.cream, borderRadius: 8, padding: '10px 12px', margin: 0 }}>
                   {detail.first.note || 'No notes provided.'}
                 </p>
               </div>
@@ -419,7 +419,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {buildHistory(detail).map((h, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0891b2', marginTop: 5, flexShrink: 0 }} />
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-inv-accent)', marginTop: 5, flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: T.charcoal }}>{h.action}</div>
                         <div style={{ fontSize: 11, color: T.faint }}>{h.by} · {fmtDateTime(h.date)}</div>

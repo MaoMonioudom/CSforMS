@@ -28,7 +28,7 @@ export default function Toast({ msg, type = 'success', onClose }) {
     }}>
       <Icon size={17} color={color} />
       <span style={{ flex: 1 }}>{msg}</span>
-      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', padding: 0 }}>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--on-dark-muted)', padding: 0 }}>
         <X size={14} />
       </button>
       <style>{`@keyframes slideUp { from { transform: translateY(12px); opacity:0 } to { transform: none; opacity:1 } }`}</style>

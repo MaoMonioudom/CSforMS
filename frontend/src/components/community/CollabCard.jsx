@@ -14,11 +14,11 @@ function Pushpin() {
       <div
         className="w-5 h-5 rounded-full shadow-md"
         style={{
-          background: "radial-gradient(circle at 35% 30%, #80cbc4, #00695c)",
+          background: "radial-gradient(circle at 35% 30%, color-mix(in oklch, var(--collaboration) 55%, white), var(--collaboration))",
           boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3)",
         }}
       />
-      <div className="w-0.5 h-2 bg-zinc-400 rounded-b" style={{ marginTop: "-1px" }} />
+      <div className="w-0.5 h-2 bg-muted-foreground rounded-b" style={{ marginTop: "-1px" }} />
     </div>
   );
 }
@@ -65,7 +65,7 @@ export function CollabCard({ post, index = 0 }) {
             {post.rolesNeeded.map((role) => (
               <span
                 key={role}
-                className="rounded-full bg-collaboration/12 border border-collaboration/25 px-2.5 py-0.5 text-xs font-semibold text-foreground"
+                className="badge badge-sm bg-collaboration/12 border border-collaboration/25 text-foreground"
               >
                 {role}
               </span>
@@ -74,7 +74,7 @@ export function CollabCard({ post, index = 0 }) {
         </div>
 
         {/* Category */}
-        <span className="inline-block w-fit rounded-full bg-black/6 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+        <span className="badge badge-sm w-fit bg-black/6 text-muted-foreground">
           {post.category}
         </span>
 

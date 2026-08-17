@@ -7,16 +7,7 @@ import {
   TIME_SLOTS, getUpcomingDates, fetchWorkspaces, fetchTakenSlots,
   fetchMyBookings, createBooking, cancelBooking, getSlotOccupancy,
 } from "../lib/workspace-data";
-
-const D = {
-  bg:     "#eef5fc",
-  bg2:    "#dceafa",
-  card:   "#ffffff",
-  border: "rgba(91,170,216,0.22)",
-  muted:  "#5b7286",
-  faint:  "#8aa0b2",
-  text:   "#16324a",
-};
+import { HUB as D } from "./hubTheme";
 
 const STATUS_STYLE = {
   pending:  { label: "Pending",  bg: "rgba(245,158,11,0.12)", color: "#b45309" },
@@ -102,9 +93,9 @@ export default function WorkspacePage() {
   const dateLabel = DATES.find(d => d.key === dateKey)?.label;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` }}>
       <div aria-hidden className="fixed inset-0 pointer-events-none"
-        style={{ backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+        style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
       <TopNav />
 
@@ -112,11 +103,11 @@ export default function WorkspacePage() {
 
         {/* Hero */}
         <div className="rounded-2xl p-8 mb-8 text-center relative overflow-hidden"
-          style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
-          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#6366f1,#a855f7,transparent)" }} />
+          style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
+          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,var(--color-inv-accent-text),var(--color-inv-accent),transparent)" }} />
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
-            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.28)" }}>
-            <Armchair size={24} style={{ color: "#6366f1" }} />
+            style={{ background: "color-mix(in oklch, var(--color-inv-accent) 12%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 28%, transparent)" }}>
+            <Armchair size={24} style={{ color: "var(--color-inv-accent)" }} />
           </div>
           <h1 className="text-2xl font-extrabold" style={{ color: D.text }}>Request a Working Space</h1>
           <p className="text-sm mt-2 max-w-md mx-auto" style={{ color: D.muted }}>
@@ -138,8 +129,8 @@ export default function WorkspacePage() {
               <button key={d.key} onClick={() => setDateKey(d.key)}
                 className="shrink-0 text-xs font-bold px-3.5 py-2 rounded-full transition-all"
                 style={active
-                  ? { background: "#6366f1", color: "white", border: "1px solid #6366f1" }
-                  : { background: D.card, color: D.muted, border: `1px solid ${D.border}` }}>
+                  ? { background: "var(--color-inv-accent)", color: "white", border: "1px solid var(--color-inv-accent)" }
+                  : { background: D.bgCard, color: D.muted, border: `1px solid ${D.border}` }}>
                 {d.label}
               </button>
             );
@@ -152,12 +143,12 @@ export default function WorkspacePage() {
           {loading ? (
             <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
           ) : (
-          <div className="rounded-2xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
             {workspaces.map((seat, i) => (
               <div key={seat.id} className="flex items-center gap-3 px-4 py-3.5 flex-wrap"
                 style={{ borderBottom: i < workspaces.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.10)" }}>
-                  <Armchair size={16} style={{ color: "#6366f1" }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in oklch, var(--color-inv-accent) 10%, transparent)" }}>
+                  <Armchair size={16} style={{ color: "var(--color-inv-accent)" }} />
                 </div>
                 <div className="min-w-[120px] mr-1">
                   <p className="text-sm font-semibold" style={{ color: D.text }}>{seat.label}</p>
@@ -180,7 +171,7 @@ export default function WorkspacePage() {
                         className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition-all disabled:cursor-not-allowed"
                         style={disabled
                           ? { background: "rgba(15,50,80,0.05)", color: D.faint }
-                          : { background: "rgba(99,102,241,0.10)", color: "#6366f1", border: "1px solid rgba(99,102,241,0.24)" }}>
+                          : { background: "color-mix(in oklch, var(--color-inv-accent) 10%, transparent)", color: "var(--color-inv-accent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 24%, transparent)" }}>
                         {submitting
                           ? "…"
                           : alreadyMine
@@ -202,12 +193,12 @@ export default function WorkspacePage() {
           {loading ? (
             <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
           ) : myBookings.length === 0 ? (
-            <div className="rounded-2xl p-8 text-center" style={{ background: D.card, border: `1px solid ${D.border}` }}>
+            <div className="rounded-2xl p-8 text-center" style={{ background: D.bgCard, border: `1px solid ${D.border}` }}>
               <Clock size={22} style={{ color: D.faint }} className="mx-auto mb-2" />
               <p className="text-xs" style={{ color: D.muted }}>No requests yet — pick an open slot above.</p>
             </div>
           ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
               {myBookings.map((r, i) => {
                 const s = STATUS_STYLE[r.status];
                 const label = DATES.find(d => d.key === r.date)?.label ?? r.date;

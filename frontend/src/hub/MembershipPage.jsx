@@ -5,16 +5,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
-
-const D = {
-  bg:     "#eef5fc",
-  bg2:    "#dceafa",
-  card:   "#ffffff",
-  border: "rgba(91,170,216,0.22)",
-  muted:  "#5b7286",
-  faint:  "#8aa0b2",
-  text:   "#16324a",
-};
+import { HUB as D } from "./hubTheme";
 
 const MEMBERSHIP_PRICE = "$20/year";
 
@@ -39,7 +30,7 @@ export default function MembershipPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
+    <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` }}>
       <div aria-hidden className="fixed inset-0 pointer-events-none"
         style={{ backgroundImage: `linear-gradient(rgba(16,185,129,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,0.05) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
@@ -49,8 +40,8 @@ export default function MembershipPage() {
 
         {/* Hero */}
         <div className="rounded-2xl p-8 mb-6 text-center relative overflow-hidden"
-          style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
-          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#10b981,#6366f1,transparent)" }} />
+          style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
+          <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 2, background: "linear-gradient(90deg,transparent,#10b981,transparent)" }} />
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.28)" }}>
             <Coins size={24} style={{ color: "#10b981" }} />
@@ -78,7 +69,7 @@ export default function MembershipPage() {
           </div>
         ) : (
           <div className="rounded-2xl p-6 mb-6 text-center"
-            style={{ background: D.card, border: `1px solid ${D.border}` }}>
+            style={{ background: D.bgCard, border: `1px solid ${D.border}` }}>
             <p className="text-sm font-bold" style={{ color: D.text }}>Not a member yet</p>
             <p className="text-xs mt-1.5 max-w-sm mx-auto" style={{ color: D.muted }}>
               Visit the front desk to pay {MEMBERSHIP_PRICE} and staff will activate your membership right away.
@@ -90,7 +81,7 @@ export default function MembershipPage() {
         <div className="grid sm:grid-cols-3 gap-4">
           {PERKS.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="rounded-2xl p-5"
-              style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+              style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
                 style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.26)" }}>
                 <Icon size={18} style={{ color: "#10b981" }} />

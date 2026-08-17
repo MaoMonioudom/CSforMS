@@ -25,9 +25,9 @@ export const MODULE_BY_REQUIREMENT = {
 };
 
 export const MODULE_COLORS = {
-  community: "#c9a86c",
-  learning: "#c0392b",
-  inventory: "#0891b2",
+  community: "var(--community-gold)",
+  learning: "var(--color-oxblood)",
+  inventory: "var(--color-inv-accent)",
 };
 
 export async function fetchAchievements() {

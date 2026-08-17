@@ -41,11 +41,11 @@ export async function getUserActionCounts(userId) {
 export async function getRecentActivity(userId, limit = 8) {
   const [events, courses, borrows, bookings] = await Promise.all([
     supabaseAdmin.from("event_registrations")
-      .select("registration_date, event:events(title)")
+      .select("registration_date, event:events(event_id, title)")
       .eq("user_id", userId).eq("participant_status", "registered")
       .order("registration_date", { ascending: false }).limit(limit),
     supabaseAdmin.from("course_enrollments")
-      .select("enrolled_at, course:courses(title)")
+      .select("enrolled_at, course:courses(course_id, title)")
       .eq("user_id", userId)
       .order("enrolled_at", { ascending: false }).limit(limit),
     supabaseAdmin.from("borrow_transactions")
@@ -59,11 +59,15 @@ export async function getRecentActivity(userId, limit = 8) {
   ]);
   for (const r of [events, courses, borrows, bookings]) if (r.error) throw r.error;
 
+  // `link` is a frontend route each entry can navigate to on click — null
+  // where there's no single-item detail page to land on (borrows/bookings
+  // are modal- or list-based, not their own route), in which case the
+  // frontend falls back to the module's list page.
   const items = [
-    ...events.data.map((r) => ({ type: "event", label: `Registered for ${r.event?.title ?? "an event"}`, date: r.registration_date })),
-    ...courses.data.map((r) => ({ type: "course", label: `Enrolled in ${r.course?.title ?? "a course"}`, date: r.enrolled_at })),
-    ...borrows.data.map((r) => ({ type: "borrow", label: `${r.status === "returned" ? "Returned" : "Borrowed"} ${r.inventory_items?.item_name ?? "an item"}`, date: r.borrow_date })),
-    ...bookings.data.map((r) => ({ type: "workspace", label: `Workspace request for ${r.workspace?.workspace_name ?? "a desk"} (${r.status})`, date: r.created_at })),
+    ...events.data.map((r) => ({ type: "event", label: `Registered for ${r.event?.title ?? "an event"}`, date: r.registration_date, link: r.event?.event_id ? `/community/eventspace/${r.event.event_id}` : null })),
+    ...courses.data.map((r) => ({ type: "course", label: `Enrolled in ${r.course?.title ?? "a course"}`, date: r.enrolled_at, link: r.course?.course_id ? `/learning/course/${r.course.course_id}` : null })),
+    ...borrows.data.map((r) => ({ type: "borrow", label: `${r.status === "returned" ? "Returned" : "Borrowed"} ${r.inventory_items?.item_name ?? "an item"}`, date: r.borrow_date, link: "/inventory/catalog" })),
+    ...bookings.data.map((r) => ({ type: "workspace", label: `Workspace request for ${r.workspace?.workspace_name ?? "a desk"} (${r.status})`, date: r.created_at, link: "/workspace" })),
   ];
 
   return items

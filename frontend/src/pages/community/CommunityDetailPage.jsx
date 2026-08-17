@@ -88,7 +88,7 @@ export default function CommunityDetailPage() {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
+        <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
           {loadFailed
             ? "Something went wrong loading this page — please try again."
@@ -124,12 +124,12 @@ export default function CommunityDetailPage() {
                 {post.author.handle} · {formatRelativeTime(post.postedAt)}
               </p>
             </div>
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-community/10 px-2.5 py-1 text-xs font-medium text-community">
+            <span className="badge ml-auto bg-community/10 text-community">
               {post.category}
             </span>
           </div>
           {post.title && (
-            <h1 className="mt-6 text-2xl sm:text-3xl font-semibold tracking-tight leading-tight">
+            <h1 className="mt-6 text-4xl font-semibold tracking-tight leading-tight">
               {post.title}
             </h1>
           )}
@@ -154,8 +154,7 @@ export default function CommunityDetailPage() {
             <button
               type="button"
               onClick={handleToggleLike}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community"
-              style={post.likedByMe ? { color: "#dc2626" } : undefined}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community ${post.likedByMe ? "text-destructive" : ""}`}
             >
               <Heart className="size-4" fill={post.likedByMe ? "currentColor" : "none"} /> {post.likes} likes
             </button>
@@ -165,8 +164,7 @@ export default function CommunityDetailPage() {
             <button
               type="button"
               onClick={handleShare}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community"
-              style={copied ? { color: "#16a34a" } : undefined}
+              className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-community/10 hover:text-community ${copied ? "text-success" : ""}`}
             >
               {copied ? <Check className="size-4" /> : <Share2 className="size-4" />} {copied ? "Copied!" : "Share"}
             </button>
@@ -180,10 +178,10 @@ export default function CommunityDetailPage() {
               value={commentText}
               onChange={e => setCommentText(e.target.value)}
               placeholder="Write a comment…"
-              className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-community"
+              className="field flex-1 resize-none border-border bg-background outline-none focus:border-community"
               rows={2}
             />
-            <Button type="submit" disabled={submittingComment || !commentText.trim()} className="bg-community text-community-foreground hover:opacity-90">
+            <Button type="submit" disabled={submittingComment || !commentText.trim()} className="btn-primary bg-community text-community-foreground hover:opacity-90">
               {submittingComment ? "Posting…" : "Reply"}
             </Button>
           </form>

@@ -30,28 +30,28 @@ function toIso(local) {
   return local ? `${local}:00Z` : undefined;
 }
 
-const inputCls = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400";
-const labelCls = "block text-xs font-semibold text-gray-500 mb-1";
+const inputCls = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border";
+const labelCls = "block text-xs font-semibold text-muted-foreground mb-1";
 
 function Actions({ event, onEdit, onDelete, onViewRegistrants }) {
   return (
     <div className="flex items-center gap-1">
       <Link
         to={`/community/eventspace/${event.id}`} target="_blank" rel="noreferrer"
-        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title="View"
+        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="View"
       >
         <Eye className="h-3.5 w-3.5" />
       </Link>
       <button onClick={() => onViewRegistrants(event)}
-        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Registrants">
+        className="p-1.5 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Registrants">
         <Users className="h-3.5 w-3.5" />
       </button>
       <button onClick={() => onEdit(event)}
-        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Edit">
+        className="p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Edit">
         <Pencil className="h-3.5 w-3.5" />
       </button>
       <button onClick={() => onDelete(event)}
-        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
         <Trash2 className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -72,26 +72,26 @@ function ImageListEditor({ images, onAdd, onRemove, onMove, uploading }) {
 
   return (
     <div>
-      <label className={labelCls}>Images <span className="font-normal text-gray-400">(first = cover, optional — shown at 2:1 on cards and the event page, e.g. 1600×800px)</span></label>
+      <label className={labelCls}>Images <span className="font-normal text-muted-foreground">(first = cover, optional — shown at 2:1 on cards and the event page, e.g. 1600×800px)</span></label>
       <div className="space-y-2">
         {images.map((url, i) => (
-          <div key={url + i} className="flex items-center gap-2 rounded-lg border border-gray-200 p-2">
-            <div className="flex aspect-[2/1] w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-50">
+          <div key={url + i} className="flex items-center gap-2 rounded-lg border border-border p-2">
+            <div className="flex aspect-[2/1] w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
               <img src={url} alt={`Image ${i + 1}`} className="h-full w-full object-contain" />
             </div>
-            <span className="text-xs font-semibold text-gray-500 flex-1 truncate">
+            <span className="text-xs font-semibold text-muted-foreground flex-1 truncate">
               {i === 0 ? "Cover" : `Image ${i + 1}`}
             </span>
             <button type="button" onClick={() => onMove(i, -1)} disabled={i === 0}
-              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+              className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 disabled:hover:bg-transparent">
               <ChevronUp className="h-3.5 w-3.5" />
             </button>
             <button type="button" onClick={() => onMove(i, 1)} disabled={i === images.length - 1}
-              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded disabled:opacity-30 disabled:hover:bg-transparent">
+              className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 disabled:hover:bg-transparent">
               <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <button type="button" onClick={() => onRemove(i)}
-              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+              className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -99,7 +99,7 @@ function ImageListEditor({ images, onAdd, onRemove, onMove, uploading }) {
       </div>
       <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={handleSelect} />
       <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60">
         <ImagePlus className="h-3.5 w-3.5" /> {uploading ? "Uploading…" : "Add image"}
       </button>
     </div>
@@ -177,7 +177,7 @@ function RegistrantsDialog({ event, onOpenChange }) {
           <DialogDescription>{registrants.length} registered</DialogDescription>
         </DialogHeader>
 
-        <Button onClick={handleRemind} disabled={sending || loading} className="w-full bg-gray-900 text-white hover:bg-gray-700">
+        <Button onClick={handleRemind} disabled={sending || loading} className="w-full bg-foreground text-white hover:bg-foreground">
           <Bell className="h-3.5 w-3.5" /> {sending ? "Sending…" : "Send reminder"}
         </Button>
 
@@ -190,27 +190,27 @@ function RegistrantsDialog({ event, onOpenChange }) {
               placeholder="Add registrant by email…"
               className={inputCls}
             />
-            <Button onClick={handleAddRegistrant} disabled={adding || !addEmail.trim()} className="shrink-0 bg-gray-900 text-white hover:bg-gray-700">
+            <Button onClick={handleAddRegistrant} disabled={adding || !addEmail.trim()} className="shrink-0 bg-foreground text-white hover:bg-foreground">
               <UserPlus className="h-3.5 w-3.5" /> {adding ? "Adding…" : "Add"}
             </Button>
           </div>
         )}
-        {status && <p className="text-xs text-gray-500">{status}</p>}
+        {status && <p className="text-xs text-muted-foreground">{status}</p>}
 
         {loading ? (
-          <p className="text-sm text-gray-400 py-6 text-center">Loading…</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">Loading…</p>
         ) : registrants.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">No one has registered yet.</p>
+          <p className="text-sm text-muted-foreground py-6 text-center">No one has registered yet.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {registrants.map((r) => (
               <li key={r.userId} className="py-2.5 flex items-center justify-between gap-2">
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium text-gray-900 truncate">{r.name}</span>
-                  <span className="text-xs text-gray-400 truncate">{r.email}</span>
+                  <span className="text-sm font-medium text-foreground truncate">{r.name}</span>
+                  <span className="text-xs text-muted-foreground truncate">{r.email}</span>
                 </div>
                 <button onClick={() => handleRemove(r)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0" title="Remove">
+                  className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0" title="Remove">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </li>
@@ -227,9 +227,9 @@ function RegistrantsDialog({ event, onOpenChange }) {
 // admin action (e.g. "cancelled"). Everything else (upcoming/ongoing/ended)
 // has to be derived from the clock, same as the public Events pages.
 const STATUS_STYLES = {
-  upcoming: "bg-white/95 text-gray-700",
+  upcoming: "bg-white/95 text-foreground",
   ongoing: "bg-red-100 text-red-700",
-  ended: "bg-gray-200 text-gray-500",
+  ended: "bg-muted text-muted-foreground",
   cancelled: "bg-red-100 text-red-700",
 };
 function liveStatus(event) {
@@ -239,31 +239,31 @@ function liveStatus(event) {
 function EventCard({ event, onEdit, onDelete, onViewRegistrants }) {
   const status = liveStatus(event);
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-sm transition-all flex flex-col">
-      <div className="relative h-32 bg-gray-100 shrink-0">
+    <div className="bg-white rounded-xl border border-border overflow-hidden hover:border-border hover:shadow-sm transition-all flex flex-col">
+      <div className="relative h-32 bg-muted shrink-0">
         {event.image ? (
           <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full flex items-center justify-center">
-            <Calendar className="h-8 w-8 text-gray-300" />
+            <Calendar className="h-8 w-8 text-muted-foreground" />
           </div>
         )}
-        <span className="absolute top-2 left-2 bg-white/95 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm">
+        <span className="absolute top-2 left-2 bg-white/95 text-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm">
           {formatEventDateShort(event.date)}
         </span>
-        <span className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm capitalize ${STATUS_STYLES[status] || STATUS_STYLES.upcoming}`}>
+        <span className={`absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm capitalize ${STATUS_STYLES[status] || STATUS_STYLES.upcoming}`}>
           {status}
         </span>
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
-        <p className="font-medium text-gray-900 truncate">{event.title}</p>
-        <p className="text-xs text-gray-400 truncate mt-0.5 flex items-center gap-1">
+        <p className="font-medium text-foreground truncate">{event.title}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
           <MapPin className="h-3 w-3 shrink-0" /> {event.location}
         </p>
-        <p className="text-xs text-gray-400 mt-1">Capacity: {event.capacity || "—"}</p>
+        <p className="text-xs text-muted-foreground mt-1">Capacity: {event.capacity || "—"}</p>
 
-        <div className="mt-3 pt-3 border-t border-gray-50 flex-1 flex items-end justify-end">
+        <div className="mt-3 pt-3 border-t border-border flex-1 flex items-end justify-end">
           <Actions event={event} onEdit={onEdit} onDelete={onDelete} onViewRegistrants={onViewRegistrants} />
         </div>
       </div>
@@ -411,11 +411,11 @@ export default function AdminEvents() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-          <p className="mt-1 text-sm text-gray-500">{total} total events</p>
+          <h1 className="text-2xl font-bold text-foreground">Events</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{total} total events</p>
         </div>
         <button onClick={openAdd}
-          className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+          className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors">
           <Plus className="h-4 w-4" /> Add Event
         </button>
       </div>
@@ -425,9 +425,9 @@ export default function AdminEvents() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">Loading events…</p>
+        <p className="text-sm text-muted-foreground">Loading events…</p>
       ) : list.length === 0 ? (
-        <p className="text-sm text-gray-400">No events yet.</p>
+        <p className="text-sm text-muted-foreground">No events yet.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {list.map(ev => (
@@ -441,7 +441,7 @@ export default function AdminEvents() {
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="inline-flex items-center gap-2 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 border border-border text-foreground text-sm font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
           >
             {loadingMore ? "Loading…" : "Load more"}
           </button>
@@ -484,13 +484,13 @@ export default function AdminEvents() {
                     <input type="datetime-local" className={inputCls} value={form.date} onChange={updateField("date")} required />
                   </div>
                   <div>
-                    <label className={labelCls}>Ends <span className="font-normal text-gray-400">(optional)</span></label>
+                    <label className={labelCls}>Ends <span className="font-normal text-muted-foreground">(optional)</span></label>
                     <input type="datetime-local" className={inputCls} value={form.endDate} onChange={updateField("endDate")} />
                   </div>
                 </div>
 
                 <div>
-                  <label className={labelCls}>Capacity <span className="font-normal text-gray-400">(optional)</span></label>
+                  <label className={labelCls}>Capacity <span className="font-normal text-muted-foreground">(optional)</span></label>
                   <input type="number" min="0" className={inputCls} value={form.capacity} onChange={updateField("capacity")} />
                 </div>
 
@@ -511,7 +511,7 @@ export default function AdminEvents() {
                 />
 
                 <div>
-                  <label className={labelCls}>Registration link <span className="font-normal text-gray-400">(optional — leave blank for in-app registration)</span></label>
+                  <label className={labelCls}>Registration link <span className="font-normal text-muted-foreground">(optional — leave blank for in-app registration)</span></label>
                   <input
                     type="url"
                     className={inputCls}
@@ -519,13 +519,13 @@ export default function AdminEvents() {
                     onChange={updateField("registrationUrl")}
                     placeholder="https://forms.gle/…"
                   />
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     If set, "Register" sends people to this link instead of registering in-app. Capacity and the registrant list still work — add registrants manually from the Registrants panel.
                   </p>
                 </div>
 
                 <div>
-                  <label className={labelCls}>Photo gallery link <span className="font-normal text-gray-400">(optional — add after the event, e.g. a Google Drive folder)</span></label>
+                  <label className={labelCls}>Photo gallery link <span className="font-normal text-muted-foreground">(optional — add after the event, e.g. a Google Drive folder)</span></label>
                   <input
                     type="url"
                     className={inputCls}
@@ -533,7 +533,7 @@ export default function AdminEvents() {
                     onChange={updateField("galleryUrl")}
                     placeholder="https://drive.google.com/…"
                   />
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Shown as a "View event gallery" button once the event ends. Leave blank until photos are ready — attendees see "coming soon" until then.
                   </p>
                 </div>
@@ -542,11 +542,11 @@ export default function AdminEvents() {
 
             <DialogFooter className="mt-2">
               <button type="button" onClick={() => setFormOpen(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
                 Cancel
               </button>
               <button type="submit" disabled={saving}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-700 transition-colors disabled:opacity-50">
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-foreground text-white hover:bg-foreground transition-colors disabled:opacity-50">
                 {editingId ? "Save changes" : "Create event"}
               </button>
             </DialogFooter>
