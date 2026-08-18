@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight, Heart, MessageCircle, Share2, Check } from "lucide-react";
+import { Heart, MessageCircle, Share2, Check } from "lucide-react";
 import { formatRelativeTime, fetchCommunityPostById, toggleLike, createComment } from "@/lib/community-data";
 import { Button } from "@/components/community/ui/button";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 import { useAuth } from "@/hub/AuthContext";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 export default function CommunityDetailPage() {
   const { postId } = useParams();
@@ -104,17 +105,12 @@ export default function CommunityDetailPage() {
   return (
     <main className="bg-background">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-5">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap mb-6">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-          <Link to="/community" className="hover:text-foreground transition-colors">Community</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-          <Link to="/community/communityspace" className="hover:text-foreground transition-colors">Connect</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-          <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm">
-            {post.title ?? post.body.slice(0, 40) + "…"}
-          </span>
-        </nav>
+        <Breadcrumb className="mb-6" items={[
+          { label: "Home", to: "/" },
+          { label: "Community", to: "/community" },
+          { label: "Connect", to: "/community/communityspace" },
+          { label: post.title ?? post.body.slice(0, 40) + "…" },
+        ]} />
         <article className="rounded-2xl border border-border bg-card p-6 sm:p-8">
           <div className="flex items-center gap-3">
             <InitialAvatar name={post.author.name} src={post.author.avatar} className="size-12 text-lg" />

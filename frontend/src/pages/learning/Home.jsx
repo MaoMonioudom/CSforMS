@@ -4,6 +4,7 @@ import SectionHeader from "../../components/learning/ui/SectionHeader";
 import HeroShelf from "../../components/learning/ui/HeroShelf";
 import CourseCard from "../../components/learning/ui/CourseCard";
 import { formatNumber } from "../../utils/format";
+import { Breadcrumb } from "../../components/Breadcrumb";
 
 const HOW_STEPS = [
   { icon: "🔍", title: "Browse",    desc: "Explore our shelves and find the course that calls to you." },
@@ -46,6 +47,10 @@ export default function Home() {
         />
         <div className={`${CONTAINER} relative z-[1] grid grid-cols-2 items-center gap-16 max-[900px]:grid-cols-1`}>
           <div>
+            <Breadcrumb className="mb-4" items={[
+              { label: "Home", to: "/" },
+              { label: "Learning" },
+            ]} />
             <span className="badge mb-5 border border-oxblood/35 bg-oxblood/[0.06] uppercase tracking-[0.15em] text-oxblood">
               The Learning Library
             </span>

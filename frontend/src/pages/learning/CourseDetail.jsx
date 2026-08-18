@@ -7,6 +7,7 @@ import CheckoutModal from "../../components/learning/ui/Checkout/CheckoutModal";
 import { useUnlockedPaths } from "../../hooks/learning/useUnlockedPaths";
 import { useEnrollment } from "../../hooks/learning/useEnrollment";
 import NotFound from "../NotFound";
+import { Breadcrumb } from "../../components/Breadcrumb";
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 
@@ -180,17 +181,14 @@ export default function CourseDetail() {
 
   return (
     <div className="min-h-screen bg-paper pb-16">
-      {/* Back link */}
-      <div className={`${CONTAINER} flex items-center gap-4 pb-4 pt-6 max-sm:pt-4`}>
-        <button
-          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-ink-soft opacity-70 transition-opacity duration-300 hover:text-oxblood hover:opacity-100"
-          onClick={() => navigate("/learning/courses")}
-        >
-          ← Back to Library
-        </button>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm italic text-ink/45 max-sm:hidden">
-          {course.title}
-        </span>
+      {/* Breadcrumb */}
+      <div className={`${CONTAINER} pb-4 pt-6 max-sm:pt-4`}>
+        <Breadcrumb items={[
+          { label: "Home", to: "/" },
+          { label: "Learning", to: "/learning" },
+          { label: "Courses", to: "/learning/courses" },
+          { label: course.title },
+        ]} />
       </div>
 
       {/* Course intro */}

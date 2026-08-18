@@ -1,6 +1,7 @@
 import { COURSE_CATEGORIES } from "../../data/courses";
 import { useCourseFilter } from "../../hooks/learning/useCourseFilter";
 import CourseCard from "../../components/learning/ui/CourseCard";
+import { Breadcrumb } from "../../components/Breadcrumb";
 
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-8 max-sm:px-4";
 
@@ -12,6 +13,11 @@ export default function CoursesPage() {
       {/* Page header */}
       <div className="border-b border-oxblood/15 bg-paper-deep pb-8 pt-16">
         <div className={CONTAINER}>
+          <Breadcrumb className="mb-4" items={[
+            { label: "Home", to: "/" },
+            { label: "Learning", to: "/learning" },
+            { label: "Courses" },
+          ]} />
           <h1 className="mb-3 text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">
             The Course Library
           </h1>

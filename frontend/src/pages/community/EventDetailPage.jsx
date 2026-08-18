@@ -7,6 +7,7 @@ import {
 } from "@/lib/events-data";
 import { useAuth } from "@/hub/AuthContext";
 import { Button } from "@/components/community/ui/button";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 export default function EventDetailPage() {
   const { eventId } = useParams();
@@ -119,15 +120,12 @@ export default function EventDetailPage() {
         {/* Breadcrumb — now a plain nav row above the cover instead of an
             overlay, since the cover no longer fills edge-to-edge (it shows
             the whole image via object-contain, not a crop). */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-50" />
-          <Link to="/community" className="hover:text-foreground transition-colors">Community</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-50" />
-          <Link to="/community/eventspace" className="hover:text-foreground transition-colors">Events</Link>
-          <ChevronRight className="size-3.5 shrink-0 opacity-50" />
-          <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm">{event.title}</span>
-        </nav>
+        <Breadcrumb items={[
+          { label: "Home", to: "/" },
+          { label: "Community", to: "/community" },
+          { label: "Events", to: "/community/eventspace" },
+          { label: event.title },
+        ]} />
 
         {/* Cover block — side arrows step through every photo in place (see
             below), and clicking the photo opens the full lightbox. Kept

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronRight, Mail, MessageCircle, Send, Users } from "lucide-react";
+import { Mail, MessageCircle, Send, Users } from "lucide-react";
 import {
   collabTypeLabel,
   formatRelativeTime,
@@ -8,6 +8,7 @@ import {
 } from "@/lib/collaboration-data";
 import { Button } from "@/components/community/ui/button";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 export default function CollabDetailPage() {
   const { postId } = useParams();
@@ -54,15 +55,12 @@ export default function CollabDetailPage() {
     <main className="bg-background">
       <div className="bg-collaboration/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-5 pb-12">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap mb-6">
-            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-            <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-            <Link to="/community" className="hover:text-foreground transition-colors">Community</Link>
-            <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-            <Link to="/community/collabspace" className="hover:text-foreground transition-colors">Find Team</Link>
-            <ChevronRight className="size-3.5 shrink-0 opacity-40" />
-            <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm">{post.projectTitle}</span>
-          </nav>
+          <Breadcrumb className="mb-6" items={[
+            { label: "Home", to: "/" },
+            { label: "Community", to: "/community" },
+            { label: "Find Team", to: "/community/collabspace" },
+            { label: post.projectTitle },
+          ]} />
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <span className="badge bg-collaboration text-collaboration-foreground">
               {collabTypeLabel[post.type]}

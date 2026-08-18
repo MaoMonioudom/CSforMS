@@ -27,7 +27,11 @@ const NOTIF_META = {
   // rejected. Own type/icon so it reads as "charged", not "denied".
   fee_charged:      { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
   event_reminder:   { Icon: MessageSquare, color: T.teal,   bg: T.tealLight  },
-  workspace_booking:{ Icon: Bell,          color: T.purple, bg: T.purpleLight },
+  // Approve/reject used to share one "workspace_booking" type — both
+  // outcomes rendered with the same neutral bell icon. Split the same way
+  // fee_charged was, reusing the approved/denied visual language.
+  workspace_approved: { Icon: CheckCircle2, color: T.green, bg: T.greenLight },
+  workspace_denied:   { Icon: XCircle,      color: T.red,   bg: T.redLight   },
   DEFAULT:          { Icon: Bell,          color: T.purple, bg: T.purpleLight },
 }
 
@@ -36,14 +40,15 @@ const NOTIF_META = {
 // a new notification_type is introduced; anything unlisted falls to
 // 'system' rather than silently disappearing from every module filter.
 const NOTIF_MODULE = {
-  event_reminder:    'community',
-  workspace_booking: 'community',
-  low_stock:         'inventory',
-  request:           'inventory',
-  approved:          'inventory',
-  denied:            'inventory',
-  overdue:           'inventory',
-  fee_charged:       'inventory',
+  event_reminder:      'community',
+  workspace_approved:  'community',
+  workspace_denied:    'community',
+  low_stock:           'inventory',
+  request:             'inventory',
+  approved:            'inventory',
+  denied:              'inventory',
+  overdue:             'inventory',
+  fee_charged:         'inventory',
 }
 const notifModule = (type) => NOTIF_MODULE[type] || 'system'
 
@@ -279,7 +284,8 @@ export default function NotificationsPage() {
     overdue:           'Overdue Item',
     fee_charged:       'Fee Charged',
     event_reminder:    'Event Reminder',
-    workspace_booking: 'Workspace Booking',
+    workspace_approved: 'Workspace Approved',
+    workspace_denied:   'Workspace Declined',
   }
 
   // "Today" / "Yesterday" / actual date — visibleFeed is already sorted

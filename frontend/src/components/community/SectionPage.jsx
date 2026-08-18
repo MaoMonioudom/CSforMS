@@ -1,27 +1,8 @@
-import { Link } from "react-router-dom";
+import { Breadcrumb as SharedBreadcrumb } from "../Breadcrumb";
 import { ChevronRight } from "lucide-react";
 
 function Breadcrumb({ items, light = false }) {
-  if (!items || items.length === 0) return null;
-  const linkColor = light ? "text-white/70 hover:text-white" : "text-muted-foreground hover:text-foreground";
-  const currentColor = light ? "text-white" : "text-foreground";
-  return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm flex-wrap mb-4">
-      {items.map((item, i) => {
-        const isLast = i === items.length - 1;
-        return (
-          <span key={item.label} className="flex items-center gap-1.5">
-            {i > 0 && <ChevronRight className={`size-3.5 shrink-0 opacity-50 ${light ? "text-white" : ""}`} />}
-            {isLast || !item.to ? (
-              <span className={`font-medium truncate max-w-[200px] sm:max-w-sm ${currentColor}`}>{item.label}</span>
-            ) : (
-              <Link to={item.to} className={`transition-colors ${linkColor}`}>{item.label}</Link>
-            )}
-          </span>
-        );
-      })}
-    </nav>
-  );
+  return <SharedBreadcrumb items={items} light={light} className="mb-4" />;
 }
 
 export function PushPin({ color = "var(--destructive)", size = 14 }) {

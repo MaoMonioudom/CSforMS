@@ -259,7 +259,9 @@ async function finalizeBooking(req, res, status, messageFor) {
   const { error: notifyError } = await supabaseAdmin.from("notifications").insert({
     user_id: data.user_id,
     message: messageFor(data.workspace?.workspace_name || "your workspace request", formatSlot(data.start_time, data.end_time)),
-    notification_type: "workspace_booking",
+    // Distinct per outcome — approved vs rejected used to share one
+    // "workspace_booking" type, so both rendered with the same icon.
+    notification_type: status === "approved" ? "workspace_approved" : "workspace_denied",
   });
   if (notifyError) throw notifyError;
 
