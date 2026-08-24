@@ -217,6 +217,7 @@ export async function purchaseItems(cart) {
 export const approveBorrowGroup = (requestIds) => api.post('/api/inventory/requests/approve-borrow', { requestIds })
 export const approvePurchaseGroup = (requestIds) => api.post('/api/inventory/requests/approve-purchase', { requestIds })
 export const denyRequests = (requestIds) => api.post('/api/inventory/requests/deny', { requestIds })
+export const deleteRequestGroup = (requestIds) => api.post('/api/inventory/requests/delete', { requestIds })
 export const approveTopUp = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-topup`)
 export const approvePrinting = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-printing`)
 export const confirm3DWeight = (requestId, grams) => api.post(`/api/inventory/requests/${requestId}/confirm-3d-weight`, { grams })

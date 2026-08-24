@@ -86,7 +86,7 @@ export function LecturerSidebar({ width = 224 }) {
       </div>
 
       {/* Nav — one folder per module */}
-      <nav className="flex-1 p-3 overflow-y-auto space-y-1">
+      <nav className="inv-hscroll flex-1 p-3 overflow-y-auto space-y-1">
         {FOLDERS.map((folder) => {
           const isOpen = open[folder.id];
           const folderIsActive = folder.match(pathname);

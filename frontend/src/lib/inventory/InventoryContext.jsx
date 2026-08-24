@@ -84,6 +84,29 @@ export function InventoryProvider({ children }) {
     refreshUsers().catch(() => {})
   }, [staff, refreshPayments, refreshUsers])
 
+  // Staff-only: poll for new pending requests so a toast pops up when a
+  // student submits one, without needing a websocket. `seenPendingIds`
+  // starts null so the first load (whatever's already pending) doesn't
+  // trigger a toast — only requests that appear after that do.
+  const seenPendingIds = useRef(null)
+  useEffect(() => {
+    if (!staff) { seenPendingIds.current = null; return }
+    const interval = setInterval(() => { refreshRequests().catch(() => {}) }, 30000)
+    return () => clearInterval(interval)
+  }, [staff, refreshRequests])
+
+  useEffect(() => {
+    if (!staff) return
+    const pending = requests.filter(r => r.status === 'pending')
+    const pendingIds = new Set(pending.map(r => r.id))
+    if (seenPendingIds.current) {
+      const newOnes = pending.filter(r => !seenPendingIds.current.has(r.id))
+      if (newOnes.length === 1) showToast(`New request: ${newOnes[0].itemName || newOnes[0].type}`)
+      else if (newOnes.length > 1) showToast(`${newOnes.length} new requests waiting for approval`)
+    }
+    seenPendingIds.current = pendingIds
+  }, [requests, staff])
+
   // ── Actions — call the API, then refresh what changed ──────────────────
   // Each returns the API result so callers can toast on success/failure.
   const run = async (fn, refreshers = []) => {
@@ -106,6 +129,7 @@ export function InventoryProvider({ children }) {
     approveBorrowGroup: (ids) => run(() => inv.approveBorrowGroup(ids), [refreshRequests, refreshBorrows, refreshCatalog]),
     approvePurchaseGroup: (ids) => run(() => inv.approvePurchaseGroup(ids), [refreshRequests, refreshPayments, refreshCatalog, refreshUsers, creditsChanged]),
     denyRequests:       (ids) => run(() => inv.denyRequests(ids), [refreshRequests]),
+    deleteRequestGroup: (ids) => run(() => inv.deleteRequestGroup(ids), [refreshRequests]),
     approveTopUp:       (id) => run(() => inv.approveTopUp(id), [refreshRequests, refreshPayments, refreshUsers, creditsChanged]),
     approvePrinting:    (id) => run(() => inv.approvePrinting(id), [refreshRequests, refreshPayments, refreshUsers, creditsChanged]),
     confirm3DWeight:    (id, grams) => run(() => inv.confirm3DWeight(id, grams), [refreshRequests, refreshPayments, refreshUsers, refreshCatalog, creditsChanged]),

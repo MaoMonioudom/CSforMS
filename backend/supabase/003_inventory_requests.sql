@@ -1,10 +1,5 @@
 -- =====================================================
 -- 003 — Inventory workflow gap-fill (ADDITIVE ONLY)
--- Creates the two tables the inventory UI needs that System_Full_DB.sql
--- doesn't have (requests approval queue, 3D filaments) and adds a few
--- nullable columns to existing inventory tables. No existing table is
--- renamed, altered in type, or dropped — other modules are unaffected.
--- =====================================================
 
 -- 3D printing filament stock (per-material credit rate)
 CREATE TABLE IF NOT EXISTS filaments (

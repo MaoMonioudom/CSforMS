@@ -170,6 +170,9 @@ export async function listInventoryUsers(req, res, next) {
 
 const REQUEST_FIELDS = {
   borrow: ["item_id", "quantity", "due_date", "note", "order_id"],
+  // Self-purchases wait for staff approval too — credits/stock only move
+  // when the request is approved (see approvePurchaseGroup).
+  purchase: ["item_id", "quantity", "note", "order_id"],
   credit_topup: ["amount_usd", "note"],
   printing: ["pages", "credits", "note"],
   "3d_printing": ["filament_id", "note"],
@@ -180,16 +183,17 @@ export async function createRequest(req, res, next) {
     const { request_type } = req.body;
     const allowed = REQUEST_FIELDS[request_type];
     if (!allowed) return res.status(400).json({ error: "Invalid request_type" });
-    // Document printing is walk-up only — staff charge it instantly at the
-    // counter (chargePrintingNow) once the student is physically present, so
-    // there's no remote request queue for it (unlike 3D printing, which is
-    // dropped off and picked up later).
-    if (request_type === "printing") return res.status(400).json({ error: "Document printing must be requested in person at the makerspace." });
+    // Both print services are walk-up only — staff charge them at the counter
+    // (chargePrintingNow / charge3DNow) once the student is physically
+    // present, so there's no remote request queue for either.
+    if (request_type === "printing" || request_type === "3d_printing") {
+      return res.status(400).json({ error: "Print services must be requested in person at the makerspace." });
+    }
 
     const payload = { user_id: req.user.user_id, request_type, status: "pending" };
     for (const f of allowed) if (req.body[f] !== undefined) payload[f] = req.body[f];
 
-    if (request_type === "borrow" && !payload.item_id) return res.status(400).json({ error: "item_id is required" });
+    if ((request_type === "borrow" || request_type === "purchase") && !payload.item_id) return res.status(400).json({ error: "item_id is required" });
     if (request_type === "credit_topup" && !(payload.amount_usd > 0)) return res.status(400).json({ error: "amount_usd must be positive" });
     if (request_type === "printing" && !(payload.pages > 0)) return res.status(400).json({ error: "pages must be positive" });
     if (request_type === "3d_printing" && !payload.filament_id) return res.status(400).json({ error: "filament_id is required" });
@@ -244,6 +248,59 @@ export async function approveBorrowGroup(req, res, next) {
   }
 }
 
+// Approve every purchase request in one cart together — this is the moment
+// credits are deducted and stock is reduced (the request itself charged
+// nothing). One invoice covers the whole cart, then one notification.
+export async function approvePurchaseGroup(req, res, next) {
+  try {
+    const { requestIds } = req.body;
+    if (!Array.isArray(requestIds) || requestIds.length === 0) {
+      return res.status(400).json({ error: "requestIds is required" });
+    }
+
+    const { data: requests, error: reqErr } = await supabaseAdmin
+      .from("requests").select("*, inventory_items(item_name, unit_credit)")
+      .in("request_id", requestIds).eq("request_type", "purchase").eq("status", "pending");
+    if (reqErr) throw reqErr;
+    if (!requests.length) return res.status(404).json({ error: "No matching pending purchase requests" });
+
+    const userId = requests[0].user_id;
+    const lines = requests.map((r) => ({
+      itemId: r.item_id, quantity: r.quantity || 1,
+      unitPrice: r.inventory_items?.unit_credit ?? 0,
+    }));
+    const totalCredits = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+
+    // Charge first — if the student can't afford it, nothing else happens.
+    await adjustCredits(userId, -totalCredits, {
+      description: `Approved purchase ${requests[0].order_id || requests[0].request_id}`,
+    });
+
+    for (const r of requests) await changeStock(r.item_id, -(r.quantity || 1));
+
+    await createPaidInvoice({
+      userId, invoiceType: "item_purchase", totalCredit: totalCredits,
+      method: "credit", verifiedBy: req.user.user_id, lines,
+    });
+
+    const { error: statusErr } = await supabaseAdmin
+      .from("requests").update({ status: "approved", approved_by: req.user.user_id, updated_at: new Date().toISOString() })
+      .in("request_id", requests.map((r) => r.request_id));
+    if (statusErr) throw statusErr;
+
+    const names = requests.map((r) => r.inventory_items?.item_name).filter(Boolean).join(", ");
+    await insertNotification({
+      userId, type: "approved",
+      message: `Your purchase has been approved — ${names || "your items"} (${totalCredits} cr deducted).`,
+    });
+
+    res.json({ data: { approved: requests.length, creditsCharged: totalCredits } });
+  } catch (err) {
+    if (creditsErrorToResponse(err, res)) return;
+    next(err);
+  }
+}
+
 export async function denyRequestGroup(req, res, next) {
   try {
     const { requestIds } = req.body;
@@ -266,10 +323,36 @@ export async function denyRequestGroup(req, res, next) {
       first.request_type === "credit_topup" ? `Your $${first.amount_usd} credit top-up request has been rejected.`
       : first.request_type === "printing" ? "Your printing request has been rejected."
       : first.request_type === "3d_printing" ? "Your 3D print job request has been rejected."
+      : first.request_type === "purchase" ? "Your purchase request has been rejected."
       : "Your borrowing request has been rejected.";
     await insertNotification({ userId: first.user_id, type: "denied", message });
 
     res.json({ data: { denied: requests.length } });
+  } catch (err) { next(err); }
+}
+
+// Clears already-resolved requests off the list — staff only, and only once
+// a request is no longer pending (approving/denying is the only way to
+// resolve a live request; this never lets one disappear unactioned).
+export async function deleteRequestGroup(req, res, next) {
+  try {
+    const { requestIds } = req.body;
+    if (!Array.isArray(requestIds) || requestIds.length === 0) {
+      return res.status(400).json({ error: "requestIds is required" });
+    }
+
+    const { data: requests, error: readErr } = await supabaseAdmin
+      .from("requests").select("request_id, status").in("request_id", requestIds);
+    if (readErr) throw readErr;
+    if (!requests.length) return res.status(404).json({ error: "No matching requests" });
+    if (requests.some((r) => r.status === "pending")) {
+      return res.status(400).json({ error: "Approve or decline a request before deleting it" });
+    }
+
+    const { error } = await supabaseAdmin.from("requests").delete().in("request_id", requests.map((r) => r.request_id));
+    if (error) throw error;
+
+    res.json({ data: { deleted: requests.length } });
   } catch (err) { next(err); }
 }
 
@@ -552,7 +635,8 @@ export async function staffSale(req, res, next) {
       } else {
         const { error: borrowErr } = await supabaseAdmin.from("borrow_transactions").insert({
           user_id: studentId, item_id: line.itemId, quantity_borrow: qty,
-          due_date: defaultDueDate(), approved_by: req.user.user_id, status: "borrowed", order_id: orderId,
+          due_date: line.dueDate || defaultDueDate(), approved_by: req.user.user_id,
+          status: "borrowed", order_id: orderId, note: line.note || null,
         });
         if (borrowErr) throw borrowErr;
       }
@@ -684,6 +768,22 @@ export async function uploadItemImage(req, res, next) {
 }
 
 // ── Maintenance ──────────────────────────────────────────────────────────
+
+// One open (unresolved) log per item — Manage Stock shows this as the
+// "Reported Issue" on any item currently flagged unavailable/Maintenance.
+export async function listOpenMaintenance(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("maintenance_logs")
+      .select("item_id, notes, quantity_damaged, reported_at")
+      .is("resolved_at", null)
+      .order("reported_at", { ascending: false });
+    if (error) throw error;
+    const byItem = {};
+    for (const log of data) if (!(log.item_id in byItem)) byItem[log.item_id] = log;
+    res.json({ data: Object.values(byItem) });
+  } catch (err) { next(err); }
+}
 
 export async function reportMaintenance(req, res, next) {
   try {

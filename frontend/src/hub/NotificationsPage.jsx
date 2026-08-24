@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package, ArrowLeft } from 'lucide-react'
+import { Bell, AlertTriangle, Clock, CheckCircle2, XCircle, RotateCcw, ShoppingBag, ClipboardList, CreditCard, X, Package2, Boxes, MessageSquare, BookOpen, Package, ArrowLeft, ArrowUpDown, Trash2 } from 'lucide-react'
 import { T } from '../lib/inventory/theme'
 import { CATEGORIES } from '../lib/inventory/data'
 import { useInventory } from '../lib/inventory/InventoryContext'
 import { useAuth } from './AuthContext'
 import { TopNav } from '../components/TopNav'
 import { AppFooter } from '../components/AppFooter'
-import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll } from '../lib/notifications-data'
-import { fmtDateTime } from '../lib/inventory/datetime'
+import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll, deleteNotification as apiDeleteOne } from '../lib/notifications-data'
+import { fmtDateTime, cambodiaDayLabel } from '../lib/inventory/datetime'
 
 // One notification feed for all three modules (Community, Learning,
 // Inventory) — same page whether you land here from the top-nav bell or
@@ -160,6 +160,7 @@ export default function NotificationsPage() {
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
   const [invSubFilter, setInvSubFilter] = useState('borrows')
+  const [sortDir, setSortDir] = useState('desc') // 'desc' = newest first
 
   // Wait for AuthContext to finish restoring the session before deciding
   // no one's logged in — otherwise a page refresh here always bounces
@@ -183,6 +184,14 @@ export default function NotificationsPage() {
   const markOne = (id) => {
     setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n))
     apiMarkOne(id).catch(() => {})
+  }
+  // Only real notification rows are deletable — borrow/purchase/request
+  // entries are transactional history derived from other tables, not rows
+  // of their own, so there's nothing there to delete.
+  const deleteOne = (id, e) => {
+    e?.stopPropagation()
+    setNotifications(p => p.filter(n => n.id !== id))
+    apiDeleteOne(id).catch(() => {})
   }
 
   // Build one unified, chronological feed: system notifications + (for students)
@@ -217,7 +226,8 @@ export default function NotificationsPage() {
     })),
   ] : []
 
-  const feed = [...notifEntries, ...activityEntries].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const feed = [...notifEntries, ...activityEntries]
+    .sort((a, b) => sortDir === 'asc' ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date))
 
   const isPurchaseGroup = (g) => g.every(b => b.action === 'purchased')
   // A borrow group is "history" once nothing in it is still out.
@@ -282,16 +292,10 @@ export default function NotificationsPage() {
     workspace_booking: 'Workspace Booking',
   }
 
-  // "Today" / "Yesterday" / actual date — visibleFeed is already sorted
-  // newest-first, so grouping consecutive same-date entries here just needs
-  // one pass, no re-sorting.
-  const dateGroupLabel = (dateStr) => {
-    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-    const diffDays = Math.round((startOfDay(new Date()) - startOfDay(new Date(dateStr))) / 86400000)
-    if (diffDays <= 0) return 'Today'
-    if (diffDays === 1) return 'Yesterday'
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  }
+  // "Today" / "Yesterday" / actual date — judged by Cambodia's calendar date
+  // (cambodiaDayLabel), not the viewer's browser timezone, so it always
+  // matches the Cambodia time shown on each entry.
+  const dateGroupLabel = cambodiaDayLabel
 
   // Aggregate status across a transaction group — worst-case wins so an
   // overdue/pending item isn't hidden behind an already-returned one.
@@ -350,13 +354,19 @@ export default function NotificationsPage() {
           <ArrowLeft size={14} /> Back
         </button>
       )}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: 12, flexWrap: 'wrap' }}>
         {!isUser
           ? <h1 className="m-0 font-heading text-lg font-bold text-charcoal">Notifications</h1>
           : <span />}
-        <button onClick={markAll} style={{ background: 'none', border: 'none', color: 'var(--color-inv-accent-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          Mark all as read
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${T.border}`, borderRadius: 8, padding: '5px 10px', color: T.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            <ArrowUpDown size={12} /> {sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
+          </button>
+          <button onClick={markAll} style={{ background: 'none', border: 'none', color: 'var(--color-inv-accent-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Mark all as read
+          </button>
+        </div>
       </div>
 
       {isUser && (
@@ -425,6 +435,10 @@ export default function NotificationsPage() {
                     <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{formatEntryDateTime(n.date)}</p>
                   </div>
                   {!n.read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.red, flexShrink: 0, marginTop: 4 }} />}
+                  <button onClick={(ev) => deleteOne(n.id, ev)} title="Delete"
+                    style={{ background: 'none', border: 'none', color: T.faint, cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex' }}>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               )
             }

@@ -3,7 +3,7 @@ import { T } from '../../../lib/inventory/theme'
 
 // Lightweight dual-series bar chart — no chart library dependency.
 // data: [{ label, a, b }]; seriesA/seriesB control color + legend labels.
-export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = T.blue, colorB = T.green, height = 200 }) {
+export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = T.blue, colorB = T.green, height = 280 }) {
   const [hover, setHover] = useState(null)
   const max = Math.max(1, ...data.flatMap(d => [d.a, d.b]))
   const plotHeight = height - 28 // reserve room for the weekday label row below the bars
@@ -24,13 +24,13 @@ export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = 
                 {d.a} {seriesA} · {d.b} {seriesB}
               </div>
             )}
-            <div className="flex w-full items-end justify-center gap-[3px]" style={{ height: plotHeight }}>
-              <div className="w-2.5 rounded-t-[3px] transition-all duration-300 sm:w-3"
+            <div className="flex w-full items-end justify-center gap-2" style={{ height: plotHeight }}>
+              <div className="w-6 rounded-t-[5px] transition-all duration-300 sm:w-8"
                 style={{ height: Math.max(d.a > 0 ? 3 : 0, Math.round((d.a / max) * plotHeight)), background: colorA, opacity: hover === null || hover === i ? 1 : 0.5 }} />
-              <div className="w-2.5 rounded-t-[3px] transition-all duration-300 sm:w-3"
+              <div className="w-6 rounded-t-[5px] transition-all duration-300 sm:w-8"
                 style={{ height: Math.max(d.b > 0 ? 3 : 0, Math.round((d.b / max) * plotHeight)), background: colorB, opacity: hover === null || hover === i ? 1 : 0.5 }} />
             </div>
-            <span className="text-xs text-faint sm:text-xs">{d.label}</span>
+            <span className="text-[11px] text-faint sm:text-[12px]">{d.label}</span>
           </div>
         ))}
       </div>

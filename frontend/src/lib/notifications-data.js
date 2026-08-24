@@ -29,3 +29,7 @@ export async function markNotificationRead(id) {
 export async function markAllNotificationsRead() {
   await api.post("/api/notifications/read-all");
 }
+
+export async function deleteNotification(id) {
+  await api.del(`/api/notifications/${id}`);
+}
