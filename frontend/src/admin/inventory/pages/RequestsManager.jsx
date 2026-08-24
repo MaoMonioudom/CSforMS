@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   Search, ChevronLeft, ChevronRight, X, Check, Ban, User, Package,
   FileText, History, CheckCircle2, XCircle, AlertCircle, Eye, Tag,
-  CreditCard, Printer, Box, Package2,
+  CreditCard, Printer, Box, Package2, Trash2, ShoppingBag,
 } from 'lucide-react'
 import { T } from '../../../lib/inventory/theme'
 import { CREDIT_RATE, PRINT_SERVICES, CATEGORIES } from '../../../lib/inventory/data'
@@ -16,6 +16,24 @@ const STATUS_STYLE = {
   Pending:  { bg: T.amberLight, fg: T.amber, icon: AlertCircle },
   Approved: { bg: T.greenLight, fg: T.green, icon: CheckCircle2 },
   Declined: { bg: T.redLight,   fg: T.red,   icon: XCircle },
+}
+
+// Mirrors the Transaction pill styling on the Admin Dashboard's Recent
+// Transactions panel, so both tables read as one consistent design.
+const TYPE_STYLE = {
+  Borrow:   { bg: T.blueLight,   fg: T.blue },
+  Purchase: { bg: T.amberLight,  fg: T.amber },
+  Credit:   { bg: T.purpleLight, fg: T.purple },
+}
+const txnType = (e) => e.kind === 'borrow' ? 'Borrow' : e.kind === 'purchase' ? 'Purchase' : 'Credit'
+
+function TypePill({ type }) {
+  const s = TYPE_STYLE[type]
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 999, width: 'fit-content', background: s.bg, color: s.fg }}>
+      {type}
+    </span>
+  )
 }
 
 function StatusPill({ status }) {
@@ -53,8 +71,11 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const [gramsInput, setGramsInput] = useState({})
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [kindFilter, setKindFilter] = useState(null) // null | 'purchase' | 'borrow' | 'credit_topup'
   const [page, setPage] = useState(1)
   const [detail, setDetail] = useState(null)
+  const [delEntry, setDelEntry] = useState(null)
+  const [confirmApprove, setConfirmApprove] = useState(null)
 
   const getLabel = (id) => { const u = users.find(x => x.id === id); return u ? u.name + (u.studentId ? ` (${u.studentId})` : '') : `User #${id}` }
   const getUser  = (id) => users.find(u => u.id === id)
@@ -163,15 +184,37 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   })
 
   // One place decides how each entry kind is approved/declined.
-  const approveEntry = (e) => {
+  const runApproveEntry = (e) => {
     if (e.kind === 'borrow') return approveGroup(e.group)
     if (e.kind === 'purchase') return approvePurchase(e)
     return approve(e.first)
   }
+  // Approving a purchase, top-up, or print job charges real credits at that
+  // moment — gate those behind one confirm step. Borrows aren't charged on
+  // approval, and 3D print jobs already have their own weight-confirm step.
+  const needsChargeConfirm = (e) => e.kind === 'purchase' || (e.kind === 'other' && ['credit_topup', 'printing'].includes(e.first.type))
+  const approveEntry = (e) => needsChargeConfirm(e) ? setConfirmApprove(e) : runApproveEntry(e)
   const denyEntry = (e) => e.isGroup ? denyGroup(e.group) : deny(e.first)
+  // Only ever offered once a request is resolved (see the Actions column and
+  // detail modal below) — the backend also refuses to delete a pending one.
+  const deleteEntry = (e) => {
+    const ids = e.isGroup ? e.group.map(r => r.id) : [e.first.id]
+    return tryAction(() => ctx.deleteRequestGroup(ids), 'Deleted')
+  }
+
+  const pendingPurchaseCount = withMeta.filter(e => e.kind === 'purchase' && e.status === 'Pending').length
+  const pendingBorrowCount   = withMeta.filter(e => e.kind === 'borrow' && e.status === 'Pending').length
+  const pendingTopUpCount    = withMeta.filter(e => e.kind === 'other' && e.first.type === 'credit_topup' && e.status === 'Pending').length
+
+  const matchesKind = (e) => {
+    if (!kindFilter) return true
+    if (kindFilter === 'credit_topup') return e.kind === 'other' && e.first.type === 'credit_topup'
+    return e.kind === kindFilter
+  }
 
   const filtered = withMeta.filter(e =>
     (statusFilter === 'All' || e.status === statusFilter) &&
+    matchesKind(e) &&
     (!query ||
       (e.student?.name || '').toLowerCase().includes(query.toLowerCase()) ||
       (e.student?.studentId || '').toLowerCase().includes(query.toLowerCase()) ||
@@ -202,17 +245,21 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         .req-btn-view { background:#fff; color:${T.charcoal}; border:1.5px solid ${T.border}; }
         .req-chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${T.border}; background:#fff; color:${T.muted}; cursor:pointer; transition:all .15s; }
         .req-chip.active { background:${T.charcoal}; color:#fff; border-color:transparent; }
-        .req-grid { grid-template-columns: 1.4fr 1.8fr 0.5fr 1.2fr 0.9fr 1.4fr; }
+        .req-grid { grid-template-columns: 1.2fr 0.7fr 1.7fr 0.95fr 0.95fr 0.8fr 0.7fr; }
         .req-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .req-items-pill { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--color-inv-accent); background:color-mix(in oklch, var(--color-inv-accent) 8%, transparent); padding:4px 10px; border-radius:20px; }
 
         .req-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
+        .req-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; border:none; cursor:pointer; transition:opacity .12s, transform .1s; flex-shrink:0; }
+        .req-icon-btn:hover { transform:translateY(-1px); }
+
+        .req-kind-btn { position:relative; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border-radius:20px; font-size:12.5px; font-weight:700; border:1px solid ${T.border}; background:#fff; color:${T.muted}; cursor:pointer; transition:all .15s; }
+        .req-kind-btn.active { background:${T.amberLight}; color:${T.amber}; border-color:${T.amber}55; }
+        .req-kind-badge { position:absolute; top:-6px; right:-6px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:${T.red}; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; }
 
         @media (max-width: 1180px) and (min-width: 701px) {
-          .req-grid { grid-template-columns: 1.2fr 1.6fr 0.4fr 1fr 0.8fr 0.85fr; column-gap: 8px; }
+          .req-grid { grid-template-columns: 1fr 0.6fr 1.4fr 0.8fr 0.8fr 0.65fr 0.55fr; column-gap: 8px; }
           .req-table-row, .req-table-head { padding-left: 16px !important; padding-right: 16px !important; }
-          .req-btn { padding: 7px 8px !important; font-size: 11px !important; }
-          .req-btn .req-btn-label { display: none; }
         }
         @media (max-width: 700px) {
           .req-table-head, .req-table-row { display: none !important; }
@@ -233,14 +280,28 @@ export default function RequestsManager({ requests, borrows, items, users, user,
             </button>
           ))}
         </div>
-        <div style={{ position: 'relative' }}>
-          <Search size={13} style={{ position: 'absolute', left: 12, top: 11, color: T.faint }} />
-          <input
-            value={query}
-            onChange={e => { setQuery(e.target.value); setPage(1) }}
-            placeholder="Search student, ID, or item…"
-            style={{ padding: '9px 14px 9px 32px', borderRadius: 20, border: `1px solid ${T.border}`, fontSize: 12.5, outline: 'none', width: 240, background: '#fff' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {[
+            { kind: 'purchase', label: 'Purchase Requests', icon: ShoppingBag, count: pendingPurchaseCount },
+            { kind: 'borrow', label: 'Borrow Requests', icon: Package, count: pendingBorrowCount },
+            { kind: 'credit_topup', label: 'Top-Up Requests', icon: CreditCard, count: pendingTopUpCount },
+          ].map(({ kind, label, icon: Icon, count }) => (
+            <button key={kind} className={`req-kind-btn ${kindFilter === kind ? 'active' : ''}`}
+              onClick={() => { setKindFilter(f => f === kind ? null : kind); setPage(1) }}
+              title={`Show ${label.toLowerCase()} only`}>
+              <Icon size={13} /> {label}
+              {count > 0 && <span className="req-kind-badge">{count}</span>}
+            </button>
+          ))}
+          <div style={{ position: 'relative' }}>
+            <Search size={13} style={{ position: 'absolute', left: 12, top: 11, color: T.faint }} />
+            <input
+              value={query}
+              onChange={e => { setQuery(e.target.value); setPage(1) }}
+              placeholder="Search student, ID, or item…"
+              style={{ padding: '9px 14px 9px 32px', borderRadius: 20, border: `1px solid ${T.border}`, fontSize: 12.5, outline: 'none', width: 240, background: '#fff' }}
+            />
+          </div>
         </div>
       </div>
 
@@ -251,9 +312,10 @@ export default function RequestsManager({ requests, borrows, items, users, user,
           color: T.faint, background: T.cream, borderBottom: `1px solid ${T.stone}`,
         }}>
           <span>Student</span>
+          <span>Transaction</span>
           <span>Items</span>
-          <span>Qty</span>
-          <span>Dates</span>
+          <span>Borrow Date</span>
+          <span>Return Date</span>
           <span>Status</span>
           <span style={{ textAlign: 'right' }}>Actions</span>
         </div>
@@ -273,16 +335,14 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                   <div className="req-truncate" style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>{e.student?.name || `User #${e.first.userId}`}</div>
                   <div className="req-truncate" style={{ fontSize: 11, color: T.faint }}>{e.student?.studentId || ''}</div>
                 </div>
+                <div><TypePill type={txnType(e)} /></div>
                 <div>
                   <span className="req-items-pill" title={e.itemsList.map(it => `${it.name} (${it.qty})`).join(', ')}>
                     <Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'}
                   </span>
                 </div>
-                <span style={{ fontSize: 12, color: T.muted }}>{e.totalQty}</span>
-                <div style={{ fontSize: 12, color: 'var(--color-charcoal)', lineHeight: 1.5 }}>
-                  <div className="req-truncate">{fmtDateTime(e.first.date)}</div>
-                  {e.first.dueDate && <div className="req-truncate" style={{ color: T.faint, fontSize: 11 }}>→ {fmtDateTime(e.first.dueDate)}</div>}
-                </div>
+                <div className="req-truncate" style={{ fontSize: 12, color: 'var(--color-charcoal)' }}>{fmtDateTime(e.first.date)}</div>
+                <div className="req-truncate" style={{ fontSize: 12, color: e.first.dueDate ? 'var(--color-charcoal)' : T.faint }}>{e.first.dueDate ? fmtDateTime(e.first.dueDate) : '—'}</div>
                 <div><StatusPill status={e.status} /></div>
                 {/* 3D print jobs need a weight entered before they can be charged —
                     that control lives here in Actions only, not as a separate
@@ -304,13 +364,17 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                     </>
                   ) : (
                     <>
-                      {e.status === 'Pending' && (
+                      {e.status === 'Pending' ? (
                         <>
-                          <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
-                          <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
+                          <button className="req-icon-btn" title="Decline" style={{ background: '#fff', color: T.red, border: `1.5px solid ${T.red}33` }} onClick={() => denyEntry(e)}><Ban size={13} /></button>
+                          <button className="req-icon-btn" title="Approve" style={{ background: T.green, color: '#fff' }} onClick={() => approveEntry(e)}><Check size={13} /></button>
                         </>
+                      ) : (
+                        // Only once resolved — clears it off the list without
+                        // touching anything still awaiting a decision.
+                        <button className="req-icon-btn" title="Delete" style={{ background: '#fff', color: T.red, border: `1.5px solid ${T.red}33` }} onClick={() => setDelEntry(e)}><Trash2 size={13} /></button>
                       )}
-                      <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
+                      <button className="req-icon-btn" title="View" style={{ background: '#fff', color: T.charcoal, border: `1.5px solid ${T.border}` }} onClick={() => setDetail(e)}><Eye size={13} /></button>
                     </>
                   )}
                 </div>
@@ -330,7 +394,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 </div>
                 <StatusPill status={e.status} />
               </div>
-              <div style={{ marginBottom: 6 }}>
+              <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <TypePill type={txnType(e)} />
                 <span className="req-items-pill"><Package size={11} /> {e.itemsList.length} {e.itemsList.length === 1 ? 'item' : 'items'} · Qty {e.totalQty}</span>
               </div>
               <div style={{ fontSize: 11.5, color: T.faint, marginBottom: 10 }}>{fmtDateTime(e.first.date)}{e.first.dueDate ? ` → ${fmtDateTime(e.first.dueDate)}` : ''}</div>
@@ -340,6 +405,9 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                     <button className="req-btn req-btn-decline" onClick={() => denyEntry(e)}><Ban size={12} /> <span className="req-btn-label">Decline</span></button>
                     <button className="req-btn req-btn-approve" onClick={() => approveEntry(e)}><Check size={12} /> <span className="req-btn-label">Approve</span></button>
                   </>
+                )}
+                {e.status !== 'Pending' && (
+                  <button className="req-btn req-btn-decline" onClick={() => setDelEntry(e)}><Trash2 size={12} /> <span className="req-btn-label">Delete</span></button>
                 )}
                 <button className="req-btn req-btn-view" onClick={() => setDetail(e)}><Eye size={12} /> <span className="req-btn-label">View</span></button>
               </div>
@@ -441,10 +509,64 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                   </button>
                 </div>
               )}
+              {detail.status !== 'Pending' && (
+                <button className="req-btn req-btn-decline" style={{ justifyContent: 'center', padding: '10px 0' }}
+                  onClick={() => { setDelEntry(detail); setDetail(null) }}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Confirm delete — only ever reachable for an already-resolved entry */}
+      {delEntry && (
+        <div onClick={() => setDelEntry(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 950, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: T.white, borderRadius: 16, padding: '1.75rem', width: 340, textAlign: 'center' }}>
+            <Trash2 size={30} color={T.red} style={{ marginBottom: 10 }} />
+            <p style={{ color: T.charcoal, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Delete this request?</p>
+            <p style={{ color: T.muted, fontSize: 13, marginBottom: 18 }}>This just clears it off the list — it won't undo the {delEntry.status.toLowerCase()} action.</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={() => setDelEntry(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { deleteEntry(delEntry); setDelEntry(null) }}
+                style={{ padding: '9px 20px', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm charge — purchases, top-ups, and print jobs all deduct/add
+          real credits the moment they're approved, so this is the one gate
+          before that happens (Cash/QR for top-ups is chosen here too). */}
+      {confirmApprove && (() => {
+        const e = confirmApprove
+        const summary = e.kind === 'purchase'
+          ? { text: 'Deducts', amount: e.group.reduce((s, r) => s + ((items.find(i => i.id === r.itemId)?.credits ?? 0) * (r.qty || 1)), 0), unit: 'cr' }
+          : e.first.type === 'credit_topup'
+            ? { text: 'Adds', amount: Math.round(e.first.amountUSD * CREDIT_RATE), unit: 'cr' }
+            : { text: 'Charges', amount: e.first.credits, unit: 'cr' }
+        return (
+          <div onClick={() => setConfirmApprove(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 950, padding: 20 }}>
+            <div onClick={ev => ev.stopPropagation()} style={{ background: T.white, borderRadius: 16, padding: '1.75rem', width: 340, textAlign: 'center' }}>
+              <CheckCircle2 size={30} color={T.green} style={{ marginBottom: 10 }} />
+              <p style={{ color: T.charcoal, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Approve this request?</p>
+              <p style={{ color: T.muted, fontSize: 13, marginBottom: 18 }}>
+                {summary.text} <strong style={{ color: T.charcoal }}>{summary.amount} {summary.unit}</strong> for {e.student?.name || `User #${e.first.userId}`} immediately.
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                <button onClick={() => setConfirmApprove(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={() => { runApproveEntry(e); setConfirmApprove(null) }}
+                  style={{ padding: '9px 20px', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+                  Confirm & Charge
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

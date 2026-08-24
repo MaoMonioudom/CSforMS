@@ -33,42 +33,58 @@ function ItemImage({ item, cat, size = 48, className = '' }) {
 
 const TEAL = 'var(--color-inv-accent)'
 
+function TileTooltip({ label, count }) {
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+      style={{ background: '#0f172a', color: '#fff' }}>
+      {label} · {count} {count === 1 ? 'item' : 'items'}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent" style={{ borderBottomColor: '#0f172a' }} />
+    </div>
+  )
+}
+
 function CategoryTiles({ items, filterCat, setFilterCat }) {
   const countFor = (id) => id === 'all' ? items.length : items.filter(i => i.category === id).length
 
   return (
-    // Mobile: Telegram-folder style — one horizontal scrollable row of icon tabs.
-    // Tablet/desktop: grid of tiles with labels and counts.
-    <div className="inv-hscroll mb-5 flex gap-1.5 overflow-x-auto pb-1 sm:grid sm:gap-2 sm:overflow-visible sm:pb-0"
-      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))' }}>
-      <button onClick={() => setFilterCat('all')}
-        className="inv-tile flex min-w-[54px] flex-shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 transition-all sm:min-w-0 sm:flex-shrink sm:rounded-xl sm:p-2"
-        style={filterCat === 'all'
-          ? { background: `color-mix(in oklch, ${TEAL} 8%, transparent)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 33%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 6%, transparent)` }
-          : { background: '#fff', border: '1.5px solid var(--border)' }}>
-        <div className="flex h-6 w-6 items-center justify-center rounded-md sm:h-8 sm:w-8 sm:rounded-lg" style={{ background: filterCat === 'all' ? `color-mix(in oklch, ${TEAL} 9%, transparent)` : 'var(--muted)' }}>
-          <Boxes size={13} color={filterCat === 'all' ? TEAL : 'var(--muted-foreground)'} className="sm:hidden" />
-          <Boxes size={15} color={filterCat === 'all' ? TEAL : 'var(--muted-foreground)'} className="hidden sm:block" />
-        </div>
-        <span className={`w-full truncate text-center text-xs font-semibold ${filterCat === 'all' ? '' : 'hidden sm:block'}`} style={{ color: filterCat === 'all' ? TEAL : 'var(--muted-foreground)' }}>All</span>
-        <span className="hidden text-xs font-medium sm:block" style={{ color: 'var(--muted-foreground)' }}>{countFor('all')}</span>
-      </button>
+    // Mobile/tablet: Telegram-folder style — one horizontal scrollable row of
+    // compact icon tabs (kept through tablet widths so tiles never wrap to a
+    // second line). Only large desktop switches to a wrapping label+count grid.
+    <div className="inv-hscroll mb-5 flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-2.5 lg:overflow-visible lg:pb-0"
+      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))' }}>
+      <div className="group relative flex-shrink-0 lg:flex-shrink">
+        <button onClick={() => setFilterCat('all')}
+          className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+          style={filterCat === 'all'
+            ? { background: `${TEAL}12`, border: `1.5px solid ${TEAL}55`, boxShadow: `0 0 0 3px ${TEAL}10` }
+            : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
+          <Boxes size={15} color={filterCat === 'all' ? TEAL : '#64748b'} className="lg:hidden" />
+          <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: filterCat === 'all' ? `${TEAL}18` : '#f1f5f9' }}>
+            <Boxes size={17} color={filterCat === 'all' ? TEAL : '#64748b'} />
+          </div>
+          <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: filterCat === 'all' ? TEAL : '#0f172a' }}>All</span>
+          <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor('all')}</span>
+        </button>
+        <TileTooltip label="All" count={countFor('all')} />
+      </div>
       {CATEGORIES.map(c => {
         const active = filterCat === c.id
         return (
-          <button key={c.id} onClick={() => setFilterCat(c.id)}
-            className="inv-tile flex min-w-[54px] flex-shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 transition-all sm:min-w-0 sm:flex-shrink sm:rounded-xl sm:p-2"
-            style={active
-              ? { background: `color-mix(in oklch, ${TEAL} 8%, transparent)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 33%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 6%, transparent)` }
-              : { background: '#fff', border: '1.5px solid var(--border)' }}>
-            <div className="flex h-6 w-6 items-center justify-center rounded-md sm:h-8 sm:w-8 sm:rounded-lg" style={{ background: active ? `color-mix(in oklch, ${TEAL} 9%, transparent)` : 'var(--muted)' }}>
-              <c.Icon size={13} color={active ? TEAL : 'var(--muted-foreground)'} className="sm:hidden" />
-              <c.Icon size={15} color={active ? TEAL : 'var(--muted-foreground)'} className="hidden sm:block" />
-            </div>
-            {/* Mobile: label only shows under the active category. Tablet/desktop: always shown. */}
-            <span className={`w-full truncate text-center text-xs font-semibold ${active ? '' : 'hidden sm:block'}`} style={{ color: active ? TEAL : 'var(--muted-foreground)' }}>{c.label}</span>
-            <span className="hidden text-xs font-medium sm:block" style={{ color: 'var(--muted-foreground)' }}>{countFor(c.id)}</span>
-          </button>
+          <div key={c.id} className="group relative flex-shrink-0 lg:flex-shrink">
+            <button onClick={() => setFilterCat(c.id)}
+              className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+              style={active
+                ? { background: `${TEAL}12`, border: `1.5px solid ${TEAL}55`, boxShadow: `0 0 0 3px ${TEAL}10` }
+                : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
+              <c.Icon size={15} color={active ? TEAL : c.iconColor} className="lg:hidden" />
+              <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: active ? `${TEAL}18` : '#f1f5f9' }}>
+                <c.Icon size={17} color={active ? TEAL : '#64748b'} />
+              </div>
+              <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: active ? TEAL : '#0f172a' }}>{c.label}</span>
+              <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor(c.id)}</span>
+            </button>
+            <TileTooltip label={c.label} count={countFor(c.id)} />
+          </div>
         )
       })}
     </div>
@@ -82,21 +98,21 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
 
   return (
     <div onClick={() => onView(item)}
-      className="flex cursor-pointer flex-col overflow-hidden rounded-2xl transition-all hover:-translate-y-1"
-      style={{ background: '#fff', border: '1.5px solid var(--border)', boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
+      className="flex cursor-pointer flex-col overflow-hidden rounded-[24px] transition-all hover:-translate-y-1"
+      style={{ background: '#fff', border: '1.5px solid #e2e8f0', boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,23,42,0.10)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'}>
 
       {/* Image — slightly shorter in staff mode, where 3 cards share the row
           with the sale panel alongside, so compact reads cleaner. */}
-      <div className={`relative flex-shrink-0 ${staffMode ? 'h-32 sm:h-36 lg:h-40' : 'h-36 sm:h-44 lg:h-48'}`}>
+      <div className={`relative flex-shrink-0 ${staffMode ? 'h-36 sm:h-40 lg:h-44' : 'h-40 sm:h-48 lg:h-52'}`}>
         <ItemImage item={item} cat={cat} size={48} className="h-full w-full" />
         <div className="absolute left-3 top-3"><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
-        <div className="badge badge-sm absolute right-3 top-3 uppercase tracking-wide"
-          style={{ background: item.type === 'Returnable' ? 'var(--color-inv-accent-light)' : 'var(--color-green-light)', color: item.type === 'Returnable' ? TEAL : 'var(--color-green)', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
+        <div className="absolute right-3 top-3 rounded-lg px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+          style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
           {item.type === 'Returnable' ? 'Returnable' : 'Consumable'}
         </div>
-        <div className="badge absolute bottom-3 right-3 shadow-sm"
+        <div className="absolute bottom-3 right-3 rounded-xl px-2 py-1 text-[13px] font-bold shadow-sm"
           style={item.credits > 0
             ? { background: '#fff', color: TEAL, border: `1.5px solid color-mix(in oklch, ${TEAL} 20%, transparent)` }
             : { background: 'var(--color-green-light)', color: 'var(--color-green)' }}>
@@ -107,8 +123,8 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       {/* Body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
         {cat && (
-          <span className="badge badge-sm w-fit"
-            style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}>
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold"
+            style={{ background: '#f1f5f9', color: '#64748b' }}>
             <cat.Icon size={11} color={cat.iconColor} />
             {cat.label}
           </span>
@@ -133,8 +149,8 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
             return (
               <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
                 disabled={!enabled}
-                className="btn-primary w-full justify-center border-none"
-                style={{ background: enabled ? TEAL : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                className="h-10 w-full rounded-2xl border-none text-[13px] font-semibold sm:h-11"
+                style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
                 {item.type === 'Returnable' ? 'Borrow' : 'Add Purchase'}
               </button>
             )
@@ -144,26 +160,62 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
             return (
               <button onClick={e => { e.stopPropagation(); onAddCart(item) }}
                 disabled={!enabled}
-                className="btn-primary w-full justify-center border-none"
-                style={{ background: enabled ? TEAL : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                className="h-10 w-full rounded-2xl border-none text-[13px] font-semibold sm:h-11"
+                style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
                 {enabled ? (item.type === 'Returnable' ? 'Borrow' : 'Purchase') : 'Unavailable'}
               </button>
             )
           })()}
           {!staffMode && !user && onRequireAuth && (
             <button onClick={e => { e.stopPropagation(); onRequireAuth() }}
-              className="btn-secondary w-full justify-center border-dashed"
-              style={{ borderColor: `color-mix(in oklch, ${TEAL} 33%, transparent)`, background: `color-mix(in oklch, ${TEAL} 3%, transparent)`, color: TEAL }}>
+              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl text-[13px] font-semibold sm:h-11"
+              style={{ border: `1.5px dashed ${TEAL}55`, background: `${TEAL}08`, color: TEAL }}>
               <Lock size={12} />{item.type === 'Returnable' ? 'Join to Borrow' : 'Join to Purchase'}
             </button>
           )}
           {!staffMode && !user && !onRequireAuth && (
             <button onClick={e => { e.stopPropagation(); onView(item) }}
-              className="btn-secondary w-full justify-center"
-              style={{ background: 'var(--color-cream)', borderColor: 'var(--border)', color: 'var(--color-inv-muted)' }}>
+              className="h-10 w-full rounded-2xl text-[13px] font-semibold sm:h-11"
+              style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', color: '#475569' }}>
               View Details
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Compact Item Card — used for the student/guest browse grid at every
+// screen size (mobile through desktop), not just phones. Corners are
+// intentionally subtle (10px, not the 24px used on the staff ItemCard) —
+// tap the whole card to open details; no inline action button. Staff still
+// get the original ItemCard with a quick-add button, since counter sales
+// need that one-click flow. ──
+function CompactItemCard({ item, onView }) {
+  const cat = CATEGORIES.find(c => c.id === item.category)
+  const available = item.status === 'available' && item.stock > 0
+  const statusLabel = item.status === 'available' ? (available ? 'Available' : 'Unavailable') : item.status === 'borrowed' ? 'Borrowed' : 'Maintenance'
+  const statusColor = available ? { bg: '#dcfce7', fg: '#16a34a' } : { bg: '#e2e8f0', fg: '#64748b' }
+  const actionLabel = available ? (item.type === 'Returnable' ? 'Borrow' : 'Add Purchase') : 'Unavailable'
+  const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? '#2563eb' : '#16a34a')
+
+  return (
+    <div onClick={() => onView(item)}
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px]"
+      style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+      <div className="relative h-[118px] flex-shrink-0 sm:h-[150px] lg:h-[180px]">
+        <ItemImage item={item} cat={cat} size={34} className="h-full w-full" />
+        <span className="absolute right-2 top-2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: statusColor.bg, color: statusColor.fg }}>
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-0.5 p-2.5">
+        <p className="m-0 truncate text-[14px] font-bold" style={{ color: '#0f172a' }}>{item.name}</p>
+        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-1.5" style={{ borderColor: '#f1f5f9' }}>
+          <span className="whitespace-nowrap text-[13px] font-bold" style={{ color: TEAL }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
+          <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: actionColor }}>{actionLabel}</span>
         </div>
       </div>
     </div>
@@ -199,8 +251,12 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   const [query, setQuery] = useState('')
   const [dollarAmount, setDollarAmount] = useState('')
   const [showTopUp, setShowTopUp] = useState(false)
-  const [payMethod, setPayMethod] = useState('Cash')
   const [checkingOut, setCheckingOut] = useState(false)
+  // Every charge (top-up, membership, checkout) goes through one confirm
+  // step instead of firing straight from the panel — { type: 'topup' |
+  // 'membership' | 'checkout', amount? }. No cash/QR choice — every counter
+  // charge is just recorded as a credit-card-style charge, one confirm click.
+  const [confirmModal, setConfirmModal] = useState(null)
   // The context-level guard already blocks a second submit from firing a
   // second transaction — this just reflects that back in the button so
   // staff can see the click registered instead of mashing it again.
@@ -220,27 +276,17 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   const total = staffOrder.filter(o => o.item.type === 'Consumable').reduce((s, o) => s + o.item.credits * o.qty, 0)
   const creditsPreview = Math.round(Number(dollarAmount || 0) * CREDIT_RATE)
 
-  const confirmTopUp = () => {
-    const amt = Number(dollarAmount)
-    if (!amt || amt <= 0) return
-    onTopUp(amt, payMethod)
+  // Confirmed inside the modal below — this only closes it and fires the
+  // actual charge once staff click "Confirm Charge". No method to pass
+  // along anymore — every counter charge is just recorded the same way.
+  const runConfirmedCharge = () => {
+    if (confirmModal?.type === 'topup') onTopUp(confirmModal.amount, 'Cash')
+    if (confirmModal?.type === 'membership') onActivateMembership('Cash')
+    if (confirmModal?.type === 'checkout') handleCheckout()
+    setConfirmModal(null)
     setDollarAmount('')
     setShowTopUp(false)
   }
-
-  const PayMethodToggle = () => (
-    <div className="flex gap-1.5">
-      {['Cash', 'QR'].map(m => (
-        <button key={m} onClick={() => setPayMethod(m)}
-          className="flex-1 rounded-md py-1.5 text-xs font-semibold transition-colors"
-          style={m === payMethod
-            ? { background: T.accent, color: '#fff', border: 'none' }
-            : { background: '#fff', color: T.muted, border: `1px solid ${T.border}` }}>
-          {m === 'QR' ? 'QR / Bank' : 'Cash'}
-        </button>
-      ))}
-    </div>
-  )
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-5">
@@ -309,25 +355,21 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
           <PricingRateCard />
 
           {staffStudent.membership !== 'active' ? (
-            <div className="flex flex-col gap-2">
-              <PayMethodToggle />
-              <button onClick={() => onActivateMembership(payMethod)}
-                className="flex items-center justify-center gap-2 rounded-md border-none py-2.5 text-sm font-bold text-white"
-                style={{ background: T.red }}>
-                <BadgeCheck size={14} /> Activate Membership — ${MEMBERSHIP_PLAN.price} → +{MEMBERSHIP_PLAN.bonusCredits} cr
-              </button>
-            </div>
+            <button onClick={() => setConfirmModal({ type: 'membership' })}
+              className="flex items-center justify-center gap-2 rounded-md border-none py-2.5 text-[13px] font-bold text-white"
+              style={{ background: T.red }}>
+              <BadgeCheck size={14} /> Activate Membership — ${MEMBERSHIP_PLAN.price} → +{MEMBERSHIP_PLAN.bonusCredits} cr
+            </button>
           ) : (
             <button onClick={() => setShowTopUp(s => !s)}
               className="flex items-center justify-center gap-2 rounded-md border-none py-2.5 text-sm font-bold"
               style={{ background: T.amberLight, color: T.amber }}>
-              <CreditCard size={14} /> Top Up Credits (cash or QR)
+              <CreditCard size={14} /> Top Up Credits
             </button>
           )}
 
           {showTopUp && (
             <div className="flex flex-col gap-2 rounded-md p-3" style={{ background: T.cream }}>
-              <PayMethodToggle />
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-faint">$</span>
                 <input type="number" min="1" placeholder="Amount paid" value={dollarAmount} onChange={e => setDollarAmount(e.target.value)}
@@ -336,8 +378,9 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
               {dollarAmount > 0 && (
                 <p className="m-0 text-xs text-inv-muted">= <strong style={{ color: T.charcoal }}>{creditsPreview} credits</strong> at {CREDIT_RATE}cr/$1</p>
               )}
-              <button onClick={confirmTopUp} className="rounded-md border-none py-2 text-sm font-bold text-white" style={{ background: T.green }}>
-                Charge ${dollarAmount || 0} via {payMethod} → +{creditsPreview} cr
+              <button onClick={() => { const amt = Number(dollarAmount); if (amt > 0) setConfirmModal({ type: 'topup', amount: amt }) }}
+                className="rounded-md border-none py-2 text-[13px] font-bold text-white" style={{ background: T.green }}>
+                Continue — ${dollarAmount || 0} → +{creditsPreview} cr
               </button>
             </div>
           )}
@@ -413,7 +456,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
                       )}
                     </div>
 
-                    <button onClick={handleCheckout} disabled={checkingOut}
+                    <button onClick={() => setConfirmModal({ type: 'checkout' })} disabled={checkingOut}
                       className="flex items-center justify-center gap-2 rounded-xl border-none py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" style={{ background: T.charcoal }}>
                       <CheckCircle2 size={15} /> {checkingOut ? 'Processing…' : 'Complete Sale'}
                     </button>
@@ -423,6 +466,41 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
             )
           })()}
         </>
+      )}
+
+      {/* One confirm step for every charge — top-up, membership, or checkout.
+          Cash/QR is chosen here (not as a separate step beforehand) for the
+          two that need a payment method. */}
+      {confirmModal && (
+        <div onClick={() => setConfirmModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: '1.75rem', width: 360 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: T.charcoal }}>
+              {confirmModal.type === 'topup' ? 'Confirm top-up' : confirmModal.type === 'membership' ? 'Confirm membership activation' : 'Confirm sale'}
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: T.muted }}>For {staffStudent?.name}</p>
+
+            {confirmModal.type === 'topup' && (
+              <p style={{ margin: '0 0 14px', fontSize: 14, color: T.charcoal }}>
+                Charge <strong>${confirmModal.amount}</strong> → <strong>+{Math.round(confirmModal.amount * CREDIT_RATE)} credits</strong>
+              </p>
+            )}
+            {confirmModal.type === 'membership' && (
+              <p style={{ margin: '0 0 14px', fontSize: 14, color: T.charcoal }}>
+                Charge <strong>${MEMBERSHIP_PLAN.price}</strong> → <strong>+{MEMBERSHIP_PLAN.bonusCredits} bonus credits</strong>
+              </p>
+            )}
+            {confirmModal.type === 'checkout' && (
+              <p style={{ margin: '0 0 14px', fontSize: 14, color: T.charcoal }}>
+                {staffOrder.length} item{staffOrder.length === 1 ? '' : 's'} — {total} cr purchase total
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button onClick={() => setConfirmModal(null)} style={{ flex: 1, padding: '10px 0', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={runConfirmedCharge} style={{ flex: 1, padding: '10px 0', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Confirm Charge</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -616,14 +694,24 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
 
           <p className="m-0 mb-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{filtered.length} items</p>
 
-          {/* Fixed column counts so cards stay equal-sized even with 1–2 results */}
-          {/* 3 compact cards per row on desktop, 2 on tablet — both sides. */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-            {visible.map(item => (
-              <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
-                staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
-            ))}
-          </div>
+          {isStaff ? (
+            /* Staff keep the original card + quick-add button at every size — counter
+               sales need that one-click flow, so this isn't part of the restyle below. */
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7">
+              {visible.map(item => (
+                <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
+                  staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
+              ))}
+            </div>
+          ) : (
+            /* Student/guest — same compact card at every screen size, 2 columns on
+               phones up to 4 on desktop. */
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+              {visible.map(item => (
+                <CompactItemCard key={item.id} item={item} onView={setSelected} />
+              ))}
+            </div>
+          )}
 
           {/* See More — reveals the next batch of items */}
           {filtered.length > visibleCount && (
@@ -657,7 +745,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         return (
           <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: hasLong ? 780 : 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
+              style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: hasLong ? 780 : 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
 
               {/* Mobile: image stacked ON TOP of the info. sm+: two columns when there's long content. */}
               <div className={`grid grid-cols-1 ${hasLong ? 'sm:grid-cols-[minmax(200px,40%)_1fr]' : ''}`} style={{ minHeight: 0 }}>
@@ -665,29 +753,24 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 {/* Image panel */}
                 <div className="relative h-40 sm:h-auto" style={{ minHeight: 160 }}>
                   <ItemImage item={selected} cat={cat} size={60}
-                    className={`h-full w-full rounded-t-[20px] ${hasLong ? 'sm:rounded-tr-none sm:rounded-l-[20px]' : ''}`} />
-                  {/* Status + type badges */}
-                  <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    className={`h-full w-full rounded-t-[24px] ${hasLong ? 'sm:rounded-tr-none sm:rounded-l-[24px]' : ''}`} />
+                  {/* Status badge */}
+                  <div style={{ position: 'absolute', top: 12, left: 12 }}>
                     <Badge status={selected.status} small />
-                    <span className="badge badge-sm" style={{ background: selected.type === 'Returnable' ? 'var(--color-inv-accent-light)' : 'var(--color-green-light)', color: selected.type === 'Returnable' ? 'var(--color-inv-accent)' : 'var(--color-green)' }}>
-                      {selected.type === 'Returnable' ? 'Borrowable' : 'Purchasable'}
-                    </span>
                   </div>
+                  {/* Close — overlaid on the image, top-right */}
+                  <button onClick={() => setSelected(null)}
+                    style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
+                    <X size={14} color="#0f172a" />
+                  </button>
                   {/* Credit chip */}
-                  <div className="badge" style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(255,255,255,0.95)', color: 'var(--color-inv-accent)', border: '1.5px solid color-mix(in oklch, var(--color-inv-accent) 30%, transparent)', backdropFilter: 'blur(4px)' }}>
+                  <div style={{ position: 'absolute', bottom: 12, right: 12, padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 800, background: 'rgba(255,255,255,0.95)', color: 'var(--color-inv-accent)', border: 'none', backdropFilter: 'blur(4px)' }}>
                     {selected.credits > 0 ? `${selected.credits} cr` : 'Free'}
                   </div>
                 </div>
 
                 {/* Info */}
                 <div className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-6" style={{ minHeight: 0 }}>
-                  {/* Close */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>
-                    <button onClick={() => setSelected(null)} style={{ background: 'var(--color-cream)', border: '1.5px solid var(--border)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <X size={14} color="var(--muted-foreground)" />
-                    </button>
-                  </div>
-
                   {/* Title */}
                   <div>
                     {cat && (
@@ -705,23 +788,25 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-inv-muted)', lineHeight: 1.65 }}>{selected.description}</p>
                   )}
 
-                  {/* Stats grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                  {/* Stats grid — fixed minHeight + truncated values so a long
+                      zone name (e.g. "Robotic Lab 2024") never grows its box
+                      taller than the other two and breaks the equal-size row. */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, alignItems: 'stretch' }}>
                     {[
                       ['Stock', selected.stock],
                       ['Room',  selected.room],
                       ['Zone',  selected.zone],
                     ].map(([k, v]) => (
-                      <div key={k} style={{ background: 'var(--color-cream)', borderRadius: 10, padding: '10px 12px', border: '1.5px solid var(--border)' }}>
+                      <div key={k} style={{ background: 'var(--color-cream)', borderRadius: 12, padding: '10px 12px', border: '1.5px solid var(--border)', minHeight: 56, boxSizing: 'border-box' }}>
                         <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{k}</p>
-                        <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--color-charcoal)' }}>{String(v)}</p>
+                        <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--color-charcoal)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={String(v)}>{String(v)}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* Usage note */}
                   {selected.usage && (
-                    <div style={{ background: 'var(--color-inv-accent-light)', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 10, border: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)' }}>
+                    <div style={{ background: 'var(--color-inv-accent-light)', borderRadius: 12, padding: '10px 14px', display: 'flex', gap: 10, border: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)' }}>
                       <Info size={13} color="var(--color-inv-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
                       <p style={{ margin: 0, fontSize: 12, color: 'var(--color-inv-accent-text)', lineHeight: 1.55 }}>{selected.usage}</p>
                     </div>
@@ -740,14 +825,14 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                       const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0
                       return (
                         <button onClick={() => { addToStaffOrder(selected); setSelected(null) }} disabled={!enabled}
-                          className="w-full py-2.5 text-sm sm:py-3 sm:text-sm"
-                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 12, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                          className="w-full py-2.5 text-[13px] sm:py-3 sm:text-sm"
+                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 14, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
                           {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : `Not Available`}
                         </button>
                       )
                     })()}
                     {!isStaff && user?.role === 'user' && (() => {
-                      const enabled = selected.status === 'available'
+                      const enabled = selected.status === 'available' && selected.stock > 0
                       const isBorrow = selected.type === 'Returnable'
                       return (
                         <button onClick={() => { handleAddCart(selected); setSelected(null) }} disabled={!enabled}
@@ -773,18 +858,18 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         const minDue = fmt(new Date(today.getTime() + 86400000)) // tomorrow — can't return same day
         return (
           <div className="fixed inset-0 z-[850] flex items-center justify-center bg-charcoal/40 p-4" onClick={() => setConfirmBorrow(null)}>
-            <div onClick={e => e.stopPropagation()} className="w-full max-w-[380px] rounded-2xl bg-white p-6">
+            <div onClick={e => e.stopPropagation()} className="w-full max-w-[380px] rounded-3xl bg-white p-6">
               <h3 className="m-0 mb-1 flex items-center gap-2 font-heading text-base font-bold text-charcoal">
                 <Calendar size={16} style={{ color: 'var(--color-inv-accent)' }} /> Confirm Borrow
               </h3>
               <p className="m-0 mb-4 text-xs text-faint">{confirmBorrow.name}</p>
               <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg p-3" style={{ background: T.cream }}>
-                  <p className="m-0 text-xs uppercase tracking-wide text-faint">Borrow Date</p>
+                <div className="rounded-xl p-3" style={{ background: T.cream }}>
+                  <p className="m-0 text-[10px] uppercase tracking-wide text-faint">Borrow Date</p>
                   <p className="m-0 mt-1 text-sm font-bold text-charcoal">{fmt(today)}</p>
                 </div>
-                <div className="rounded-lg p-3" style={{ background: T.cream }}>
-                  <p className="m-0 mb-1 text-xs uppercase tracking-wide text-faint">Return Date</p>
+                <div className="rounded-xl p-3" style={{ background: T.cream }}>
+                  <p className="m-0 mb-1 text-[10px] uppercase tracking-wide text-faint">Return Date</p>
                   <input type="date" min={minDue} value={borrowDueDate || fmt(defaultDue)}
                     onChange={e => setBorrowDueDate(e.target.value)}
                     className="w-full rounded-md border-none bg-transparent p-0 text-sm font-bold text-charcoal outline-none" />
@@ -801,7 +886,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               </div>
 
               {/* Late-return rule — the student agrees to this before confirming */}
-              <div className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2.5" style={{ background: 'var(--color-amber-light)', border: '1px solid color-mix(in oklch, var(--color-amber) 40%, transparent)' }}>
+              <div className="mb-4 flex items-start gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-amber-light)', border: '1px solid color-mix(in oklch, var(--color-amber) 40%, transparent)' }}>
                 <AlertTriangle size={13} style={{ color: 'var(--color-amber)', flexShrink: 0, marginTop: 1 }} />
                 <p className="m-0 text-xs leading-snug" style={{ color: 'color-mix(in oklch, var(--color-amber) 70%, black)' }}>
                   Late returns are charged <strong>{OVERDUE_RATE} credits per day</strong> after your chosen return date.

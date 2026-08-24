@@ -22,9 +22,11 @@ router.use("/locations", createCrudRouter("location_items", { pkColumn: "locatio
 // Item photo upload — staff only, multipart field "image", returns { url }.
 router.post("/items/upload-image", requireAuth, STAFF, upload.single("image"), ctrl.uploadItemImage);
 
-// Maintenance — report damage / mark repaired (staff).
+// Maintenance — report damage / mark repaired (staff), and the open-issue
+// list Manage Stock reads to show each item's reported problem.
 router.post("/items/:id/report-maintenance", requireAuth, STAFF, ctrl.reportMaintenance);
 router.post("/items/:id/maintenance-complete", requireAuth, STAFF, ctrl.completeMaintenance);
+router.get("/maintenance-open", requireAuth, STAFF, ctrl.listOpenMaintenance);
 
 // Borrows — students see their own, staff see all.
 router.get("/borrows", requireAuth, ctrl.listBorrows);
@@ -35,7 +37,9 @@ router.post("/borrows/deduct-credits", requireAuth, STAFF, ctrl.deductCredits);
 router.get("/requests", requireAuth, ctrl.listRequests);
 router.post("/requests", requireAuth, ctrl.createRequest);
 router.post("/requests/approve-borrow", requireAuth, STAFF, ctrl.approveBorrowGroup);
+router.post("/requests/approve-purchase", requireAuth, STAFF, ctrl.approvePurchaseGroup);
 router.post("/requests/deny", requireAuth, STAFF, ctrl.denyRequestGroup);
+router.post("/requests/delete", requireAuth, STAFF, ctrl.deleteRequestGroup);
 router.post("/requests/:id/approve-topup", requireAuth, STAFF, ctrl.approveTopUp);
 router.post("/requests/:id/approve-printing", requireAuth, STAFF, ctrl.approvePrinting);
 router.post("/requests/:id/confirm-3d-weight", requireAuth, STAFF, ctrl.confirm3DWeight);

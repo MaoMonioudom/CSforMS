@@ -38,8 +38,8 @@ const FOLDERS = [
       {
         group: "Operation",
         items: [
-          { label: "Browse Items", to: "/admin/inventory/catalog",  icon: Compass },
-          { label: "Lab Services", to: "/admin/inventory/services", icon: Printer },
+          { label: "Inventory Operations", to: "/admin/inventory/catalog",  icon: Compass },
+          { label: "Services Operations", to: "/admin/inventory/services", icon: Printer },
         ],
       },
       {
@@ -143,7 +143,7 @@ export function AdminSidebar({ width = 224 }) {
 
       {/* Nav — one folder per module, plus a flat "General" list for
           cross-module items (Users, Workspace) below the folders. */}
-      <nav className="flex-1 p-3 overflow-y-auto">
+      <nav className="inv-hscroll flex-1 p-3 overflow-y-auto">
         <SectionLabel>Modules</SectionLabel>
         <div className="space-y-1">
           {FOLDERS.map((folder) => {

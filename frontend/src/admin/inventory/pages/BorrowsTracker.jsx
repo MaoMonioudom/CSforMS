@@ -8,6 +8,7 @@ import { T } from '../../../lib/inventory/theme'
 import { OVERDUE_RATE, CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
 import { fmtDateTime } from '../../../lib/inventory/datetime'
+import OverdueReminderPreview from './OverdueReminderPreview'
 
 const DAY = 86400000
 const today = () => new Date().toISOString().split('T')[0]
@@ -261,6 +262,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
 
   return (
     <div className="p-4 sm:p-8">
+      <OverdueReminderPreview />
       <style>{`
         .bt-row { transition: background .12s; cursor: pointer; }
         .bt-row:hover { background: ${T.cream}; }

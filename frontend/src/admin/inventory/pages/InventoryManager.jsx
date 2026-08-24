@@ -53,10 +53,13 @@ export default function InventoryManager({ items, user, filaments = [] }) {
     }
   }
 
-  // "Low Stock" is derived (stock at/below minimum) rather than a stored status.
+  // "Low Stock" and "Unavailable" are both derived from stock, not a stored
+  // status — Unavailable means "out of stock" here, since that's what makes
+  // an item genuinely unavailable to borrow or purchase.
   const matchesStatus = (i) => {
     if (statusTab === 'All') return true
     if (statusTab === 'Low Stock') return isLowStock(i.stock)
+    if (statusTab === 'Unavailable') return isOutOfStock(i.stock)
     return i.status === statusTab.toLowerCase()
   }
 
@@ -65,6 +68,12 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   const visibleItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const save = async () => {
+    // Consumables are sold for credits — a free/0-credit "purchase" makes no
+    // sense, so this is enforced here rather than trusting the input.
+    if (form.type === 'Consumable' && (!form.credits || form.credits <= 0)) {
+      ctx.showToast?.('Consumable items need a credit cost greater than 0.', 'error')
+      return
+    }
     try {
       await ctx.saveItem(editing ? { ...form, id: editing } : form)
       setModal(false)
@@ -332,7 +341,12 @@ export default function InventoryManager({ items, user, filaments = [] }) {
               </div>
               <div>
                 <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Type</label>
-                <select value={form.type} onChange={e => setF('type', e.target.value)} style={inp}>
+                <select value={form.type} onChange={e => {
+                  const type = e.target.value
+                  // Consumables must be priced — default to 50cr so switching
+                  // to Consumable never leaves a 0-credit "Free" purchase.
+                  setForm(f => ({ ...f, type, credits: type === 'Consumable' && !f.credits ? 50 : f.credits }))
+                }} style={inp}>
                   <option>Returnable</option><option>Consumable</option>
                 </select>
               </div>

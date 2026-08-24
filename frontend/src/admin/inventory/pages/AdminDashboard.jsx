@@ -24,15 +24,29 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
   const lowStock   = items.filter(i => isLowStock(i.stock))
 
   const rangedBorrows = borrows.filter(b => inRange(b.date, range))
+  // Approved purchases never create a borrow_transactions row (see
+  // approvePurchaseGroup) — they only exist as a paid "Item Purchase"
+  // invoice. So purchase activity has to come from `payments`, not `borrows`.
+  //
+  // Use `dateTime` (the full timestamp), not `date` (already truncated to a
+  // UTC calendar date server-side) — CADT is UTC+7, so anything purchased
+  // in the early-morning local hours has a UTC date that's still "yesterday",
+  // and slicing to date-only before converting to local time bakes that
+  // wrong day in permanently. Building the Date from the full timestamp lets
+  // getDay()/getFullYear() etc. convert to local time correctly.
+  const rangedPurchasePayments = payments.filter(p => p.type === 'Item Purchase' && p.status === 'Completed' && inRange(p.dateTime || p.date, range))
 
-  // Weekly activity — borrows vs purchases grouped by weekday, built from real borrow records
-  // within the selected date range.
+  // Weekly activity — borrows vs purchases grouped by weekday.
   const weekly = WEEKDAYS.map(label => ({ label, a: 0, b: 0 }))
   rangedBorrows.forEach(b => {
     const day = new Date(b.date).getDay()
     if (Number.isNaN(day)) return
-    if (b.action === 'purchased') weekly[day].b += 1
-    else weekly[day].a += 1
+    weekly[day].a += 1
+  })
+  rangedPurchasePayments.forEach(p => {
+    const day = new Date(p.dateTime || p.date).getDay()
+    if (Number.isNaN(day)) return
+    weekly[day].b += 1
   })
 
   const catData = CATEGORIES.map(c => ({ label: c.label, value: items.filter(i => i.category === c.id).length, color: c.iconColor }))
@@ -67,7 +81,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
             <h3 className="m-0 text-lg font-semibold text-charcoal">Weekly Activity</h3>
             <DateRangeFilter value={range} onChange={setRange} />
           </div>
-          <BarChart data={weekly} seriesA="Borrowed" seriesB="Purchased" colorA={T.blue} colorB={T.green} />
+          <BarChart data={weekly} seriesA="Borrowed" seriesB="Purchased" colorA={T.blue} colorB={T.green} height={420} />
         </div>
 
         {/* Inventory by category — donut */}
@@ -92,6 +106,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
           <div className="border-b border-stone px-4 py-3.5 sm:px-6">
             <h3 className="m-0 text-lg font-semibold text-charcoal">Top Borrowed Items</h3>
           </div>
+          <div className="inv-hscroll" style={{ maxHeight: 340, overflowY: 'auto' }}>
           {topItems.map(item => {
             const cat = CATEGORIES.find(c => c.id === item.category)
             const isOpen = expanded === item.id
@@ -124,6 +139,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
               </div>
             )
           })}
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -133,31 +149,43 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
               <AlertTriangle size={15} color={T.amber} /> Low Stock
             </h3>
             {lowStock.length === 0 ? (
-              <p className="text-sm text-faint">All items well-stocked.</p>
-            ) : lowStock.map(item => (
-              <div key={item.id} className="flex items-center justify-between border-b border-stone py-1.5 last:border-b-0">
-                <span className="text-sm text-ink">{item.name}</span>
-                <span className="text-xs font-bold text-red">{item.stock} left</span>
+              <p className="text-[13px] text-faint">All items well-stocked.</p>
+            ) : (
+              <div className="inv-hscroll" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                {lowStock.map(item => (
+                  <div key={item.id} className="flex items-center justify-between border-b border-stone py-1.5 last:border-b-0">
+                    <span className="text-[13px] text-ink">{item.name}</span>
+                    <span className="text-xs font-bold text-red">{item.stock} left</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
 
-          {/* Recent activity */}
+          {/* Recent activity — borrows come from `borrows`, but purchases only
+              ever exist as a paid invoice (see rangedPurchasePayments above),
+              so both have to be merged here for purchases to show up at all. */}
           <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-            <h3 className="m-0 mb-3 text-lg font-semibold text-charcoal">Recent Activity</h3>
-            {rangedBorrows.slice(-3).reverse().map(b => {
-              const actItem = items.find(i => i.id === b.itemId)
-              const actCat = actItem && CATEGORIES.find(c => c.id === actItem.category)
-              return (
-                <div key={b.id} className="mb-2.5 flex items-start gap-2.5 last:mb-0">
-                  <ItemThumb item={actItem} cat={actCat} size={28} iconSize={13} />
-                  <div className="min-w-0">
-                    <p className="m-0 truncate text-sm font-medium text-ink">{b.itemName}</p>
-                    <p className="m-0 text-xs text-faint">{b.action} · {fmtDateTime(b.date)}</p>
+            <h3 className="m-0 mb-3 text-[15px] font-semibold text-charcoal">Recent Activity</h3>
+            {[
+              ...rangedBorrows.map(b => ({ key: `b-${b.id}`, name: b.itemName, itemId: b.itemId, action: b.action, date: b.date })),
+              ...rangedPurchasePayments.map(p => ({ key: `p-${p.id}`, name: p.itemName || 'Purchase', itemId: null, action: 'purchased', date: p.dateTime || p.date })),
+            ]
+              .sort((a, b) => new Date(a.date) - new Date(b.date))
+              .slice(-3).reverse()
+              .map(a => {
+                const actItem = a.itemId != null ? items.find(i => i.id === a.itemId) : null
+                const actCat = actItem && CATEGORIES.find(c => c.id === actItem.category)
+                return (
+                  <div key={a.key} className="mb-2.5 flex items-start gap-2.5 last:mb-0">
+                    <ItemThumb item={actItem} cat={actCat} size={28} iconSize={13} />
+                    <div className="min-w-0">
+                      <p className="m-0 truncate text-[13px] font-medium text-ink">{a.name}</p>
+                      <p className="m-0 text-xs text-faint">{a.action} · {fmtDateTime(a.date)}</p>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         </div>
       </div>
@@ -233,22 +261,41 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
   const paymentEntries = payments
     .filter(p => CREDIT_PAYMENT_TYPES.includes(p.type))
     .map(p => ({
-      key: `pay-${p.id}`, userId: null, studentName: p.customerName, studentId: p.customerId, date: p.date,
+      key: `pay-${p.id}`, userId: null, studentName: p.customerName, studentId: p.customerId, date: p.dateTime || p.date,
       type: 'Credit', status: p.status === 'Completed' ? 'pay_completed' : 'pay_pending',
       items: [{ name: p.type, category: 'Credit Service', qty: 1, unit: p.amount, total: p.amount, currency: p.currency === 'USD' ? '$' : 'cr' }],
     }))
 
-  // ── Pending / approved requests not yet turned into a borrow or payment ──
-  const openRequests = requests.filter(r => r.status === 'pending' || r.status === 'awaiting_weight' || r.status === 'approved')
+  // ── Item purchases — approving a purchase request never creates a
+  // borrow_transactions row (it only charges credits + creates this paid
+  // invoice), so completed purchases only exist here, not in `borrows`.
+  const purchasePaymentEntries = payments
+    .filter(p => p.type === 'Item Purchase')
+    .map(p => ({
+      key: `buy-${p.id}`, userId: null, studentName: p.customerName, studentId: p.customerId, date: p.dateTime || p.date,
+      type: 'Purchase', status: p.status === 'Completed' ? 'pay_completed' : 'pay_pending',
+      items: (p.items || []).map(it => ({
+        name: it.inventory_items?.item_name || '—', category: null, qty: it.quantity || 1,
+        unit: it.unit_price ?? 0, total: it.subtotal ?? 0, currency: 'cr',
+      })),
+    }))
+
+  // ── Requests still awaiting a decision ── once approved, every request
+  // type already has its own authoritative record elsewhere (borrow
+  // requests → borrow_transactions, everything else → a paid invoice), so
+  // including 'approved' here would double-count it alongside that record.
+  const openRequests = requests.filter(r => r.status === 'pending' || r.status === 'awaiting_weight')
+  // Borrow AND purchase requests both come in as multi-item carts sharing an
+  // orderId — group both the same way so a 3-item cart shows as one row.
   const reqGroups = []
   const reqSeen = new Map()
   const reqOthers = []
   openRequests.forEach(r => {
-    if (r.type === 'borrow') {
-      const key = r.orderId || `single-${r.id}`
+    if (r.type === 'borrow' || r.type === 'purchase') {
+      const key = `${r.type}-${r.orderId || `single-${r.id}`}`
       if (reqSeen.has(key)) { reqGroups[reqSeen.get(key)].group.push(r); return }
       reqSeen.set(key, reqGroups.length)
-      reqGroups.push({ key: `req-${key}`, group: [r] })
+      reqGroups.push({ key: `req-${key}`, kind: r.type, group: [r] })
     } else {
       reqOthers.push(r)
     }
@@ -261,22 +308,27 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
   }
   const requestEntries = [
     ...reqGroups.map(g => ({
-      key: g.key, userId: g.group[0].userId, date: g.group[0].date, type: 'Borrow',
-      status: g.group[0].status === 'approved' ? 'approved' : 'pending',
-      // Same rule as approved borrows — a Borrow item isn't charged, so 0/0.
-      items: g.group.map(r => ({ name: r.itemName, category: getCategory(r.itemId), qty: r.qty || 1, unit: 0, total: 0, currency: 'cr' })),
+      key: g.key, userId: g.group[0].userId, date: g.group[0].date, type: g.kind === 'purchase' ? 'Purchase' : 'Borrow',
+      status: 'pending',
+      // A pending Borrow isn't charged (0/0) — a pending Purchase is priced
+      // at the item's credit cost, same as it'll be charged on approval.
+      items: g.group.map(r => {
+        const qty = r.qty || 1
+        const unit = g.kind === 'purchase' ? (getProduct(r.itemId)?.credits ?? 0) : 0
+        return { name: r.itemName, category: getCategory(r.itemId), qty, unit, total: unit * qty, currency: 'cr' }
+      }),
     })),
     ...reqOthers.map(r => {
       const v = requestValue(r)
       return {
         key: `req-${r.id}`, userId: r.userId, date: r.date, type: 'Credit',
-        status: r.status === 'approved' ? 'approved' : 'pending',
+        status: 'pending',
         items: [{ name: requestLabel(r), category: 'Credit Service', qty: 1, unit: v.unit, total: v.unit, currency: v.currency }],
       }
     }),
   ]
 
-  const allEntries = [...borrowEntries, ...paymentEntries, ...requestEntries]
+  const allEntries = [...borrowEntries, ...paymentEntries, ...purchasePaymentEntries, ...requestEntries]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const filtered = typeTab === 'All' ? allEntries : allEntries.filter(e => e.type === typeTab)
