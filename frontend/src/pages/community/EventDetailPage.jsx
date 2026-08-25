@@ -150,7 +150,7 @@ export default function EventDetailPage() {
               </button>
             )}
 
-            <div className="group relative aspect-[2/1] min-w-0 flex-1 overflow-hidden bg-muted">
+            <div className="group relative aspect-2/1 min-w-0 flex-1 overflow-hidden bg-muted">
               <button
                 type="button"
                 onClick={() => setLightboxIndex(coverIndex)}
@@ -198,7 +198,7 @@ export default function EventDetailPage() {
                   key={src + i}
                   type="button"
                   onClick={() => setLightboxIndex(i)}
-                  className="aspect-[2/1] w-full flex-none snap-center overflow-hidden bg-muted"
+                  className="aspect-2/1 w-full flex-none snap-center overflow-hidden bg-muted"
                 >
                   <img src={src} alt={`${event.title} — image ${i + 1}`} className="h-full w-full object-contain" />
                 </button>

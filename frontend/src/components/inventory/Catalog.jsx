@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar, MapPin } from 'lucide-react'
 import Badge from './ui/Badge'
-import PageBreadcrumb from './layout/PageBreadcrumb'
 import { Breadcrumb } from '../Breadcrumb'
 import { T } from '../../lib/inventory/theme'
 import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE, isLowStock, isOutOfStock } from '../../lib/inventory/data'
@@ -645,7 +644,6 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               { label: 'Inventory', to: '/inventory' },
               { label: 'Browse' },
             ]} />
-            {user && <PageBreadcrumb current="/catalog" />}
             <h1 style={{ margin: 0, fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Browse Equipment
             </h1>

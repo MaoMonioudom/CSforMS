@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { T as THEME } from '../../lib/inventory/theme'
 import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inventory/data'
-import PageBreadcrumb from '../../components/inventory/layout/PageBreadcrumb'
+import { Breadcrumb } from '../../components/Breadcrumb'
 import CreditInfoModal from '../../components/inventory/ui/CreditInfoModal'
 import { useAuth } from '../../hub/AuthContext'
 import { useInventory } from '../../lib/inventory/InventoryContext'
@@ -107,7 +107,10 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
 
             {/* Left */}
             <div>
-              <PageBreadcrumb current="/home" />
+              <Breadcrumb className="mb-3" light items={[
+                { label: 'Home', to: '/' },
+                { label: 'Inventory' },
+              ]} />
               <h1 className="font-display leading-[1.1] tracking-tight" style={{ fontSize: 'clamp(30px,5vw,58px)', margin: '8px 0 0', color: '#fff' }}>
                 Welcome back,<br />
                 <span style={{ color: CYAN }}>{user.name.split(' ')[0]}.</span>

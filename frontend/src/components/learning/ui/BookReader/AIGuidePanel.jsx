@@ -17,7 +17,7 @@ const CANNED_REPLIES = [
 export default function AIGuidePanel({ lessonTitle, agentUrl }) {
   if (agentUrl?.trim()) {
     return (
-      <div className="mx-auto mt-5 max-w-[1000px] rounded-[10px] border border-community-gold/20 bg-navy px-[18px] py-4">
+      <div className="mx-auto mt-5 max-w-250 rounded-[10px] border border-community-gold/20 bg-navy px-4.5 py-4">
         <div className="mb-2.5 flex items-center justify-between">
           <span className="text-xs font-semibold text-community-gold">🤖 AI Guide</span>
           <a
@@ -32,7 +32,7 @@ export default function AIGuidePanel({ lessonTitle, agentUrl }) {
         <iframe
           src={agentUrl}
           title={`AI guide for ${lessonTitle}`}
-          className="h-[420px] w-full rounded-md border border-white/10 bg-white"
+          className="h-105 w-full rounded-md border border-white/10 bg-white"
           allow="clipboard-write"
         />
       </div>
@@ -62,18 +62,18 @@ function DemoGuidePanel({ lessonTitle }) {
   };
 
   return (
-    <div className="mx-auto mt-5 max-w-[1000px] rounded-[10px] border border-community-gold/20 bg-navy px-[18px] py-4">
+    <div className="mx-auto mt-5 max-w-250 rounded-[10px] border border-community-gold/20 bg-navy px-4.5 py-4">
       <div className="mb-2.5 flex items-center justify-between">
         <span className="text-xs font-semibold text-community-gold">🤖 AI Guide</span>
         <span className="text-xs text-parchment/35">demo — canned responses</span>
       </div>
 
-      <div className="mb-3 flex max-h-[220px] flex-col gap-2 overflow-y-auto">
+      <div className="mb-3 flex max-h-55 flex-col gap-2 overflow-y-auto">
         {messages.map((m, i) => (
           <div
             key={i}
             className={`max-w-[80%] rounded-lg px-3 py-2 text-sm leading-normal text-parchment/90 ${
-              m.from === "ai" ? "self-start bg-community-gold/[0.12]" : "self-end bg-white/[0.08]"
+              m.from === "ai" ? "self-start bg-community-gold/12" : "self-end bg-white/8"
             }`}
           >
             {m.text}
@@ -90,7 +90,7 @@ function DemoGuidePanel({ lessonTitle }) {
         />
         <button
           type="submit"
-          className="cursor-pointer rounded-[8px] border-none bg-community-gold px-4 py-2.5 text-sm font-semibold text-navy-deep transition-colors duration-150 hover:bg-community-gold-light"
+          className="cursor-pointer rounded-xl border-none bg-community-gold px-4 py-2.5 text-sm font-semibold text-navy-deep transition-colors duration-150 hover:bg-community-gold-light"
         >
           Send
         </button>
