@@ -60,6 +60,9 @@ export async function listMyBookings(req, res, next) {
       .from("workspace_bookings")
       .select(`*, workspace:workspaces(${WORKSPACE_COLS})`)
       .eq("user_id", req.user.user_id)
+      // Self-cancelled requests have no reason to reappear in "My Requests"
+      // — STATUS_STYLE on the frontend only knows pending/approved/rejected.
+      .neq("status", "cancelled")
       .order("created_at", { ascending: false });
     if (error) throw error;
     res.json({ data: data.map(normalizeRow) });

@@ -26,7 +26,10 @@ export default function AIGuidePanel({ lessonTitle, agentUrl }) {
             rel="noreferrer"
             className="text-xs text-parchment/50 underline-offset-2 hover:text-community-gold hover:underline"
           >
-            open in new tab ↗
+            Start chatting
+            <span className="transition-transform duration-150 group-hover:translate-x-0.5">
+              ↗
+            </span>
           </a>
         </div>
         <iframe
