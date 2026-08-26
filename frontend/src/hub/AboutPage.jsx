@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight, MessageSquare, BookOpen, Package,
   Compass, Target, ShieldCheck, Wrench, Users, MessageCircle,
-  MapPin, Mail, Clock, ChevronDown,
+  MapPin, Mail, Clock, ChevronDown, GraduationCap, Zap, Box, FlaskConical,
 } from "lucide-react";
 import { HubNav } from "./HubNav";
 import { CurtainWallDecoration } from "./LandingPage";
@@ -12,19 +12,11 @@ import { HUB as T, HUB_GRADIENT as GRADIENT, SKY_TOP, SKY_BOT } from "./hubTheme
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function SectionLabel({ number, children }) {
+// The section's own name as its header — no number badge, no separate
+// filler tagline underneath (e.g. no "Why this exists." below "Vision & Mission").
+function SectionLabel({ children }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <span
-        className="text-[10px] font-black tracking-[0.22em] uppercase px-2.5 py-1 rounded font-mono"
-        style={{ background: GRADIENT, color: "white" }}
-      >
-        {number}
-      </span>
-      <span className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-        {children}
-      </span>
-    </div>
+    <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>{children}</h2>
   );
 }
 
@@ -34,37 +26,6 @@ function Divider() {
       <div className="flex-1 h-px" style={{ background: T.border }} />
       <div className="w-1.5 h-1.5 rounded-full" style={{ background: T.faint }} />
       <div className="flex-1 h-px" style={{ background: T.border }} />
-    </div>
-  );
-}
-
-// ── Ruled "notebook paper" card — used for Guidelines ─────────────────────────
-const RULE_H = 28;
-
-function RuledCard({ icon: Icon, title, body, accent = T.accent }) {
-  return (
-    <div
-      className="relative rounded-2xl overflow-hidden"
-      style={{
-        background: "#fffdf7",
-        border: `1px solid ${T.border}`,
-        boxShadow: T.shadow,
-        backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${RULE_H - 1}px, rgba(37,99,235,0.35) ${RULE_H - 1}px, rgba(37,99,235,0.35) ${RULE_H}px)`,
-        backgroundPosition: "0 14px",
-      }}
-    >
-      <div className="absolute inset-y-0" style={{ left: 34, width: 1.5, background: `color-mix(in oklch, ${accent} 40%, transparent)` }} />
-      <div className="absolute rounded-full" style={{ left: 13, top: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
-      <div className="absolute rounded-full" style={{ left: 13, bottom: 44, width: 7, height: 7, background: "rgba(15,50,80,0.10)", boxShadow: "inset 0 1px 1px rgba(0,0,0,0.15)" }} />
-
-      <div className="relative p-6 pl-12">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-          style={{ background: `color-mix(in oklch, ${accent} 8%, transparent)`, border: `1px solid color-mix(in oklch, ${accent} 16%, transparent)` }}>
-          <Icon size={18} style={{ color: accent }} />
-        </div>
-        <h4 className="font-bold mb-2" style={{ color: T.text }}>{title}</h4>
-        <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{body}</p>
-      </div>
     </div>
   );
 }
@@ -95,6 +56,13 @@ function FaqItem({ q, a, open, onToggle }) {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
+const PROGRAMS = [
+  { icon: GraduationCap, title: "Programs & Workshops",     body: "Hands-on sessions fostering creativity and skill development." },
+  { icon: Zap,            title: "Hackathons",               body: "Collaborative events designed to innovate and solve problems." },
+  { icon: Box,             title: "Prototyping",              body: "Transforming ideas into tangible creations and solutions." },
+  { icon: FlaskConical,   title: "Research & Development",   body: "Investigative work addressing real-world challenges and opportunities." },
+];
+
 const GUIDELINES = [
   { icon: ShieldCheck,   accent: T.accent,  title: "Membership & access", body: "You need an active CADT Makerspace membership to book equipment or workspace. Sign up once — it covers all three modules." },
   { icon: Wrench,        accent: "var(--community-gold)", title: "Safety first",        body: "Some equipment (like the laser cutter) requires a certification workshop before solo use. Never operate tools you haven't been trained on." },
@@ -105,8 +73,8 @@ const GUIDELINES = [
 ];
 
 const FAQS = [
-  { q: "Who can use the CADT Makerspace?", a: "Any active CADT student with a MakerClub account. Create an account with your CADT email to get started." },
-  { q: "Is MakerClub free to use?", a: "Yes — it's free for all CADT students. Create an account and you'll have access to Community, Learning, and Inventory from day one." },
+  { q: "Who can use the CADT Makerspace?", a: "Any active CADT student with a Makerspace Community account. Create an account with your CADT email to get started." },
+  { q: "Is the Makerspace Community free to use?", a: "Yes — it's free for all CADT students. Create an account and you'll have access to Community, Learning, and Inventory from day one." },
   { q: "How do I borrow tools or equipment?", a: "Head to the Inventory module (Resource Manager), find the item you need, and submit a request. An admin reviews and approves it before it's checked out to you." },
   { q: "What if I damage or lose something I borrowed?", a: "Report it as soon as possible rather than waiting — either through the app or directly to Makerspace staff. Being upfront keeps the whole system working for everyone." },
   { q: "How do I find teammates for a project?", a: "Post on Find Team in the Community module — describe your project and the roles you're looking for. Interested students reach out to you directly." },
@@ -140,7 +108,7 @@ export default function AboutPage() {
             style={{ background: "rgba(255,255,255,0.28)", border: "1px solid rgba(74,88,112,0.22)", color: "#1a3350", backdropFilter: "blur(8px)" }}
           >
             <span className="w-2 h-2 rounded-full" style={{ background: GRADIENT }} />
-            CADT MakerClub — Hub
+            CADT Makerspace — Hub
           </div>
 
           <h1 className="font-display text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight" style={{ color: "#0f2033" }}>
@@ -152,14 +120,14 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(15,32,51,0.65)" }}>
-            MakerClub is the official platform of the CADT Makerspace — a single place where students connect with the community, access courses, and manage shared resources. Three modules, one home.
+            The Makerspace Community is the official platform of the CADT Makerspace — a single place where students connect with the community, access courses, and manage shared resources. Three modules, one home.
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center mt-10">
             <Link to="/register"
               className="btn-primary text-white hover:opacity-85"
               style={{ background: GRADIENT }}>
-              Join MakerClub <ArrowRight size={14} />
+              Join Makerspace <ArrowRight size={14} />
             </Link>
             <Link to="/hub"
               className="btn-secondary hover:opacity-70"
@@ -180,18 +148,14 @@ export default function AboutPage() {
       <section className="py-24" style={{ background: T.bg1 }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <SectionLabel number="§ 01">What Is the Makerspace?</SectionLabel>
-            <h2 className="text-4xl font-extrabold mb-6 leading-tight" style={{ color: T.text }}>
-              A real, physical space —{" "}
-              <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                not just an app.
-              </span>
-            </h2>
+            <div className="mb-6">
+              <SectionLabel>What Is the Makerspace?</SectionLabel>
+            </div>
             <p className="text-base leading-relaxed mb-4" style={{ color: T.muted }}>
-              The CADT Makerspace is a hands-on workshop on campus — electronics benches, 3D printers, a laser cutter, and a wood + metal shop — where students build things instead of just reading about them.
+              CADT's Makerspace is a vibrant space where individuals come together to explore, build, and connect innovative ideas. Our hands-on approach fosters collaboration among students, researchers, and educators, empowering them to transform their visions into reality. We embrace a global maker mindset while nurturing local talent and creativity.
             </p>
             <p className="text-base leading-relaxed mb-6" style={{ color: T.muted }}>
-              MakerClub is the digital front door to that space: discover workshops and events, request the tools and materials you need, and find people to build with — all from one account.
+              The Makerspace Community is the digital front door to that space: discover workshops and events, request the tools and materials you need, and find people to build with — all from one account.
             </p>
 
             <div className="grid grid-cols-3 gap-4 mt-8">
@@ -237,8 +201,7 @@ export default function AboutPage() {
       <section className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
-            <SectionLabel number="§ 02">Vision &amp; Mission</SectionLabel>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Why this exists.</h2>
+            <SectionLabel>Vision &amp; Mission</SectionLabel>
             <Divider />
           </div>
 
@@ -250,7 +213,7 @@ export default function AboutPage() {
               </div>
               <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Vision</h3>
               <p className="text-base leading-relaxed" style={{ color: T.muted }}>
-                A campus where every CADT student has the tools, space, and community to turn ideas into things — not just in theory, but with their own hands.
+                To become Cambodia's leading hub for innovation, learning, and collaboration — where ideas spark into action, technologies are born through hands-on creativity, and a global community of changemakers comes together to build a brighter, smarter future.
               </p>
             </div>
 
@@ -261,33 +224,62 @@ export default function AboutPage() {
               </div>
               <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Mission</h3>
               <p className="text-base leading-relaxed" style={{ color: T.muted }}>
-                To give CADT students one connected platform for the physical Makerspace: discover workshops and events, request the tools and materials you need, and find people to build with.
+                Cultivate an explorative learning environment and foster innovation culture through hands-on making, inclusive design, and open collaboration that develop future-ready learners and socially relevant solutions.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── § 03 GUIDELINES ─────────────────────────────────────────────── */}
-      <section id="guidelines" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
+      {/* ── § 03 PROGRAMS & WORKSHOPS ───────────────────────────────────── */}
+      <section id="programs" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
-            <SectionLabel number="§ 03">Guidelines</SectionLabel>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>How the space works.</h2>
+            <SectionLabel>Programs &amp; Workshops</SectionLabel>
             <Divider />
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {GUIDELINES.map((g) => <RuledCard key={g.title} {...g} />)}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {PROGRAMS.map((p) => (
+              <div key={p.title} className="rounded-2xl p-6" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                  style={{ background: "color-mix(in oklch, var(--color-inv-accent) 8%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 16%, transparent)" }}>
+                  <p.icon size={20} style={{ color: T.accent }} />
+                </div>
+                <h3 className="font-bold text-base mb-2" style={{ color: T.text }}>{p.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{p.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── § 04 FAQ ─────────────────────────────────────────────────────── */}
-      <section id="faq" className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, scrollMarginTop: 80 }}>
+      {/* ── § 04 GUIDELINES ─────────────────────────────────────────────── */}
+      <section id="guidelines" className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, scrollMarginTop: 80 }}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-14">
+            <SectionLabel>Guidelines</SectionLabel>
+            <Divider />
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {GUIDELINES.map((g) => (
+              <div key={g.title} className="rounded-2xl p-6" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                  style={{ background: `color-mix(in oklch, ${g.accent} 8%, transparent)`, border: `1px solid color-mix(in oklch, ${g.accent} 16%, transparent)` }}>
+                  <g.icon size={20} style={{ color: g.accent }} />
+                </div>
+                <h3 className="font-bold text-base mb-2" style={{ color: T.text }}>{g.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: T.muted }}>{g.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── § 05 FAQ ─────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
-            <SectionLabel number="§ 04">FAQ</SectionLabel>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Common questions.</h2>
+            <SectionLabel>Frequently Asked Questions</SectionLabel>
             <Divider />
           </div>
           <div className="flex flex-col gap-3">
@@ -298,14 +290,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── § 05 CONTACT ─────────────────────────────────────────────────── */}
-      <section id="contact" className="py-24" style={{ background: T.bg1, scrollMarginTop: 80 }}>
+      {/* ── § 06 CONTACT ─────────────────────────────────────────────────── */}
+      <section id="contact" className="py-24" style={{ background: T.bg2, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}`, scrollMarginTop: 80 }}>
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14 text-center">
-            <div className="flex justify-center">
-              <SectionLabel number="§ 05">Contact</SectionLabel>
-            </div>
-            <h2 className="text-4xl font-extrabold leading-tight" style={{ color: T.text }}>Find us.</h2>
+            <SectionLabel>Contact</SectionLabel>
           </div>
 
           <div className="rounded-2xl p-8 sm:p-10" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
@@ -364,7 +353,7 @@ export default function AboutPage() {
                 Ready to join the
                 <br />
                 <span style={{ background: GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                  MakerClub?
+                  Makerspace Community?
                 </span>
               </h2>
               <p className="text-base mb-10 max-w-md mx-auto" style={{ color: T.muted }}>

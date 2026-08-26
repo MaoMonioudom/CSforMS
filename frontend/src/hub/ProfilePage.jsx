@@ -129,9 +129,9 @@ export default function ProfilePage() {
         style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
 
       <TopNav />
-      <BackBar />
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-12">
+      <main className="relative z-10 mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+        <BackBar />
         {error && (
           <div className="rounded-xl px-4 py-3 mb-6 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#dc2626" }}>
             {error}

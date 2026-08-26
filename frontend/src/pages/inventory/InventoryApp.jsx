@@ -82,6 +82,8 @@ export default function InventoryApp() {
                     still reachable from here for anything that links to the old path. */}
                 <Route path="my-borrows" element={<Navigate to="/notifications" replace />} />
                 <Route path="notifications" element={<Navigate to="/notifications" replace />} />
+                {/* Manage Credits now lives entirely on the shared /credits page. */}
+                <Route path="credits" element={<Navigate to="/credits" replace />} />
               </>
             )}
 

@@ -12,7 +12,7 @@ const NAV_LINKS = [
 ];
 
 const MODULE_CHIPS = [
-  { label: "Connect", href: "/community", color: "var(--community-gold)" },
+  { label: "Community", href: "/community", color: "var(--community-gold)" },
   { label: "Learn",  href: "/learning",  color: "var(--color-oxblood)" },
   { label: "Build", href: "/inventory", color: "var(--color-inv-accent)" },
 ];

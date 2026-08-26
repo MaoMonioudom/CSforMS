@@ -6,7 +6,9 @@ import { CATEGORIES } from '../lib/inventory/data'
 import { useInventory } from '../lib/inventory/InventoryContext'
 import { useAuth } from './AuthContext'
 import { TopNav } from '../components/TopNav'
+import { BackBar } from '../components/BackBar'
 import { AppFooter } from '../components/AppFooter'
+import { HUB as D } from './hubTheme'
 import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll, deleteNotification as apiDeleteOne } from '../lib/notifications-data'
 import { fmtDateTime, cambodiaDayLabel } from '../lib/inventory/datetime'
 
@@ -323,47 +325,35 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div style={{ background: T.cream, minHeight: '100vh' }}>
+    <div style={{ background: isUser ? `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` : T.cream, minHeight: '100vh' }}>
+      {/* Same subtle dot-grid + BackBar chrome as Profile/Credits, for
+          students only — admin gets its own TopBar title/back button and
+          keeps the plain cream background it already had. */}
+      {isUser && (
+        <div aria-hidden className="fixed inset-0 pointer-events-none"
+          style={{ backgroundImage: `linear-gradient(color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in oklch, var(--color-inv-accent) 5%, transparent) 1px,transparent 1px)`, backgroundSize: '48px 48px' }} />
+      )}
+
       {/* This page is reached from every module (top-nav bell, inventory's own
           nav), not just from inside InventoryApp/InventoryAdminArea — those
           normally provide TopNav themselves, but at this shared route nothing
           else does, so it's rendered here unconditionally. */}
       <TopNav />
 
-      {/* Dark teal header banner — students only (admin layout already shows a TopBar title) */}
-      {isUser && (
-        <div style={{
-          position: 'relative', overflow: 'hidden',
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)',
-          backgroundSize: '40px 40px, 40px 40px, cover',
-          borderBottom: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)',
-        }}>
-          <div className="px-5 pt-8 pb-7 sm:px-8 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
-            <button onClick={() => navigate(-1)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--on-dark-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              <ArrowLeft size={14} /> Back
-            </button>
-            <h1 style={{ margin: 0, fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
-              Notifications
-            </h1>
-            <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--on-dark-muted)' }}>
-              Alerts, requests, and your borrow & purchase history.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
-      {!isUser && (
+      <div className="relative z-10 px-5 py-8 sm:px-8 sm:py-10 lg:px-12" style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {isUser ? (
+        <BackBar />
+      ) : (
         <button onClick={() => navigate(-1)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: T.white, border: `1px solid ${T.border}`, color: T.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           <ArrowLeft size={14} /> Back
         </button>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: 12, flexWrap: 'wrap' }}>
-        {!isUser
-          ? <h1 className="m-0 font-heading text-lg font-bold text-charcoal">Notifications</h1>
-          : <span />}
+        <h1 className={isUser ? 'm-0 text-lg font-extrabold' : 'm-0 font-heading text-lg font-bold text-charcoal'}
+          style={isUser ? { color: D.text } : undefined}>
+          Notifications
+        </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${T.border}`, borderRadius: 8, padding: '5px 10px', color: T.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>

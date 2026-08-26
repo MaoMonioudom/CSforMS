@@ -1,11 +1,39 @@
 // Small chart primitives shared across admin pages/dashboards.
 
-export function ChartCard({ title, subtitle, children }) {
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
+
+export function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
+  return (
+    <Link
+      to={to}
+      className="group bg-white rounded-xl border border-border p-5 hover:border-border hover:shadow-sm transition-all"
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
+        </div>
+        <div className={`p-2 rounded-lg ${bg}`}>
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground flex items-center gap-1 group-hover:text-muted-foreground transition-colors">
+        Manage <ArrowUpRight className="h-3 w-3" />
+      </p>
+    </Link>
+  );
+}
+
+export function ChartCard({ title, subtitle, action, children }) {
   return (
     <div className="bg-white rounded-xl border border-border">
-      <div className="px-5 py-4 border-b border-border">
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+        </div>
+        {action}
       </div>
       {children}
     </div>

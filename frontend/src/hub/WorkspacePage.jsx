@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Armchair, Check, Clock } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
+import { BackBar } from "../components/BackBar";
 import {
   TIME_SLOTS, getUpcomingDates, fetchWorkspaces, fetchTakenSlots,
   fetchMyBookings, createBooking, cancelBooking, getSlotOccupancy,
@@ -99,7 +100,8 @@ export default function WorkspacePage() {
 
       <TopNav />
 
-      <main className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 py-12">
+      <main className="relative z-10 mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+        <BackBar />
 
         {/* Hero */}
         <div className="rounded-2xl p-8 mb-8 text-center relative overflow-hidden"

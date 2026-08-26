@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Calendar, Users, MessageSquare, UserCog, ArrowUpRight } from "lucide-react";
+import { Calendar, Users, MessageSquare, UserCog } from "lucide-react";
 import { fetchEvents } from "@/lib/events-data";
 import { fetchCollabPosts } from "@/lib/collaboration-data";
 import { fetchCommunityPosts } from "@/lib/community-data";
 import { fetchDailyPageViews } from "@/lib/analytics-data";
 import { api } from "@/lib/api/client";
-import { ChartCard, LegendDot, HBar } from "../../components/charts";
+import { StatCard, ChartCard, LegendDot, HBar } from "../../components/charts";
 
 function formatShortDate(iso) {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -38,30 +37,6 @@ function deriveTopSkills(collabPosts) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([name, count]) => ({ name, count }));
-}
-
-// --- Base components ---
-
-function StatCard({ label, value, icon: Icon, bg, iconColor, to }) {
-  return (
-    <Link
-      to={to}
-      className="group bg-white rounded-xl border border-border p-5 hover:border-border hover:shadow-sm transition-all"
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-foreground">{value}</p>
-        </div>
-        <div className={`p-2 rounded-lg ${bg}`}>
-          <Icon className={`h-5 w-5 ${iconColor}`} />
-        </div>
-      </div>
-      <p className="mt-4 text-xs text-muted-foreground flex items-center gap-1 group-hover:text-muted-foreground transition-colors">
-        Manage <ArrowUpRight className="h-3 w-3" />
-      </p>
-    </Link>
-  );
 }
 
 // --- Chart components ---
@@ -257,9 +232,9 @@ export default function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/community/events" />
-        <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/community/collaboration" />
-        <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community/posts" />
+        <StatCard label="Events"          value={events.length}         icon={Calendar}      bg="bg-orange-50"  iconColor="text-orange-500"  to="/admin/events" />
+        <StatCard label="Collab Posts"    value={collabPosts.length}    icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/collaboration" />
+        <StatCard label="Community Posts" value={communityPosts.length} icon={MessageSquare} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/community" />
         <StatCard label="Users"           value={userCount}              icon={UserCog}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/users" />
       </div>
 

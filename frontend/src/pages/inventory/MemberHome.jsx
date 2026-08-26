@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-  ArrowRight, CreditCard, Bell, Package2, ChevronRight, BadgeCheck,
+  ArrowRight, CreditCard, Package2, BadgeCheck,
   X, Printer, Box, Zap, Layers, MapPin, Clock, Users, Star,
   FileText, Cpu, Wrench, CheckCircle2, RotateCcw, ShoppingBag,
 } from 'lucide-react'
 import { T as THEME } from '../../lib/inventory/theme'
 import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inventory/data'
 import { Breadcrumb } from '../../components/Breadcrumb'
-import CreditInfoModal from '../../components/inventory/ui/CreditInfoModal'
 import { useAuth } from '../../hub/AuthContext'
-import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const NAVY   = 'var(--color-inv-accent-text)' // teal-700 — primary accent (kept name to avoid touching every usage)
 const TEAL   = 'var(--color-inv-accent)'
@@ -42,29 +40,17 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   // (id, name, matching borrow/request records) still comes from Inventory's
   // local state, since borrow/purchase logic isn't wired to the real backend yet.
   const { user: hubUser } = useAuth()
-  const { submitTopUpRequest } = useInventory()
   const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
 
   const [activeCat, setActiveCat]   = useState('all')
 
   const activeLoans = borrows.filter(b => b.userId === user.id && b.action !== 'purchased' && b.status === 'active').length
-  const unread      = notifications.filter(n => !n.read && (n.forRoles?.includes('user') || n.userId === user.id)).length
   const available   = items.filter(i => i.status === 'available').length
   const totalItems  = items.length
 
-  // Membership & credits now live in the "Your Credits" panel (same one the
-  // top-nav credits pill opens) instead of a big section on this page.
-  const [creditOpen, setCreditOpen] = useState(false)
-  const scrollToCredits = () => setCreditOpen(true)
-
-  const requestTopUp = async (amountUSD) => {
-    try {
-      await submitTopUpRequest({ amountUSD })
-      showToast?.('Top-up request sent to the makerspace team.')
-    } catch (err) {
-      showToast?.(err.message || 'Could not send the top-up request.', 'error')
-    }
-  }
+  // Membership & credits now live entirely on the shared /credits page (same
+  // one the top-nav credits pill opens) instead of a modal on this page.
+  const goToCredits = () => setPage('/credits')
 
   // Due-date reminder — briefly toast once per visit if the student has a borrow
   // due soon or overdue, so they don't find out only after a late fee.
@@ -124,7 +110,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                   style={{ background: TEAL }}>
                   Browse Equipment <ArrowRight size={14} />
                 </button>
-                <button onClick={scrollToCredits}
+                <button onClick={goToCredits}
                   className="btn-secondary text-white"
                   style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)' }}>
                   <CreditCard size={14} /> Manage Credits
@@ -140,13 +126,6 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 </button>
                 <div className="hidden sm:block" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.2)' }} />
                 <StatPill value={available} label="Items available" color="var(--color-green)" />
-                <button onClick={() => setPage('/notifications')}
-                  className="btn-secondary text-left sm:ml-auto"
-                  style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)' }}>
-                  <Bell size={14} style={{ color: '#fff' }} />
-                  <span className="text-xs font-semibold" style={{ color: '#fff' }}>{unread} unread</span>
-                  <ChevronRight size={12} style={{ color: 'var(--on-dark-muted)' }} />
-                </button>
               </div>
             </div>
 
@@ -446,7 +425,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
               <p className="m-0 mt-0.5 text-xs text-inv-muted">{user.membership === 'active' ? 'Full access to borrow and purchase items.' : 'Activate to start borrowing tools.'}</p>
             </div>
             {user.membership !== 'active' && (
-              <button onClick={scrollToCredits} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: NAVY }}>
+              <button onClick={goToCredits} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: NAVY }}>
                 Activate
               </button>
             )}
@@ -463,10 +442,6 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           </div>
         </div>
       </section>
-
-      {creditOpen && (
-        <CreditInfoModal user={user} onClose={() => setCreditOpen(false)} onRequestTopUp={requestTopUp} />
-      )}
     </div>
   )
 }

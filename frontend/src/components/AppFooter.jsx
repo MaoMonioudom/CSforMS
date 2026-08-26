@@ -26,7 +26,7 @@ const COLUMNS = [
     ],
   },
   {
-    label:  "Learning",
+    label:  "Learn",
     // Plain --color-oxblood(-deep) is a dark red built for use on Learning's
     // light parchment background — against this footer's near-black bg it
     // reads as almost no color at all. Lightened just for this on-dark spot
@@ -41,7 +41,7 @@ const COLUMNS = [
     ],
   },
   {
-    label:  "Inventory",
+    label:  "Build",
     accent: "var(--color-inv-accent)",
     links: [
       { label: "Inventory Home",   to: "/inventory" },

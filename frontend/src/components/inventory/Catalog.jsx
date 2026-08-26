@@ -90,94 +90,57 @@ function CategoryTiles({ items, filterCat, setFilterCat }) {
   )
 }
 
-// ── Item Card — larger, modern card with image, name, category, stock, location ──
+// ── Item Card — staff/admin catalog card. Pixel-matched to the student's
+// CompactItemCard below (same image size, corner radius, layout), except
+// the bottom-right action label is a real button — staff need one-click
+// add for counter sales, students just tap the card to view details. ──
 export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMode, staffStudent, onStaffAdd }) {
-  const cat   = CATEGORIES.find(c => c.id === item.category)
-  const isLow = isLowStock(item.stock)
+  const cat = CATEGORIES.find(c => c.id === item.category)
+  const available = item.status === 'available' && item.stock > 0
+  const statusLabel = item.status === 'available' ? (available ? 'Available' : 'Unavailable') : item.status === 'borrowed' ? 'Borrowed' : 'Maintenance'
+  const statusColor = available ? { bg: '#dcfce7', fg: '#16a34a' } : { bg: '#e2e8f0', fg: '#64748b' }
+  const actionLabel = available ? (item.type === 'Returnable' ? 'Borrow' : 'Add Purchase') : 'Unavailable'
+  const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? '#2563eb' : '#16a34a')
+
+  const enabled = staffMode ? (!!staffStudent && available) : available
 
   return (
     <div onClick={() => onView(item)}
-      className="flex cursor-pointer flex-col overflow-hidden rounded-[24px] transition-all hover:-translate-y-1"
-      style={{ background: '#fff', border: '1.5px solid #e2e8f0', boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 28px rgba(15,23,42,0.10)'}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'}>
-
-      {/* Image — slightly shorter in staff mode, where 3 cards share the row
-          with the sale panel alongside, so compact reads cleaner. */}
-      <div className={`relative flex-shrink-0 ${staffMode ? 'h-36 sm:h-40 lg:h-44' : 'h-40 sm:h-48 lg:h-52'}`}>
-        <ItemImage item={item} cat={cat} size={48} className="h-full w-full" />
-        <div className="absolute left-3 top-3"><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
-        <div className="absolute right-3 top-3 rounded-lg px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-          style={{ background: item.type === 'Returnable' ? '#e0f9fe' : '#f0fdf4', color: item.type === 'Returnable' ? TEAL : '#16a34a', boxShadow: '0 1px 2px rgba(15,23,42,0.08)' }}>
-          {item.type === 'Returnable' ? 'Returnable' : 'Consumable'}
-        </div>
-        <div className="absolute bottom-3 right-3 rounded-xl px-2 py-1 text-[13px] font-bold shadow-sm"
-          style={item.credits > 0
-            ? { background: '#fff', color: TEAL, border: `1.5px solid color-mix(in oklch, ${TEAL} 20%, transparent)` }
-            : { background: 'var(--color-green-light)', color: 'var(--color-green)' }}>
-          {item.credits > 0 ? `${item.credits} cr` : 'Free'}
-        </div>
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px]"
+      style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+      <div className="relative h-[118px] flex-shrink-0 sm:h-[150px] lg:h-[180px]">
+        <ItemImage item={item} cat={cat} size={34} className="h-full w-full" />
+        <span className="absolute right-2 top-2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: statusColor.bg, color: statusColor.fg }}>
+          {statusLabel}
+        </span>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        {cat && (
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold"
+      <div className="flex flex-1 flex-col gap-0.5 p-2.5">
+        {staffMode && cat && (
+          <span className="mb-0.5 inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
             style={{ background: '#f1f5f9', color: '#64748b' }}>
-            <cat.Icon size={11} color={cat.iconColor} />
+            <cat.Icon size={10} color={cat.iconColor} />
             {cat.label}
           </span>
         )}
-
-        <h3 className="m-0 truncate text-lg font-bold leading-snug sm:text-lg" style={{ color: 'var(--color-charcoal)' }}>{item.name}</h3>
-
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 truncate font-medium" style={{ color: 'var(--muted-foreground)' }}>
-            <MapPin size={staffMode ? 12 : 11} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} /> {item.room}{item.zone ? ` · Zone ${item.zone}` : ''}
+        <p className="m-0 truncate text-[14px] font-bold" style={{ color: '#0f172a' }}>{item.name}</p>
+        {staffMode && (
+          <span className="flex items-center gap-1 truncate text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
+            <MapPin size={10} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
+            {item.room}{item.zone ? ` · Zone ${item.zone}` : ''} · {item.stock} in stock
           </span>
-          <span className="flex flex-shrink-0 items-center gap-1 font-semibold" style={{ color: isLow ? 'var(--color-amber)' : 'var(--color-green)' }}>
-            {isLow && <AlertTriangle size={10} />}{item.stock} in stock
-          </span>
-        </div>
-
-        {/* Action button — pinned to the card bottom so every button in a
-            row sits on the same line, whatever the content height above */}
-        <div className="mt-auto pt-2">
-          {staffMode && (() => {
-            const enabled = !!staffStudent && item.status === 'available' && item.stock > 0
-            return (
-              <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
-                disabled={!enabled}
-                className="h-10 w-full rounded-2xl border-none text-[13px] font-semibold sm:h-11"
-                style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                {item.type === 'Returnable' ? 'Borrow' : 'Add Purchase'}
-              </button>
-            )
-          })()}
-          {!staffMode && user?.role === 'user' && (() => {
-            const enabled = item.status === 'available' && item.stock > 0
-            return (
-              <button onClick={e => { e.stopPropagation(); onAddCart(item) }}
-                disabled={!enabled}
-                className="h-10 w-full rounded-2xl border-none text-[13px] font-semibold sm:h-11"
-                style={{ background: enabled ? TEAL : '#f1f5f9', color: enabled ? '#fff' : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                {enabled ? (item.type === 'Returnable' ? 'Borrow' : 'Purchase') : 'Unavailable'}
-              </button>
-            )
-          })()}
-          {!staffMode && !user && onRequireAuth && (
-            <button onClick={e => { e.stopPropagation(); onRequireAuth() }}
-              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl text-[13px] font-semibold sm:h-11"
-              style={{ border: `1.5px dashed ${TEAL}55`, background: `${TEAL}08`, color: TEAL }}>
-              <Lock size={12} />{item.type === 'Returnable' ? 'Join to Borrow' : 'Join to Purchase'}
+        )}
+        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-1.5" style={{ borderColor: '#f1f5f9' }}>
+          <span className="whitespace-nowrap text-[13px] font-bold" style={{ color: TEAL }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
+          {staffMode ? (
+            <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
+              disabled={!enabled}
+              className={`-my-1 -mr-1 whitespace-nowrap rounded-md px-1.5 py-1 text-[11px] font-bold transition-colors duration-150 ${enabled ? 'hover:bg-blue-50' : ''}`}
+              style={{ background: 'transparent', border: 'none', color: enabled ? actionColor : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
+              {enabled ? actionLabel : (!staffStudent ? 'Select student' : 'Unavailable')}
             </button>
-          )}
-          {!staffMode && !user && !onRequireAuth && (
-            <button onClick={e => { e.stopPropagation(); onView(item) }}
-              className="h-10 w-full rounded-2xl text-[13px] font-semibold sm:h-11"
-              style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', color: '#475569' }}>
-              View Details
-            </button>
+          ) : (
+            <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: actionColor }}>{actionLabel}</span>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Coins, BadgeCheck, Loader2, ShieldOff, ShieldCheck } from "lucide-react";
+import { Search, Coins, BadgeCheck, Loader2, ShieldOff, ShieldCheck, UserPlus, X } from "lucide-react";
 import { api } from "../../../lib/api/client";
+import { useAuth } from "../../../hub/AuthContext";
 
 const inputCls = "w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-border";
 
@@ -36,8 +37,18 @@ function AccountStatusPill({ status }) {
 // search for — e.g. auditing "who are all my staff" or scanning for
 // recently-joined members. Clicking a row opens the same detail panel a
 // search result would.
+//
+// Paginated client-side (load more, PAGE_SIZE at a time) rather than
+// rendering every row at once — the full list is still one API call (small
+// enough for a single makerspace's user count), this just keeps the DOM
+// from growing unbounded as the list does.
+const PAGE_SIZE = 10;
+
 function UsersTable({ title, subtitle, users, onSelect, selectedId, showStudentId = true }) {
   const colCount = showStudentId ? 4 : 3;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visible = users.slice(0, visibleCount);
+
   return (
     <div>
       <div className="flex items-baseline justify-between mb-3">
@@ -61,9 +72,9 @@ function UsersTable({ title, subtitle, users, onSelect, selectedId, showStudentI
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {users.length === 0 ? (
+              {visible.length === 0 ? (
                 <tr><td colSpan={colCount} className="px-5 py-8 text-center text-sm text-muted-foreground">No accounts here.</td></tr>
-              ) : users.map(u => (
+              ) : visible.map(u => (
                 <tr key={u.user_id} onClick={() => onSelect(u)}
                   className={`cursor-pointer hover:bg-muted transition-colors ${selectedId === u.user_id ? "bg-muted" : ""}`}>
                   <td className="px-5 py-3">
@@ -84,12 +95,20 @@ function UsersTable({ title, subtitle, users, onSelect, selectedId, showStudentI
             </tbody>
           </table>
         </div>
+        {users.length > visibleCount && (
+          <button onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+            className="w-full border-t border-border py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            Load more ({users.length - visibleCount} more)
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 export default function AdminUsers() {
+  const { user: me } = useAuth();
+  const isAdmin = me?.role === "Admin";
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -101,6 +120,14 @@ export default function AdminUsers() {
   const [error, setError] = useState("");
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
+
+  // Create-user modal — role picker only shown to admins; a staff-submitted
+  // request is forced to "user" server-side regardless of what's sent, so
+  // there's no client-only guard to bypass here.
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ full_name: "", email: "", password: "", role: "user" });
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState("");
   // Bumped on every selectUser() call so a slow response from an earlier
   // selection can recognize it's stale and not overwrite whatever the admin
   // has since clicked into — without this, clicking user A then quickly
@@ -197,16 +224,51 @@ export default function AdminUsers() {
     }
   };
 
+  const submitCreate = async (e) => {
+    e.preventDefault();
+    setCreateError("");
+    if (!createForm.full_name.trim() || !createForm.email.trim() || !createForm.password) {
+      setCreateError("Name, email, and password are required.");
+      return;
+    }
+    if (createForm.password.length < 6) {
+      setCreateError("Password must be at least 6 characters.");
+      return;
+    }
+    setCreateBusy(true);
+    try {
+      const { data } = await api.post("/api/users", {
+        full_name: createForm.full_name.trim(),
+        email: createForm.email.trim(),
+        password: createForm.password,
+        role: isAdmin ? createForm.role : "user",
+      });
+      setUsers((prev) => [data, ...prev]);
+      setCreateOpen(false);
+      setCreateForm({ full_name: "", email: "", password: "", role: "user" });
+    } catch (err) {
+      setCreateError(err.message || "Couldn't create that account.");
+    } finally {
+      setCreateBusy(false);
+    }
+  };
+
   const teamUsers = users.filter(u => u.role !== "user");
   const regularUsers = users.filter(u => u.role === "user");
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Users</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Search a student to view their account, manage membership/credits, or suspend access.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Users</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Search a student to view their account, manage membership/credits, or suspend access.
+          </p>
+        </div>
+        <button onClick={() => setCreateOpen(true)}
+          className="inline-flex shrink-0 items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground/85 transition-colors">
+          <UserPlus className="h-4 w-4" /> New User
+        </button>
       </div>
 
       {usersError && (
@@ -248,16 +310,24 @@ export default function AdminUsers() {
         {!selected ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Search for a student above to get started.</p>
         ) : (
-          <div className="rounded-lg border border-border p-5">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-foreground truncate">{selected.full_name}</p>
-                <p className="text-xs text-muted-foreground truncate">{selected.email}{selected.student_id ? ` · ${selected.student_id}` : ""}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[selected.role] ?? "bg-muted text-muted-foreground"}`}>
-                    {selected.role}
-                  </span>
-                  <AccountStatusPill status={selected.status} />
+          <div className="rounded-xl border border-border overflow-hidden">
+            {/* Header band — separates identity from the actions below it,
+                same two-tone card pattern as the ChartCard/StatCard panels
+                elsewhere in admin. */}
+            <div className="flex items-start justify-between gap-4 bg-muted px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${ROLE_BADGE[selected.role] ?? "bg-muted text-muted-foreground"}`}>
+                  {selected.full_name?.[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{selected.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{selected.email}{selected.student_id ? ` · ${selected.student_id}` : ""}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[selected.role] ?? "bg-muted text-muted-foreground"}`}>
+                      {selected.role}
+                    </span>
+                    <AccountStatusPill status={selected.status} />
+                  </div>
                 </div>
               </div>
               {loadingMembership ? (
@@ -265,78 +335,80 @@ export default function AdminUsers() {
               ) : membership && <StatusPill isMember={membership.isMember} />}
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5 mb-4">{error}</div>
-            )}
+            <div className="p-5">
+              {error && (
+                <div className="rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5 mb-4">{error}</div>
+              )}
 
-            <div className="mb-5">
-              <button
-                onClick={toggleAccountStatus}
-                disabled={busy}
-                className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
-                  selected.status === "active"
-                    ? "border-red-200 text-red-600 hover:bg-red-50"
-                    : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-                }`}
-              >
-                {selected.status === "active" ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                {selected.status === "active" ? "Suspend account" : "Reactivate account"}
-              </button>
+              <div className="mb-5">
+                <button
+                  onClick={toggleAccountStatus}
+                  disabled={busy}
+                  className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
+                    selected.status === "active"
+                      ? "border-red-200 text-red-600 hover:bg-red-50"
+                      : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                  }`}
+                >
+                  {selected.status === "active" ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                  {selected.status === "active" ? "Suspend account" : "Reactivate account"}
+                </button>
+              </div>
+
+              {!loadingMembership && membership && (
+                <>
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="p-2 rounded-lg bg-emerald-50">
+                      <Coins className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-foreground leading-none">{membership.credits}</p>
+                      <p className="text-xs text-muted-foreground">credits available</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {!membership.isMember && (
+                      <button
+                        onClick={activate}
+                        disabled={busy}
+                        className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground/85 transition-colors disabled:opacity-50"
+                      >
+                        <BadgeCheck className="h-4 w-4" /> Activate Membership
+                      </button>
+                    )}
+
+                    {membership.isMember && !topUpOpen && (
+                      <button
+                        onClick={() => setTopUpOpen(true)}
+                        className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground/85 transition-colors"
+                      >
+                        <Coins className="h-4 w-4" /> Add Credits
+                      </button>
+                    )}
+                  </div>
+
+                  {topUpOpen && (
+                    <form onSubmit={submitTopUp} className="flex items-center gap-2 mt-4">
+                      <input
+                        type="number" min="1" autoFocus value={topUpAmount}
+                        onChange={(e) => setTopUpAmount(e.target.value)}
+                        placeholder="Credits to add"
+                        className={`${inputCls} max-w-[160px]`}
+                      />
+                      <button type="submit" disabled={busy}
+                        className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                        Add
+                      </button>
+                      <button type="button" onClick={() => { setTopUpOpen(false); setTopUpAmount(""); }}
+                        className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                        Cancel
+                      </button>
+                    </form>
+                  )}
+                </>
+              )}
             </div>
-
-            {!loadingMembership && membership && (
-              <>
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="p-2 rounded-lg bg-emerald-50">
-                    <Coins className="h-4 w-4 text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-foreground leading-none">{membership.credits}</p>
-                    <p className="text-xs text-muted-foreground">credits available</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {!membership.isMember && (
-                    <button
-                      onClick={activate}
-                      disabled={busy}
-                      className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors disabled:opacity-50"
-                    >
-                      <BadgeCheck className="h-4 w-4" /> Activate Membership
-                    </button>
-                  )}
-
-                  {membership.isMember && !topUpOpen && (
-                    <button
-                      onClick={() => setTopUpOpen(true)}
-                      className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors"
-                    >
-                      <Coins className="h-4 w-4" /> Add Credits
-                    </button>
-                  )}
-                </div>
-
-                {topUpOpen && (
-                  <form onSubmit={submitTopUp} className="flex items-center gap-2 mt-4">
-                    <input
-                      type="number" min="1" autoFocus value={topUpAmount}
-                      onChange={(e) => setTopUpAmount(e.target.value)}
-                      placeholder="Credits to add"
-                      className={`${inputCls} max-w-[160px]`}
-                    />
-                    <button type="submit" disabled={busy}
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50">
-                      Add
-                    </button>
-                    <button type="button" onClick={() => { setTopUpOpen(false); setTopUpAmount(""); }}
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
-                      Cancel
-                    </button>
-                  </form>
-                )}
-              </>
-            )}
           </div>
         )}
       </div>
@@ -358,6 +430,64 @@ export default function AdminUsers() {
             onSelect={selectUser}
             selectedId={selected?.user_id}
           />
+        </div>
+      )}
+
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setCreateOpen(false)}>
+          <form onClick={(e) => e.stopPropagation()} onSubmit={submitCreate}
+            className="w-full max-w-sm rounded-xl bg-white p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-foreground">Create account</h2>
+              <button type="button" onClick={() => setCreateOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {createError && (
+              <div className="mb-4 rounded-lg bg-red-50 text-red-600 text-sm px-4 py-2.5">{createError}</div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <input
+                value={createForm.full_name}
+                onChange={(e) => setCreateForm((f) => ({ ...f, full_name: e.target.value }))}
+                placeholder="Full name" className={inputCls} autoFocus
+              />
+              <input
+                type="email" value={createForm.email}
+                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="Email" className={inputCls}
+              />
+              <input
+                type="password" value={createForm.password}
+                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Temporary password (min. 6 characters)" className={inputCls}
+              />
+              {isAdmin && (
+                <select
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))}
+                  className={inputCls}
+                >
+                  <option value="user">User</option>
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                </select>
+              )}
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => setCreateOpen(false)}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={createBusy}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white bg-foreground hover:bg-foreground/85 transition-colors disabled:opacity-50">
+                {createBusy ? "Creating…" : "Create"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

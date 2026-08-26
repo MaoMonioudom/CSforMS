@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { AlertTriangle, ChevronDown } from 'lucide-react'
-import GradientStatCard from '../../../components/inventory/ui/GradientStatCard'
+import { AlertTriangle, ChevronDown, Package, Clock, Wrench, Users, ClipboardList } from 'lucide-react'
 import ItemThumb from '../../../components/inventory/ui/ItemThumb'
 import DonutChart from '../../../components/inventory/ui/DonutChart'
 import BarChart from '../../../components/inventory/ui/BarChart'
 import Badge from '../../../components/inventory/ui/Badge'
 import DateRangeFilter, { inRange } from '../../../components/inventory/ui/DateRangeFilter'
+import { StatCard, ChartCard } from '../../components/charts'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES, isLowStock, isOutOfStock } from '../../../lib/inventory/data'
 import { fmtDateTime } from '../../../lib/inventory/datetime'
@@ -62,50 +62,45 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
     .slice(0, 5)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      {/* Gradient stat cards */}
-      <div className="mb-6 grid gap-3 sm:gap-4 lg:mb-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-        {/* No trend props — we have no historical snapshots to compute real
-            percentage changes from, and made-up numbers mislead. */}
-        <GradientStatCard label="Total Items" value={total} period="All time" gradient="linear-gradient(135deg,var(--color-blue-light),var(--color-inv-accent-light))" />
-        <GradientStatCard label="Borrowed" value={borrowed} period="Today" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
-        <GradientStatCard label="Maintenance" value={maint} period="Today" gradient="linear-gradient(135deg,var(--color-red-light),color-mix(in oklch, var(--color-red-light) 50%, white))" />
-        <GradientStatCard label="Active Members" value={members} period="This month" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
-        <GradientStatCard label="Pending Requests" value={pending} period="Today" gradient="linear-gradient(135deg,var(--color-purple-light),color-mix(in oklch, var(--color-purple-light) 50%, white))" />
+    <div className="p-5 sm:p-8">
+      {/* No trend props — we have no historical snapshots to compute real
+          percentage changes from, and made-up numbers mislead. */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <StatCard label="Total Items"      value={total}    icon={Package}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/inventory/manage" />
+        <StatCard label="Borrowed"         value={borrowed} icon={Clock}         bg="bg-amber-50"   iconColor="text-amber-500"   to="/admin/inventory/borrows" />
+        <StatCard label="Maintenance"      value={maint}    icon={Wrench}        bg="bg-red-50"     iconColor="text-red-500"     to="/admin/inventory/manage" />
+        <StatCard label="Active Members"   value={members}  icon={Users}         bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/users" />
+        <StatCard label="Pending Requests" value={pending}  icon={ClipboardList} bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/inventory/requests" />
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr] lg:mb-6">
+      <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* Weekly activity chart */}
-        <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="m-0 text-lg font-semibold text-charcoal">Weekly Activity</h3>
-            <DateRangeFilter value={range} onChange={setRange} />
+        <ChartCard title="Weekly Activity" subtitle="Borrows vs. purchases by weekday" action={<DateRangeFilter value={range} onChange={setRange} />}>
+          <div className="px-5 py-4">
+            <BarChart data={weekly} seriesA="Borrowed" seriesB="Purchased" colorA={T.blue} colorB={T.green} height={420} />
           </div>
-          <BarChart data={weekly} seriesA="Borrowed" seriesB="Purchased" colorA={T.blue} colorB={T.green} height={420} />
-        </div>
+        </ChartCard>
 
         {/* Inventory by category — donut */}
-        <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-          <h3 className="m-0 mb-4 text-lg font-semibold text-charcoal">Inventory by Category</h3>
-          <DonutChart data={catData} />
-          <div className="mt-4 flex flex-col gap-1.5">
-            {catData.map(d => (
-              <div key={d.label} className="flex items-center gap-2 text-xs">
-                <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: d.color }} />
-                <span className="flex-1 truncate text-inv-muted">{d.label}</span>
-                <span className="font-semibold text-charcoal">{d.value}</span>
-              </div>
-            ))}
+        <ChartCard title="Inventory by Category">
+          <div className="px-5 py-5">
+            <DonutChart data={catData} />
+            <div className="mt-4 flex flex-col gap-1.5">
+              {catData.map(d => (
+                <div key={d.label} className="flex items-center gap-2 text-xs">
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: d.color }} />
+                  <span className="flex-1 truncate text-muted-foreground">{d.label}</span>
+                  <span className="font-semibold text-foreground">{d.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="grid lg:grid-cols-2 gap-6">
         {/* Top items table — expandable rows */}
-        <div className="overflow-hidden rounded-2xl border border-border bg-white">
-          <div className="border-b border-stone px-4 py-3.5 sm:px-6">
-            <h3 className="m-0 text-lg font-semibold text-charcoal">Top Borrowed Items</h3>
-          </div>
+        <ChartCard title="Top Borrowed Items" subtitle="Ranked by borrows in range">
           <div className="inv-hscroll" style={{ maxHeight: 340, overflowY: 'auto' }}>
           {topItems.map(item => {
             const cat = CATEGORIES.find(c => c.id === item.category)
@@ -140,16 +135,18 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
             )
           })}
           </div>
-        </div>
+        </ChartCard>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {/* Low stock */}
-          <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-            <h3 className="m-0 mb-3 flex items-center gap-2 text-lg font-semibold text-charcoal">
+          <ChartCard title={
+            <span className="flex items-center gap-2">
               <AlertTriangle size={15} color={T.amber} /> Low Stock
-            </h3>
+            </span>
+          }>
+            <div className="p-5">
             {lowStock.length === 0 ? (
-              <p className="text-[13px] text-faint">All items well-stocked.</p>
+              <p className="text-[13px] text-muted-foreground">All items well-stocked.</p>
             ) : (
               <div className="inv-hscroll" style={{ maxHeight: 220, overflowY: 'auto' }}>
                 {lowStock.map(item => (
@@ -160,13 +157,14 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          </ChartCard>
 
           {/* Recent activity — borrows come from `borrows`, but purchases only
               ever exist as a paid invoice (see rangedPurchasePayments above),
               so both have to be merged here for purchases to show up at all. */}
-          <div className="rounded-2xl border border-border bg-white p-4 sm:p-6">
-            <h3 className="m-0 mb-3 text-[15px] font-semibold text-charcoal">Recent Activity</h3>
+          <ChartCard title="Recent Activity">
+            <div className="p-5">
             {[
               ...rangedBorrows.map(b => ({ key: `b-${b.id}`, name: b.itemName, itemId: b.itemId, action: b.action, date: b.date })),
               ...rangedPurchasePayments.map(p => ({ key: `p-${p.id}`, name: p.itemName || 'Purchase', itemId: null, action: 'purchased', date: p.dateTime || p.date })),
@@ -186,7 +184,8 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                   </div>
                 )
               })}
-          </div>
+            </div>
+          </ChartCard>
         </div>
       </div>
 
@@ -342,11 +341,11 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
   }
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-white lg:mt-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone px-4 py-4 sm:px-6">
+    <div className="mt-6 overflow-hidden rounded-xl border border-border bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <h3 className="m-0 text-lg font-bold text-charcoal">Recent Transactions</h3>
-          <p className="m-0 mt-0.5 text-xs text-faint">Borrows &amp; purchases, credit payments, and pending/approved requests — click a row for item details.</p>
+          <h2 className="text-sm font-semibold text-foreground">Recent Transactions</h2>
+          <p className="m-0 mt-0.5 text-xs text-muted-foreground">Borrows &amp; purchases, credit payments, and pending/approved requests — click a row for item details.</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['All', 'Borrow', 'Purchase', 'Credit'].map(t => (

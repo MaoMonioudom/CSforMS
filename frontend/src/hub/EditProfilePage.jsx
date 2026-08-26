@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
-import { BackBar } from "../components/BackBar";
 import { updateMyProfile, uploadMyAvatar } from "../lib/user-profile-data";
 
 const D = {
@@ -93,15 +92,15 @@ export default function EditProfilePage() {
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg} 0%, ${D.bg2} 100%)` }}>
       <TopNav />
-      <BackBar />
 
-      <main className="relative z-10 mx-auto max-w-xl px-4 sm:px-6 py-12">
+      <main className="relative z-10 mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
         <button onClick={() => navigate("/profile")}
           className="inline-flex items-center gap-1.5 text-sm font-semibold mb-6 hover:opacity-70 transition-opacity"
           style={{ color: D.muted }}>
           <ArrowLeft size={14} /> Back to profile
         </button>
 
+        <div className="mx-auto max-w-xl">
         <div className="rounded-2xl p-8" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
           <h1 className="text-xl font-extrabold mb-6" style={{ color: D.text }}>Edit profile</h1>
 
@@ -155,6 +154,7 @@ export default function EditProfilePage() {
               </button>
             </div>
           </form>
+        </div>
         </div>
       </main>
     </div>

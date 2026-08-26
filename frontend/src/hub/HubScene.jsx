@@ -14,8 +14,8 @@ const PROX    = 82;
 
 const STATIONS = [
   { id: "community", worldX: -480, label: "Community", color: "#f59e0b", to: "/community", isRoom: false },
-  { id: "learning",  worldX:  100, label: "Library",   color: "#3b82f6", to: "/learning",  isRoom: true, sign: "Library",  interior: "#deeeff" },
-  { id: "inventory", worldX:  560, label: "Storage",   color: "#10b981", to: "/inventory", isRoom: true, sign: "Storage",  interior: "#d8f5ec" },
+  { id: "learning",  worldX:  100, label: "Learning",  color: "#3b82f6", to: "/learning",  isRoom: true, sign: "Learning", plaque: "Library",   doorType: "Library", interior: "#deeeff" },
+  { id: "inventory", worldX:  560, label: "Build",     color: "#10b981", to: "/inventory", isRoom: true, sign: "Build",    plaque: "Inventory", doorType: "Storage", interior: "#d8f5ec" },
 ];
 
 const ws = (worldX, camX, f = 1) => CHAR_X + worldX - camX * f;
@@ -131,7 +131,7 @@ function IndustrialCeiling({ camX }) {
 }
 
 // ── Bulletin Board — Community (makerspace: magnetic steel board) ─────────────
-function BulletinBoard({ screenX, near, color }) {
+function BulletinBoard({ screenX, near, color, label }) {
   const cx = screenX;
   const fw = 162, fh = 228;
   const L  = cx - fw / 2, top = FLOOR - fh - 14;
@@ -158,6 +158,21 @@ function BulletinBoard({ screenX, near, color }) {
       {/* Wall mounting rails */}
       <rect x={L - 6} y={top - 16} width={fw + 12} height={10} rx="2" fill={P.metalDk} />
       <rect x={L - 6} y={top + fh + 6} width={fw + 12} height={10} rx="2" fill={P.metalDk} />
+
+      {/* Board name plaque — width grows with the label so longer names don't clip */}
+      {(() => {
+        const pw = Math.max(68, label.length * 9 + 20);
+        return (
+          <>
+            <rect x={cx - pw / 2} y={top - 52} width={pw} height={28} rx="3" fill={P.metalDk} />
+            <rect x={cx - pw / 2 + 4} y={top - 48} width={pw - 8} height={20} rx="2" fill={P.metal} />
+            <text x={cx} y={top - 33} textAnchor="middle" fontSize="11" fontWeight="700"
+              fill="#e0eaf5" letterSpacing="1">
+              {label}
+            </text>
+          </>
+        );
+      })()}
       {/* Rail bolts */}
       {[L + 10, L + fw - 10].map((bx, i) => (
         <circle key={i} cx={bx} cy={top - 11} r="3.5" fill={P.metal} />
@@ -239,7 +254,7 @@ function BulletinBoard({ screenX, near, color }) {
 
       {/* Label */}
       <text x={cx} y={FLOOR + 20} textAnchor="middle" fontSize="13" fontWeight="700" fill={color}>
-        Community
+        {label}
       </text>
       <text x={cx} y={FLOOR + 34} textAnchor="middle" fontSize="10" fill={P.metal}>
         Bulletin Board
@@ -259,15 +274,15 @@ function BulletinBoard({ screenX, near, color }) {
 }
 
 // ── Room Door — glass/industrial (makerspace) ─────────────────────────────────
-function RoomDoor({ screenX, color, interior, sign, near }) {
+function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
   const cx = screenX;
   const fw = 170, fh = 252;
   const L  = cx - fw / 2, top = FLOOR - fh;
   const dW = fw - 28, dH = fh - 10;
   const dL = L + 14;
 
-  const isGlass = sign === "Library";   // glass door for library
-  const isIndustrial = sign === "Storage"; // metal door for storage
+  const isGlass = doorType === "Library";   // glass door for library
+  const isIndustrial = doorType === "Storage"; // metal door for storage
 
   return (
     <g>
@@ -384,13 +399,20 @@ function RoomDoor({ screenX, color, interior, sign, near }) {
         </>
       )}
 
-      {/* Room ID plaque */}
-      <rect x={cx - 34} y={top - 52} width={68} height={28} rx="3" fill={P.metalDk} />
-      <rect x={cx - 30} y={top - 48} width={60} height={20} rx="2" fill={P.metal} />
-      <text x={cx} y={top - 33} textAnchor="middle" fontSize="11" fontWeight="700"
-        fill="#e0eaf5" letterSpacing="1">
-        {sign}
-      </text>
+      {/* Room ID plaque — width grows with the label so longer names don't clip */}
+      {(() => {
+        const pw = Math.max(68, plaque.length * 9 + 20);
+        return (
+          <>
+            <rect x={cx - pw / 2} y={top - 52} width={pw} height={28} rx="3" fill={P.metalDk} />
+            <rect x={cx - pw / 2 + 4} y={top - 48} width={pw - 8} height={20} rx="2" fill={P.metal} />
+            <text x={cx} y={top - 33} textAnchor="middle" fontSize="11" fontWeight="700"
+              fill="#e0eaf5" letterSpacing="1">
+              {plaque}
+            </text>
+          </>
+        );
+      })()}
 
       {/* Near glow */}
       {near && (
@@ -798,11 +820,11 @@ export function HubScene({ scrollControlRef, initialCamX = -180, onKeyMove }) {
               {s.isRoom ? (
                 <RoomDoor
                   screenX={sx} color={s.color} interior={s.interior}
-                  sign={s.sign} near={isNear}
+                  sign={s.sign} plaque={s.plaque} doorType={s.doorType} near={isNear}
                 />
               ) : (
                 <BulletinBoard
-                  screenX={sx} color={s.color} near={isNear}
+                  screenX={sx} color={s.color} label={s.label} near={isNear}
                 />
               )}
             </g>

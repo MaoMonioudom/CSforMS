@@ -1,22 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { LogOut, ChevronDown } from 'lucide-react'
 import { useInventory } from '../../lib/inventory/InventoryContext'
-import { SignOutConfirmDialog } from '../../components/SignOutConfirmDialog'
 import Toast from '../../components/inventory/ui/Toast'
 
 import AdminDashboard from './pages/AdminDashboard'
 import InventoryManager from './pages/InventoryManager'
 import ServicePage from './pages/ServicePage'
-import UserManager from './pages/UserManager'
 import PaymentsPage from './pages/PaymentsPage'
 import BorrowsTracker from './pages/BorrowsTracker'
 import RequestsManager from './pages/RequestsManager'
 import Catalog from '../../components/inventory/Catalog'
 
-// Titles for the teal gradient header — same visual language as the student side.
-// This top bar is the ONLY page header — the pages themselves no longer
-// render their own duplicate title banners underneath it.
+// Titles for the shared page header (same plain style as Community/Learning's
+// admin dashboards). This header is the ONLY page header — the pages
+// themselves don't render their own duplicate title banners underneath it.
 const PAGE_META = {
   '':          { title: 'Dashboard',          subtitle: 'Inventory overview & management' },
   'catalog':   { title: 'Browse Items',       subtitle: 'Manage inventory, or select a student to sell consumables and lend tools at the counter' },
@@ -25,7 +22,6 @@ const PAGE_META = {
   'borrows':   { title: 'Borrow Tracker',     subtitle: 'Track all active borrowed and returns — click any row for full transaction details' },
   'manage':    { title: 'Manage Stock',       subtitle: 'Manage items, stock, and availability' },
   'payments':  { title: 'Payment List',       subtitle: 'Track credit top-ups and item purchases' },
-  'users':     { title: 'Users & Roles',      subtitle: 'Manage members and staff permissions' },
 }
 
 // Inventory admin pages, rendered inside the shared AdminLayout (sidebar shell).
@@ -46,17 +42,6 @@ export default function InventoryAdminArea() {
   // Staff in-person sale on the catalog page needs a local cart slot.
   const [cart, setCart] = useState([])
 
-  // Profile dropdown in the top bar (holds Sign out).
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [signOutOpen, setSignOutOpen] = useState(false)
-  const profileRef = useRef(null)
-  useEffect(() => {
-    if (!profileOpen) return
-    const onClickAway = (e) => { if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false) }
-    document.addEventListener('mousedown', onClickAway)
-    return () => document.removeEventListener('mousedown', onClickAway)
-  }, [profileOpen])
-
   // Brief flash right after login, before InventoryContext finishes creating
   // this hub account's inventory profile — nothing meaningful to render yet.
   if (!user) return null
@@ -65,59 +50,19 @@ export default function InventoryAdminArea() {
 
   return (
     <div className="inv-root">
-      {/* Full-width top bar — spans the whole area right of the sidebar.
-          Shows the page title and the signed-in profile (dropdown → sign out). */}
-      <div className="sticky top-0 z-40" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)',
-        backgroundSize: '40px 40px, 40px 40px, cover',
-        borderBottom: '1px solid color-mix(in oklch, var(--color-inv-accent) 25%, transparent)',
-      }}>
-        <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-8">
-          <div className="min-w-0">
-            <h1 className="m-0 truncate text-lg font-bold text-white sm:text-xl" style={{ letterSpacing: '-0.02em' }}>{meta.title}</h1>
-            <p className="m-0 mt-0.5 hidden truncate text-xs sm:block" style={{ color: 'var(--on-dark-muted)' }}>{meta.subtitle}</p>
-          </div>
-
-          {/* Profile chip + dropdown */}
-          <div ref={profileRef} className="relative flex-shrink-0">
-            <button onClick={() => setProfileOpen(v => !v)}
-              className="flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-3"
-              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,color-mix(in oklch, var(--color-inv-accent) 55%, white),var(--color-inv-accent))', color: 'var(--color-charcoal)' }}>
-                {user.name[0].toUpperCase()}
-              </span>
-              <span className="hidden text-left sm:block">
-                <span className="block text-xs font-bold leading-tight text-white">{user.name}</span>
-                <span className="block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--on-dark-muted)' }}>{user.role}</span>
-              </span>
-              <ChevronDown size={13} color="var(--on-dark-muted)" style={{ transition: 'transform .15s', transform: profileOpen ? 'rotate(180deg)' : 'none' }} />
-            </button>
-            {profileOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl bg-white"
-                style={{ border: `1px solid var(--border)`, boxShadow: '0 12px 32px rgba(15,23,42,0.14)' }}>
-                <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--muted)' }}>
-                  <p className="m-0 text-sm font-bold text-charcoal">{user.name}</p>
-                  <p className="m-0 mt-0.5 text-xs text-faint">{user.email}</p>
-                </div>
-                <button onClick={() => { setProfileOpen(false); setSignOutOpen(true) }}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold"
-                  style={{ background: 'none', border: 'none', color: 'var(--color-red)', cursor: 'pointer' }}>
-                  <LogOut size={13} /> Sign out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Plain page header — same style as the Community/Learning admin
+          dashboards. The shared AdminSidebar already shows the signed-in
+          user's name/role and provides sign out, so this doesn't duplicate
+          that with its own profile chip. */}
+      <div className="border-b border-border bg-white px-5 py-6 sm:px-8">
+        <h1 className="text-2xl font-bold text-foreground">{meta.title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{meta.subtitle}</p>
       </div>
-
-      <SignOutConfirmDialog open={signOutOpen} onOpenChange={setSignOutOpen} redirectTo="/inventory" />
 
       <Routes>
         <Route index element={<AdminDashboard items={items} users={users} borrows={borrows} requests={requests} payments={payments} />} />
         <Route path="manage"   element={<InventoryManager items={items} setItems={setItems} user={user} filaments={filaments} setFilaments={setFilaments} />} />
         <Route path="services" element={<ServicePage user={user} users={users} setUsers={setUsers} filaments={filaments} setFilaments={setFilaments} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} />} />
-        <Route path="users"    element={user.role === 'admin' ? <UserManager users={users} setUsers={setUsers} /> : <Navigate to="/admin/inventory" replace />} />
         <Route path="borrows"  element={<BorrowsTracker {...sharedBorrow} users={users} setUsers={setUsers} showToast={showToast} user={user} />} />
         <Route path="requests" element={<RequestsManager requests={requests} setRequests={setRequests} {...sharedBorrow} users={users} setUsers={setUsers} user={user} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} filaments={filaments} setFilaments={setFilaments} />} />
         <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} items={items} requests={requests} users={users} />} />
