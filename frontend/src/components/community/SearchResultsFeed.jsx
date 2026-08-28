@@ -4,7 +4,7 @@ import { CollabCard } from "./CollabCard";
 import { CommunityPostCard } from "./CommunityPostCard";
 
 const BATCH_SIZE = 6;
-const LOAD_DELAY = 350; // ms — small simulated-load feel, like a real feed fetching more
+const LOAD_DELAY = 350; // ms: small simulated-load feel, like a real feed fetching more
 
 const GRID_CLASS = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-10 sm:gap-y-14 items-start";
 

@@ -37,8 +37,8 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
       }
       setCart([])
       onClose()
-      // Both flows are requests now — nothing is charged until staff approve.
-      showToast('Request submitted for staff approval — credits are only deducted once approved.')
+      // Both flows are requests now. Nothing is charged until staff approve.
+      showToast('Request submitted for staff approval. Credits are only deducted once approved.')
     } catch (err) {
       showToast(err.message || 'Checkout failed. Please try again.', 'error')
     } finally {
@@ -47,7 +47,7 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
   }
 
   return (
-    // Overlay drawer — slides in from the right without pushing the page content.
+    // Overlay drawer: slides in from the right without pushing the page content.
     <div style={{
       width: 'min(380px, 100vw)', maxWidth: '100vw', background: T.white,
       borderLeft: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column',
@@ -77,7 +77,7 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
               <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.75rem' }}>
                   <RotateCcw size={13} color={T.blue} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: T.blue, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Borrow — Returnable</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.blue, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Borrow: Returnable</span>
                 </div>
                 {borrowItems.map(ci => <CartRow key={ci.item.id} ci={ci} onQty={updateQty} onRemove={remove} />)}
               </div>
@@ -88,7 +88,7 @@ export default function CartPanel({ cart, setCart, user, showToast, onClose }) {
               <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.75rem' }}>
                   <ShoppingBag size={13} color={T.amber} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Purchase — Consumable</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.amber, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Purchase: Consumable</span>
                 </div>
                 {buyItems.map(ci => <CartRow key={ci.item.id} ci={ci} onQty={updateQty} onRemove={remove} />)}
               </div>

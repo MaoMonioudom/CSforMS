@@ -8,7 +8,7 @@ import { useAuth } from '../../hub/AuthContext'
 // calls the backend then refetches the affected collections, so approving a
 // request in the admin area is visible to the student side on next load.
 //
-// Identity comes straight from the hub's auth — user_id is the same row in
+// Identity comes straight from the hub's auth. user_id is the same row in
 // `users` everywhere, and membership/credits arrive via /api/membership/me
 // (already fetched by AuthContext.refreshMembership).
 const InventoryCtx = createContext(null)
@@ -64,7 +64,7 @@ export function InventoryProvider({ children }) {
   const refreshPayments = useCallback(() => inv.fetchPayments().then(setPayments), [])
   const refreshUsers = useCallback(() => inv.fetchUsers().then(setUsers), [])
 
-  // Public catalog — guests can browse.
+  // Public catalog: guests can browse.
   useEffect(() => {
     refreshCatalog().catch(() => {}).finally(() => setLoading(false))
   }, [refreshCatalog])
@@ -87,7 +87,7 @@ export function InventoryProvider({ children }) {
   // Staff-only: poll for new pending requests so a toast pops up when a
   // student submits one, without needing a websocket. `seenPendingIds`
   // starts null so the first load (whatever's already pending) doesn't
-  // trigger a toast — only requests that appear after that do.
+  // trigger a toast. Only requests that appear after that do.
   const seenPendingIds = useRef(null)
   useEffect(() => {
     if (!staff) { seenPendingIds.current = null; return }
@@ -107,7 +107,7 @@ export function InventoryProvider({ children }) {
     seenPendingIds.current = pendingIds
   }, [requests, staff])
 
-  // ── Actions — call the API, then refresh what changed ──────────────────
+  // ── Actions: call the API, then refresh what changed ──────────────────
   // Each returns the API result so callers can toast on success/failure.
   const run = async (fn, refreshers = []) => {
     const result = await fn()
@@ -122,10 +122,10 @@ export function InventoryProvider({ children }) {
     submitTopUpRequest:   (p) => run(() => inv.submitTopUpRequest(p), [refreshRequests]),
     submitPrintingRequest:(p) => run(() => inv.submitPrintingRequest(p), [refreshRequests]),
     submit3DPrintRequest: (p) => run(() => inv.submit3DPrintRequest(p), [refreshRequests]),
-    // Purchases are requests now — nothing is charged until staff approve.
+    // Purchases are requests now. Nothing is charged until staff approve.
     purchaseItems:        (cart) => run(() => inv.purchaseItems(cart), [refreshRequests]),
 
-    // staff — requests
+    // staff: requests
     approveBorrowGroup: (ids) => run(() => inv.approveBorrowGroup(ids), [refreshRequests, refreshBorrows, refreshCatalog]),
     approvePurchaseGroup: (ids) => run(() => inv.approvePurchaseGroup(ids), [refreshRequests, refreshPayments, refreshCatalog, refreshUsers, creditsChanged]),
     denyRequests:       (ids) => run(() => inv.denyRequests(ids), [refreshRequests]),
@@ -134,7 +134,7 @@ export function InventoryProvider({ children }) {
     approvePrinting:    (id) => run(() => inv.approvePrinting(id), [refreshRequests, refreshPayments, refreshUsers, creditsChanged]),
     confirm3DWeight:    (id, grams) => run(() => inv.confirm3DWeight(id, grams), [refreshRequests, refreshPayments, refreshUsers, refreshCatalog, creditsChanged]),
 
-    // staff — borrows & counter
+    // staff: borrows & counter
     returnBorrow:  (id, opts) => run(() => inv.returnBorrow(id, opts), [refreshBorrows, refreshCatalog]),
     deductCredits: (p) => run(() => inv.deductCredits(p), [refreshPayments, refreshUsers, creditsChanged]),
     chargePrint:   (p) => run(() => inv.chargePrint(p), [refreshPayments, refreshUsers, creditsChanged]),
@@ -142,10 +142,10 @@ export function InventoryProvider({ children }) {
     staffSale:     (p) => run(() => inv.staffSale(p), [refreshPayments, refreshUsers, refreshBorrows, refreshCatalog, creditsChanged]),
     topUpCounter:  (p) => run(() => inv.topUpCounter(p), [refreshPayments, refreshUsers, creditsChanged]),
 
-    // staff — item/filament CRUD
+    // staff: item/filament CRUD
     saveItem: (ui) => run(async () => {
       // Any room + shelf code the form is submitted with gets a real
-      // location row if one doesn't already exist — see resolveLocation.
+      // location row if one doesn't already exist, see resolveLocation.
       const location = await inv.resolveLocation({ room: ui.room, zone: ui.zone }, locations)
       const payload = inv.toDbItem({ ...ui, locationId: location?.location_id ?? null }, categories, locations)
       return ui.id ? inv.updateItem(ui.id, payload) : inv.createItem(payload)
@@ -161,7 +161,7 @@ export function InventoryProvider({ children }) {
     markAllNotificationsRead: () => run(() => inv.markAllNotificationsRead(), [refreshNotifications]),
   }
 
-  // Every one of the actions above is a "click to submit" mutation — this
+  // Every one of the actions above is a "click to submit" mutation. This
   // guards ALL of them (student and staff alike) against rapid repeat clicks
   // firing the same request multiple times (e.g. "Complete Sale" clicked 3x
   // creating 3 transactions). One action name in flight at a time; extra

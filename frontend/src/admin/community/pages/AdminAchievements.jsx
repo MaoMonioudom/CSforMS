@@ -33,7 +33,7 @@ export default function AdminAchievements() {
   useEffect(() => {
     fetchAchievements()
       .then(setList)
-      .catch(() => setListError("Couldn't load achievements — please try refreshing."))
+      .catch(() => setListError("Couldn't load achievements. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -120,7 +120,7 @@ export default function AdminAchievements() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Achievements</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Badges members can earn — {list.length} defined.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Badges members can earn: {list.length} defined.</p>
         </div>
         <button onClick={openAdd}
           className="inline-flex items-center gap-2 bg-foreground text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-foreground transition-colors">
@@ -135,7 +135,7 @@ export default function AdminAchievements() {
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : list.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No achievements yet — add one above.</p>
+        <p className="text-sm text-muted-foreground">No achievements yet. Add one above.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {list.map((a) => (

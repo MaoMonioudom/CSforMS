@@ -119,7 +119,7 @@ export default function BookReader({ course, initialLessonId }) {
     }
   }, [initialLessonId, initialLessonIndex]);
 
-  /* ── MOBILE — single-page flip ── */
+  /* ── MOBILE: single-page flip ── */
   const goToPageMobile = useCallback(
     (target) => {
       if (animatingRef.current) return;
@@ -144,7 +144,7 @@ export default function BookReader({ course, initialLessonId }) {
     [pageIdx, totalMobile]
   );
 
-  /* ── DESKTOP — two-page spread flip ── */
+  /* ── DESKTOP: two-page spread flip ── */
   const goToSpreadDesktop = useCallback(
     (targetSpread) => {
       if (animatingRef.current) return;

@@ -11,7 +11,7 @@ const PERKS = [
 ];
 
 // Shown when a signed-in, non-member user taps the credits slot in the
-// profile menu — a quick teaser before sending them to the full pitch page.
+// profile menu, a quick teaser before sending them to the full pitch page.
 export function MembershipPromoDialog({ open, onOpenChange }) {
   const navigate = useNavigate();
 

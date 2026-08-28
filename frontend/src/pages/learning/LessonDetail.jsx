@@ -13,7 +13,7 @@ export default function LessonDetail() {
   const { course, loading } = useCourse(id);
   const { enrolled, loaded } = useEnrollment(id);
 
-  // Lessons are for enrolled students only — anyone else (guest or not yet
+  // Lessons are for enrolled students only. Anyone else (guest or not yet
   // enrolled) is sent to the course page, where the enroll prompt appears.
   useEffect(() => {
     if (loaded && !enrolled) navigate(`/learning/course/${id}`, { replace: true });
@@ -46,7 +46,7 @@ export default function LessonDetail() {
         </span>
       </div>
 
-      {/* Single-lesson book page — no cover/TOC/other lessons */}
+      {/* Single-lesson book page: no cover/TOC/other lessons */}
       <div className={`${CONTAINER} pt-2`}>
         <LessonPageView course={course} lessonId={lesson.id} />
       </div>

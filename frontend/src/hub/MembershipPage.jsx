@@ -20,7 +20,7 @@ export default function MembershipPage() {
   const navigate = useNavigate();
 
   // Wait for AuthContext to finish confirming a stored token before
-  // deciding the user is logged out — otherwise a refresh bounces someone
+  // deciding the user is logged out. Otherwise a refresh bounces someone
   // who's genuinely still logged in through /login and out to /inventory.
   useEffect(() => {
     if (authLoading) return;
@@ -48,7 +48,7 @@ export default function MembershipPage() {
           </div>
           <h1 className="text-2xl font-extrabold" style={{ color: D.text }}>Become a CADT Makerspace Member</h1>
           <p className="text-sm mt-2 max-w-md mx-auto" style={{ color: D.muted }}>
-            {MEMBERSHIP_PRICE} unlocks a credit balance and the ability to request a personal workspace — earn credits by
+            {MEMBERSHIP_PRICE} unlocks a credit balance and the ability to request a personal workspace. Earn credits by
             showing up and learning, or top them up in person at the front desk.
           </p>
         </div>

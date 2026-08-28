@@ -1,9 +1,9 @@
 import { api } from "./api/client";
 
 // Presentation (icon/color/title) is a frontend concern and lives in
-// NotificationsPage.jsx, keyed off `type` — this file only shapes the raw
+// NotificationsPage.jsx, keyed off `type`. This file only shapes the raw
 // row into something UI-agnostic. `date` keeps the full timestamp (not
-// truncated to YYYY-MM-DD) — the merged feed sorts by it, so same-day
+// truncated to YYYY-MM-DD): the merged feed sorts by it, so same-day
 // notifications need real precision to land in the right order, and the
 // page displays the time alongside the date.
 function mapNotification(row) {

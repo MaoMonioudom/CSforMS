@@ -5,7 +5,7 @@ import { listMyNotifications, markNotificationRead, markAllNotificationsRead, de
 const router = Router();
 const STAFF = requireRole("admin", "staff");
 
-// Preview only — see <overdueEmailReminders.js> for why this doesn't send yet.
+// Preview only; see <overdueEmailReminders.js> for why this doesn't send yet.
 router.get("/overdue-reminders/preview", requireAuth, STAFF, previewOverdueReminders);
 
 router.get("/", requireAuth, listMyNotifications);

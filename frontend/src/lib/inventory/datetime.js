@@ -1,4 +1,4 @@
-// Shared date-time formatting for the inventory module — everything renders
+// Shared date-time formatting for the inventory module. Everything renders
 // in Cambodia time (Asia/Phnom_Penh) as "2:09 PM, 7-16-2026".
 //
 // Supabase stores timestamps in UTC but often without a zone marker, so bare
@@ -7,7 +7,7 @@
 const TZ = 'Asia/Phnom_Penh'
 
 // Bare "YYYY-MM-DDTHH:MM:SS" (no Z/offset) is what Supabase returns for
-// timestamp columns — always UTC, just missing the marker.
+// timestamp columns, always UTC, just missing the marker.
 function toDate(ts) {
   const s = String(ts)
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(s)
@@ -28,7 +28,7 @@ export function fmtDateTime(ts) {
   return dateOnly ? date : `${get('hour')}:${get('minute')} ${get('dayPeriod')}, ${date}`
 }
 
-// Cambodia calendar date as a sortable "YYYY-MM-DD" key — for grouping
+// Cambodia calendar date as a sortable "YYYY-MM-DD" key, for grouping
 // entries by day (Today/Yesterday) using Cambodia's clock, not the
 // viewer's browser timezone (which could be anywhere).
 export function cambodiaDateKey(ts) {
@@ -39,7 +39,7 @@ export function cambodiaDateKey(ts) {
   return `${get('year')}-${get('month')}-${get('day')}`
 }
 
-// "Today" / "Yesterday" / "17 July, 2026" — all judged by Cambodia's date,
+// "Today" / "Yesterday" / "17 July, 2026": all judged by Cambodia's date,
 // so the label matches the Cambodia time shown on each entry.
 export function cambodiaDayLabel(ts) {
   const key = cambodiaDateKey(ts)

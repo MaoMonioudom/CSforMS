@@ -13,7 +13,7 @@ export const RANGE_OPTIONS = [
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
 
 // Checks whether a yyyy-mm-dd date string falls within the given range, relative to
-// today — shared by every dashboard that offers a period filter. `range` is either
+// today. Shared by every dashboard that offers a period filter. `range` is either
 // one of RANGE_OPTIONS' ids, or a custom range in the form "custom:FROM:TO".
 export function inRange(dateStr, range) {
   if (!range || range === 'all') return true
@@ -53,7 +53,7 @@ function labelFor(value) {
   return RANGE_OPTIONS.find(o => o.id === value)?.label || RANGE_OPTIONS[0].label
 }
 
-// Small dropdown pill used on dashboards/reports to switch the active date range —
+// Small dropdown pill used on dashboards/reports to switch the active date range,
 // includes a "Custom Range" option that reveals a from/to date picker.
 export default function DateRangeFilter({ value, onChange }) {
   const [open,   setOpen]   = useState(false)

@@ -1,5 +1,5 @@
 // Postgres `timestamp` (no time zone) columns come back from PostgREST as
-// bare strings like "2026-07-14T12:36:04.759406" — no 'Z', no offset. The
+// bare strings like "2026-07-14T12:36:04.759406": no 'Z', no offset. The
 // value IS UTC (CURRENT_TIMESTAMP on the Supabase server), but `new Date(...)`
 // on an offset-less string assumes local time, so every "created X ago" is
 // off by the viewer's UTC offset. Stamp the missing 'Z' back on before the
@@ -7,7 +7,7 @@
 const BARE_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/;
 
 // Recurses into nested objects/arrays (e.g. a borrow row's embedded
-// `return_transactions` array from a Supabase join) — the bare-timestamp
+// `return_transactions` array from a Supabase join); the bare-timestamp
 // bug isn't limited to top-level columns.
 export function normalizeRow(row) {
   if (Array.isArray(row)) {

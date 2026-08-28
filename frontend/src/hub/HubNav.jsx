@@ -39,7 +39,7 @@ export function HubNav({ light = true }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  /* ── Colour tokens — Sky & Cloud palette, matches Landing / About ─────────── */
+  /* ── Colour tokens: Sky & Cloud palette, matches Landing / About ─────────── */
   const bg = light
     ? scrolled ? "rgba(244,248,252,0.94)" : "rgba(244,248,252,0.78)"
     : scrolled ? "rgba(8,8,14,0.92)"      : "transparent";
@@ -112,7 +112,7 @@ export function HubNav({ light = true }) {
           ))}
         </nav>
 
-        {/* Auth — desktop */}
+        {/* Auth: desktop */}
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <Link

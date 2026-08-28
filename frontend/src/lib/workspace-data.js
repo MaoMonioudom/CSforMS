@@ -1,10 +1,10 @@
 import { api } from "./api/client";
 
-// Real desks/rooms + bookings now — the `workspaces`/`workspace_bookings`
+// Real desks/rooms + bookings now: the `workspaces`/`workspace_bookings`
 // tables were already defined in the DB schema but never wired up; this
 // used to be a localStorage-only mock until this rewrite.
 
-// Fixed 3-hour blocks, matching what was previously hardcoded — stored as
+// Fixed 3-hour blocks, matching what was previously hardcoded. Stored as
 // literal UTC-labeled timestamps (no real timezone conversion), same
 // convention events already use (see events-data.js's toIso/formatEventDate
 // with timeZone: "UTC").
@@ -37,7 +37,7 @@ function slotToRange(dateKey, slot) {
 }
 
 // Bare-timestamp columns can come back with slightly different string
-// formatting (fractional seconds, etc.) than what was sent — compare actual
+// formatting (fractional seconds, etc.) than what was sent; compare actual
 // instants, not raw strings.
 function sameInstant(a, b) {
   return new Date(a).getTime() === new Date(b).getTime();
@@ -49,7 +49,7 @@ function slotForStartTime(iso) {
 }
 
 // Zone shown to members prefers the linked location's real zone_name
-// (location_items — shared with inventory's storage locations) over the
+// (location_items, shared with inventory's storage locations) over the
 // desk's own workspace_type, falling back to workspace_type only when no
 // location is linked yet.
 function mapWorkspace(row) {
@@ -95,14 +95,14 @@ export async function fetchWorkspaces() {
   return data.map(mapWorkspace);
 }
 
-// { workspace_id, start_time, end_time } only — no identity — used just to
+// { workspace_id, start_time, end_time } only, no identity. Used just to
 // gray out already-taken slots on the member's availability grid.
 export async function fetchTakenSlots(dateKey) {
   const { data } = await api.get(`/api/workspace/bookings/taken?date=${dateKey}`);
   return data;
 }
 
-// { count, capacity, full } for one (workspace, slot) — count is how many
+// { count, capacity, full } for one (workspace, slot). count is how many
 // pending/approved bookings already exist for it, so a multi-person space
 // (capacity > 1) stays bookable until it's actually full instead of the
 // first request locking everyone else out.
@@ -123,7 +123,7 @@ export async function createBooking({ workspaceId, dateKey, slot }) {
   return mapMyBooking(data);
 }
 
-// Self-service — only works on your own still-pending requests (the
+// Self-service: only works on your own still-pending requests (the
 // backend enforces both), frees up your PENDING_CAP quota and the slot
 // itself for others.
 export async function cancelBooking(id) {
@@ -152,11 +152,11 @@ function mapAdminWorkspace(row) {
     capacity: row.capacity,
     status: row.status,
     locationId: row.location?.location_id ?? null,
-    locationLabel: row.location ? `${row.location.location_name}${row.location.zone_name ? " — " + row.location.zone_name : ""}` : "",
+    locationLabel: row.location ? `${row.location.location_name}${row.location.zone_name ? ", " + row.location.zone_name : ""}` : "",
   };
 }
 
-// Admin/staff only — every desk regardless of status, for the "Manage
+// Admin/staff only: every desk regardless of status, for the "Manage
 // Desks" panel (fetchWorkspaces above only returns 'available' ones).
 export async function fetchAllWorkspacesAdmin() {
   const { data } = await api.get("/api/workspace/workspaces/all");
@@ -164,7 +164,7 @@ export async function fetchAllWorkspacesAdmin() {
 }
 
 // location_id links to the same location_items table inventory's storage
-// spots use — optional, since not every desk needs a tracked location yet.
+// spots use, optional since not every desk needs a tracked location yet.
 export async function createWorkspace({ name, type, locationId, capacity }) {
   const { data } = await api.post("/api/workspace/workspaces", {
     workspace_name: name,
@@ -179,13 +179,13 @@ export async function setWorkspaceStatus(id, status) {
   await api.patch(`/api/workspace/workspaces/${id}/status`, { status });
 }
 
-// Shared with inventory — the same physical storage/room list, reused here
+// Shared with inventory: the same physical storage/room list, reused here
 // per System_Full_DB.sql's comment rather than inventing a second location
 // concept just for desks.
 export async function fetchLocations() {
   const { data } = await api.get("/api/inventory/locations");
   return data.map((row) => ({
     id: row.location_id,
-    label: row.zone_name ? `${row.location_name} — ${row.zone_name}` : row.location_name,
+    label: row.zone_name ? `${row.location_name}, ${row.zone_name}` : row.location_name,
   }));
 }

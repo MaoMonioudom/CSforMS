@@ -19,7 +19,7 @@ import {
 
 const router = Router();
 
-// Public catalog — anyone can browse courses and lessons.
+// Public catalog: anyone can browse courses and lessons.
 router.get("/courses", listCourses);
 router.get("/courses/:id", getCourse);
 

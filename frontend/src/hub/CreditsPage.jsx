@@ -22,7 +22,7 @@ export default function CreditsPage() {
   const navigate = useNavigate();
 
   // Wait for AuthContext to finish confirming a stored token before
-  // deciding the user is logged out — otherwise a refresh bounces someone
+  // deciding the user is logged out. Otherwise a refresh bounces someone
   // who's genuinely still logged in through /login and out to /inventory.
   useEffect(() => {
     if (authLoading) return;
@@ -30,7 +30,7 @@ export default function CreditsPage() {
     if (!user.isMember) navigate("/membership");
   }, [user, authLoading, navigate]);
 
-  // Top-up request flow — moved here from Inventory's old credits modal so
+  // Top-up request flow: moved here from Inventory's old credits modal so
   // there's one real "Manage Credits" destination instead of two.
   const [customAmount, setCustomAmount] = useState("");
   const [pendingAmount, setPendingAmount] = useState(null);
@@ -45,7 +45,7 @@ export default function CreditsPage() {
       await submitTopUpRequest({ amountUSD: pendingAmount });
       setSent(true);
     } catch (err) {
-      setRequestError(err.message || "Could not send the top-up request — please try again.");
+      setRequestError(err.message || "Could not send the top-up request. Please try again.");
     }
   };
 
@@ -73,7 +73,7 @@ export default function CreditsPage() {
           <p className="text-sm mt-1" style={{ color: D.muted }}>credits available</p>
         </div>
 
-        {/* How to earn — kept deliberately vague: the only credit sources
+        {/* How to earn: kept deliberately vague. The only credit sources
             actually wired up today are membership signup and top-up
             requests below. Event/course bonuses aren't built yet, so this
             is a heads-up rather than a list of exact numbers. */}
@@ -83,12 +83,12 @@ export default function CreditsPage() {
               <Sparkles size={16} style={{ color: "#10b981" }} />
             </div>
             <p className="m-0 text-sm leading-relaxed" style={{ color: D.muted }}>
-              Joining events, completing courses, and other Makerspace activities can earn you bonus credits — keep an eye on your Notifications for updates.
+              Joining events, completing courses, and other Makerspace activities can earn you bonus credits. Keep an eye on your Notifications for updates.
             </p>
           </div>
         </div>
 
-        {/* How to top up — request an amount, staff arrange payment and add it */}
+        {/* How to top up: request an amount, staff arrange payment and add it */}
         <div className="mb-8">
           <SectionLabel>Top up credits</SectionLabel>
           <div className="rounded-2xl p-5" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: D.shadow }}>
@@ -104,7 +104,7 @@ export default function CreditsPage() {
                 </button>
               </div>
             ) : pendingAmount !== null ? (
-              // ── Confirm step — make sure the student really wants to contact the team ──
+              // ── Confirm step: make sure the student really wants to contact the team ──
               <>
                 <button onClick={() => setPendingAmount(null)} className="mb-3 flex items-center gap-1.5 border-none bg-transparent text-xs font-semibold" style={{ color: D.faint }}>
                   <ArrowLeft size={13} /> Back
@@ -200,7 +200,7 @@ export default function CreditsPage() {
 
                 <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: D.faint }}>Or reach the team directly</p>
                 <div className="flex flex-col gap-2">
-                  <a href={`mailto:${TEAM_CONTACT.email}?subject=Credit%20top-up%20request&body=Hi%20team%2C%20I%27d%20like%20to%20top%20up%20my%20MakerVault%20credits.`}
+                  <a href={`mailto:${TEAM_CONTACT.email}?subject=Credit%20top-up%20request&body=Hi%20team%2C%20I%27d%20like%20to%20top%20up%20my%20Makerspace%20credits.`}
                     className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold" style={{ border: `1px solid ${D.border}`, color: D.text }}>
                     <Mail size={15} style={{ color: "#2563eb" }} /> Email {TEAM_CONTACT.email}
                   </a>
@@ -214,13 +214,13 @@ export default function CreditsPage() {
           </div>
         </div>
 
-        {/* How to redeem — actual cost is per-item and shown live in the
+        {/* How to redeem: actual cost is per-item and shown live in the
             Inventory catalog, so this just points there instead of listing
             fixed prices that would drift out of sync. */}
         <div className="mb-8">
           <div className="rounded-2xl p-4 flex items-center justify-between gap-3" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
             <p className="m-0 text-sm leading-relaxed" style={{ color: D.muted }}>
-              Spend credits by borrowing tools or buying consumables — each item's cost is shown in the Inventory catalog.
+              Spend credits by borrowing tools or buying consumables. Each item's cost is shown in the Inventory catalog.
             </p>
             <button onClick={() => navigate("/inventory/catalog")}
               className="shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white" style={{ background: "var(--color-inv-accent)" }}>

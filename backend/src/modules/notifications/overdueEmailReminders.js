@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { supabaseAdmin } from "../../config/supabaseClient.js";
 
-// Same rate inventory.controller.js quotes in its in-app overdue message —
+// Same rate inventory.controller.js quotes in its in-app overdue message,
 // duplicated here (not imported) since it's a UI-facing constant, not a
 // charge that's actually applied anywhere yet.
 const OVERDUE_RATE = 5;
@@ -12,12 +12,12 @@ function daysOverdue(dueDate, now = new Date()) {
   return Math.floor((now - due) / 86400000);
 }
 
-// One email per student, listing every overdue item together — a student
+// One email per student, listing every overdue item together. A student
 // with 3 overdue items gets 1 email, not 3.
 function buildEmail({ studentName, items }) {
   const totalCredits = items.reduce((sum, i) => sum + i.creditsAccrued, 0);
   const lines = items
-    .map((i) => `  • "${i.itemName}" — due ${i.dueDay}, ${i.overdueDays} day${i.overdueDays === 1 ? "" : "s"} overdue (${i.creditsAccrued} credits so far)`)
+    .map((i) => `  • "${i.itemName}": due ${i.dueDay}, ${i.overdueDays} day${i.overdueDays === 1 ? "" : "s"} overdue (${i.creditsAccrued} credits so far)`)
     .join("\n");
   const plural = items.length > 1;
   return {
@@ -25,13 +25,13 @@ function buildEmail({ studentName, items }) {
     body:
       `Hi ${studentName},\n\n` +
       `You have ${items.length} item${plural ? "s" : ""} overdue at the Makerspace:\n\n${lines}\n\n` +
-      `Late returns are charged ${OVERDUE_RATE} credits per day per item (${totalCredits} credits total so far) — this keeps growing until each item is returned.\n\n` +
+      `Late returns are charged ${OVERDUE_RATE} credits per day per item (${totalCredits} credits total so far); this keeps growing until each item is returned.\n\n` +
       `Please bring ${plural ? "them" : "it"} back to the Makerspace as soon as you can.\n\n` +
-      `— CADT Makerspace team`,
+      `- CADT Makerspace team`,
   };
 }
 
-// Everything overdue right now, grouped by student — this is the shared
+// Everything overdue right now, grouped by student. This is the shared
 // query behind both the admin preview endpoint and the daily send job, so
 // what you see in the preview is exactly what would go out.
 export async function getOverdueReminderCandidates() {
@@ -46,7 +46,7 @@ export async function getOverdueReminderCandidates() {
   const byUser = new Map();
   for (const b of borrows) {
     const overdueDays = daysOverdue(b.due_date);
-    if (overdueDays < 1) continue; // just crossed the line today — first email goes out tomorrow
+    if (overdueDays < 1) continue; // just crossed the line today; first email goes out tomorrow
     const userId = b.user_id;
     if (!byUser.has(userId)) {
       byUser.set(userId, {
@@ -72,14 +72,14 @@ export async function getOverdueReminderCandidates() {
   }));
 }
 
-// Dry-run only for now — logs what would be sent instead of calling
+// Dry-run only for now; logs what would be sent instead of calling
 // Microsoft Graph. Flip this over to a real sendMail call once the Azure
 // app registration has Mail.Send (application permission + admin consent).
 export async function runOverdueReminderJob() {
   const candidates = await getOverdueReminderCandidates();
   for (const c of candidates) {
     if (!c.toEmail) {
-      console.warn(`[overdue-reminder] skipped user ${c.userId} — no email on file`);
+      console.warn(`[overdue-reminder] skipped user ${c.userId}: no email on file`);
       continue;
     }
     console.log(`[overdue-reminder][DRY RUN] to=${c.toEmail} from=${c.from} items=${c.items.length} subject="${c.subject}"`);
@@ -87,7 +87,7 @@ export async function runOverdueReminderJob() {
   return { checked: candidates.length, candidates };
 }
 
-// Daily at 08:00 Phnom Penh time — dry-run only until Mail.Send is granted
+// Daily at 08:00 Phnom Penh time; dry-run only until Mail.Send is granted
 // on the Azure app registration (see runOverdueReminderJob above). Once
 // that's live, this same schedule starts sending real email with no other
 // changes needed.
@@ -97,7 +97,7 @@ export function startOverdueReminderScheduler() {
     async () => {
       try {
         const { checked } = await runOverdueReminderJob();
-        console.log(`[overdue-reminder] daily run complete — ${checked} overdue borrow(s) checked`);
+        console.log(`[overdue-reminder] daily run complete: ${checked} overdue borrow(s) checked`);
       } catch (err) {
         console.error("[overdue-reminder] daily run failed:", err);
       }

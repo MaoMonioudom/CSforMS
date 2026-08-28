@@ -18,7 +18,7 @@ function writeOverlay(overlay) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(overlay));
   } catch {
-    /* localStorage unavailable — edits won't persist this session */
+    /* localStorage unavailable, edits won't persist this session */
   }
 }
 

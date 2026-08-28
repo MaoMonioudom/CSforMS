@@ -102,7 +102,7 @@ function LessonEditor({ lesson, index, paths, error, onChange, onRemove, onMove,
 
       {paths.includes("stepByStep") && (
         <div>
-          <label className={labelCls}>Step-by-step — one step per line</label>
+          <label className={labelCls}>Step-by-step: one step per line</label>
           <textarea className={inputCls} rows={4} value={lesson.stepsBody} onChange={set("stepsBody")}
             placeholder={"Install Python from python.org\nOpen VS Code and create hello.py\nRun the script from the terminal"} />
           <p className="mt-1 text-xs text-muted-foreground">Each line becomes one checklist step. Empty = steps are made from the Basic content's lines.</p>
@@ -455,7 +455,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         </div>
 
         {lessons.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No lessons yet — add one above.</p>
+          <p className="text-sm text-muted-foreground">No lessons yet. Add one above.</p>
         ) : (
           <div className="space-y-3">
             {lessons.map((lesson, i) => (

@@ -9,7 +9,7 @@ import { T as THEME } from "../../lib/inventory/theme";
 import { LOGO_IMAGE, BROWSE_LANDING_IMAGE, PRINT_SERVICES, MEMBERSHIP_PLAN, CREDIT_RATE, CREDIT_TIERS } from "../../lib/inventory/data.js";
 
 /* ── palette ─────────────────────────────────────────────────────────────── */
-/* Reuses the shared inventory/global tokens instead of its own one-off hex —
+/* Reuses the shared inventory/global tokens instead of its own one-off hex.
    TEAL is inventory's own accent (var(--inv-accent)); DARK/CREAM/MUTED map
    1:1 onto the existing --charcoal/--cream/--inv-muted tokens. */
 const TEAL    = "var(--color-inv-accent)";
@@ -39,9 +39,9 @@ const STEPS = [
 ];
 
 const HIGHLIGHTS = [
-  { icon: Compass,  title: "Browse Resources",  color: TEAL,                 bg: "var(--color-inv-accent-light)", text: "Search 100+ tools, components, and materials by category, zone, and room — see live availability before you walk in." },
+  { icon: Compass,  title: "Browse Resources",  color: TEAL,                 bg: "var(--color-inv-accent-light)", text: "Search 100+ tools, components, and materials by category, zone, and room; see live availability before you walk in." },
   { icon: BookOpen, title: "Learning Resources", color: "var(--community)",   bg: "color-mix(in oklch, var(--community) 12%, white)", text: "Guides and safety notes for every machine, so first-timers can borrow and use equipment with confidence." },
-  { icon: Users,    title: "Community",          color: "var(--color-green)", bg: "var(--color-green-light)", text: "Join a community of student makers — share projects, get help from peers, and connect with makerspace staff." },
+  { icon: Users,    title: "Community",          color: "var(--color-green)", bg: "var(--color-green-light)", text: "Join a community of student makers: share projects, get help from peers, and connect with makerspace staff." },
 ];
 
 /* ── scene illustration ──────────────────────────────────────────────────── */
@@ -149,7 +149,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         .mv-step-card:hover { background:#fff!important;border-color:color-mix(in oklch, var(--color-inv-accent) 27%, transparent)!important;box-shadow:0 4px 20px color-mix(in oklch, var(--color-inv-accent) 10%, transparent); }
         .mv-testi-card { transition:box-shadow .2s; }
         .mv-testi-card:hover { box-shadow:0 8px 32px color-mix(in oklch, var(--color-inv-accent) 10%, transparent); }
-        /* Section headers — Inter, larger on tablet/desktop */
+        /* Section headers: Inter, larger on tablet/desktop */
         .mv-sec-h { font-family:'Inter','Poppins',sans-serif; font-weight:800; letter-spacing:-0.02em; }
         /* Buttons scale down on small screens */
         @media (max-width: 767px) {
@@ -169,7 +169,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         }} />
 
         <div className="grid-cols-1 gap-8 px-4 pt-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-12 lg:pt-[72px]" style={{ position: "relative", zIndex: 1, maxWidth: 1320, margin: "0 auto", display: "grid", alignItems: "center" }}>
-          {/* Left — headline */}
+          {/* Left: headline */}
           <div style={{ paddingBottom: 72 }}>
             <div className="badge" style={{ marginBottom: 24, background: "color-mix(in oklch, var(--color-inv-accent) 15%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 35%, transparent)" }}>
               <Package size={11} style={{ color: "color-mix(in oklch, var(--color-inv-accent) 55%, white)" }} />
@@ -184,7 +184,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               </p>
             </div>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--on-dark-muted)", maxWidth: 460, marginBottom: 36 }}>
-              Browse tools, borrow equipment, and purchase materials — searchable by zone, shelf, category, and room. Built for the CADT community.
+              Browse tools, borrow equipment, and purchase materials, searchable by zone, shelf, category, and room. Built for the CADT community.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 }}>
               <button className="mv-btn-teal" onClick={browse}>Browse Inventory <ArrowRight size={14} /></button>
@@ -201,7 +201,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             </div>
           </div>
 
-          {/* Right — illustration */}
+          {/* Right: illustration */}
           <div style={{ paddingBottom: 40 }}>
             <StorageIllustration />
           </div>
@@ -254,11 +254,11 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
           ))}
         </div>
 
-        {/* Item type explainer — Returnable vs Consumable */}
+        {/* Item type explainer: Returnable vs Consumable */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14, marginBottom: 32 }}>
           {[
             { Icon: RotateCcw,   label: "Returnable", color: TEAL,      bg: "var(--color-inv-accent-light)", desc: "Borrow tools and equipment, then return them by your due date. No credits charged unless it's late or damaged." },
-            { Icon: ShoppingBag, label: "Consumable",  color: "var(--color-green)", bg: "var(--color-green-light)", desc: "Materials you keep — filament, fasteners, solder wire. Purchased outright with makerspace credits." },
+            { Icon: ShoppingBag, label: "Consumable",  color: "var(--color-green)", bg: "var(--color-green-light)", desc: "Materials you keep: filament, fasteners, solder wire. Purchased outright with makerspace credits." },
           ].map(({ Icon, label, color, bg, desc }) => (
             <div key={label} style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 18px", borderRadius: 14, border: `1px solid ${BORDER}`, background: "#fff" }}>
               <div style={{ width: 38, height: 38, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -314,7 +314,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               <Eyebrow label="Services" />
               <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,5vw,60px)" }}>What We Offer</h2>
               <p style={{ marginTop: 8, fontSize: 14, color: MUTED, maxWidth: 480 }}>
-                Submit a request and our staff will handle the rest — pay with your makerspace credits.
+                Submit a request and our staff will handle the rest, pay with your makerspace credits.
               </p>
             </div>
             <button className="mv-btn-ghost" onClick={go}><ArrowRight size={14} /> Request a Service</button>
@@ -384,7 +384,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             <Eyebrow label="Membership" />
             <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,5vw,60px)" }}>Membership &amp; Credits</h2>
             <p style={{ marginTop: 8, fontSize: 14, color: MUTED, maxWidth: 520 }}>
-              One yearly membership unlocks borrowing and purchasing — credits are the makerspace currency.
+              One yearly membership unlocks borrowing and purchasing. Credits are the makerspace currency.
             </p>
           </div>
 
@@ -418,7 +418,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
               <div className="p-6 sm:p-8" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                 <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--events)", marginBottom: 12 }}>Credit Top-Up</p>
                 <p style={{ fontSize: 14, color: MUTED, marginBottom: 18 }}>
-                  Rate: <strong style={{ color: DARK }}>{CREDIT_RATE} credits per $1</strong> — paid in cash or QR at the front desk.
+                  Rate: <strong style={{ color: DARK }}>{CREDIT_RATE} credits per $1</strong>, paid in cash or QR at the front desk.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {CREDIT_TIERS.map(([cr, usd]) => (
@@ -429,7 +429,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                   ))}
                 </div>
                 <p style={{ fontSize: 12, color: MUTED, marginTop: "auto", paddingTop: 18 }}>
-                  Membership and top-ups are handled in person — this section is for reference only.
+                  Membership and top-ups are handled in person. This section is for reference only.
                 </p>
               </div>
             </div>
@@ -475,7 +475,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
       <section className="px-4 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20" style={{ background: "#fff" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <Eyebrow label="Why MakerVault" />
+            <Eyebrow label="Why Makerspace" />
             <h2 className="mv-sec-h" style={{ fontSize: "clamp(30px,5vw,60px)" }}>
               Built for the way you make.
             </h2>
@@ -529,9 +529,9 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
                 The makerspace<br />of the future, today.
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--on-dark-muted)", marginBottom: 32 }}>
-                Real-time availability, seamless borrowing, and credit-based purchasing — all in one platform built for the CADT community.
+                Real-time availability, seamless borrowing, and credit-based purchasing: all in one platform built for the CADT community.
               </p>
-              {/* Buttons stay on one line — media query shrinks them on mobile */}
+              {/* Buttons stay on one line; media query shrinks them on mobile */}
               <div style={{ display: "flex", gap: 10, flexWrap: "nowrap" }}>
                 <button className="mv-btn-white" onClick={go}><UserPlus size={14} /> Create Account</button>
                 <button className="mv-btn-ghost-white" onClick={browse}><ArrowRight size={14} /> Browse First</button>
@@ -541,7 +541,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         </div>
       </section>
 
-      {/* Footer removed — InventoryApp already renders the shared <AppFooter />. */}
+      {/* Footer removed: InventoryApp already renders the shared <AppFooter />. */}
     </div>
   );
 }

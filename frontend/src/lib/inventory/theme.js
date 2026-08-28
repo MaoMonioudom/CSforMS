@@ -1,6 +1,6 @@
-// ── MakerVault Theme ── Modern Tech / Inventory ───────────────────────────
+// ── Makerspace Theme ── Modern Tech / Inventory ───────────────────────────
 // Values reference the real tokens registered in index.css's inventory
-// @theme block, instead of duplicating hex here — this file used to keep
+// @theme block, instead of duplicating hex here. This file used to keep
 // its own separate copy (including a stale, pre-redesign `accent`), which
 // is exactly the kind of drift that made two sources of truth disagree.
 export const T = {

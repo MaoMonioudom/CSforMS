@@ -141,7 +141,7 @@ export default function CommunityPage() {
   useEffect(() => {
     fetchCommunityPostsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ posts, total }) => { setCommunityPosts(posts); setTotal(total); })
-      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .catch(() => setError("Couldn't load posts. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -162,7 +162,7 @@ export default function CommunityPage() {
       setTotal(freshTotal);
       setPage(nextPage);
     } catch {
-      setError("Couldn't load more posts — please try again.");
+      setError("Couldn't load more posts. Please try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -176,7 +176,7 @@ export default function CommunityPage() {
     setOpen(true);
   };
 
-  // Optimistic toggle — flips local state immediately so the click feels
+  // Optimistic toggle: flips local state immediately so the click feels
   // instant, then reconciles with the server's real count/state. Rolls back
   // to the pre-click snapshot on failure rather than trusting the optimistic
   // guess.
@@ -198,7 +198,7 @@ export default function CommunityPage() {
   };
 
   const hasMore = communityPosts.length < total;
-  // Filtering only looks at posts already loaded — if a rare category has
+  // Filtering only looks at posts already loaded. If a rare category has
   // matches sitting on a later page, "Load more" first, same as the
   // unfiltered feed.
   const visiblePosts = activeFilter === "All"
@@ -206,7 +206,7 @@ export default function CommunityPage() {
     : communityPosts.filter(p => p.category === activeFilter);
 
   // There's no per-user activity tracking in the DB, so "active users
-  // today" isn't something we can honestly compute — this counts real
+  // today" isn't something we can honestly compute. This counts real
   // posts made today instead, off what's loaded (newest-first) so far.
   const postsToday = communityPosts.filter(p => {
     const days = (Date.now() - new Date(p.postedAt).getTime()) / 86400000;
@@ -217,9 +217,9 @@ export default function CommunityPage() {
     <SectionPage
       bulletin
       breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Connect" }]}
-      eyebrow="03 — Hang out"
+      eyebrow="03: Hang out"
       title="Connect"
-      description="One feed for everything — technical questions, project showcases, casual chatter, and announcements from the makerspace."
+      description="One feed for everything: technical questions, project showcases, casual chatter, and announcements from the makerspace."
       tapeColor="color-mix(in oklch, var(--community) 72%, transparent)"
       stats={[
         { value: total,      label: "Discussions", rotate: 1.5,  pinColor: "var(--community)" },
@@ -269,8 +269,8 @@ export default function CommunityPage() {
           ) : visiblePosts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {communityPosts.length === 0
-                ? "No posts yet — be the first to share something."
-                : hasMore ? "No posts match this filter yet — try loading more." : "No posts match this filter."}
+                ? "No posts yet. Be the first to share something."
+                : hasMore ? "No posts match this filter yet. Try loading more." : "No posts match this filter."}
             </p>
           ) : (
             <div className="space-y-5">

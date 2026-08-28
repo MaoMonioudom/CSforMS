@@ -24,11 +24,11 @@ export default function EventDetailPage() {
   const [error, setError] = useState("");
   // Index into event.images for the lightbox; null = closed.
   const [lightboxIndex, setLightboxIndex] = useState(null);
-  // Which image the cover carousel is currently showing — separate from the
+  // Which image the cover carousel is currently showing, separate from the
   // lightbox so arrow-stepping through the cover doesn't need the modal open.
   const [coverIndex, setCoverIndex] = useState(0);
   // Mobile cover swipes natively instead of using the arrow columns (no
-  // width to spare on a small screen) — this tracks scroll position back
+  // width to spare on a small screen). This tracks scroll position back
   // into coverIndex so the counter badge stays in sync.
   const mobileScrollRef = useRef(null);
   const handleMobileScroll = () => {
@@ -55,14 +55,14 @@ export default function EventDetailPage() {
         if (err.status !== 404) setLoadFailed(true);
       })
       .finally(() => setLoading(false));
-    // user?.id, not user — AuthContext's refreshMembership() replaces the
+    // user?.id, not user: AuthContext's refreshMembership() replaces the
     // whole user object with a new reference once membership data lands,
     // even though the id (and thus what this effect needs to know) hasn't
     // changed; depending on the object itself re-ran this fetch 2-3x on
     // every page load.
   }, [eventId, user?.id]);
 
-  // One-way — no self-service unregister. If someone can't make it, an
+  // One-way, no self-service unregister. If someone can't make it, an
   // admin removes them from the Registrants panel so the spot frees up.
   const handleRegister = async () => {
     if (!user) {
@@ -71,7 +71,7 @@ export default function EventDetailPage() {
     }
     setError("");
     setWorking(true);
-    // Optimistic — bump the count and lock in "Registered" right away instead
+    // Optimistic: bump the count and lock in "Registered" right away instead
     // of waiting on requireAuth's user lookup + the RPC's own serialized
     // queries; roll both back if the request turns out to have failed.
     setRegistered(true);
@@ -96,7 +96,7 @@ export default function EventDetailPage() {
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
         <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this event" : "Event not found"}</h1>
         <p className="mt-2 text-muted-foreground">
-          {loadFailed ? "Something went wrong loading this page — please try again." : "This event doesn't exist or has been removed."}
+          {loadFailed ? "Something went wrong loading this page. Please try again." : "This event doesn't exist or has been removed."}
         </p>
         <Link to="/community/eventspace" className="mt-6 inline-block text-events underline">
           Back to all events
@@ -109,7 +109,7 @@ export default function EventDetailPage() {
   const pct = event.capacity ? Math.min(100, Math.round((participants / event.capacity) * 100)) : 0;
 
   // Mirrors the backend's own gate (eventRegistrations.routes.js): once the
-  // event has started, or every spot is taken, registration closes — this
+  // event has started, or every spot is taken, registration closes. This
   // just reflects that in the UI instead of letting a click round-trip fail.
   const status = getEventStatus(event);
   const isFull = event.capacity > 0 && participants >= event.capacity;
@@ -118,7 +118,7 @@ export default function EventDetailPage() {
   return (
     <main className="bg-background">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 pb-24">
-        {/* Breadcrumb — now a plain nav row above the cover instead of an
+        {/* Breadcrumb: now a plain nav row above the cover instead of an
             overlay, since the cover no longer fills edge-to-edge (it shows
             the whole image via object-contain, not a crop). */}
         <Breadcrumb items={[
@@ -128,12 +128,12 @@ export default function EventDetailPage() {
           { label: event.title },
         ]} />
 
-        {/* Cover block — side arrows step through every photo in place (see
+        {/* Cover block: side arrows step through every photo in place (see
             below), and clicking the photo opens the full lightbox. Kept
             short (no thumbnail strip) so the title/details below are
             visible without scrolling. */}
         <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-          {/* Tablet/desktop — arrows live in their own side columns (not
+          {/* Tablet/desktop: arrows live in their own side columns (not
               overlaid on the photo), which also naturally makes the photo
               itself shorter since it keeps its 2:1 ratio at a narrower
               width. Steps through images in place, separate from the
@@ -183,7 +183,7 @@ export default function EventDetailPage() {
             )}
           </div>
 
-          {/* Mobile — no room for side arrow columns, so this swipes/scrolls
+          {/* Mobile: no room for side arrow columns, so this swipes/scrolls
               natively instead. key={eventId} resets scroll position when
               navigating between events. */}
           <div className="relative sm:hidden">
@@ -200,7 +200,7 @@ export default function EventDetailPage() {
                   onClick={() => setLightboxIndex(i)}
                   className="aspect-2/1 w-full flex-none snap-center overflow-hidden bg-muted"
                 >
-                  <img src={src} alt={`${event.title} — image ${i + 1}`} className="h-full w-full object-contain" />
+                  <img src={src} alt={`${event.title}, image ${i + 1}`} className="h-full w-full object-contain" />
                 </button>
               ))}
             </div>
@@ -294,7 +294,7 @@ export default function EventDetailPage() {
                     <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                   </span>
-                  <span className="text-sm font-semibold text-red-700">Ongoing — registration closed</span>
+                  <span className="text-sm font-semibold text-red-700">Ongoing, registration closed</span>
                 </div>
               ) : status === "ended" ? (
                 <div className="mt-5 w-full rounded-lg border border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-muted-foreground">
@@ -313,7 +313,7 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {/* Photos — only relevant once the event has actually happened;
+            {/* Photos: only relevant once the event has actually happened;
                 galleryUrl is added by staff afterward (e.g. a Google Drive
                 folder), so this shows a placeholder until then. */}
             {status === "ended" && (
@@ -336,7 +336,7 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* Lightbox — plain dark backdrop + object-contain, so a portrait
+      {/* Lightbox: plain dark backdrop + object-contain, so a portrait
           poster shows whole instead of getting cropped like the hero cover. */}
       {lightboxIndex !== null && (
         <div
@@ -373,7 +373,7 @@ export default function EventDetailPage() {
           )}
           <img
             src={event.images[lightboxIndex]}
-            alt={`${event.title} — image ${lightboxIndex + 1}`}
+            alt={`${event.title}, image ${lightboxIndex + 1}`}
             className="max-h-full max-w-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />

@@ -2,7 +2,7 @@ import { assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { getUserActionCounts, getRecentActivity } from "../../shared/userActivityCounts.js";
 
 // Real per-user counts + a merged recent-activity feed for the Profile
-// page — same counts the achievement award-check uses, so the stat cards
+// page: same counts the achievement award-check uses, so the stat cards
 // and the badges never disagree with each other.
 export async function getProfileSummary(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;

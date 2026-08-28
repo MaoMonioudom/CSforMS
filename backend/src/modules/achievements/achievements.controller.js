@@ -3,7 +3,7 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 import { getUserActionCounts } from "../../shared/userActivityCounts.js";
 
 // Every requirement_type maps to a real, countable thing a member has
-// actually done — kept to a fixed list (rather than a free-text column, even
+// actually done, kept to a fixed list (rather than a free-text column, even
 // though the DB allows any string) so the awarding logic later can dispatch
 // on it safely instead of guessing what an arbitrary string means.
 export const REQUIREMENT_TYPES = [
@@ -31,7 +31,7 @@ export async function listAchievements(req, res, next) {
 
 // The full catalog, annotated per-caller with earned/earned_at/progress.
 // Newly-qualified badges are awarded (a real user_achievements row written)
-// right here at read time — checked whenever the profile loads, rather
+// right here at read time. Checked whenever the profile loads, rather
 // than hooked into every action endpoint across every module.
 export async function getMyAchievements(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -141,7 +141,7 @@ export async function updateAchievement(req, res, next) {
   }
 }
 
-// user_achievements has ON DELETE CASCADE on achievement_id — deleting an
+// user_achievements has ON DELETE CASCADE on achievement_id: deleting an
 // achievement from the catalog also wipes everyone's earned record for it.
 // Acceptable here (removing a badge definition should remove it entirely),
 // unlike workspaces/desks where we deliberately avoided a hard delete.
@@ -156,7 +156,7 @@ export async function deleteAchievement(req, res, next) {
   }
 }
 
-// Admin/staff only — multipart upload, same pattern as event-images
+// Admin/staff only. Multipart upload, same pattern as event-images
 // (community.routes.js): buffer straight to Supabase Storage, return the
 // public URL for the create/edit form to save as icon_url.
 export async function uploadAchievementIcon(req, res, next) {

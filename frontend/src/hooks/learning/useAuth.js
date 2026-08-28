@@ -13,7 +13,7 @@ function readSession() {
 }
 
 /**
- * Mock auth — there's no backend yet, so this checks email/password
+ * Mock auth. There's no backend yet, so this checks email/password
  * against the seed + admin-created accounts (data/userStore.js) and
  * keeps the session in localStorage. Not secure; good enough to demo
  * the admin/lecturer access-control flow.

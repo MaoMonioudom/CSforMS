@@ -9,7 +9,7 @@ import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inve
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { useAuth } from '../../hub/AuthContext'
 
-const NAVY   = 'var(--color-inv-accent-text)' // teal-700 — primary accent (kept name to avoid touching every usage)
+const NAVY   = 'var(--color-inv-accent-text)' // teal-700, primary accent (kept name to avoid touching every usage)
 const TEAL   = 'var(--color-inv-accent)'
 const CYAN   = 'color-mix(in oklch, var(--color-inv-accent) 55%, white)'
 const CREAM  = THEME.cream
@@ -36,7 +36,7 @@ function StatPill({ value, label, color = THEME.charcoal }) {
 
 export default function UserHome({ user: invUser, items, borrows, notifications, setPage, filaments = [], setRequests, showToast }) {
   // Credits/membership now come from the real database (useAuth), not the
-  // Inventory module's own local copy — everything else about this "user"
+  // Inventory module's own local copy. Everything else about this "user"
   // (id, name, matching borrow/request records) still comes from Inventory's
   // local state, since borrow/purchase logic isn't wired to the real backend yet.
   const { user: hubUser } = useAuth()
@@ -52,7 +52,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   // one the top-nav credits pill opens) instead of a modal on this page.
   const goToCredits = () => setPage('/credits')
 
-  // Due-date reminder — briefly toast once per visit if the student has a borrow
+  // Due-date reminder: briefly toast once per visit if the student has a borrow
   // due soon or overdue, so they don't find out only after a late fee.
   useEffect(() => {
     const today = new Date()
@@ -74,13 +74,13 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
   const catItems    = activeCat === 'all' ? items : items.filter(i => i.category === activeCat)
   const visibleItems = catItems.slice(0, 8)
 
-  // Both print services are walk-up only — staff run and charge them at the
+  // Both print services are walk-up only. Staff run and charge them at the
   // front desk, so there's no remote request flow for either.
 
   return (
     <div style={{ background: CREAM, minHeight: '100%' }}>
 
-      {/* ── HERO — lighter teal gradient ── */}
+      {/* ── HERO, lighter teal gradient ── */}
       <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)' }}>
         {/* Grid overlay */}
         <div aria-hidden style={{
@@ -102,7 +102,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 <span style={{ color: CYAN }}>{user.name.split(' ')[0]}.</span>
               </h1>
               <p className="mt-4 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: 'var(--on-dark-muted)' }}>
-                Your makerspace hub — borrow equipment, print documents, run 3D prints, and manage your credits all in one place.
+                Your makerspace hub: borrow equipment, print documents, run 3D prints, and manage your credits all in one place.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <button onClick={() => setPage('/catalog')}
@@ -129,7 +129,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
               </div>
             </div>
 
-            {/* Right — hero image */}
+            {/* Right: hero image */}
             <div className="mx-auto hidden w-full max-w-[420px] sm:block lg:max-w-[560px] xl:max-w-[640px]">
               <img src={BROWSE_LANDING_IMAGE} alt="CADT Makerspace" className="w-full object-contain" style={{ filter: 'drop-shadow(0 16px 48px color-mix(in oklch, var(--color-inv-accent) 30%, transparent))' }} />
             </div>
@@ -144,7 +144,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
             { Icon: MapPin,  label: 'Location',    value: 'CADT Campus, Room MS-01' },
             { Icon: Clock,   label: 'Open Hours',  value: 'Mon – Fri · 8am – 5pm'  },
             { Icon: Users,   label: 'Members',     value: `${items.filter(i=>i.status!=='maintenance').length} items ready` },
-            { Icon: Star,    label: 'Membership',  value: user.membership === 'active' ? 'Active ✓' : 'Inactive — renew' },
+            { Icon: Star,    label: 'Membership',  value: user.membership === 'active' ? 'Active ✓' : 'Inactive, renew' },
           ].map(({ Icon, label, value }) => (
             <div key={label} className="flex items-center gap-3 px-4 py-5" style={{ borderRight: '1px solid rgba(255,255,255,0.1)' }}>
               <Icon size={18} color="var(--on-dark-muted)" strokeWidth={1.5} />
@@ -163,7 +163,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
           <div>
             <Tag color={THEME.purple}>Services</Tag>
             <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">What We Offer</h2>
-            <p className="mt-2 max-w-lg text-sm text-inv-muted">Submit a request and our staff will handle the rest — pay with your makerspace credits.</p>
+            <p className="mt-2 max-w-lg text-sm text-inv-muted">Submit a request and our staff will handle the rest, pay with your makerspace credits.</p>
           </div>
         </div>
 
@@ -194,10 +194,10 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 ))}
               </ul>
 
-              {/* Walk-up only — staff charge this instantly at the front desk,
+              {/* Walk-up only. Staff charge this instantly at the front desk,
                   so there's no remote request to submit. */}
               <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.blueLight, color: THEME.blue, border: `1px solid color-mix(in oklch, ${THEME.blue} 20%, transparent)`, justifyContent: 'center' }}>
-                <MapPin size={13} /> Available at the front desk — visit in makerspace
+                <MapPin size={13} /> Available at the front desk, visit in makerspace
               </div>
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 <span className="badge" style={{ color: THEME.purple, background: THEME.purpleLight }}>3D Print</span>
               </div>
               <h3 className="text-lg font-bold text-charcoal">3D Printing</h3>
-              <p className="mt-1 text-sm leading-relaxed text-inv-muted">Submit your model file and choose a filament. Staff will print and weigh it — you pay based on filament used.</p>
+              <p className="mt-1 text-sm leading-relaxed text-inv-muted">Submit your model file and choose a filament. Staff will print and weigh it, then you pay based on filament used.</p>
 
               <div className="mt-5 flex items-baseline gap-1">
                 <span style={{ fontSize: 36, fontWeight: 800, color: NAVY, lineHeight: 1 }}>4</span>
@@ -239,10 +239,10 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
                 </div>
               )}
 
-              {/* Walk-up only, same as document printing — staff run and weigh
+              {/* Walk-up only, same as document printing. Staff run and weigh
                   the print at the counter, so no remote request either. */}
               <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.purpleLight, color: THEME.purple, border: `1px solid color-mix(in oklch, ${THEME.purple} 20%, transparent)`, justifyContent: 'center' }}>
-                <MapPin size={13} /> Available at the front desk — visit in makerspace
+                <MapPin size={13} /> Available at the front desk, visit in makerspace
               </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
             <div>
               <Tag color={THEME.amber}>Equipment</Tag>
               <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">Browse by Category</h2>
-              <p className="mt-2 text-sm text-inv-muted">{totalItems} items across {CATEGORIES.length} categories — borrow with your membership credits.</p>
+              <p className="mt-2 text-sm text-inv-muted">{totalItems} items across {CATEGORIES.length} categories, borrow with your membership credits.</p>
             </div>
             <button onClick={() => setPage('/catalog')}
               className="btn-secondary shrink-0 hover:bg-cream"
@@ -265,11 +265,11 @@ export default function UserHome({ user: invUser, items, borrows, notifications,
             </button>
           </div>
 
-          {/* Item type explainer — Returnable vs Consumable */}
+          {/* Item type explainer: Returnable vs Consumable */}
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
-              { Icon: RotateCcw,   label: 'Returnable', color: TEAL,           bg: 'var(--color-inv-accent-light)', desc: "Borrow and return by your due date — no charge unless it's late or damaged." },
-              { Icon: ShoppingBag, label: 'Consumable',  color: THEME.green,   bg: THEME.greenLight, desc: 'Materials you keep — purchased outright with your credits.' },
+              { Icon: RotateCcw,   label: 'Returnable', color: TEAL,           bg: 'var(--color-inv-accent-light)', desc: "Borrow and return by your due date. No charge unless it's late or damaged." },
+              { Icon: ShoppingBag, label: 'Consumable',  color: THEME.green,   bg: THEME.greenLight, desc: 'Materials you keep, purchased outright with your credits.' },
             ].map(({ Icon, label, color, bg, desc }) => (
               <div key={label} className="flex items-start gap-3 rounded-xl p-3.5" style={{ border: `1px solid ${BORDER}`, background: THEME.cream }}>
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: bg }}>

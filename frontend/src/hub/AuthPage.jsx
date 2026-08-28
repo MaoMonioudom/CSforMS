@@ -8,7 +8,7 @@ import { AppFooter } from "../components/AppFooter";
 import { BASE_URL } from "../lib/api/client";
 import { D, GRADIENT, ErrorBox, TextField, PasswordField, MicrosoftButton, OrDivider } from "./authUi";
 import { destinationFor } from "./authNav";
-// Single shared page for both /login and /register — which mode is active
+// Single shared page for both /login and /register. Which mode is active
 // is derived from the route, and switching modes navigates between the two
 // routes while sliding an overlay panel across (classic sign-in/sign-up
 // panel pattern): register puts the info panel on the left and the form on
@@ -37,7 +37,7 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
   return (
     <form onSubmit={onSubmit} className="w-full flex flex-col gap-4">
       <h1 className="text-2xl font-extrabold mb-1" style={{ color: D.text }}>Welcome back</h1>
-      <p className="text-sm" style={{ color: D.muted }}>Sign in to your CADT Hub account.</p>
+      <p className="text-sm" style={{ color: D.muted }}>Sign in to your CADT Makerspace account.</p>
       <ErrorBox message={error} />
 
       <div className="flex flex-col gap-1.5">
@@ -84,7 +84,7 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
         ))}
       </div> */}
       <h1 className="text-2xl font-extrabold mb-1" style={{ color: D.text }}>Create account</h1>
-      <p className="text-sm" style={{ color: D.muted }}>Join Makerclub and access all three modules.</p>
+      <p className="text-sm" style={{ color: D.muted }}>Join CADT Makerspace and access all three modules.</p>
       <ErrorBox message={error} />
 
       <div className="flex flex-col gap-1.5">
@@ -128,7 +128,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = location.pathname === "/register";
-  // Where to send the user after signing in — wherever they were trying to
+  // Where to send the user after signing in: wherever they were trying to
   // reach (e.g. /inventory) takes priority over the generic role destination.
   const from = location.state?.from;
   // Carried through unchanged so the destination page can resume whatever
@@ -153,7 +153,7 @@ export default function AuthPage() {
   }, [location.search]);
 
   // Already signed in but landed on /login or /register anyway (e.g. via a
-  // bookmark, or the "back" button after a previous sign-in) — bounce away
+  // bookmark, or the "back" button after a previous sign-in), bounce away
   // instead of showing a stale auth form. Uses replace so it doesn't add
   // yet another entry for "back" to trip over.
   useEffect(() => {
@@ -211,7 +211,7 @@ export default function AuthPage() {
       <div className="relative z-10 hidden md:block w-full max-w-[840px] rounded-3xl overflow-hidden "
         style={{ height: 580, background: D.card, boxShadow: "0 24px 64px rgba(0,0,30,0.35)" }}>
 
-        {/* Sign-in form — lives in the left half, slides right and fades out when registering */}
+        {/* Sign-in form: lives in the left half, slides right and fades out when registering */}
         <div className="absolute top-0 left-0 h-full w-1/2 flex items-center px-10 transition-all duration-700 ease-in-out"
           style={{
             transform: isRegister ? "translateX(100%)" : "translateX(0)",
@@ -223,7 +223,7 @@ export default function AuthPage() {
             showPw={showPw} setShowPw={setShowPw} onSubmit={handleLogin} />
         </div>
 
-        {/* Sign-up form — lives in the left half too, revealed on the right when registering */}
+        {/* Sign-up form: lives in the left half too, revealed on the right when registering */}
         <div className="absolute top-0 left-0 h-full w-1/2 flex items-center px-10 py-8 overflow-y-auto transition-all duration-700 ease-in-out"
           style={{
             transform: isRegister ? "translateX(100%)" : "translateX(0)",
@@ -235,7 +235,7 @@ export default function AuthPage() {
             showPw={showPw} setShowPw={setShowPw} onSubmit={handleRegister} />
         </div>
 
-        {/* Sliding gradient overlay — occupies whichever half the active form ISN'T on */}
+        {/* Sliding gradient overlay: occupies whichever half the active form ISN'T on */}
         <div className="absolute top-0 h-full w-1/2 overflow-hidden transition-all duration-700 ease-in-out"
           style={{ left: isRegister ? 0 : "50%", zIndex: 20 }}>
           <div className="relative h-full transition-all duration-700 ease-in-out" style={{ width: "200%", left: isRegister ? "0%" : "-100%" }}>
@@ -243,18 +243,18 @@ export default function AuthPage() {
             <div aria-hidden className="absolute inset-0 opacity-10"
               style={{ backgroundImage: "radial-gradient(white 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
 
-            {/* Shown when the overlay sits on the LEFT (register mode) — points back to sign in */}
+            {/* Shown when the overlay sits on the LEFT (register mode): points back to sign in */}
             <div className="absolute top-0 left-0 h-full w-1/2 flex flex-col items-center justify-center text-center px-10 text-white">
               <img src={msBbgLogo} alt="CADT Makerspace" className="h-10 w-auto object-contain mb-6" />
               <h2 className="text-2xl font-extrabold mb-3">Welcome back!</h2>
-              <p className="text-sm text-white/80 mb-8 leading-relaxed">Already part of Makerclub? Sign in to pick up where you left off.</p>
+              <p className="text-sm text-white/80 mb-8 leading-relaxed">Already part of CADT Makerspace? Sign in to pick up where you left off.</p>
               <button type="button" onClick={() => switchTo("login")}
                 className="px-7 py-2.5 rounded-full font-bold text-sm border-2 border-white text-white transition-colors hover:bg-white hover:text-[var(--color-inv-accent-text)]">
                 Sign In
               </button>
             </div>
 
-            {/* Shown when the overlay sits on the RIGHT (login mode) — points to sign up */}
+            {/* Shown when the overlay sits on the RIGHT (login mode): points to sign up */}
             <div className="absolute top-0 right-0 h-full w-1/2 flex flex-col items-center justify-center text-center px-10 text-white">
               <img src={msBbgLogo} alt="CADT Makerspace" className="h-10 w-auto object-contain mb-6" />
               <h2 className="text-2xl font-extrabold mb-3">New here?</h2>
@@ -271,14 +271,14 @@ export default function AuthPage() {
       {/* ── Mobile: full-screen takeover, no sliding (too tight a space for it) ── */}
       <div className="md:hidden fixed inset-0 z-40 flex flex-col overflow-y-auto" style={{ background: D.card }}>
 
-        {/* Info banner — same branding as the desktop overlay, with its own toggle button */}
+        {/* Info banner: same branding as the desktop overlay, with its own toggle button */}
         <div className="shrink-0 px-8 pt-14 pb-8 text-center" style={{ background: GRADIENT }}>
           <img src={msBbgLogo} alt="CADT Makerspace" className="h-9 w-auto object-contain mx-auto mb-3" />
           <h2 className="text-xl font-extrabold text-white mb-1.5">
             {isRegister ? "New here?" : "Welcome back"}
           </h2>
           <p className="text-xs text-white/85 leading-relaxed mb-5 max-w-xs mx-auto">
-            {isRegister ? "Join the CADT Makerspace community." : "Sign in to continue to Makerclub."}
+            {isRegister ? "Join the CADT Makerspace community." : "Sign in to continue to CADT Makerspace."}
           </p>
           <button type="button" onClick={() => switchTo(isRegister ? "login" : "register")}
             className="px-6 py-2 rounded-full font-bold text-xs border-2 border-white text-white transition-colors hover:bg-white hover:text-[var(--color-inv-accent-text)]">

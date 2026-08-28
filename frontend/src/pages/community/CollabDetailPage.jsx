@@ -38,7 +38,7 @@ export default function CollabDetailPage() {
         <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
           {loadFailed
-            ? "Something went wrong loading this page — please try again."
+            ? "Something went wrong loading this page. Please try again."
             : "This collaboration post doesn't exist or has been removed."}
         </p>
         <Link to="/community/collabspace" className="mt-6 inline-block text-collaboration underline">

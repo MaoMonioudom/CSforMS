@@ -62,7 +62,7 @@ export function LecturerSidebar({ width = 224 }) {
   });
   const toggle = (id) => setOpen((o) => ({ ...o, [id]: !o[id] }));
 
-  // Sub-folders (Operation / Inventory Management) start open — they're short lists.
+  // Sub-folders (Operation / Inventory Management) start open; they're short lists.
   const [subOpen, setSubOpen] = useState({});
   const subIsOpen = (key) => subOpen[key] !== false;
   const toggleSub = (key) => setSubOpen((o) => ({ ...o, [key]: !subIsOpen(key) }));
@@ -85,7 +85,7 @@ export function LecturerSidebar({ width = 224 }) {
         )}
       </div>
 
-      {/* Nav — one folder per module */}
+      {/* Nav: one folder per module */}
       <nav className="inv-hscroll flex-1 p-3 overflow-y-auto space-y-1">
         {FOLDERS.map((folder) => {
           const isOpen = open[folder.id];

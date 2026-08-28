@@ -8,7 +8,7 @@ import {
 } from "@/components/community/ui/alert-dialog";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 
-// User-authored posts — admins moderate (view, remove) rather than edit
+// User-authored posts. Admins moderate (view, remove) rather than edit
 // someone else's content under their name. No Edit action here, unlike
 // Events which are admin-owned.
 function Actions({ post, onDelete }) {
@@ -50,7 +50,7 @@ export default function AdminCommunity() {
   useEffect(() => {
     fetchCommunityPostsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ posts, total }) => { setList(posts); setTotal(total); })
-      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .catch(() => setError("Couldn't load posts. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,7 +64,7 @@ export default function AdminCommunity() {
       setTotal(freshTotal);
       setPage(nextPage);
     } catch {
-      setError("Couldn't load more posts — please try again.");
+      setError("Couldn't load more posts. Please try again.");
     } finally {
       setLoadingMore(false);
     }

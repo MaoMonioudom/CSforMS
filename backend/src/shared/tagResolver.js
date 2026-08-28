@@ -1,11 +1,11 @@
 import { supabaseAdmin } from "../config/supabaseClient.js";
 
 // Shared by every post type that tags via the `tags` dictionary + a junction
-// table (collaboration_skills, post_tags, event_tags all point here) —
+// table (collaboration_skills, post_tags, event_tags all point here);
 // originally written for collaboration_skills, now reused by post_tags too.
 //
 // normalizeTagName only folds mechanical variance (case, stray whitespace,
-// a trailing period) — it deliberately doesn't try to merge "react" with
+// a trailing period); it deliberately doesn't try to merge "react" with
 // "react.js"/"reactjs". That's what the /tags search endpoint + frontend
 // typeahead are for: surfacing the existing tag so a person picks it
 // themselves, instead of guessing string similarity server-side and
@@ -15,12 +15,12 @@ export function normalizeTagName(raw) {
 }
 
 // Batched into 2 round trips total (find existing, insert whatever's
-// missing) rather than 2 round trips per tag — a post with 5 new tags would
+// missing) rather than 2 round trips per tag; a post with 5 new tags would
 // otherwise mean up to 10 sequential queries before it even finishes
 // creating.
 //
 // Note: if two requests introduce the same brand-new tag at the same
-// instant, both can decide it's missing and both insert it — a rare
+// instant, both can decide it's missing and both insert it: a rare
 // duplicate tag row, not a broken create. Only worth guarding against with
 // a DB-level unique constraint + upsert, which needs confirming against the
 // live schema first.

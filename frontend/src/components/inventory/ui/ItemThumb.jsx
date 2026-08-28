@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { T } from '../../../lib/inventory/theme'
 
-// Small square item thumbnail for table rows and activity lists — shows the
+// Small square item thumbnail for table rows and activity lists. Shows the
 // item's uploaded photo, falling back to the category icon when the item has
 // no image (or the URL is broken). Mirrors ItemImage in Catalog.jsx, sized
 // for compact rows instead of cards.

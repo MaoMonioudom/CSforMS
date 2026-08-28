@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-// Lightweight SVG donut chart — no chart library dependency.
+// Lightweight SVG donut chart, no chart library dependency.
 export default function DonutChart({ data, size = 160, thickness = 26 }) {
   const [hover, setHover] = useState(null)
   const total = data.reduce((s, d) => s + d.value, 0) || 1

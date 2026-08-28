@@ -4,7 +4,7 @@ import { parsePagination } from "../../shared/pagination.js";
 
 // Events used to go through the generic crudRouter (see community.routes.js
 // history), but a gallery needs a real child table (event_images) that
-// crudRouter can't read, write, or clean up on save — same reason
+// crudRouter can't read, write, or clean up on save; same reason
 // collaboration_posts/community_posts got dedicated controllers. The image
 // list is rewritten wholesale on every create/update (mirrors
 // learning.controller.js's lessons handling), not diffed in place: the
@@ -32,7 +32,7 @@ function toImageRows(eventId, images) {
     .map((url, i) => ({ event_id: eventId, image_url: url.trim(), sort_order: i }));
 }
 
-// Plain event columns only — images/event_id/created_at are handled
+// Plain event columns only: images/event_id/created_at are handled
 // separately, never taken from the client payload.
 function toEventRow(payload) {
   const row = { ...payload };
@@ -40,7 +40,7 @@ function toEventRow(payload) {
   delete row.event_id;
   delete row.created_by;
   delete row.created_at;
-  // Cover mirror for the legacy column — kept in sync so anything still
+  // Cover mirror for the legacy column, kept in sync so anything still
   // reading image_url directly (e.g. an un-migrated report/query) sees the
   // current cover image.
   row.image_url = Array.isArray(payload.images) && payload.images[0] ? payload.images[0].trim() : null;

@@ -1,13 +1,13 @@
 import { api, getToken, BASE_URL } from "./api/client";
 
 // Real events (from the `events` table) don't carry a tag list or a
-// per-event organizer profile yet — those need their own tables/routes we
+// per-event organizer profile yet. Those need their own tables/routes we
 // haven't built. Fall back to something reasonable instead of leaving the
 // existing card/detail UI with blank images and an empty author card.
 export const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop";
 const PLACEHOLDER_AUTHOR = { name: "Community Team", role: "Event Organizer", avatar: "https://i.pravatar.cc/120?img=68" };
 
-// countsById is the { [event_id]: count } map from /registrations/counts —
+// countsById is the { [event_id]: count } map from /registrations/counts,
 // passed in so a single bulk fetch covers every card instead of N calls.
 function mapEvent(row, countsById = {}) {
   const images = row.images?.length ? row.images : row.image_url ? [row.image_url] : [PLACEHOLDER_IMAGE];
@@ -42,7 +42,7 @@ export async function fetchEvents() {
 }
 
 // Paginated variant for the Events list page, so a growing events table
-// doesn't mean downloading every row on every visit — fetchEvents() above
+// doesn't mean downloading every row on every visit. fetchEvents() above
 // stays full-list for HomePage, which needs everything in memory for search.
 export async function fetchEventsPage({ page = 1, limit = 12 } = {}) {
   const [{ data, total }, counts] = await Promise.all([
@@ -74,7 +74,7 @@ export async function deleteEvent(id) {
   await api.del(`/api/community/events/${id}`);
 }
 
-// Multipart upload — the JSON client can't carry files, so this goes through
+// Multipart upload: the JSON client can't carry files, so this goes through
 // fetch directly with the same bearer token. Returns the public image URL
 // (same pattern as inventory's uploadItemImage).
 export async function uploadEventImage(file) {
@@ -90,7 +90,7 @@ export async function uploadEventImage(file) {
   return data.data.url;
 }
 
-// { [event_id]: count } across every event — one call covers every card, no
+// { [event_id]: count } across every event. One call covers every card, no
 // per-event round trip. Public, no PII.
 export async function fetchEventRegistrationCounts() {
   const { data } = await api.get("/api/community/events/registrations/counts");
@@ -103,14 +103,14 @@ export async function fetchMyEventRegistrations() {
   return data;
 }
 
-// One-way — there's no self-service unregister. If you can't make it,
+// One-way: there's no self-service unregister. If you can't make it,
 // an admin removes you (removeEventRegistrant below) so the spot frees up
 // for someone else without letting registration be a no-commitment toggle.
 export async function registerForEvent(id) {
   await api.post(`/api/community/events/${id}/register`);
 }
 
-// Admin/staff only — who's registered for one event.
+// Admin/staff only: who's registered for one event.
 export async function fetchEventRegistrants(id) {
   const { data } = await api.get(`/api/community/events/${id}/registrants`);
   return data.map((r) => ({
@@ -122,12 +122,12 @@ export async function fetchEventRegistrants(id) {
   }));
 }
 
-// Admin/staff only — removes a specific registrant (e.g. a no-show).
+// Admin/staff only: removes a specific registrant (e.g. a no-show).
 export async function removeEventRegistrant(eventId, userId) {
   await api.del(`/api/community/events/${eventId}/registrants/${userId}`);
 }
 
-// Admin/staff only — manually logs someone who registered off-site (e.g.
+// Admin/staff only: manually logs someone who registered off-site (e.g.
 // through an externally-hosted event's own link) by email, so capacity/
 // registrant tracking still works for events using registrationUrl.
 export async function addEventRegistrant(eventId, email) {
@@ -135,13 +135,13 @@ export async function addEventRegistrant(eventId, email) {
   return data;
 }
 
-// Admin/staff only — sends every active registrant an in-app notification.
+// Admin/staff only: sends every active registrant an in-app notification.
 export async function sendEventReminder(id) {
   const { data } = await api.post(`/api/community/events/${id}/remind`);
   return data.sent;
 }
 
-// Derived purely from the clock — "ongoing" means we're between the event's
+// Derived purely from the clock. "ongoing" means we're between the event's
 // start and its end (events without an endDate are treated as instantaneous).
 export function getEventStatus(event, now = new Date()) {
   const start = new Date(event.date);
@@ -164,7 +164,7 @@ export function formatEventDate(iso) {
   });
 }
 
-// Compact "Jul 12, 2026" form for card badges — full date without the noise
+// Compact "Jul 12, 2026" form for card badges: full date without the noise
 // of weekday/time/timezone.
 export function formatEventDateShort(iso) {
   return new Date(iso).toLocaleDateString("en-US", {

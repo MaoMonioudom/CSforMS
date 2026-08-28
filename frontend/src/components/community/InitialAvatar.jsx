@@ -1,5 +1,5 @@
 // Shows a real photo when the account has one; otherwise a colored circle
-// with the first letter of the name — no external avatar-image service.
+// with the first letter of the name, no external avatar-image service.
 const COLORS = [
   "#ef4444", "#f97316", "#f59e0b", "#84cc16", "#22c55e",
   "#10b981", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1",

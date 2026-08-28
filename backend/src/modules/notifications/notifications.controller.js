@@ -50,9 +50,9 @@ export async function markNotificationRead(req, res, next) {
   }
 }
 
-// Admin/staff-only — runs the same query and email content the daily cron
+// Admin/staff-only: runs the same query and email content the daily cron
 // job uses, but only logs + returns it as JSON. Nothing is actually sent
-// yet (no Mail.Send permission wired up) — this is purely for the
+// yet (no Mail.Send permission wired up); this is purely for the
 // makerspace team to check the content/list is right before that's turned on.
 export async function previewOverdueReminders(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;

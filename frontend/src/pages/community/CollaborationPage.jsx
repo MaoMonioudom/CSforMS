@@ -18,7 +18,7 @@ import { Label } from "@/components/community/ui/label";
 import { TagsInput } from "@/components/community/TagsInput";
 import { Plus } from "lucide-react";
 
-// post_type only has these 2 real values (DB CHECK constraint) — category
+// post_type only has these 2 real values (DB CHECK constraint). category
 // used to also appear here as "Competition"/"Research", but category is
 // free text with no fixed vocabulary (people type "Robotics", "Play PLay",
 // anything), so those two were never reliably filterable and are dropped.
@@ -30,8 +30,8 @@ const filters = [
 
 const PAGE_SIZE = 12;
 
-// author-profile (year/major) has nowhere to live yet — no per-user academic
-// fields on `users` — so that one's still left out (see collaboration-data.js).
+// author-profile (year/major) has nowhere to live yet: no per-user academic
+// fields on `users`, so that one's still left out (see collaboration-data.js).
 function CreateCollabDialog({ open, onOpenChange, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -101,7 +101,7 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
                   Looking for Team
                 </span>
                 <span className="pl-5 text-xs text-muted-foreground">
-                  You want to join a project — describe your skills and what kind of team you're hoping to find.
+                  You want to join a project. Describe your skills and what kind of team you're hoping to find.
                 </span>
               </label>
               <label className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-accent has-[:checked]:border-collaboration has-[:checked]:bg-collaboration/5">
@@ -215,7 +215,7 @@ export default function CollaborationPage() {
   useEffect(() => {
     fetchCollabPostsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ posts, total }) => { setCollabPosts(posts); setTotal(total); })
-      .catch(() => setError("Couldn't load posts — please try refreshing."))
+      .catch(() => setError("Couldn't load posts. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -236,7 +236,7 @@ export default function CollaborationPage() {
       setTotal(freshTotal);
       setPage(nextPage);
     } catch {
-      setError("Couldn't load more posts — please try again.");
+      setError("Couldn't load more posts. Please try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -251,7 +251,7 @@ export default function CollaborationPage() {
   };
 
   const hasMore = collabPosts.length < total;
-  // Filtering only looks at posts already loaded — if a rare filter has
+  // Filtering only looks at posts already loaded. If a rare filter has
   // matches sitting on a later page, "Load more" first, same as an
   // unfiltered feed.
   const visiblePosts = activeFilter === "all"
@@ -260,7 +260,7 @@ export default function CollaborationPage() {
 
   // Posts load newest-first, so this stays accurate off what's loaded so
   // far as long as there aren't more than a page's worth of new posts in a
-  // week — same reasoning as Events' "This week" stat.
+  // week, same reasoning as Events' "This week" stat.
   const newThisWeek = collabPosts.filter(p => {
     const days = (Date.now() - new Date(p.postedAt).getTime()) / 86400000;
     return days >= 0 && days <= 7;
@@ -270,7 +270,7 @@ export default function CollaborationPage() {
     <SectionPage
       bulletin
       breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Find Team" }]}
-      eyebrow="02 — Build together"
+      eyebrow="02: Build together"
       title="Find Team"
       description="Find teammates, recruit members, and connect with people who want to build alongside you."
       tapeColor="color-mix(in oklch, var(--collaboration) 72%, transparent)"
@@ -315,8 +315,8 @@ export default function CollaborationPage() {
       ) : visiblePosts.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {collabPosts.length === 0
-            ? "No posts yet — be the first to create one."
-            : hasMore ? "No posts match this filter yet — try loading more." : "No posts match this filter."}
+            ? "No posts yet. Be the first to create one."
+            : hasMore ? "No posts match this filter yet. Try loading more." : "No posts match this filter."}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

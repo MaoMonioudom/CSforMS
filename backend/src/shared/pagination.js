@@ -1,6 +1,6 @@
 // Parses ?page=&limit= into a Supabase .range() pair. Returns null when
 // neither is present, so callers can fall back to their old "return
-// everything" behavior — pagination is opt-in per request, not forced on
+// everything" behavior; pagination is opt-in per request, not forced on
 // every list endpoint (existing callers that never send these params, like
 // inventory's items/filaments, are unaffected).
 export function parsePagination(query, defaultLimit = 20, maxLimit = 100) {

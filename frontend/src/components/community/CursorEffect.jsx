@@ -175,7 +175,7 @@ export function CursorEffect() {
         }}
       />
 
-      {/* Paper plane — nose points RIGHT at 0° */}
+      {/* Paper plane: nose points RIGHT at 0° */}
       <div
         ref={planeRef}
         aria-hidden

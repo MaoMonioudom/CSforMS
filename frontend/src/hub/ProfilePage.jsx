@@ -13,7 +13,7 @@ import { fetchProfileSummary, formatActivityDate } from "../lib/profile-data";
 import { HUB as D } from "./hubTheme";
 
 // Stat tiles pull straight from the same per-user counts the achievement
-// award-check uses (see getUserActionCounts on the backend) — so these
+// award-check uses (see getUserActionCounts on the backend), so these
 // numbers and badge progress never disagree. community_posts +
 // collaboration_posts are merged into one "Posts" tile to keep the row to
 // 5 tiles, matching the badges grid below it.
@@ -27,11 +27,11 @@ const STATS = [
 
 // Recent-activity entries carry a `link` from the backend (a specific
 // event/course detail page, or a module list page when there's no single
-// item to land on) — fall back to the module root if it's ever missing.
+// item to land on), fall back to the module root if it's ever missing.
 const MODULE_FALLBACK_LINK = { learning: "/learning", inventory: "/inventory", community: "/community" };
 
 // Shows the real uploaded photo (profile_img_url) when one exists, falling
-// back to initials-on-gradient otherwise — previously this always ignored
+// back to initials-on-gradient otherwise. Previously this always ignored
 // a real avatar even when the user had uploaded one.
 function Avatar({ name, avatar, size = 56 }) {
   const initials = name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
@@ -48,7 +48,7 @@ function Avatar({ name, avatar, size = 56 }) {
 }
 
 // Shows the admin-uploaded icon_url directly, full-size, rather than
-// shrinking it into a tiny overlay on a placeholder shape — the coded medal
+// shrinking it into a tiny overlay on a placeholder shape. The coded medal
 // (drawn as SVG, no image asset) only kicks in as a fallback for badges
 // that don't have a real image uploaded yet. Locked badges show the same
 // image desaturated + dimmed rather than hidden, so there's something to
@@ -60,8 +60,8 @@ function BadgeMedal({ achievement }) {
   return (
     <div className="flex flex-col items-center text-center gap-1"
       title={earned
-        ? `${achievement.title} — earned ${new Date(achievement.earned_at).toLocaleDateString()}`
-        : `${achievement.title} — ${achievement.progress}/${achievement.requirement_value}`}>
+        ? `${achievement.title}: earned ${new Date(achievement.earned_at).toLocaleDateString()}`
+        : `${achievement.title}: ${achievement.progress}/${achievement.requirement_value}`}>
       <div className="relative flex items-center justify-center" style={{ width: 52, height: 59 }}>
         {icon_url ? (
           <img src={icon_url} alt=""
@@ -101,7 +101,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
 
   // Wait for AuthContext to finish confirming a stored token before
-  // deciding the user is logged out — otherwise a refresh bounces someone
+  // deciding the user is logged out. Otherwise a refresh bounces someone
   // who's genuinely still logged in through /login and out to /inventory.
   useEffect(() => {
     if (authLoading) return;
@@ -112,7 +112,7 @@ export default function ProfilePage() {
     if (!user) return;
     Promise.all([fetchMyAchievements(), fetchProfileSummary()])
       .then(([badges, sum]) => { setAchievements(badges); setSummary(sum); })
-      .catch(() => setError("Couldn't load your profile data — please try refreshing."))
+      .catch(() => setError("Couldn't load your profile data. Please try refreshing."))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -138,7 +138,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Stats strip — real per-module counts, same numbers the badges below track */}
+        {/* Stats strip: real per-module counts, same numbers the badges below track */}
         <div className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5">
           {STATS.map((s) => {
             const value = s.key === "posts"
@@ -156,10 +156,10 @@ export default function ProfilePage() {
           })}
         </div>
 
-        {/* Top row — profile identity on one side, badges & achievements on the other */}
+        {/* Top row: profile identity on one side, badges & achievements on the other */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
-          {/* Left — profile img + info (no cover photo) */}
+          {/* Left: profile img + info (no cover photo) */}
           <div className="lg:sticky lg:top-6 flex flex-col gap-6">
             <div className="rounded-2xl p-6 flex flex-col items-center text-center"
               style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                       <p className="text-xs font-semibold" style={{ color: "#16a34a" }}>Active member</p>
                     ) : (
                       <p className="text-xs" style={{ color: D.faint }}>
-                        Not a member yet — <Link to="/membership" className="font-semibold underline" style={{ color: D.muted }}>activate</Link>
+                        Not a member yet. <Link to="/membership" className="font-semibold underline" style={{ color: D.muted }}>activate</Link>
                       </p>
                     )}
                   </div>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                       <p className="text-xs leading-relaxed" style={{ color: D.text }}>{user.bio}</p>
                     </div>
                   ) : (
-                    <p className="text-xs italic" style={{ color: D.faint }}>No bio yet — add one to tell others about yourself.</p>
+                    <p className="text-xs italic" style={{ color: D.faint }}>No bio yet. Add one to tell others about yourself.</p>
                   )}
                   {user.phone && (
                     <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Quick links — Workspace/Credits/Membership live on their own
+            {/* Quick links: Workspace/Credits/Membership live on their own
                 routes today, reachable only via footer/nav; surfacing them
                 here makes Profile the actual account-hub landing spot. */}
             <div className="rounded-2xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
@@ -247,7 +247,7 @@ export default function ProfilePage() {
 
           <SignOutConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} />
 
-          {/* Right — badges & achievements */}
+          {/* Right: badges & achievements */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5" style={{ color: D.muted }}>
@@ -259,12 +259,12 @@ export default function ProfilePage() {
               {loading ? (
                 <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
               ) : achievements.length === 0 ? (
-                <p className="text-xs" style={{ color: D.muted }}>No badges have been set up yet — check back soon.</p>
+                <p className="text-xs" style={{ color: D.muted }}>No badges have been set up yet. Check back soon.</p>
               ) : (
                 <>
                   {earnedCount === 0 && (
                     <p className="text-xs mb-4" style={{ color: D.muted }}>
-                      You haven't earned a badge yet — join an event, borrow an item, or enroll in a course to get started!
+                      You haven't earned a badge yet. Join an event, borrow an item, or enroll in a course to get started!
                     </p>
                   )}
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
@@ -274,14 +274,14 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Recent activity — directly under badges & achievements */}
+            {/* Recent activity: directly under badges & achievements */}
             <div className="mt-6">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
               <div className="rounded-xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
                 {loading ? (
                   <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Loading…</p>
                 ) : activity.length === 0 ? (
-                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Nothing yet — get involved to see your activity here.</p>
+                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Nothing yet. Get involved to see your activity here.</p>
                 ) : activity.map((a, i) => {
                   const module = a.type === "course" ? "learning" : a.type === "borrow" ? "inventory" : "community";
                   const to = a.link || MODULE_FALLBACK_LINK[module];

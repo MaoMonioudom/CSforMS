@@ -5,7 +5,7 @@ import { api } from '../../../lib/api/client'
 
 // Lets the makerspace team see exactly what the daily overdue-reminder job
 // would email, without needing DevTools or Postman. Nothing is actually
-// sent — see backend/src/modules/notifications/overdueEmailReminders.js.
+// sent; see backend/src/modules/notifications/overdueEmailReminders.js.
 export default function OverdueReminderPreview() {
   const [loading, setLoading] = useState(false)
   const [candidates, setCandidates] = useState(null)
@@ -32,7 +32,7 @@ export default function OverdueReminderPreview() {
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: T.charcoal }}>Overdue reminder emails</p>
             <p style={{ margin: 0, fontSize: 11.5, color: T.faint }}>
-              Preview only — nothing sends until Microsoft email is wired up.
+              Preview only. Nothing sends until Microsoft email is wired up.
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function OverdueReminderPreview() {
                     className="flex w-full items-center justify-between gap-3 text-left"
                     style={{ padding: '10px 12px', background: T.cream, border: 'none', cursor: 'pointer' }}>
                     <div className="min-w-0">
-                      <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: T.charcoal }} className="truncate">{c.studentName} — {c.toEmail || 'no email on file'}</p>
+                      <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: T.charcoal }} className="truncate">{c.studentName}: {c.toEmail || 'no email on file'}</p>
                       <p style={{ margin: '2px 0 0', fontSize: 11.5, color: T.faint }} className="truncate">{c.subject}</p>
                     </div>
                     <ChevronDown size={14} color={T.faint} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }} />

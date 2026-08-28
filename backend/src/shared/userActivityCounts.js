@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "../config/supabaseClient.js";
 
 // One real count per achievement requirement_type (see achievements.
-// controller.js's REQUIREMENT_TYPES) — shared by achievement award-checking
+// controller.js's REQUIREMENT_TYPES); shared by achievement award-checking
 // and the profile page's stat cards, so both always read the exact same
 // numbers, computed fresh on every call rather than cached anywhere.
 export async function getUserActionCounts(userId) {
@@ -11,7 +11,7 @@ export async function getUserActionCounts(userId) {
     supabaseAdmin.from("course_enrollments").select("*", { count: "exact", head: true })
       .eq("user_id", userId),
     // Real table is borrow_transactions, not borrows (that name only
-    // exists in an older, superseded schema doc) — "borrows" here is just
+    // exists in an older, superseded schema doc); "borrows" here is just
     // our own internal requirement_type label, not the table name.
     supabaseAdmin.from("borrow_transactions").select("*", { count: "exact", head: true })
       .eq("user_id", userId),
@@ -35,7 +35,7 @@ export async function getUserActionCounts(userId) {
 }
 
 // Recent timestamped rows across every module, merged and sorted newest
-// first — queries each table directly rather than needing changes to the
+// first; queries each table directly rather than needing changes to the
 // existing per-module "my X" endpoints (several of those only return bare
 // IDs today, not timestamps).
 export async function getRecentActivity(userId, limit = 8) {
@@ -59,7 +59,7 @@ export async function getRecentActivity(userId, limit = 8) {
   ]);
   for (const r of [events, courses, borrows, bookings]) if (r.error) throw r.error;
 
-  // `link` is a frontend route each entry can navigate to on click — null
+  // `link` is a frontend route each entry can navigate to on click: null
   // where there's no single-item detail page to land on (borrows/bookings
   // are modal- or list-based, not their own route), in which case the
   // frontend falls back to the module's list page.

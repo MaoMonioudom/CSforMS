@@ -23,7 +23,7 @@ function formatExpiry(value) {
 }
 
 /**
- * Simulated checkout — no real payment gateway is wired up (this app has
+ * Simulated checkout. No real payment gateway is wired up (this app has
  * no backend yet). Validates basic card-shaped input, fakes a short
  * "processing" delay, then reports success. Swap the fake delay in
  * `submit()` for a real gateway call when a backend exists.
@@ -60,7 +60,7 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
     }
     setErrors({});
     setStatus("processing");
-    // Simulated payment — no real gateway/backend exists yet.
+    // Simulated payment. No real gateway/backend exists yet.
     setTimeout(() => {
       setStatus("success");
       setTimeout(() => onSuccess(), 700);
@@ -175,7 +175,7 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
                 {status === "processing" ? "Processing…" : `Pay $${price.toFixed(2)}`}
               </button>
               <p className="text-center text-xs text-[#2C2C2C]/45">
-                Simulated checkout — no real payment is processed.
+                Simulated checkout. No real payment is processed.
               </p>
             </form>
           </>

@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
 
-// Pastel-gradient stat card with a trend pill and period label — used on dashboard overviews.
+// Pastel-gradient stat card with a trend pill and period label, used on dashboard overviews.
 export default function GradientStatCard({ label, value, period = 'Today', trend, gradient }) {
   const isUp = trend === undefined ? null : trend >= 0
   return (

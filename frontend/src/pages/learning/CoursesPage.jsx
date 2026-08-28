@@ -25,7 +25,7 @@ export default function CoursesPage() {
             {loading
               ? "Opening the library…"
               : filtered.length > 0
-                ? `${filtered.length} volumes across programming, robotics, and AI — each a complete learning journey.`
+                ? `${filtered.length} volumes across programming, robotics, and AI, each a complete learning journey.`
                 : "No courses match the selected category yet."}
           </p>
 

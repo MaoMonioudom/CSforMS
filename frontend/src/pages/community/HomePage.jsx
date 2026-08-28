@@ -229,7 +229,7 @@ function StatPin({ value, label, color, rotate, pinColor }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   // Failures here just leave a preview section empty rather than surfacing
-  // an error banner on the landing page — the real errors already show up
+  // an error banner on the landing page. The real errors already show up
   // on each section's own list page (EventsPage/CollaborationPage/
   // CommunityPage), this just avoids an unhandled promise rejection.
   const [events, setEvents] = useState([]);
@@ -247,7 +247,7 @@ export default function HomePage() {
     () => (query ? searchCommunity(query, { events, collabPosts, communityPosts }) : []),
     [query, events, collabPosts, communityPosts]
   );
-  // Strict title matches can be sparse — fill the grid with broader
+  // Strict title matches can be sparse, so fill the grid with broader
   // (tag/body/skill) matches when there are too few to avoid an empty-looking page.
   const suggestions = useMemo(() => {
     if (!query || searchResults.length >= 6) return [];
@@ -255,7 +255,7 @@ export default function HomePage() {
   }, [query, searchResults, events, collabPosts, communityPosts]);
 
   const ongoingEvent = events.find((e) => getEventStatus(e) === "ongoing");
-  // Only truly-upcoming events — ongoing is already surfaced via the
+  // Only truly-upcoming events: ongoing is already surfaced via the
   // "Happening now" note above, and ended events don't belong under
   // "Upcoming Events" at all.
   const featuredEvents  = events.filter((e) => getEventStatus(e) === "upcoming").slice(0, 4);
@@ -306,7 +306,7 @@ export default function HomePage() {
         </svg>
       </div>
 
-      {/* Extra paper grain — just a touch more tooth on top of the cork-board bg */}
+      {/* Extra paper grain: just a touch more tooth on top of the cork-board bg */}
       <div
         aria-hidden
         style={{
@@ -351,8 +351,8 @@ export default function HomePage() {
                 <span className="text-community-gold">Hub.</span>
               </h1>
               <p className="mt-5 text-muted-foreground leading-relaxed text-base max-w-sm">
-                A bulletin board for makers, builders &amp; curious minds at CADT —
-                find events, team up, and share what you're building.
+                A bulletin board for makers, builders &amp; curious minds at CADT.
+                Find events, team up, and share what you're building.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
@@ -375,7 +375,7 @@ export default function HomePage() {
 
           {/* Middle pinned notes cluster */}
           <div className="hidden lg:flex flex-col gap-7 pt-14 flex-1 max-w-52.5">
-            {/* Happening now — only appears while an event is actually live */}
+            {/* Happening now: only appears while an event is actually live */}
             {ongoingEvent && <OngoingNote event={ongoingEvent} />}
 
             {/* Hot discussion sticky */}

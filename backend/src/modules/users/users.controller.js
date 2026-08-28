@@ -11,7 +11,7 @@ export async function getMe(req, res) {
   res.json({ data: req.user });
 }
 
-// Self-service profile edit — deliberately narrow: name/phone/bio/avatar
+// Self-service profile edit, deliberately narrow: name/phone/bio/avatar
 // only. Role/status/email/student_id aren't editable here (those are
 // admin-controlled or identity-critical), so there's no need to guard
 // individual fields beyond just not accepting them.
@@ -41,7 +41,7 @@ export async function updateMe(req, res, next) {
   }
 }
 
-// Multipart upload — same pattern as event-images/achievement-icons: buffer
+// Multipart upload, same pattern as event-images/achievement-icons: buffer
 // straight to Supabase Storage, return the public URL for the edit form to
 // save as profile_img_url via updateMe above.
 export async function uploadMyAvatar(req, res, next) {
@@ -74,7 +74,7 @@ export async function listUsers(req, res, next) {
   }
 }
 
-// Admin/staff creating an account on someone's behalf — separate from public
+// Admin/staff creating an account on someone's behalf, separate from public
 // self-signup (auth.controller.js), which always creates a plain "user".
 // Role is admin-only: a staff-issued request is silently forced to "user"
 // regardless of what's in the body, so a staff account can never mint
@@ -117,7 +117,7 @@ export async function createUser(req, res, next) {
   }
 }
 
-// Suspend/reactivate — requireAuth already rejects a suspended account's
+// Suspend/reactivate: requireAuth already rejects a suspended account's
 // own token on every subsequent request (see requireAuth.js), so toggling
 // this is immediately effective, no separate enforcement needed here.
 export async function setUserStatus(req, res, next) {

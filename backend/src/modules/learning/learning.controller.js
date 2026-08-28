@@ -17,7 +17,7 @@ const COURSE_SELECT = `
 `;
 
 // ---------------------------------------------------------------------------
-// Mappers — the API speaks the frontend's camelCase course shape (the one
+// Mappers: the API speaks the frontend's camelCase course shape (the one
 // data/courses.js established), so no page or component needs to change
 // how it reads a course.
 
@@ -122,7 +122,7 @@ function canEditCourse(user, courseRow) {
 
 // Catalog reads go through the service-role client (like every other module
 // here): the learning tables have RLS enabled with no anon policies, so the
-// anon-key client sees zero rows. The API is the trust boundary — these two
+// anon-key client sees zero rows. The API is the trust boundary; these two
 // endpoints only ever return the public course shape.
 export async function listCourses(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -250,7 +250,7 @@ export async function deleteCourse(req, res, next) {
 }
 
 // ---------------------------------------------------------------------------
-// Lecturers — thin admin API over users with role 'lecturer', shaped the way
+// Lecturers: thin admin API over users with role 'lecturer', shaped the way
 // the AdminLecturers page and course editor expect ({ id, name, email, active }).
 
 function toFrontendLecturer(row) {
@@ -459,7 +459,7 @@ export async function getMyLearning(req, res, next) {
       data: {
         enrolledCourseIds: enrollments.data.map((r) => r.course_id),
         unlockedCourseIds: unlocks.data.map((r) => r.course_id),
-        // { [courseId]: stars } — the student's own ratings.
+        // { [courseId]: stars }: the student's own ratings.
         myRatings: Object.fromEntries(ratings.data.map((r) => [r.course_id, r.stars])),
       },
     });
@@ -469,7 +469,7 @@ export async function getMyLearning(req, res, next) {
 }
 
 // ---------------------------------------------------------------------------
-// Admin reporting — who is in each course, and what's happening platform-wide.
+// Admin reporting: who is in each course, and what's happening platform-wide.
 
 // Roster for one course. Admin/staff see any course; a lecturer only their own.
 export async function listCourseStudents(req, res, next) {

@@ -58,7 +58,7 @@ function Actions({ event, onEdit, onDelete, onViewRegistrants }) {
   );
 }
 
-// Ordered thumbnail list — add/reorder/remove, first item is the cover
+// Ordered thumbnail list: add/reorder/remove, first item is the cover
 // shown on cards. Mirrors LessonEditor's move-up/move-down/remove pattern
 // (frontend/src/admin/learning/adminSide/CourseEditorForm.jsx).
 function ImageListEditor({ images, onAdd, onRemove, onMove, uploading }) {
@@ -72,7 +72,7 @@ function ImageListEditor({ images, onAdd, onRemove, onMove, uploading }) {
 
   return (
     <div>
-      <label className={labelCls}>Images <span className="font-normal text-muted-foreground">(first = cover, optional — shown at 2:1 on cards and the event page, e.g. 1600×800px)</span></label>
+      <label className={labelCls}>Images <span className="font-normal text-muted-foreground">(first = cover, optional, shown at 2:1 on cards and the event page, e.g. 1600×800px)</span></label>
       <div className="space-y-2">
         {images.map((url, i) => (
           <div key={url + i} className="flex items-center gap-2 rounded-lg border border-border p-2">
@@ -121,12 +121,12 @@ function RegistrantsDialog({ event, onOpenChange }) {
     setAddEmail("");
     fetchEventRegistrants(event.id)
       .then(setRegistrants)
-      .catch(() => setStatus("Couldn't load registrants — please try again."))
+      .catch(() => setStatus("Couldn't load registrants. Please try again."))
       .finally(() => setLoading(false));
   }, [event]);
 
   // For events using an external registration link (event.registrationUrl),
-  // sign-ups happen off-site — this is how staff keep the registrant list
+  // sign-ups happen off-site. This is how staff keep the registrant list
   // and capacity accurate for those without an automatic pipeline back in.
   const handleAddRegistrant = async () => {
     const email = addEmail.trim();
@@ -157,7 +157,7 @@ function RegistrantsDialog({ event, onOpenChange }) {
     }
   };
 
-  // Registration has no self-cancel by design — this is the only way a
+  // Registration has no self-cancel by design. This is the only way a
   // registrant comes off the list once they're on it.
   const handleRemove = async (registrant) => {
     setStatus("");
@@ -173,7 +173,7 @@ function RegistrantsDialog({ event, onOpenChange }) {
     <Dialog open={!!event} onOpenChange={(open) => !open && onOpenChange(null)}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Registrants — {event?.title}</DialogTitle>
+          <DialogTitle>Registrants: {event?.title}</DialogTitle>
           <DialogDescription>{registrants.length} registered</DialogDescription>
         </DialogHeader>
 
@@ -223,7 +223,7 @@ function RegistrantsDialog({ event, onOpenChange }) {
 }
 
 // event.status in the DB is set once at creation and never transitions on
-// its own (no cron/trigger updates it) — so it only ever reflects an actual
+// its own (no cron/trigger updates it), so it only ever reflects an actual
 // admin action (e.g. "cancelled"). Everything else (upcoming/ongoing/ended)
 // has to be derived from the clock, same as the public Events pages.
 const STATUS_STYLES = {
@@ -290,7 +290,7 @@ export default function AdminEvents() {
   useEffect(() => {
     fetchEventsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ events, total }) => { setList(events); setTotal(total); })
-      .catch(() => setListError("Couldn't load events — please try refreshing."))
+      .catch(() => setListError("Couldn't load events. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -304,7 +304,7 @@ export default function AdminEvents() {
       setTotal(freshTotal);
       setPage(nextPage);
     } catch {
-      setListError("Couldn't load more events — please try again.");
+      setListError("Couldn't load more events. Please try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -448,7 +448,7 @@ export default function AdminEvents() {
         </div>
       )}
 
-      {/* Add / Edit form — wide three-column layout, admin panel is desktop-only
+      {/* Add / Edit form: wide three-column layout, admin panel is desktop-only
           in practice, so there's no need to cram everything into one narrow
           stacked column like a mobile form would. Description gets its own
           column since event write-ups tend to run long. */}
@@ -467,7 +467,7 @@ export default function AdminEvents() {
             )}
 
             <div className="grid gap-5 lg:grid-cols-3 lg:gap-x-8">
-              {/* Column 1 — the essentials */}
+              {/* Column 1: the essentials */}
               <div className="grid gap-4 content-start">
                 <div>
                   <label className={labelCls}>Title</label>
@@ -496,7 +496,7 @@ export default function AdminEvents() {
                 </div>
               </div>
 
-              {/* Column 2 — media and outbound links */}
+              {/* Column 2: media and outbound links */}
               <div className="grid gap-4 content-start">
                 <ImageListEditor
                   images={form.images}
@@ -507,7 +507,7 @@ export default function AdminEvents() {
                 />
 
                 <div>
-                  <label className={labelCls}>Registration link <span className="font-normal text-muted-foreground">(optional — leave blank for in-app registration)</span></label>
+                  <label className={labelCls}>Registration link <span className="font-normal text-muted-foreground">(optional, leave blank for in-app registration)</span></label>
                   <input
                     type="url"
                     className={inputCls}
@@ -516,12 +516,12 @@ export default function AdminEvents() {
                     placeholder="https://forms.gle/…"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    If set, "Register" sends people to this link instead of registering in-app. Capacity and the registrant list still work — add registrants manually from the Registrants panel.
+                    If set, "Register" sends people to this link instead of registering in-app. Capacity and the registrant list still work; add registrants manually from the Registrants panel.
                   </p>
                 </div>
 
                 <div>
-                  <label className={labelCls}>Photo gallery link <span className="font-normal text-muted-foreground">(optional — add after the event, e.g. a Google Drive folder)</span></label>
+                  <label className={labelCls}>Photo gallery link <span className="font-normal text-muted-foreground">(optional, add after the event, e.g. a Google Drive folder)</span></label>
                   <input
                     type="url"
                     className={inputCls}
@@ -530,12 +530,12 @@ export default function AdminEvents() {
                     placeholder="https://drive.google.com/…"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Shown as a "View event gallery" button once the event ends. Leave blank until photos are ready — attendees see "coming soon" until then.
+                    Shown as a "View event gallery" button once the event ends. Leave blank until photos are ready; attendees see "coming soon" until then.
                   </p>
                 </div>
               </div>
 
-              {/* Column 3 — description, given its own column since these run long */}
+              {/* Column 3: description, given its own column since these run long */}
               <div className="flex flex-col gap-1.5">
                 <label className={labelCls}>Description</label>
                 <textarea

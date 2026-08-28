@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { T } from '../../../lib/inventory/theme'
 
-// Lightweight dual-series bar chart — no chart library dependency.
+// Lightweight dual-series bar chart, no chart library dependency.
 // data: [{ label, a, b }]; seriesA/seriesB control color + legend labels.
 export default function BarChart({ data, seriesA = 'A', seriesB = 'B', colorA = T.blue, colorB = T.green, height = 280 }) {
   const [hover, setHover] = useState(null)

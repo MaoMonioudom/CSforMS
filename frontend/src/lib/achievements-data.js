@@ -1,7 +1,7 @@
 import { api, getToken, BASE_URL } from "./api/client";
 
 // Mirrors backend/src/modules/achievements/achievements.controller.js's
-// REQUIREMENT_TYPES — kept to a fixed set of real, countable actions rather
+// REQUIREMENT_TYPES: kept to a fixed set of real, countable actions rather
 // than free text, so a badge's requirement always maps to something real.
 export const REQUIREMENT_TYPE_LABELS = {
   event_registrations: "Events registered for",
@@ -13,7 +13,7 @@ export const REQUIREMENT_TYPE_LABELS = {
 };
 
 // Which of the 3 module colors a badge belongs to, derived from its
-// requirement_type rather than a separate DB column — event/workspace/
+// requirement_type rather than a separate DB column. Event/workspace/
 // community-post/collab-post achievements are all "Community" space.
 export const MODULE_BY_REQUIREMENT = {
   event_registrations: "community",
@@ -36,7 +36,7 @@ export async function fetchAchievements() {
 }
 
 // Full catalog for the current user, each annotated with earned/earned_at/
-// progress toward the requirement — see getMyAchievements in the backend.
+// progress toward the requirement: see getMyAchievements in the backend.
 export async function fetchMyAchievements() {
   const { data } = await api.get("/api/achievements/me");
   return data;
@@ -56,7 +56,7 @@ export async function deleteAchievement(id) {
   await api.del(`/api/achievements/${id}`);
 }
 
-// Multipart upload — same pattern as events' uploadEventImage: the JSON
+// Multipart upload, same pattern as events' uploadEventImage: the JSON
 // client can't carry files, so this goes through fetch directly with the
 // same bearer token.
 export async function uploadAchievementIcon(file) {

@@ -1,5 +1,5 @@
 // Thin persistence layer over localStorage.
-// Swap the body of each function for real HTTP calls when a backend exists —
+// Swap the body of each function for real HTTP calls when a backend exists;
 // callers already treat every export here as async.
 const PREFIX = 'mv:'
 

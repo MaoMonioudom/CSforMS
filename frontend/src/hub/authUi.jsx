@@ -5,7 +5,7 @@ import { HUB, HUB_GRADIENT } from "./hubTheme";
 // register, forgot password, reset password) so they all match without
 // duplicating styling. Re-exported under this file's own key names (bg/
 // card/etc, rather than HUB's bg1/bgCard/etc) so every existing consumer
-// keeps working — only the underlying values changed, unifying with the
+// keeps working; only the underlying values changed, unifying with the
 // rest of the hub instead of carrying a third slightly-different palette.
 export const D = {
   bg:     HUB.bg1,

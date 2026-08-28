@@ -3,7 +3,7 @@ import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseCl
 import { requireAuth, requireRole } from "../../middleware/requireAuth.js";
 import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 
-// Action-based routes for `event_registrations` — not a plain table CRUD,
+// Action-based routes for `event_registrations`: not a plain table CRUD,
 // so this doesn't go through crudRouter. Mounted at /events, alongside (and
 // before) the generic events crudRouter in community.routes.js; every path
 // here is at least two segments past /events (e.g. /:id/register,
@@ -11,21 +11,21 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 // -segment /:id.
 //
 // Registration is intentionally one-way for the registrant: once you're in,
-// there's no self-cancel — an admin has to remove you (see
+// there's no self-cancel; an admin has to remove you (see
 // DELETE /:id/registrants/:userId below). This is a deliberate product
 // decision, not an oversight.
 const router = Router();
 
 // Validation + capacity check + insert all happen in one DB transaction via
-// register_for_event() (backend/supabase/009_atomic_event_registration.sql)
-// — a plain JS "count, then check, then insert" can't be made race-free
+// register_for_event() (backend/supabase/009_atomic_event_registration.sql).
+// A plain JS "count, then check, then insert" can't be made race-free
 // against two truly concurrent requests for the same event; the SQL
 // function locks the event row instead, so a second concurrent call for the
 // same event waits for the first instead of reading a stale count.
 const REGISTER_ERROR_RESPONSES = {
   EVENT_NOT_FOUND: [404, "Event not found"],
   EVENT_CANCELLED: [400, "This event has been cancelled."],
-  EVENT_STARTED: [400, "Registration is closed — this event has already started."],
+  EVENT_STARTED: [400, "Registration is closed. This event has already started."],
   EVENT_FULL: [409, "This event is full."],
 };
 
@@ -48,7 +48,7 @@ router.post("/:id/register", requireAuth, async (req, res, next) => {
   }
 });
 
-// Event ids the caller is actively registered for — one call so the
+// Event ids the caller is actively registered for: one call so the
 // frontend can mark every event card without an N+1 fetch.
 router.get("/registrations/me", requireAuth, async (req, res, next) => {
   if (!assertSupabaseConfigured(res)) return;
@@ -83,7 +83,7 @@ router.get("/registrations/counts", async (req, res, next) => {
 });
 
 // Admin/staff-only: manually record someone who registered off-site (e.g.
-// through an externally-hosted event's own form/link — see events.registration_url)
+// through an externally-hosted event's own form/link (see events.registration_url)
 // so capacity/registrant tooling still reflects reality even though the
 // sign-up itself happened outside this app. Looked up by email rather than
 // user_id since that's what staff have on hand from an external form.
@@ -138,7 +138,7 @@ router.get("/:id/registrants", requireAuth, requireRole("admin", "staff"), async
 });
 
 // Admin/staff-only: removes a specific registrant (e.g. a no-show freeing
-// their spot for someone else) — the only way a registration goes away.
+// their spot for someone else); the only way a registration goes away.
 router.delete("/:id/registrants/:userId", requireAuth, requireRole("admin", "staff"), async (req, res, next) => {
   if (!assertSupabaseConfigured(res)) return;
   try {

@@ -65,7 +65,7 @@ function UserLayout() {
   );
 }
 
-// learning-scope carries the parchment/navy/gold tokens (see index.css) —
+// learning-scope carries the parchment/navy/gold tokens (see index.css),
 // scoped so it doesn't touch the hub's ink/font-display values elsewhere.
 function LearningLayout() {
   return (
@@ -85,7 +85,7 @@ export default function App() {
       <ScrollToTop />
       <PageViewTracker />
       <Routes>
-        {/* Hub landing — default root, standalone (no TopNav/Footer) */}
+        {/* Hub landing: default root, standalone (no TopNav/Footer) */}
         <Route path="/" element={<HubLandingPage />} />
         <Route path="/hub/about" element={<HubAboutPage />} />
         <Route path="/login" element={<AuthPage />} />
@@ -100,10 +100,10 @@ export default function App() {
         <Route path="/membership" element={<MembershipPage />} />
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/workspace" element={<WorkspacePage />} />
-        {/* Inventory module (MakerVault) — self-contained app with its own auth */}
+        {/* Inventory module (Makerspace): self-contained app with its own auth */}
         <Route path="/inventory/*" element={<InventoryApp />} />
 
-        {/* Community spaces — TopNav + Footer */}
+        {/* Community spaces: TopNav + Footer */}
         <Route element={<UserLayout />}>
           <Route path="/community" element={<HomePage />} />
           <Route path="/community/eventspace" element={<EventsPage />} />
@@ -114,7 +114,7 @@ export default function App() {
           <Route path="/community/communityspace/:postId" element={<CommunityDetailPage />} />
         </Route>
 
-        {/* Learning spaces — TopNav + Footer, scoped to the library theme */}
+        {/* Learning spaces: TopNav + Footer, scoped to the library theme */}
         <Route element={<LearningLayout />}>
           <Route path="/learning" element={<LearningHomePage />} />
           <Route path="/learning/courses" element={<LearningCoursesPage />} />
@@ -132,7 +132,7 @@ export default function App() {
             <Route path="collaboration" element={<AdminCollaboration />} />
             <Route path="community" element={<AdminCommunity />} />
             <Route path="users" element={<AdminUsers />} />
-            {/* Merged into Users — kept as a redirect so old links/bookmarks still land somewhere. */}
+            {/* Merged into Users; kept as a redirect so old links/bookmarks still land somewhere. */}
             <Route path="membership" element={<Navigate to="/admin/users" replace />} />
             <Route path="workspace" element={<AdminWorkspace />} />
             <Route path="achievements" element={<AdminAchievements />} />
@@ -157,7 +157,7 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Catch-all — NotFound uses the library theme's CSS tokens
+        {/* Catch-all: NotFound uses the library theme's CSS tokens
             (--color-navy-deep etc.), so it needs LearningLayout's wrapper. */}
         <Route element={<LearningLayout />}>
           <Route path="*" element={<NotFound />} />

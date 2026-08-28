@@ -1,4 +1,4 @@
-// Simple relevance scorer — good enough for local/demo search, not a real index.
+// Simple relevance scorer, good enough for local/demo search, not a real index.
 function textScore(text, q) {
   if (!text) return 0;
   const t = text.toLowerCase();
@@ -31,7 +31,7 @@ export function resultKey(r) {
 // matching the query against each item's title only, and returns one
 // relevance-sorted list (recency used just to break ties, not to match).
 // Data is passed in (rather than imported) so callers' React state stays the
-// single source of truth — a useMemo keyed on these args recomputes as soon
+// single source of truth: a useMemo keyed on these args recomputes as soon
 // as a fetch resolves, instead of ever reading a stale snapshot.
 export function searchCommunity(query, { events, collabPosts, communityPosts }) {
   const q = query.trim().toLowerCase();
@@ -59,7 +59,7 @@ export function searchCommunity(query, { events, collabPosts, communityPosts }) 
 }
 
 // Broader fallback used only to fill "You might also like" when the strict
-// title search above comes back sparse — matches tags/body/skills/etc, never
+// title search above comes back sparse. Matches tags/body/skills/etc, never
 // mixed into the primary relevance-ranked results themselves.
 export function suggestRelated(query, { events, collabPosts, communityPosts }, excludeKeys = [], limit = 8) {
   const q = query.trim().toLowerCase();

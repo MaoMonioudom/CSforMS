@@ -42,7 +42,7 @@ function deriveTopSkills(collabPosts) {
 // --- Chart components ---
 
 // Events with no capacity set (max_participants left blank) would otherwise
-// divide by zero — treated as 0% full rather than NaN/Infinity.
+// divide by zero, treated as 0% full rather than NaN/Infinity.
 function fillRate(ev) {
   return ev.capacity ? ev.participants / ev.capacity : 0;
 }
@@ -50,7 +50,7 @@ function fillRate(ev) {
 function EventFillChart({ events }) {
   const sorted = [...events].sort((a, b) => fillRate(b) - fillRate(a));
   return (
-    <ChartCard title="Event Capacity" subtitle="Fill rate — sorted highest first">
+    <ChartCard title="Event Capacity" subtitle="Fill rate, sorted highest first">
       <div className="px-5 py-4 space-y-3 max-h-72 overflow-y-auto">
         {sorted.map(ev => {
           const pct = Math.round(Math.min(1, fillRate(ev)) * 100);
@@ -174,7 +174,7 @@ function SiteVisitsChart({ series }) {
   const total = series.reduce((s, d) => s + d.count, 0);
   const maxCount = Math.max(1, ...series.map(d => d.count));
   return (
-    <ChartCard title="Site Visits" subtitle={`Last ${series.length} days — real traffic, admin usage excluded`}>
+    <ChartCard title="Site Visits" subtitle={`Last ${series.length} days, real traffic, admin usage excluded`}>
       <div className="px-5 py-4">
         <p className="mb-4">
           <span className="text-3xl font-bold text-foreground">{total}</span>
@@ -203,22 +203,22 @@ function SiteVisitsChart({ series }) {
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState("");
-  useEffect(() => { fetchEvents().then(setEvents).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+  useEffect(() => { fetchEvents().then(setEvents).catch(() => setError("Couldn't load some dashboard data. Try refreshing.")); }, []);
 
   const [collabPosts, setCollabPosts] = useState([]);
-  useEffect(() => { fetchCollabPosts().then(setCollabPosts).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+  useEffect(() => { fetchCollabPosts().then(setCollabPosts).catch(() => setError("Couldn't load some dashboard data. Try refreshing.")); }, []);
   const topSkills = deriveTopSkills(collabPosts);
 
   const [communityPosts, setCommunityPosts] = useState([]);
-  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+  useEffect(() => { fetchCommunityPosts().then(setCommunityPosts).catch(() => setError("Couldn't load some dashboard data. Try refreshing.")); }, []);
   const communityDonutData = deriveCommunityDonutData(communityPosts);
   const topCommunityPosts = deriveTopCommunityPosts(communityPosts);
 
   const [userCount, setUserCount] = useState(0);
-  useEffect(() => { api.get("/api/users").then(({ data }) => setUserCount(data.length)).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+  useEffect(() => { api.get("/api/users").then(({ data }) => setUserCount(data.length)).catch(() => setError("Couldn't load some dashboard data. Try refreshing.")); }, []);
 
   const [pageViews, setPageViews] = useState([]);
-  useEffect(() => { fetchDailyPageViews(30).then(setPageViews).catch(() => setError("Couldn't load some dashboard data — try refreshing.")); }, []);
+  useEffect(() => { fetchDailyPageViews(30).then(setPageViews).catch(() => setError("Couldn't load some dashboard data. Try refreshing.")); }, []);
 
   return (
     <div>

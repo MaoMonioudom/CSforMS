@@ -38,7 +38,7 @@ async function insertNotification({ userId, type, message, dedupKey = null }) {
   if (error) throw error;
 }
 
-// One paid invoice + its payment row (and optional purchase_items lines) —
+// One paid invoice + its payment row (and optional purchase_items lines),
 // the real schema's equivalent of the old flat "payments" record. Everything
 // the counter/approval flows create is already settled, so status is 'paid'.
 async function createPaidInvoice({ userId, invoiceType, totalCredit = 0, totalAmount = 0, method, verifiedBy, lines = [] }) {
@@ -120,7 +120,7 @@ const INVOICE_TYPE_LABELS = {
   "3d_printing": "3D Printing", fee: "Late/Damage Fee",
 };
 
-// Staff-only. Flattened for the admin Payments page — one row per invoice.
+// Staff-only. Flattened for the admin Payments page: one row per invoice.
 export async function listPayments(req, res, next) {
   try {
     const { data, error } = await supabaseAdmin
@@ -170,7 +170,7 @@ export async function listInventoryUsers(req, res, next) {
 
 const REQUEST_FIELDS = {
   borrow: ["item_id", "quantity", "due_date", "note", "order_id"],
-  // Self-purchases wait for staff approval too — credits/stock only move
+  // Self-purchases wait for staff approval too. Credits/stock only move
   // when the request is approved (see approvePurchaseGroup).
   purchase: ["item_id", "quantity", "note", "order_id"],
   credit_topup: ["amount_usd", "note"],
@@ -183,7 +183,7 @@ export async function createRequest(req, res, next) {
     const { request_type } = req.body;
     const allowed = REQUEST_FIELDS[request_type];
     if (!allowed) return res.status(400).json({ error: "Invalid request_type" });
-    // Both print services are walk-up only — staff charge them at the counter
+    // Both print services are walk-up only; staff charge them at the counter
     // (chargePrintingNow / charge3DNow) once the student is physically
     // present, so there's no remote request queue for either.
     if (request_type === "printing" || request_type === "3d_printing") {
@@ -238,7 +238,7 @@ export async function approveBorrowGroup(req, res, next) {
     const names = requests.map((r) => r.inventory_items?.item_name).filter(Boolean).join(", ");
     await insertNotification({
       userId: requests[0].user_id, type: "approved",
-      message: `Your borrowing request has been approved — ${names || "your items"}.`,
+      message: `Your borrowing request has been approved: ${names || "your items"}.`,
     });
 
     res.json({ data: { approved: requests.length } });
@@ -248,7 +248,7 @@ export async function approveBorrowGroup(req, res, next) {
   }
 }
 
-// Approve every purchase request in one cart together — this is the moment
+// Approve every purchase request in one cart together. This is the moment
 // credits are deducted and stock is reduced (the request itself charged
 // nothing). One invoice covers the whole cart, then one notification.
 export async function approvePurchaseGroup(req, res, next) {
@@ -271,7 +271,7 @@ export async function approvePurchaseGroup(req, res, next) {
     }));
     const totalCredits = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
 
-    // Charge first — if the student can't afford it, nothing else happens.
+    // Charge first: if the student can't afford it, nothing else happens.
     await adjustCredits(userId, -totalCredits, {
       description: `Approved purchase ${requests[0].order_id || requests[0].request_id}`,
     });
@@ -291,7 +291,7 @@ export async function approvePurchaseGroup(req, res, next) {
     const names = requests.map((r) => r.inventory_items?.item_name).filter(Boolean).join(", ");
     await insertNotification({
       userId, type: "approved",
-      message: `Your purchase has been approved — ${names || "your items"} (${totalCredits} cr deducted).`,
+      message: `Your purchase has been approved: ${names || "your items"} (${totalCredits} cr deducted).`,
     });
 
     res.json({ data: { approved: requests.length, creditsCharged: totalCredits } });
@@ -331,7 +331,7 @@ export async function denyRequestGroup(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// Clears already-resolved requests off the list — staff only, and only once
+// Clears already-resolved requests off the list. Staff only, and only once
 // a request is no longer pending (approving/denying is the only way to
 // resolve a live request; this never lets one disappear unactioned).
 export async function deleteRequestGroup(req, res, next) {
@@ -460,7 +460,7 @@ export async function approveTopUp(req, res, next) {
     });
     await insertNotification({
       userId: r.user_id, type: "approved",
-      message: `Your payment has been completed — $${r.amount_usd} → +${creditsToAdd} credits.`,
+      message: `Your payment has been completed: $${r.amount_usd} → +${creditsToAdd} credits.`,
     });
 
     res.json({ data: { credits: membership.credits } });
@@ -487,7 +487,7 @@ export async function approvePrinting(req, res, next) {
     });
     await insertNotification({
       userId: r.user_id, type: "approved",
-      message: `Your print job is ready — ${r.pages} page${r.pages === 1 ? "" : "s"} printed, ${charge} cr charged.`,
+      message: `Your print job is ready: ${r.pages} page${r.pages === 1 ? "" : "s"} printed, ${charge} cr charged.`,
     });
 
     res.json({ data: { credits: membership.credits } });
@@ -531,7 +531,7 @@ export async function confirm3DWeight(req, res, next) {
     });
     await insertNotification({
       userId: r.user_id, type: "approved",
-      message: `Your 3D print is ready — ${grams}g used, ${credits} cr charged.`,
+      message: `Your 3D print is ready: ${grams}g used, ${credits} cr charged.`,
     });
 
     res.json({ data: { credits: membership.credits } });
@@ -559,7 +559,7 @@ export async function chargePrintingNow(req, res, next) {
     });
     await insertNotification({
       userId: studentId, type: "approved",
-      message: `Staff printed ${pages} page(s) for you — ${credits} cr charged.`,
+      message: `Staff printed ${pages} page(s) for you: ${credits} cr charged.`,
     });
 
     res.json({ data: { credits: membership.credits } });
@@ -598,7 +598,7 @@ export async function charge3DNow(req, res, next) {
     });
     await insertNotification({
       userId: studentId, type: "approved",
-      message: `Your 3D print is ready — ${grams}g used, ${credits} cr charged.`,
+      message: `Your 3D print is ready: ${grams}g used, ${credits} cr charged.`,
     });
 
     res.json({ data: { credits: membership.credits } });
@@ -679,7 +679,7 @@ export async function selfPurchase(req, res, next) {
         .from("inventory_items").select("item_id, item_name, unit_credit, current_stock, is_returnable")
         .eq("item_id", line.itemId).single();
       if (error) throw error;
-      if (item.is_returnable) return res.status(400).json({ error: `"${item.item_name}" is returnable — request to borrow it instead` });
+      if (item.is_returnable) return res.status(400).json({ error: `"${item.item_name}" is returnable; request to borrow it instead` });
       if (item.current_stock < qty) return res.status(400).json({ error: `Not enough stock of "${item.item_name}"` });
       total += item.unit_credit * qty;
       lines.push({ itemId: item.item_id, quantity: qty, unitPrice: item.unit_credit });
@@ -702,7 +702,7 @@ export async function selfPurchase(req, res, next) {
 }
 
 // type: 'topup' charges at CREDIT_RATE/$1 (requires existing membership);
-// 'membership' is the fixed $20/year plan — activates/renews + bonus credits.
+// 'membership' is the fixed $20/year plan: activates/renews + bonus credits.
 export async function topUpCounter(req, res, next) {
   try {
     const { studentId, amountUSD, method = "cash", type = "topup" } = req.body;
@@ -769,7 +769,7 @@ export async function uploadItemImage(req, res, next) {
 
 // ── Maintenance ──────────────────────────────────────────────────────────
 
-// One open (unresolved) log per item — Manage Stock shows this as the
+// One open (unresolved) log per item. Manage Stock shows this as the
 // "Reported Issue" on any item currently flagged unavailable/Maintenance.
 export async function listOpenMaintenance(req, res, next) {
   try {
@@ -826,7 +826,7 @@ export async function completeMaintenance(req, res, next) {
 
 // ── Notifications ────────────────────────────────────────────────────────
 
-// Generated lazily whenever a student's notifications are fetched — no cron
+// Generated lazily whenever a student's notifications are fetched; no cron
 // needed, and the UNIQUE (user_id, dedup_key) constraint makes re-runs safe.
 export async function generateDueDateAlerts(userId) {
   const { data: borrows, error } = await supabaseAdmin
@@ -844,7 +844,7 @@ export async function generateDueDateAlerts(userId) {
     if (daysLeft < 0) {
       candidates.push({
         user_id: userId, notification_type: "overdue", is_read: false, dedup_key: `overdue-${b.borrow_id}`,
-        message: `"${itemName}" is overdue (due ${dueDay}) — late returns are charged ${OVERDUE_RATE} credits per day. Please return it as soon as possible.`,
+        message: `"${itemName}" is overdue (due ${dueDay}). Late returns are charged ${OVERDUE_RATE} credits per day. Please return it as soon as possible.`,
       });
     } else if (daysLeft <= 1) {
       candidates.push({

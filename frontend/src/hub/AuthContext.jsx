@@ -5,7 +5,7 @@ const AuthCtx = createContext(null);
 
 // Backend roles are lowercase ('admin'/'staff'/'user'); the rest of the
 // frontend (AdminGuard, AdminSidebar's role badge, etc.) was built around
-// capitalized roles ('Admin'/'Staff'/'User') — map at the boundary so
+// capitalized roles ('Admin'/'Staff'/'User'); map at the boundary so
 // nothing downstream has to care which convention the API uses.
 const ROLE_MAP = { admin: "Admin", staff: "Staff", user: "User", lecturer: "Lecturer" };
 
@@ -18,9 +18,9 @@ function toFrontendUser(row) {
     avatar: row.profile_img_url || null,
     phone: row.phone_number || "",
     bio: row.bio || "",
-    // Real account-creation date — for "Member since" on the Profile page.
+    // Real account-creation date, for "Member since" on the Profile page.
     createdAt: row.created_at,
-    // Filled in separately by loadMembership() — membership/credits live in
+    // Filled in separately by loadMembership(); membership/credits live in
     // their own table, fetched after identity so a slow membership lookup
     // never blocks login.
     isMember: false,
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Single source of truth for isMember/credits — every module reads this
+  // Single source of truth for isMember/credits; every module reads this
   // instead of keeping its own local copy. Safe to call any time (e.g.
   // after an admin activates membership or adds credits) to pull fresh
   // numbers without a full session reload.
@@ -41,19 +41,19 @@ export function AuthProvider({ children }) {
       const { data } = await api.get("/api/membership/me");
       setUser(prev => (prev ? { ...prev, isMember: data.isMember, credits: data.credits } : prev));
     } catch {
-      // Not fatal — the user just keeps seeing the last-known balance.
+      // Not fatal; the user just keeps seeing the last-known balance.
     }
   }, []);
 
   // On mount, if a token is already stored (from a previous visit), confirm
-  // it's still valid and restore the session — otherwise every page refresh
+  // it's still valid and restore the session; otherwise every page refresh
   // would silently sign the user out.
   useEffect(() => {
     if (!getToken()) { setLoading(false); return; }
     api.get("/api/auth/session")
       .then(async ({ user: row }) => {
         setUser(toFrontendUser(row));
-        // Awaited (not fire-and-forget) — toFrontendUser() only sets a
+        // Awaited (not fire-and-forget): toFrontendUser() only sets a
         // placeholder isMember:false, so pages that gate on `loading` to
         // decide "do we actually know this user's membership yet" would
         // otherwise see loading flip to false before the real value lands.
@@ -82,7 +82,7 @@ export function AuthProvider({ children }) {
   };
 
   // Establishes a session from a token issued outside the normal login/signup
-  // calls — the Microsoft OAuth callback and the reset-password flow both
+  // calls; the Microsoft OAuth callback and the reset-password flow both
   // hand back a ready-made session token instead of credentials.
   const loginWithToken = async (token) => {
     setToken(token);
@@ -95,7 +95,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => { setUser(null); setToken(null); };
 
-  // Patches fields on the current user client-side only — for things that
+  // Patches fields on the current user client-side only, for things that
   // don't need a round trip. Membership/credits go through
   // refreshMembership() instead, since the server owns those now.
   const updateUser = (patch) => {

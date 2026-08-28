@@ -1,6 +1,6 @@
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 
-// Public — every page load records one row here (see frontend's route-change
+// Public: every page load records one row here (see frontend's route-change
 // tracker in App.jsx). optionalAuth attaches req.user when a token is
 // present so a logged-in visit carries who it was, but never blocks a guest.
 export async function recordPageView(req, res, next) {
@@ -20,7 +20,7 @@ export async function recordPageView(req, res, next) {
   }
 }
 
-// Admin/staff only — raw timestamps for the last N days, aggregated into
+// Admin/staff only. Raw timestamps for the last N days, aggregated into
 // daily counts on the frontend (same "fetch raw, derive client-side"
 // pattern the rest of AdminDashboard's charts already use, rather than
 // hand-rolling a GROUP BY through the Supabase query builder).

@@ -2,7 +2,7 @@ import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseCl
 import { adjustCredits, CreditsError } from "../../shared/credits.js";
 
 // Membership is deliberately not staff-actioned through a request/approval
-// queue — payment always happens in person at the front desk (cash/QR), so
+// queue: payment always happens in person at the front desk (cash/QR), so
 // the staff member entering it IS the approval. No pending state to model.
 function toPublicMembership(row) {
   if (!row) {
@@ -32,7 +32,7 @@ export async function getMyMembership(req, res, next) {
   }
 }
 
-// Admin/Staff only. Looks up any user's membership by id — powers the
+// Admin/Staff only. Looks up any user's membership by id; powers the
 // admin "search a student, see their balance" panel.
 export async function getMembershipForUser(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -50,7 +50,7 @@ export async function getMembershipForUser(req, res, next) {
   }
 }
 
-// Admin/Staff only. Activates or renews a membership for the given user —
+// Admin/Staff only. Activates or renews a membership for the given user;
 // upserts the one membership row per user (creates it on first activation).
 export async function activateMembership(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -88,7 +88,7 @@ export async function activateMembership(req, res, next) {
 }
 
 // Admin/Staff only. Adds credits to a member's balance and logs the change
-// in credit_transactions — the ledger that lets a student's balance stay
+// in credit_transactions: the ledger that lets a student's balance stay
 // auditable no matter which module spent or granted it.
 export async function topUpCredits(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;

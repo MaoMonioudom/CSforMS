@@ -10,7 +10,7 @@ export function ScrollToTop() {
 
     if (hash) {
       // By the time this effect runs, React has already committed the new
-      // page's DOM, so the target section is already there — no need to
+      // page's DOM, so the target section is already there; no need to
       // wait a frame (rAF can be throttled/suspended in background tabs).
       const el = document.getElementById(hash.slice(1));
       el?.scrollIntoView({ behavior: "instant", block: "start" });

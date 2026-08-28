@@ -30,7 +30,7 @@ const MODULE_CFG = {
     placeholder: "Search items and equipment…",
     root:        "/inventory",
   },
-  // Account pages (Profile, Notifications, ...) aren't tied to a module —
+  // Account pages (Profile, Notifications, ...) aren't tied to a module:
   // no search bar, and the info box shows the page name instead of a module.
   hub: {
     accent:      "var(--color-inv-accent)",
@@ -53,7 +53,7 @@ const SPACE_ROOTS = { community: "/community", learning: "/learning", inventory:
 // Remembers whichever of the 3 module spaces was last visited, so the logo
 // and back button on account pages (Profile, Notifications, ...) can return
 // to that space's homepage instead of a generic hub root. Falls back to the
-// landing page ("/") when no module has been visited yet this session —
+// landing page ("/") when no module has been visited yet this session,
 // e.g. right after logging in, before going into Community/Learning/Inventory.
 function useLastSpace(mod) {
   useEffect(() => {
@@ -89,10 +89,10 @@ const LEARNING_LINKS = [
   // { label: "Announcements",  to: "/learning"  },
 ];
 
-// Inventory only has two real pages now — Home and Browse (Catalog) —
-// everything else lives inside those (e.g. requests are submitted from the
+// Inventory only has two real pages now: Home and Browse (Catalog).
+// Everything else lives inside those (e.g. requests are submitted from the
 // item detail on Browse, not a separate page). Notifications dropped from
-// this list — it's unified across all 3 modules and reachable from the
+// this list; it's unified across all 3 modules and reachable from the
 // bell icon, same as Community/Learning don't list it either.
 const INVENTORY_LINKS = [
   { label: "Inventory Home",   to: "/inventory",         featured: true, desc: "Your makerspace hub" },
@@ -209,7 +209,7 @@ function ProfileCluster({ onClose }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-bold text-xs">Become a Member</p>
-                <p className="text-[10px] text-white/70">$20/year — credits &amp; workspace</p>
+                <p className="text-[10px] text-white/70">$20/year: credits &amp; workspace</p>
               </div>
               <ChevronRight size={13} style={{ color: "#10b981" }} className="shrink-0" />
             </button>
@@ -290,7 +290,7 @@ function NotifBell({ dark, to = "/notifications", count = 0 }) {
     background: dark ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
   };
 
-  // Already on Notifications — clicking the bell again closes it (goes back)
+  // Already on Notifications: clicking the bell again closes it (goes back)
   // rather than re-navigating to the same page.
   if (onNotifications) {
     return (
@@ -360,7 +360,7 @@ function ModuleBox({ mod, cfg, dark }) {
 }
 
 // ── Credit box ────────────────────────────────────────────────────────────────
-// Links to /credits — the manage-credits panel (balance, top-up, history).
+// Links to /credits, the manage-credits panel (balance, top-up, history).
 function CreditBox({ credits, dark }) {
   return (
     <Link
@@ -459,7 +459,7 @@ function MobileSearch({ cfg, onClose }) {
   );
 }
 
-// ── Mobile search takeover — tapping the search icon turns the header itself
+// ── Mobile search takeover: tapping the search icon turns the header itself
 // into a focused input (YouTube-style), instead of opening the full menu.
 function MobileSearchTakeover({ cfg, dark, onClose }) {
   const navigate = useNavigate();
@@ -504,7 +504,7 @@ function MobileSearchTakeover({ cfg, dark, onClose }) {
   );
 }
 
-// ── Mobile quick-menu — expandable module accordions (full sub-page access) ──
+// ── Mobile quick-menu: expandable module accordions (full sub-page access) ──
 const MOBILE_MODULES = [
   { key: "community", icon: MessageSquare, label: "Community", desc: "Bulletin board & events",      accent: "#f59e0b", links: COMMUNITY_LINKS },
   { key: "learning",  icon: BookOpen,      label: "Learning",  desc: "Courses & digital library",     accent: "var(--color-oxblood)", links: LEARNING_LINKS  },
@@ -609,7 +609,7 @@ function MobileProfileRow({ onClose }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-extrabold text-[14px]">Become a Member</p>
-              <p className="text-white text-[11px] truncate">$20/year — credits &amp; workspace</p>
+              <p className="text-white text-[11px] truncate">$20/year: credits &amp; workspace</p>
             </div>
             <ChevronRight size={14} style={{ color: "#10b981" }} className="shrink-0" />
           </button>
@@ -652,7 +652,7 @@ export function TopNav() {
     ? inv.notifications.filter(n => !n.read && (n.forRoles?.includes(inv.user?.role) || n.userId === inv.user?.id)).length
     : 0;
 
-  // Real unread count for Community/Learning — fetched once per sign-in
+  // Real unread count for Community/Learning, fetched once per sign-in
   // rather than mocked. Skipped entirely for Inventory (invUnread above
   // already covers it from InventoryContext) and for signed-out visitors,
   // who have nothing to fetch.
@@ -666,7 +666,7 @@ export function TopNav() {
     return () => { cancelled = true; };
   }, [isInventory, user]);
 
-  // Bell is signed-in-only — guests (hub or Inventory) have no notifications
+  // Bell is signed-in-only: guests (hub or Inventory) have no notifications
   // to show, so the icon shouldn't take up header space for them.
   const loggedIn = isInventory ? !!inv?.user : !!user;
 
@@ -713,7 +713,7 @@ export function TopNav() {
   }, [open]);
 
   // Header background: one white/light frosted glass nav for all 3 modules
-  // now (previously Learning/Inventory got a separate dark-tinted header) —
+  // now (previously Learning/Inventory got a separate dark-tinted header);
   // the mobile drawer overlay (`open`) stays its own dark treatment, that's
   // a different kind of surface (full-screen overlay), not a module theme.
   const headerBg = open ? "rgba(12,16,30,0.75)" : undefined; // undefined → use className (bg-background/65)
@@ -735,7 +735,7 @@ export function TopNav() {
             <MobileSearchTakeover cfg={cfg} dark={open} onClose={() => setMobileSearchOpen(false)} />
           ) : (
             <>
-              {/* 1 · Logo — on account pages, returns to whichever space was last visited */}
+              {/* 1 · Logo: on account pages, returns to whichever space was last visited */}
               <Link
                 to={logoTo}
                 className="shrink-0"
@@ -754,7 +754,7 @@ export function TopNav() {
                 />
               </Link>
 
-              {/* 2 · Search bar — expands to fill center on sm+ (hidden on account pages) */}
+              {/* 2 · Search bar: expands to fill center on sm+ (hidden on account pages) */}
               {isHub
                 ? <div className="hidden sm:flex flex-1" />
                 : <NavSearch cfg={cfg} dark={open} />
@@ -763,7 +763,7 @@ export function TopNav() {
               {/* Mobile spacer (search is hidden on mobile) */}
               <div className="flex-1 sm:hidden" />
 
-              {/* Mobile search icon — turns the header into a focused search field, YouTube-style */}
+              {/* Mobile search icon: turns the header into a focused search field, YouTube-style */}
               {!isHub && (
                 <button
                   type="button"
@@ -779,7 +779,7 @@ export function TopNav() {
                 </button>
               )}
 
-              {/* 3 · Module box / account-page box — desktop/tablet only, no room on mobile */}
+              {/* 3 · Module box / account-page box: desktop/tablet only, no room on mobile */}
               <div className="hidden sm:block">
                 {isHub
                   ? hubPage && <InfoBox icon={hubPage.icon} label={hubPage.label} color={cfg.accent} dark={open} />
@@ -787,7 +787,7 @@ export function TopNav() {
                 }
               </div>
 
-              {/* 4 · Notifications — signed-in only, guests have nothing to show */}
+              {/* 4 · Notifications: signed-in only, guests have nothing to show */}
               {loggedIn && (
                 <NotifBell
                   dark={open}
@@ -796,13 +796,13 @@ export function TopNav() {
                 />
               )}
 
-              {/* 4b · Cart — inventory module, members only (guests have no checkout panel) */}
+              {/* 4b · Cart: inventory module, members only (guests have no checkout panel) */}
               {isInventory && inv?.user && (
                 <CartButton dark={open} count={inv.cart.length} onClick={() => inv.setCartOpen(true)} />
               )}
 
-              {/* 5 · Credits — members only, desktop/tablet only. Always the real
-                  (database) balance from useAuth, even on Inventory pages —
+              {/* 5 · Credits: members only, desktop/tablet only. Always the real
+                  (database) balance from useAuth, even on Inventory pages.
                   Inventory's own borrow/purchase math still uses its local
                   copy for now, this is just the display. */}
               {(isInventory ? inv?.user : user?.isMember) && (
@@ -844,8 +844,8 @@ export function TopNav() {
           <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
           <OverlayDoodles />
 
-          {/* Mobile — expandable module accordions, full sub-page access.
-              Note: no stopPropagation here — tapping the gaps between boxes
+          {/* Mobile: expandable module accordions, full sub-page access.
+              Note: no stopPropagation here, tapping the gaps between boxes
               should close the menu, same as clicking outside cards on desktop. */}
           <div
             className="sm:hidden flex flex-col gap-3 px-5 pt-20 pb-6"
@@ -867,7 +867,7 @@ export function TopNav() {
             <MobileProfileRow onClose={close} />
           </div>
 
-          {/* Desktop / tablet — full menu with sub-links */}
+          {/* Desktop / tablet: full menu with sub-links */}
           <div className="hidden sm:flex min-h-screen flex-col justify-center px-4 py-6 sm:pt-12">
             <p className="text-center text-white text-[10px] uppercase tracking-[0.25em] font-bold mb-5">
               Where do you want to go?

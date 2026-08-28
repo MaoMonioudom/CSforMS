@@ -6,7 +6,7 @@ import {
 } from "./community/ui/dialog";
 
 // Shared confirm-before-sign-out modal. Used from the module TopNav (desktop
-// and mobile quick menus) and from ProfilePage — keeps the confirmation UX
+// and mobile quick menus) and from ProfilePage; keeps the confirmation UX
 // and copy consistent everywhere sign-out can be triggered.
 export function SignOutConfirmDialog({ open, onOpenChange, redirectTo = "/", onSignedOut }) {
   const { logout } = useAuth();
@@ -28,7 +28,7 @@ export function SignOutConfirmDialog({ open, onOpenChange, redirectTo = "/", onS
             <LogOut size={20} style={{ color: "#dc2626" }} />
           </div>
           <DialogTitle className="text-lg font-bold text-center" style={{ color: "#16324a" }}>
-            Sign out of CADT Hub?
+            Sign out of CADT Makerspace?
           </DialogTitle>
           <DialogDescription className="text-center" style={{ color: "#5b7286" }}>
             You'll need to sign in again to access your profile, badges, and saved progress.

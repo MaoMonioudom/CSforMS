@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 /**
- * Course card — displays category, level, title, subtitle, and stats.
+ * Course card: displays category, level, title, subtitle, and stats.
  * Simple lift + accent-glow hover. Clicking navigates to /learning/course/:id.
  */
 export default function CourseCard({ course }) {

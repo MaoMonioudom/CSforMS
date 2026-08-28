@@ -65,7 +65,7 @@ const FOLDERS = [
   },
 ];
 
-// Cross-module concerns — not scoped to a single space, so they sit outside
+// Cross-module concerns, not scoped to a single space, so they sit outside
 // the module folders as a flat list.
 const generalItems = [
   { label: "Users",        to: "/admin/users",        icon: UserCog },
@@ -118,7 +118,7 @@ export function AdminSidebar({ width = 224 }) {
     return { community: false, inventory: false, learning: false, [active ? active.id : "community"]: true };
   });
   const toggle = (id) => setOpen(o => ({ ...o, [id]: !o[id] }));
-  // Sub-folders (Operation / Inventory Management) start open — they're short lists.
+  // Sub-folders (Operation / Inventory Management) start open; they're short lists.
   const [subOpen, setSubOpen] = useState({});
   const subIsOpen = (key) => subOpen[key] !== false;
   const toggleSub = (key) => setSubOpen(o => ({ ...o, [key]: !subIsOpen(key) }));
@@ -141,7 +141,7 @@ export function AdminSidebar({ width = 224 }) {
         )}
       </div>
 
-      {/* Nav — one folder per module, plus a flat "General" list for
+      {/* Nav: one folder per module, plus a flat "General" list for
           cross-module items (Users, Workspace) below the folders. */}
       <nav className="inv-hscroll flex-1 p-3 overflow-y-auto">
         <SectionLabel>Modules</SectionLabel>

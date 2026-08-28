@@ -4,21 +4,21 @@ import { Popover, PopoverContent, PopoverAnchor } from "@/components/community/u
 import { Input } from "@/components/community/ui/input";
 import { searchTags } from "@/lib/tags-data";
 
-// Chip input backed by the shared tag dictionary — typing shows matching
+// Chip input backed by the shared tag dictionary. Typing shows matching
 // existing tags (via /tags search) so people pick "React" instead of typing
 // "react.js" as an unintentional near-duplicate. Enter/comma still adds
 // whatever's typed as a brand-new value if nothing matches.
 //
-// Used for both Find Team's "skills" field and Connect's "tags" field —
+// Used for both Find Team's "skills" field and Connect's "tags" field;
 // same underlying `tags` dictionary either way (collaboration_skills and
 // post_tags are both junction tables into it). `noun` only customizes the
 // hint copy ("skill" vs "tag").
 //
 // z-[110] on the popover: it needs to render above a parent Dialog
-// (z-[100] — see dialog.jsx), since Radix portals it to document.body,
+// (z-[100], see dialog.jsx), since Radix portals it to document.body,
 // escaping the dialog's own stacking context. Any future usage inside a
 // dialog needs this same override, or the suggestions render invisibly
-// behind the dialog's backdrop (bit us once already — see CollaborationPage
+// behind the dialog's backdrop (bit us once already, see CollaborationPage
 // history).
 export function TagsInput({ value, onChange, noun = "tag", placeholder }) {
   const [query, setQuery] = useState("");

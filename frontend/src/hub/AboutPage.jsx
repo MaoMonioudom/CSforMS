@@ -3,16 +3,17 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight, MessageSquare, BookOpen, Package,
   Compass, Target, ShieldCheck, Wrench, Users, MessageCircle,
-  MapPin, Mail, Clock, ChevronDown, GraduationCap, Zap, Box, FlaskConical,
+  MapPin, Mail, Clock, ChevronDown, GraduationCap, Zap, Box, FlaskConical, Send,
 } from "lucide-react";
 import { HubNav } from "./HubNav";
 import { CurtainWallDecoration } from "./LandingPage";
 import { AppFooter } from "../components/AppFooter";
 import { HUB as T, HUB_GRADIENT as GRADIENT, SKY_TOP, SKY_BOT } from "./hubTheme";
+import { TEAM_CONTACT } from "../lib/inventory/data";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-// The section's own name as its header — no number badge, no separate
+// The section's own name as its header: no number badge, no separate
 // filler tagline underneath (e.g. no "Why this exists." below "Vision & Mission").
 function SectionLabel({ children }) {
   return (
@@ -64,20 +65,20 @@ const PROGRAMS = [
 ];
 
 const GUIDELINES = [
-  { icon: ShieldCheck,   accent: T.accent,  title: "Membership & access", body: "You need an active CADT Makerspace membership to book equipment or workspace. Sign up once — it covers all three modules." },
+  { icon: ShieldCheck,   accent: T.accent,  title: "Membership & access", body: "You need an active CADT Makerspace membership to book equipment or workspace. Sign up once; it covers all three modules." },
   { icon: Wrench,        accent: "var(--community-gold)", title: "Safety first",        body: "Some equipment (like the laser cutter) requires a certification workshop before solo use. Never operate tools you haven't been trained on." },
   { icon: Package,       accent: "var(--color-inv-accent)", title: "Borrow & return",     body: "Return borrowed items by the due date shown in your request. Report damage or loss right away rather than staying quiet about it." },
   { icon: Users,         accent: "var(--color-oxblood)", title: "Respect the space",   body: "Clean up after yourself, put tools back where they belong, and flag anything broken so the next person isn't caught off guard." },
   { icon: MessageCircle, accent: T.accent, title: "Code of conduct",     body: "Keep Community and Find Team posts respectful and on-topic. Harassment or spam isn't tolerated and may result in account action." },
-  { icon: Target,        accent: "var(--community-gold)", title: "Event registration", body: "Register ahead when you can, and cancel your spot if plans change — it frees the seat up for someone on the waitlist." },
+  { icon: Target,        accent: "var(--community-gold)", title: "Event registration", body: "Register ahead when you can, and cancel your spot if plans change; it frees the seat up for someone on the waitlist." },
 ];
 
 const FAQS = [
   { q: "Who can use the CADT Makerspace?", a: "Any active CADT student with a Makerspace Community account. Create an account with your CADT email to get started." },
-  { q: "Is the Makerspace Community free to use?", a: "Yes — it's free for all CADT students. Create an account and you'll have access to Community, Learning, and Inventory from day one." },
+  { q: "Is the Makerspace Community free to use?", a: "Yes, it's free for all CADT students. Create an account and you'll have access to Community, Learning, and Inventory from day one." },
   { q: "How do I borrow tools or equipment?", a: "Head to the Inventory module (Resource Manager), find the item you need, and submit a request. An admin reviews and approves it before it's checked out to you." },
-  { q: "What if I damage or lose something I borrowed?", a: "Report it as soon as possible rather than waiting — either through the app or directly to Makerspace staff. Being upfront keeps the whole system working for everyone." },
-  { q: "How do I find teammates for a project?", a: "Post on Find Team in the Community module — describe your project and the roles you're looking for. Interested students reach out to you directly." },
+  { q: "What if I damage or lose something I borrowed?", a: "Report it as soon as possible rather than waiting, either through the app or directly to Makerspace staff. Being upfront keeps the whole system working for everyone." },
+  { q: "How do I find teammates for a project?", a: "Post on Find Team in the Community module: describe your project and the roles you're looking for. Interested students reach out to you directly." },
   { q: "How do I register for an event or workshop?", a: "Browse Events in the Community module and click register. Some sessions (like equipment certifications) are prerequisites for using certain tools solo." },
 ];
 
@@ -90,7 +91,7 @@ export default function AboutPage() {
     <div style={{ backgroundColor: T.bg1, color: T.text, minHeight: "100vh" }}>
       <HubNav light />
 
-      {/* ── HERO — same sky-glass scene as the landing page welcome ───────── */}
+      {/* ── HERO: same sky-glass scene as the landing page welcome ───────── */}
       <section
         className="relative pt-40 pb-28 overflow-hidden"
         style={{ background: `linear-gradient(180deg, ${SKY_TOP} 0%, ${SKY_BOT} 100%)` }}
@@ -108,7 +109,7 @@ export default function AboutPage() {
             style={{ background: "rgba(255,255,255,0.28)", border: "1px solid rgba(74,88,112,0.22)", color: "#1a3350", backdropFilter: "blur(8px)" }}
           >
             <span className="w-2 h-2 rounded-full" style={{ background: GRADIENT }} />
-            CADT Makerspace — Hub
+            CADT Makerspace: Hub
           </div>
 
           <h1 className="font-display text-5xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight" style={{ color: "#0f2033" }}>
@@ -120,7 +121,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: "rgba(15,32,51,0.65)" }}>
-            The Makerspace Community is the official platform of the CADT Makerspace — a single place where students connect with the community, access courses, and manage shared resources. Three modules, one home.
+            The Makerspace Community is the official platform of the CADT Makerspace: a single place where students connect with the community, access courses, and manage shared resources. Three modules, one home.
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center mt-10">
@@ -155,7 +156,7 @@ export default function AboutPage() {
               CADT's Makerspace is a vibrant space where individuals come together to explore, build, and connect innovative ideas. Our hands-on approach fosters collaboration among students, researchers, and educators, empowering them to transform their visions into reality. We embrace a global maker mindset while nurturing local talent and creativity.
             </p>
             <p className="text-base leading-relaxed mb-6" style={{ color: T.muted }}>
-              The Makerspace Community is the digital front door to that space: discover workshops and events, request the tools and materials you need, and find people to build with — all from one account.
+              The Makerspace Community is the digital front door to that space: discover workshops and events, request the tools and materials you need, and find people to build with, all from one account.
             </p>
 
             <div className="grid grid-cols-3 gap-4 mt-8">
@@ -213,7 +214,7 @@ export default function AboutPage() {
               </div>
               <h3 className="font-bold text-xl mb-3" style={{ color: T.text }}>Vision</h3>
               <p className="text-base leading-relaxed" style={{ color: T.muted }}>
-                To become Cambodia's leading hub for innovation, learning, and collaboration — where ideas spark into action, technologies are born through hands-on creativity, and a global community of changemakers comes together to build a brighter, smarter future.
+                To become Cambodia's leading hub for innovation, learning, and collaboration: where ideas spark into action, technologies are born through hands-on creativity, and a global community of changemakers comes together to build a brighter, smarter future.
               </p>
             </div>
 
@@ -298,7 +299,7 @@ export default function AboutPage() {
           </div>
 
           <div className="rounded-2xl p-8 sm:p-10" style={{ background: T.bgCard, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
-            <div className="grid sm:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
               <div>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: "color-mix(in oklch, var(--color-inv-accent) 8%, transparent)", border: "1px solid color-mix(in oklch, var(--color-inv-accent) 16%, transparent)" }}>
@@ -319,6 +320,16 @@ export default function AboutPage() {
                 </div>
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Email</p>
                 <p className="text-sm leading-relaxed" style={{ color: T.faint }}>Makerspace@cadt.edu.kh</p>
+              </div>
+
+              <div>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: "rgba(34,158,217,0.14)", border: "1px solid rgba(34,158,217,0.28)" }}>
+                  <Send size={18} style={{ color: "#229ED9" }} />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: T.faint }}>Telegram</p>
+                <a href={TEAM_CONTACT.telegram} target="_blank" rel="noreferrer"
+                  className="text-sm leading-relaxed hover:underline" style={{ color: T.faint }}>@ms_cadt</a>
               </div>
 
               <div>
@@ -357,7 +368,7 @@ export default function AboutPage() {
                 </span>
               </h2>
               <p className="text-base mb-10 max-w-md mx-auto" style={{ color: T.muted }}>
-                Create your free account and unlock the Community, Learning, and Inventory modules — all in one place.
+                Create your free account and unlock the Community, Learning, and Inventory modules, all in one place.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link to="/register"

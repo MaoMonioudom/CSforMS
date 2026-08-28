@@ -1,6 +1,10 @@
 # Claude Code — local tool config/settings, not shared with the team
 **/.claude/
 
+# Personal internship docs — not for the public repo (may describe admin
+# operations/internals not meant to be shared outside the team).
+docs/
+
 # Dependencies / build output
 node_modules
 dist

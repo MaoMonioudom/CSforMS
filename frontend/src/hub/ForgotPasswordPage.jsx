@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
           <>
             <p className="text-sm leading-relaxed" style={{ color: D.muted }}>
               Enter your account email and we'll check it for you. You'll then verify it's really you
-              through your Microsoft account — no reset email needed.
+              through your Microsoft account, no reset email needed.
             </p>
 
             <form onSubmit={handleCheck} className="flex flex-col gap-4">

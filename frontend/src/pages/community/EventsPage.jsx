@@ -92,7 +92,7 @@ export default function EventsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
-  // Separate from the paginated grid below — the grid only ever holds the
+  // Separate from the paginated grid below. The grid only ever holds the
   // pages loaded so far, which isn't enough to say how many events overall
   // are actually upcoming (total from fetchEventsPage counts every event,
   // ended ones included).
@@ -101,7 +101,7 @@ export default function EventsPage() {
   useEffect(() => {
     fetchEventsPage({ page: 1, limit: PAGE_SIZE })
       .then(({ events, total }) => { setEvents(events); setTotal(total); })
-      .catch(() => setError("Couldn't load events — please try refreshing."))
+      .catch(() => setError("Couldn't load events. Please try refreshing."))
       .finally(() => setLoading(false));
     fetchEvents().then(setAllEvents).catch(() => {});
   }, []);
@@ -121,7 +121,7 @@ export default function EventsPage() {
       setTotal(freshTotal);
       setPage(nextPage);
     } catch {
-      setError("Couldn't load more events — please try again.");
+      setError("Couldn't load more events. Please try again.");
     } finally {
       setLoadingMore(false);
     }
@@ -132,7 +132,7 @@ export default function EventsPage() {
   const upcomingOnly  = events.filter(e => getEventStatus(e) === "upcoming");
   const endedEvents   = events.filter(e => getEventStatus(e) === "ended");
   const ongoing = ongoingEvents[0];
-  // The spotlighted ongoing event above only ever shows one at a time — the
+  // The spotlighted ongoing event above only ever shows one at a time. The
   // filter tabs are what let a second overlapping ongoing event (or past
   // events) actually be reachable instead of silently disappearing. "Ended"
   // exists mainly so people can browse past events and reach their photo
@@ -151,7 +151,7 @@ export default function EventsPage() {
     <SectionPage
       bulletin
       breadcrumb={[{ label: "Home", to: "/" }, { label: "Community", to: "/community" }, { label: "Events" }]}
-      eyebrow="01 — Community"
+      eyebrow="01: Community"
       title="Events"
       description="Discover, register for, and participate in makerspace activities, workshops, competitions, and community events."
       tapeColor="color-mix(in oklch, var(--events) 78%, transparent)"
@@ -199,12 +199,12 @@ export default function EventsPage() {
       ) : visibleEvents.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {filter === "ongoing"
-            ? "Nothing happening right now — check back soon."
+            ? "Nothing happening right now. Check back soon."
             : filter === "ended"
             ? "No ended events yet."
             : filter === "all"
-            ? "No events yet — check back soon."
-            : "No upcoming events yet — check back soon."}
+            ? "No events yet. Check back soon."
+            : "No upcoming events yet. Check back soon."}
         </p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

@@ -5,10 +5,10 @@ import { normalizeRow } from "./normalizeTimestamps.js";
 import { parsePagination } from "./pagination.js";
 
 // Generic REST router for a single table. These tables have RLS enabled
-// with no anon policy (same as `courses` — see learning.controller.js), so
+// with no anon policy (same as `courses`; see learning.controller.js), so
 // both reads and writes go through the service-role client. The API itself
 // is the trust boundary: GET stays open to anyone, writes are gated by our
-// own requireAuth/requireRole/ownership checks below — there's no per-user
+// own requireAuth/requireRole/ownership checks below; there's no per-user
 // Supabase session to scope RLS to anyway.
 //
 // pkColumn: this schema doesn't use a uniform "id" column (events use
@@ -16,10 +16,10 @@ import { parsePagination } from "./pagination.js";
 // ownerField: if set, that column is stamped with req.user.user_id on
 // create, overriding anything the caller sent (e.g. "user_id" on
 // community_posts, which is NOT NULL). It also scopes who may update/delete
-// an existing row: the row's owner, or a moderatorRoles user — anyone else
+// an existing row: the row's owner, or a moderatorRoles user. Anyone else
 // gets 403, even though they're authenticated.
 // writeRoles: if set, only these roles may create/update/delete at all (e.g.
-// events are admin/staff-owned — everyone else gets read-only). Omit for
+// events are admin/staff-owned, everyone else gets read-only). Omit for
 // tables like community_posts where any logged-in user may create their own,
 // and ownership (not role) governs who can change a given row.
 // moderatorRoles: roles that can update/delete any row regardless of
@@ -27,10 +27,10 @@ import { parsePagination } from "./pagination.js";
 // writeRoles isn't.
 // embedAuthor: if true, every row comes back with an `author` object
 // ({ user_id, full_name, user_name, profile_img_url }) embedded via the
-// ownerField's FK to `users` — so the frontend can show who actually posted
+// ownerField's FK to `users`, so the frontend can show who actually posted
 // instead of a placeholder. Requires ownerField to be a real FK to users.
-// orderBy: { column, ascending } applied to the list endpoint (GET /) —
-// without it, row order is whatever Postgres feels like, which isn't a
+// orderBy: { column, ascending } applied to the list endpoint (GET /).
+// Without it, row order is whatever Postgres feels like, which isn't a
 // contract worth relying on. Omit for tables where the frontend does its
 // own sorting/filtering (e.g. events, sorted by start_date client-side).
 export function createCrudRouter(table, { pkColumn = "id", ownerField, writeRoles, moderatorRoles = ["admin", "staff"], embedAuthor = false, orderBy } = {}) {
@@ -40,8 +40,8 @@ export function createCrudRouter(table, { pkColumn = "id", ownerField, writeRole
     ? `*, author:users!${ownerField}(user_id, full_name, user_name, profile_img_url)`
     : "*";
 
-  // For owned tables, only the row's creator or a moderator may modify it —
-  // fetched fresh per-request since ownership isn't derivable from the URL.
+  // For owned tables, only the row's creator or a moderator may modify it.
+  // Fetched fresh per-request since ownership isn't derivable from the URL.
   async function requireOwnerOrModerator(req, res, next) {
     if (moderatorRoles.includes(req.user.role)) return next();
     try {
@@ -103,7 +103,7 @@ export function createCrudRouter(table, { pkColumn = "id", ownerField, writeRole
 
   router.put("/:id", ...guardModify, async (req, res, next) => {
     try {
-      // Ownership is fixed at creation — never let an update payload hand a
+      // Ownership is fixed at creation. Never let an update payload hand a
       // row off to a different owner.
       const payload = ownerField ? { ...req.body } : req.body;
       if (ownerField) delete payload[ownerField];

@@ -3,7 +3,7 @@ import { getToken } from "../../lib/api/client";
 import { learningApi } from "../../lib/api/learning";
 
 /**
- * Enrollment + rating state for one course. Guests are never enrolled —
+ * Enrollment + rating state for one course. Guests are never enrolled;
  * enrollment lives server-side (course_enrollments) so the admin dashboard
  * counts real students. `loaded` flips true once the server has answered,
  * so UIs can wait before deciding to show the enroll prompt.
@@ -25,7 +25,7 @@ export function useEnrollment(courseId) {
         setMyStars(myRatings?.[id] || 0);
       })
       .catch(() => {
-        /* backend down or token invalid — leave as not enrolled */
+        /* backend down or token invalid, leave as not enrolled */
       })
       .finally(() => setLoaded(true));
   }, [signedIn, id]);

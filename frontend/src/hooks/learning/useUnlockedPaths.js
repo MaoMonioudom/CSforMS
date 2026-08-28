@@ -18,7 +18,7 @@ function writeLocal(ids) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
   } catch {
-    /* localStorage unavailable — unlock still works for this session */
+    /* localStorage unavailable, unlock still works for this session */
   }
 }
 
@@ -36,7 +36,7 @@ export function useUnlockedPaths() {
       .myLearning()
       .then(({ unlockedCourseIds }) => setUnlocked(unlockedCourseIds))
       .catch(() => {
-        /* token invalid or backend down — keep the local list */
+        /* token invalid or backend down, keep the local list */
       });
   }, []);
 

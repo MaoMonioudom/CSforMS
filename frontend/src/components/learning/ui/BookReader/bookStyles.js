@@ -1,6 +1,6 @@
 /**
  * Shared Tailwind class strings for the BookReader suite.
- * Kept as full static literals so Tailwind's scanner generates every utility —
+ * Kept as full static literals so Tailwind's scanner generates every utility,
  * including the ones applied to imperatively-created flip elements.
  */
 

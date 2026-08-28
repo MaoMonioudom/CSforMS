@@ -34,7 +34,7 @@ export function CommunityPostCard({ post, index = 0, onToggleLike }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard unavailable (unsupported browser/permissions) — nothing to fall back to
+      // clipboard unavailable (unsupported browser/permissions); nothing to fall back to
     }
   };
 
@@ -55,7 +55,7 @@ export function CommunityPostCard({ post, index = 0, onToggleLike }) {
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = paperShadowHover; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = paperShadow; }}
     >
-      {/* Sticky-note header — colored band with category */}
+      {/* Sticky-note header: colored band with category */}
       <div className="bg-community px-5 py-3 flex items-center gap-2 shrink-0">
         <span className="text-xs font-extrabold text-community-foreground uppercase tracking-wider">
           {post.category}

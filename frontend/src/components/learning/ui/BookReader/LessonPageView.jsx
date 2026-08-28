@@ -10,7 +10,7 @@ import {
 } from "./bookStyles";
 
 /**
- * Open-book page showing a single lesson only — no cover, table of
+ * Open-book page showing a single lesson only: no cover, table of
  * contents, other lessons, or enroll page. Prev/Next move directly
  * between this course's lessons, keeping the current path.
  *
@@ -19,7 +19,7 @@ import {
  *  - stepByStep  → the same content broken into a checklist
  *  - interactive → the lesson plus an AI guide panel (requires the
  *                  course to have unlocked Interactive; otherwise
- *                  falls back to basic — payment happens on the course
+ *                  falls back to basic; payment happens on the course
  *                  page, not here)
  */
 export default function LessonPageView({ course, lessonId }) {

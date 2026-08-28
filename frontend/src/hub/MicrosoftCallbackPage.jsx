@@ -5,7 +5,7 @@ import { destinationFor } from "./authNav";
 import { D } from "./authUi";
 
 // Landing spot for the Microsoft "Continue with Microsoft" redirect
-// (intent=login) — the backend already issued a session token, this page
+// (intent=login): the backend already issued a session token, this page
 // just has to pick it up and finish signing the user in.
 export default function MicrosoftCallbackPage() {
   const location = useLocation();

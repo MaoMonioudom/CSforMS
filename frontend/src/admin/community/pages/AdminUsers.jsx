@@ -34,12 +34,12 @@ function AccountStatusPill({ status }) {
 }
 
 // Browsable list for when the admin doesn't have a specific name/email to
-// search for — e.g. auditing "who are all my staff" or scanning for
+// search for, e.g. auditing "who are all my staff" or scanning for
 // recently-joined members. Clicking a row opens the same detail panel a
 // search result would.
 //
 // Paginated client-side (load more, PAGE_SIZE at a time) rather than
-// rendering every row at once — the full list is still one API call (small
+// rendering every row at once. The full list is still one API call (small
 // enough for a single makerspace's user count), this just keeps the DOM
 // from growing unbounded as the list does.
 const PAGE_SIZE = 10;
@@ -121,7 +121,7 @@ export default function AdminUsers() {
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
 
-  // Create-user modal — role picker only shown to admins; a staff-submitted
+  // Create-user modal: role picker only shown to admins; a staff-submitted
   // request is forced to "user" server-side regardless of what's sent, so
   // there's no client-only guard to bypass here.
   const [createOpen, setCreateOpen] = useState(false);
@@ -130,7 +130,7 @@ export default function AdminUsers() {
   const [createError, setCreateError] = useState("");
   // Bumped on every selectUser() call so a slow response from an earlier
   // selection can recognize it's stale and not overwrite whatever the admin
-  // has since clicked into — without this, clicking user A then quickly
+  // has since clicked into. Without this, clicking user A then quickly
   // user B could show A's membership data under B's name if A's request
   // happened to resolve second.
   const selectionRef = useRef(0);
@@ -138,7 +138,7 @@ export default function AdminUsers() {
   useEffect(() => {
     api.get("/api/users")
       .then(({ data }) => setUsers(data))
-      .catch(() => setUsersError("Couldn't load users — please try refreshing."))
+      .catch(() => setUsersError("Couldn't load users. Please try refreshing."))
       .finally(() => setLoadingUsers(false));
   }, []);
 
@@ -311,7 +311,7 @@ export default function AdminUsers() {
           <p className="text-sm text-muted-foreground py-6 text-center">Search for a student above to get started.</p>
         ) : (
           <div className="rounded-xl border border-border overflow-hidden">
-            {/* Header band — separates identity from the actions below it,
+            {/* Header band: separates identity from the actions below it,
                 same two-tone card pattern as the ChartCard/StatCard panels
                 elsewhere in admin. */}
             <div className="flex items-start justify-between gap-4 bg-muted px-5 py-4">

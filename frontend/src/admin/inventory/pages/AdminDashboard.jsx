@@ -25,18 +25,18 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
 
   const rangedBorrows = borrows.filter(b => inRange(b.date, range))
   // Approved purchases never create a borrow_transactions row (see
-  // approvePurchaseGroup) — they only exist as a paid "Item Purchase"
+  // approvePurchaseGroup); they only exist as a paid "Item Purchase"
   // invoice. So purchase activity has to come from `payments`, not `borrows`.
   //
   // Use `dateTime` (the full timestamp), not `date` (already truncated to a
-  // UTC calendar date server-side) — CADT is UTC+7, so anything purchased
+  // UTC calendar date server-side). CADT is UTC+7, so anything purchased
   // in the early-morning local hours has a UTC date that's still "yesterday",
   // and slicing to date-only before converting to local time bakes that
   // wrong day in permanently. Building the Date from the full timestamp lets
   // getDay()/getFullYear() etc. convert to local time correctly.
   const rangedPurchasePayments = payments.filter(p => p.type === 'Item Purchase' && p.status === 'Completed' && inRange(p.dateTime || p.date, range))
 
-  // Weekly activity — borrows vs purchases grouped by weekday.
+  // Weekly activity: borrows vs purchases grouped by weekday.
   const weekly = WEEKDAYS.map(label => ({ label, a: 0, b: 0 }))
   rangedBorrows.forEach(b => {
     const day = new Date(b.date).getDay()
@@ -52,7 +52,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
   const catData = CATEGORIES.map(c => ({ label: c.label, value: items.filter(i => i.category === c.id).length, color: c.iconColor }))
     .filter(d => d.value > 0)
 
-  // Top items within the selected range — falls back to each item's lifetime
+  // Top items within the selected range. Falls back to each item's lifetime
   // borrowCount when a range has no activity, so the panel isn't empty on load.
   const rangedCounts = {}
   rangedBorrows.forEach(b => { rangedCounts[b.itemId] = (rangedCounts[b.itemId] || 0) + 1 })
@@ -63,7 +63,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
 
   return (
     <div className="p-5 sm:p-8">
-      {/* No trend props — we have no historical snapshots to compute real
+      {/* No trend props: we have no historical snapshots to compute real
           percentage changes from, and made-up numbers mislead. */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard label="Total Items"      value={total}    icon={Package}       bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/inventory/manage" />
@@ -81,7 +81,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
           </div>
         </ChartCard>
 
-        {/* Inventory by category — donut */}
+        {/* Inventory by category: donut */}
         <ChartCard title="Inventory by Category">
           <div className="px-5 py-5">
             <DonutChart data={catData} />
@@ -99,7 +99,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Top items table — expandable rows */}
+        {/* Top items table: expandable rows */}
         <ChartCard title="Top Borrowed Items" subtitle="Ranked by borrows in range">
           <div className="inv-hscroll" style={{ maxHeight: 340, overflowY: 'auto' }}>
           {topItems.map(item => {
@@ -115,7 +115,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
                     <p className="m-0 mt-0.5 truncate text-xs text-faint">{cat?.label}</p>
                   </div>
                   <span className="hidden text-xs text-inv-muted sm:block">{hasRangedActivity ? (rangedCounts[item.id] || 0) : (item.borrowCount || 0)} borrows</span>
-                  {/* "available" with zero stock is a lie — surface it as out of stock */}
+                  {/* "available" with zero stock is a lie; surface it as out of stock */}
                   <Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small />
                   <ChevronDown size={14} className={`flex-shrink-0 text-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -160,7 +160,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
             </div>
           </ChartCard>
 
-          {/* Recent activity — borrows come from `borrows`, but purchases only
+          {/* Recent activity: borrows come from `borrows`, but purchases only
               ever exist as a paid invoice (see rangedPurchasePayments above),
               so both have to be merged here for purchases to show up at all. */}
           <ChartCard title="Recent Activity">
@@ -189,7 +189,7 @@ export default function AdminDashboard({ items, users, borrows, requests, paymen
         </div>
       </div>
 
-      {/* ── Recent transactions — borrows/purchases, credit payments, and
+      {/* ── Recent transactions: borrows/purchases, credit payments, and
           pending/approved requests, all in one feed ── */}
       <TransactionsPanel borrows={borrows} users={users} items={items} payments={payments} requests={requests} />
     </div>
@@ -204,15 +204,15 @@ const TXN_PAGE_SIZE = 10
 const CREDIT_PAYMENT_TYPES = ['Membership Activation', 'Membership Credit Top-Up', 'Document Printing', '3D Printing']
 
 function requestLabel(req) {
-  if (req.type === 'credit_topup') return `Credit Top-Up — $${req.amountUSD}`
-  if (req.type === 'printing')     return `Document Printing — ${req.pages} page${req.pages === 1 ? '' : 's'}`
-  if (req.type === '3d_printing')  return `3D Print Job — ${req.filamentName || 'filament TBD'}`
+  if (req.type === 'credit_topup') return `Credit Top-Up: $${req.amountUSD}`
+  if (req.type === 'printing')     return `Document Printing: ${req.pages} page${req.pages === 1 ? '' : 's'}`
+  if (req.type === '3d_printing')  return `3D Print Job: ${req.filamentName || 'filament TBD'}`
   return req.itemName
 }
 
 // Unified recent-transactions feed: borrow/purchase groups (from `borrows`),
 // credit-service payments (from `payments`), and pending/approved requests
-// not yet reflected elsewhere (from `requests`) — each row expands inline
+// not yet reflected elsewhere (from `requests`); each row expands inline
 // (no side panel, no separate View button) to list every item's name,
 // category, and quantity.
 function TransactionsPanel({ borrows, users, items, payments, requests }) {
@@ -247,7 +247,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
     type: g.raw.every(b => b.action === 'purchased') ? 'Purchase' : 'Borrow',
     status: groupStatus(g),
     // Borrowing itself isn't charged (only late/damaged penalties, handled
-    // separately in Borrow Tracker) — so a Borrow item's unit/total is 0.
+    // separately in Borrow Tracker), so a Borrow item's unit/total is 0.
     // Purchases keep their real recorded credit cost.
     items: g.raw.map(b => {
       const qty = b.qty || 1
@@ -265,7 +265,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
       items: [{ name: p.type, category: 'Credit Service', qty: 1, unit: p.amount, total: p.amount, currency: p.currency === 'USD' ? '$' : 'cr' }],
     }))
 
-  // ── Item purchases — approving a purchase request never creates a
+  // ── Item purchases: approving a purchase request never creates a
   // borrow_transactions row (it only charges credits + creates this paid
   // invoice), so completed purchases only exist here, not in `borrows`.
   const purchasePaymentEntries = payments
@@ -285,7 +285,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
   // including 'approved' here would double-count it alongside that record.
   const openRequests = requests.filter(r => r.status === 'pending' || r.status === 'awaiting_weight')
   // Borrow AND purchase requests both come in as multi-item carts sharing an
-  // orderId — group both the same way so a 3-item cart shows as one row.
+  // orderId. Group both the same way so a 3-item cart shows as one row.
   const reqGroups = []
   const reqSeen = new Map()
   const reqOthers = []
@@ -309,7 +309,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
     ...reqGroups.map(g => ({
       key: g.key, userId: g.group[0].userId, date: g.group[0].date, type: g.kind === 'purchase' ? 'Purchase' : 'Borrow',
       status: 'pending',
-      // A pending Borrow isn't charged (0/0) — a pending Purchase is priced
+      // A pending Borrow isn't charged (0/0); a pending Purchase is priced
       // at the item's credit cost, same as it'll be charged on approval.
       items: g.group.map(r => {
         const qty = r.qty || 1
@@ -345,7 +345,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Recent Transactions</h2>
-          <p className="m-0 mt-0.5 text-xs text-muted-foreground">Borrows &amp; purchases, credit payments, and pending/approved requests — click a row for item details.</p>
+          <p className="m-0 mt-0.5 text-xs text-muted-foreground">Borrows &amp; purchases, credit payments, and pending/approved requests. Click a row for item details.</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {['All', 'Borrow', 'Purchase', 'Credit'].map(t => (
@@ -398,7 +398,7 @@ function TransactionsPanel({ borrows, users, items, payments, requests }) {
                   <ChevronDown size={14} color={T.faint} style={{ transition: 'transform .15s', transform: isOpen ? 'rotate(180deg)' : 'none' }} />
                 </div>
 
-                {/* Inline expand — clean item table, no card/panel */}
+                {/* Inline expand: clean item table, no card/panel */}
                 {isOpen && (() => {
                   const grandTotal = e.items.reduce((s, it) => s + (it.total || 0), 0)
                   const currency = e.items[0]?.currency || 'cr'

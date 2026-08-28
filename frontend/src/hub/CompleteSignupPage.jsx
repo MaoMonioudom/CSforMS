@@ -8,7 +8,7 @@ import { destinationFor } from "./authNav";
 import { D, GRADIENT, ErrorBox, TextField, PasswordField } from "./authUi";
 
 // Lands here after Microsoft has verified the email but no account exists
-// yet (see microsoftCallback's "ms_signup" branch) — Microsoft only proves
+// yet (see microsoftCallback's "ms_signup" branch). Microsoft only proves
 // the email is real, it doesn't get to pick the name or password for you.
 export default function CompleteSignupPage() {
   const location = useLocation();

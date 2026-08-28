@@ -14,7 +14,7 @@ const DAY = 86400000
 const today = () => new Date().toISOString().split('T')[0]
 const daysOverdue = (dueDate) => Math.max(0, Math.floor((Date.now() - new Date(dueDate).getTime()) / DAY))
 const daysLeft    = (dueDate) => Math.ceil((new Date(dueDate).getTime() - Date.now()) / DAY)
-// Borrow dates are full timestamps now; due dates stay date-only — the shared
+// Borrow dates are full timestamps now; due dates stay date-only. The shared
 // formatter renders each accordingly, in Cambodia time.
 const fmt = fmtDateTime
 
@@ -34,7 +34,7 @@ function StatusBadge({ label, tone }) {
   )
 }
 
-// Borrow Tracker only ever tracks borrows (never purchases) — statuses are
+// Borrow Tracker only ever tracks borrows (never purchases); statuses are
 // just Borrowed (running to its deadline), Overdue, and Returned.
 function deriveStatus(rec) {
   if (rec.stage === 'returned') return { label: 'Returned', tone: 'green', remaining: '—' }
@@ -171,7 +171,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
     return list
   }, [borrows])
 
-  // Borrow Tracker only tracks borrows — purchase items are stripped out of
+  // Borrow Tracker only tracks borrows; purchase items are stripped out of
   // every group, and a group made up entirely of purchases is dropped.
   const records = useMemo(() => groups
     .map(g => {
@@ -190,7 +190,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
       rec.history = (() => {
         const h = [{ action: 'Borrowed', by: rec.student?.name || `User #${g.userId}`, date: g.date }]
         itemsList.forEach(it => {
-          if (it.returned) h.push({ action: `Returned — ${it.condition || 'Good'} condition${it.issue ? ` (${it.issue})` : ''}`, by: `Staff${user?.name ? ` — ${user.name}` : ''}`, date: it.returnDate || g.date })
+          if (it.returned) h.push({ action: `Returned: ${it.condition || 'Good'} condition${it.issue ? ` (${it.issue})` : ''}`, by: `Staff${user?.name ? `: ${user.name}` : ''}`, date: it.returnDate || g.date })
         })
         return h.sort((a, b) => new Date(a.date) - new Date(b.date))
       })()
@@ -218,7 +218,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
     return list
   }, [records, query, statusFilter, sortDir])
 
-  // ── Actions — all persisted through the backend ─────────────────────────
+  // ── Actions: all persisted through the backend ─────────────────────────
   const confirmReturnGroup = async (rec, itemStates) => {
     const anyIssue = rec.activeItems.some(b => itemStates[b.id]?.condition !== 'Good')
     try {
@@ -231,7 +231,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
         })
       }
       setReturning(null)
-      showToast?.(anyIssue ? 'Items returned. Some flagged for repair — maintenance log created and borrowing disabled until fixed.' : 'All items confirmed returned in good condition.')
+      showToast?.(anyIssue ? 'Items returned. Some flagged for repair; maintenance log created and borrowing disabled until fixed.' : 'All items confirmed returned in good condition.')
     } catch (err) {
       showToast?.(err.message || 'Return failed.', 'error')
     }
@@ -242,17 +242,17 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
     try {
       await ctx.deductCredits({ userId: rec.userId, amount, reason })
       setDeducting(null)
-      showToast?.(`Deducted ${amount} credit${amount !== 1 ? 's' : ''} from ${rec.student?.name || 'student'}${reason ? ` — ${reason}` : ''}.`)
+      showToast?.(`Deducted ${amount} credit${amount !== 1 ? 's' : ''} from ${rec.student?.name || 'student'}${reason ? `: ${reason}` : ''}.`)
     } catch (err) {
       showToast?.(err.message || 'Deduction failed.', 'error')
     }
   }
 
-  // Borrow history is an immutable ledger now — due dates are set at approval
+  // Borrow history is an immutable ledger now; due dates are set at approval
   // and completed transactions can't be edited or deleted from the UI.
   const saveEdit = () => {
     setEditing(null)
-    showToast?.('Borrow records can no longer be edited — set the due date when approving the request.', 'error')
+    showToast?.('Borrow records can no longer be edited. Set the due date when approving the request.', 'error')
   }
 
   const deleteRecord = () => {
@@ -418,7 +418,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
             <AlertTriangle size={34} color={T.red} style={{ marginBottom: 12 }} />
             <p style={{ color: T.charcoal, fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Delete this record?</p>
             <p style={{ color: T.muted, fontSize: 14, marginBottom: '1.5rem' }}>
-              {deleting.student?.name || 'This student'}'s {deleting.totalQty > 1 ? `${deleting.totalQty} items` : 'item'} — this cannot be undone.
+              {deleting.student?.name || 'This student'}'s {deleting.totalQty > 1 ? `${deleting.totalQty} items` : 'item'}. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => setDeleting(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
@@ -431,7 +431,7 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
   )
 }
 
-// ── Edit modal — per-item due date ───────────────────────────────────────
+// ── Edit modal: per-item due date ───────────────────────────────────────
 function EditModal({ record, onClose, onSave }) {
   const [dueDates, setDueDates] = useState(Object.fromEntries(record.activeItems.map(b => [b.id, b.dueDate || ''])))
   const [qtyMap, setQtyMap] = useState(Object.fromEntries(record.activeItems.map(b => [b.id, b.qty || 1])))
@@ -467,7 +467,7 @@ function DeductModal({ record, onClose, onConfirm }) {
     <ModalShell onClose={onClose} title="Deduct Credits" subtitle={`${record.student?.name || 'Student'} · ${record.student?.studentId || ''}`}>
       <div style={{ display: 'flex', gap: 8, background: T.redLight, color: T.red, fontSize: 12, padding: '9px 12px', borderRadius: 8 }}>
         <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-        This item is overdue ({odDays} day{odDays !== 1 ? 's' : ''}). Suggested penalty at {OVERDUE_RATE} cr/day — adjust as needed.
+        This item is overdue ({odDays} day{odDays !== 1 ? 's' : ''}). Suggested penalty at {OVERDUE_RATE} cr/day; adjust as needed.
       </div>
       <div>
         <label style={labelStyle}>Credits to deduct</label>

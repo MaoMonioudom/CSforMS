@@ -8,7 +8,7 @@ const INPUT =
 
 /**
  * Staff sign-in for the learning module (admin + lecturer).
- * Not routed yet — wire it up once the admin/lecturer dashboards are fixed.
+ * Not routed yet; wire it up once the admin/lecturer dashboards are fixed.
  */
 export default function Login() {
   const { login } = useAuth();
@@ -74,8 +74,8 @@ export default function Login() {
 
         <div className="mt-6 border-t border-community-gold/15 pt-5 text-xs leading-[1.9] text-navy-muted">
           <p className="mb-1 font-semibold uppercase tracking-[0.08em] text-community-gold">Demo accounts</p>
-          <p><strong>Admin</strong> — admin@makerspace.edu / admin123</p>
-          <p><strong>Lecturer</strong> — sarah.chen@makerspace.edu / lecturer123</p>
+          <p><strong>Admin</strong>: admin@makerspace.edu / admin123</p>
+          <p><strong>Lecturer</strong>: sarah.chen@makerspace.edu / lecturer123</p>
         </div>
       </div>
     </div>

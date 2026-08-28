@@ -48,7 +48,7 @@ const P = {
   amber:    "#f59e0b",
 };
 
-// ── LAYER 1 — Glass curtain wall (factor 0.12) ────────────────────────────────
+// ── LAYER 1: Glass curtain wall (factor 0.12) ────────────────────────────────
 function GlassCurtainWall({ camX }) {
   const panH = FLOOR - 30;
   return (
@@ -72,7 +72,7 @@ function GlassCurtainWall({ camX }) {
   );
 }
 
-// ── LAYER 2 — Steel I-beam columns (factor 0.26) ─────────────────────────────
+// ── LAYER 2: Steel I-beam columns (factor 0.26) ─────────────────────────────
 function SteelColumns({ camX }) {
   const colH = FLOOR - 30;
   return (
@@ -96,7 +96,7 @@ function SteelColumns({ camX }) {
   );
 }
 
-// ── LAYER 3 — Exposed ceiling with LED strips (factor 0.36) ──────────────────
+// ── LAYER 3: Exposed ceiling with LED strips (factor 0.36) ──────────────────
 function IndustrialCeiling({ camX }) {
   return (
     <>
@@ -130,10 +130,10 @@ function IndustrialCeiling({ camX }) {
   );
 }
 
-// ── Bulletin Board — Community (makerspace: magnetic steel board) ─────────────
+// ── Bulletin Board: Community (makerspace: magnetic steel board) ─────────────
 function BulletinBoard({ screenX, near, color, label }) {
   const cx = screenX;
-  const fw = 162, fh = 228;
+  const fw = 162, fh = 238;
   const L  = cx - fw / 2, top = FLOOR - fh - 14;
 
   // Card helper: rect + coloured header bar + rule lines + magnet
@@ -159,7 +159,7 @@ function BulletinBoard({ screenX, near, color, label }) {
       <rect x={L - 6} y={top - 16} width={fw + 12} height={10} rx="2" fill={P.metalDk} />
       <rect x={L - 6} y={top + fh + 6} width={fw + 12} height={10} rx="2" fill={P.metalDk} />
 
-      {/* Board name plaque — width grows with the label so longer names don't clip */}
+      {/* Board name plaque: width grows with the label so longer names don't clip */}
       {(() => {
         const pw = Math.max(68, label.length * 9 + 20);
         return (
@@ -209,32 +209,32 @@ function BulletinBoard({ screenX, near, color, label }) {
           stroke="rgba(74,100,130,0.07)" strokeWidth="0.8" />
       ))}
 
-      {/* Card 1 — amber (announcements) top-left */}
+      {/* Card 1: amber (announcements) top-left */}
       <Card x={L + 9} y={top + 12} w={68} h={56}
         accent={P.amber} lines={[22, 31, 40, 50]}
         mx={L + 43} my={top + 13} />
 
-      {/* Card 2 — blue (events) top-right */}
+      {/* Card 2: blue (events) top-right */}
       <Card x={L + 86} y={top + 16} w={66} h={50}
         accent="#3b82f6" lines={[27, 36, 46]}
         mx={L + 119} my={top + 17} />
 
-      {/* Card 3 — indigo full-width banner */}
+      {/* Card 3: indigo full-width banner */}
       <Card x={L + 9} y={top + 78} w={144} h={40}
         accent="#6366f1" lines={[91, 100, 109]}
         mx={cx} my={top + 79} />
 
-      {/* Card 4 — green (projects) bottom-left */}
+      {/* Card 4: green (projects) bottom-left */}
       <Card x={L + 9} y={top + 128} w={62} h={52}
         accent="#10b981" lines={[140, 150, 160, 170]}
         mx={L + 40} my={top + 129} />
 
-      {/* Card 5 — red (urgent) bottom-right */}
+      {/* Card 5: red (urgent) bottom-right */}
       <Card x={L + 82} y={top + 132} w={70} h={48}
         accent="#ef4444" lines={[144, 154, 164]}
         mx={L + 117} my={top + 133} />
 
-      {/* Card 6 — grey full-width footer */}
+      {/* Card 6: grey full-width footer */}
       <Card x={L + 9} y={top + 190} w={144} h={30}
         accent={P.metal} lines={[202, 211]}
         mx={cx} my={top + 191} />
@@ -273,7 +273,7 @@ function BulletinBoard({ screenX, near, color, label }) {
   );
 }
 
-// ── Room Door — glass/industrial (makerspace) ─────────────────────────────────
+// ── Room Door: glass/industrial (makerspace) ─────────────────────────────────
 function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
   const cx = screenX;
   const fw = 170, fh = 252;
@@ -351,7 +351,7 @@ function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
           ))}
           {/* Stencil text */}
           <text x={cx} y={top + dH / 2 + 5} textAnchor="middle"
-            fontSize="13" fontWeight="900" letterSpacing="3" fill={P.metalDk} opacity="0.55">
+            fontSize="13" fontWeight="900" letterSpacing="3" fill="#eef3f8" opacity="0.85">
             {sign.toUpperCase()}
           </text>
           {/* Lever handle */}
@@ -378,11 +378,11 @@ function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
         fill="#283444" opacity="0.45"
       />
 
-      {/* Frame — left post */}
+      {/* Frame: left post */}
       <rect x={L}        y={top - 12} width={15} height={fh + 12} rx="2" fill={P.metalDk} />
-      {/* Frame — right post */}
+      {/* Frame: right post */}
       <rect x={L + fw - 15} y={top - 12} width={15} height={fh + 12} rx="2" fill={P.metalDk} />
-      {/* Frame — top */}
+      {/* Frame: top */}
       <rect x={L} y={top - 16} width={fw} height={18} rx="2" fill={P.metalDk} />
       {/* Doorstep */}
       <rect x={L} y={FLOOR - 6} width={fw} height={10} rx="1" fill={P.metalDk} />
@@ -399,7 +399,7 @@ function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
         </>
       )}
 
-      {/* Room ID plaque — width grows with the label so longer names don't clip */}
+      {/* Room ID plaque: width grows with the label so longer names don't clip */}
       {(() => {
         const pw = Math.max(68, plaque.length * 9 + 20);
         return (
@@ -424,7 +424,8 @@ function RoomDoor({ screenX, color, interior, sign, plaque, doorType, near }) {
       <ellipse cx={cx} cy={FLOOR} rx={80} ry={9} fill="rgba(0,0,0,0.07)" />
 
       {/* Label */}
-      <text x={cx} y={FLOOR + 20} textAnchor="middle" fontSize="13" fontWeight="700" fill={color}>
+      <text x={cx} y={FLOOR + 20} textAnchor="middle" fontSize="13" fontWeight="700"
+        fill={color} stroke="white" strokeWidth="3" paintOrder="stroke" strokeLinejoin="round">
         {sign}
       </text>
 
@@ -632,7 +633,7 @@ export function HubScene({ scrollControlRef, initialCamX = -180, onKeyMove }) {
   useEffect(() => {
     const KEY_STEP = 6;
     function step() {
-      // Keyboard movement — applied every frame while a key is held
+      // Keyboard movement, applied every frame while a key is held
       const keys = heldKeysRef.current;
       if (keys.size > 0) {
         let delta = 0;
@@ -710,7 +711,7 @@ export function HubScene({ scrollControlRef, initialCamX = -180, onKeyMove }) {
     return () => { scrollControlRef.current = null; };
   }, [scrollControlRef]);
 
-  // Wheel listener — only active when not scroll-driven by a parent.
+  // Wheel listener, only active when not scroll-driven by a parent.
   useEffect(() => {
     if (scrollControlRef) return;
     const el = containerRef.current;
@@ -725,7 +726,7 @@ export function HubScene({ scrollControlRef, initialCamX = -180, onKeyMove }) {
     return () => el.removeEventListener("wheel", onWheel);
   }, [scrollControlRef]);
 
-  // Keyboard controls — A/←  D/→ to move, W/↑ to enter nearest station
+  // Keyboard controls: A/←  D/→ to move, W/↑ to enter nearest station
   useEffect(() => {
     const onKeyDown = (e) => {
       const k = e.key;
@@ -860,7 +861,7 @@ export function HubScene({ scrollControlRef, initialCamX = -180, onKeyMove }) {
         {!isWalking && !bubble && (
           <text x={W / 2} y={H - 12} textAnchor="middle" fontSize="11.5"
             fill="rgba(60,80,110,0.5)">
-            Scroll to explore — step near a door to enter
+            Scroll to explore, step near a door to enter
           </text>
         )}
       </svg>

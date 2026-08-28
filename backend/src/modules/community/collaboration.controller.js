@@ -3,13 +3,13 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 import { resolveTagIds } from "../../shared/tagResolver.js";
 import { parsePagination } from "../../shared/pagination.js";
 
-// collaboration_posts has real child tables for its list fields —
+// collaboration_posts has real child tables for its list fields:
 // collaboration_roles (one row per role) and collaboration_skills, a join
 // table into the shared `tags` dictionary (also used by post_tags/event_tags).
 // crudRouter (community.routes.js) only does single-table CRUD, so list/
 // detail/create/delete for this resource get their own handlers here.
 // Update isn't offered anywhere in the UI (admin only views/deletes other
-// people's posts — see AdminCollaboration.jsx), so it's the one verb still
+// people's posts, see AdminCollaboration.jsx), so it's the one verb still
 // left to crudRouter.
 const MODERATOR_ROLES = ["admin", "staff"];
 const SELECT_WITH_RELATIONS =
@@ -61,7 +61,7 @@ export async function getCollabPost(req, res, next) {
 
 // Skills are deduped against the shared `tags` table (via resolveTagIds in
 // tagResolver.js) instead of inserted fresh every time, so the same skill
-// typed on different posts collapses to one tag row — same helper post_tags
+// typed on different posts collapses to one tag row, same helper post_tags
 // uses for community posts.
 export async function createCollabPost(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -106,7 +106,7 @@ export async function createCollabPost(req, res, next) {
 }
 
 // Explicitly clears collaboration_roles/collaboration_skills before removing
-// the post, rather than assuming the live FK constraints cascade — cheap
+// the post, rather than assuming the live FK constraints cascade. Cheap
 // either way, and avoids a possible FK-violation error (or silently
 // orphaned rows) if they don't. Doesn't touch `tags` itself: those are
 // shared with post_tags/event_tags, so a tag stays even if this was its

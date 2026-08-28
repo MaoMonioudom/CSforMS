@@ -56,7 +56,7 @@ export function useCourses() {
 }
 
 /** Single course with its lessons. `id` may be undefined (e.g. "new course"
- *  editor route) — then nothing is fetched and course stays null. */
+ *  editor route); then nothing is fetched and course stays null. */
 export function useCourse(id) {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(Boolean(id));

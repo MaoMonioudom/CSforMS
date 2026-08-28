@@ -1,12 +1,12 @@
 import { api } from "./api/client";
 
-// Fire-and-forget — a missed pageview beacon shouldn't ever surface an
+// Fire-and-forget: a missed pageview beacon shouldn't ever surface an
 // error to a real visitor, so failures are swallowed silently here.
 export function recordPageView(path) {
   api.post("/api/analytics/pageview", { path }).catch(() => {});
 }
 
-// { date: "2026-07-20", count: 12 } per day, oldest first — raw timestamps
+// { date: "2026-07-20", count: 12 } per day, oldest first. Raw timestamps
 // come back from the backend and get bucketed here, same "fetch raw,
 // aggregate client-side" pattern the rest of AdminDashboard's charts use.
 export async function fetchDailyPageViews(days = 30) {

@@ -1,5 +1,5 @@
 /**
- * Demo user accounts — there's no backend/database yet, so these are
+ * Demo user accounts. There's no backend/database yet, so these are
  * seed accounts checked client-side. Admin-created lecturers are stored
  * separately via userStore's localStorage overlay.
  */

@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "../config/supabaseClient.js";
 
 // Credits live on `memberships` and every change must leave a row in
-// `credit_transactions` — one shared implementation so the membership and
+// `credit_transactions`: one shared implementation so the membership and
 // inventory modules can't drift on the rules (no overdrafts, always logged).
 
 export class CreditsError extends Error {
@@ -22,7 +22,7 @@ export async function getMembershipByUserId(userId) {
 }
 
 // Positive delta = earn, negative = spend. Rejects (rather than clamps)
-// spends that exceed the balance, and requires an existing membership row —
+// spends that exceed the balance, and requires an existing membership row;
 // same rule membership.controller's topUpCredits enforces.
 export async function adjustCredits(userId, delta, { sourceType = "inventory", sourceId = null, description } = {}) {
   if (!Number.isFinite(delta) || delta === 0) {
@@ -31,7 +31,7 @@ export async function adjustCredits(userId, delta, { sourceType = "inventory", s
 
   const membership = await getMembershipByUserId(userId);
   if (!membership) {
-    throw new CreditsError("This user is not a member yet — activate membership first");
+    throw new CreditsError("This user is not a member yet. Activate membership first");
   }
 
   const nextCredits = membership.credits + delta;

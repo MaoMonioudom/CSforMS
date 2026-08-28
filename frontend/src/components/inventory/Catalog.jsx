@@ -6,7 +6,7 @@ import { T } from '../../lib/inventory/theme'
 import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE, isLowStock, isOutOfStock } from '../../lib/inventory/data'
 import { useInventory } from '../../lib/inventory/InventoryContext'
 
-const LOAN_DAYS = 7 // standard borrow period — shown to the student before they confirm
+const LOAN_DAYS = 7 // standard borrow period, shown to the student before they confirm
 
 const TYPE_FILTERS = [
   { id: 'all',         label: 'All Items', Icon: Boxes },
@@ -46,7 +46,7 @@ function CategoryTiles({ items, filterCat, setFilterCat }) {
   const countFor = (id) => id === 'all' ? items.length : items.filter(i => i.category === id).length
 
   return (
-    // Mobile/tablet: Telegram-folder style — one horizontal scrollable row of
+    // Mobile/tablet: Telegram-folder style, one horizontal scrollable row of
     // compact icon tabs (kept through tablet widths so tiles never wrap to a
     // second line). Only large desktop switches to a wrapping label+count grid.
     <div className="inv-hscroll mb-5 flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-2.5 lg:overflow-visible lg:pb-0"
@@ -90,9 +90,9 @@ function CategoryTiles({ items, filterCat, setFilterCat }) {
   )
 }
 
-// ── Item Card — staff/admin catalog card. Pixel-matched to the student's
+// ── Item Card: staff/admin catalog card. Pixel-matched to the student's
 // CompactItemCard below (same image size, corner radius, layout), except
-// the bottom-right action label is a real button — staff need one-click
+// the bottom-right action label is a real button. Staff need one-click
 // add for counter sales, students just tap the card to view details. ──
 export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMode, staffStudent, onStaffAdd }) {
   const cat = CATEGORIES.find(c => c.id === item.category)
@@ -148,9 +148,9 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
   )
 }
 
-// ── Compact Item Card — used for the student/guest browse grid at every
+// ── Compact Item Card: used for the student/guest browse grid at every
 // screen size (mobile through desktop), not just phones. Corners are
-// intentionally subtle (10px, not the 24px used on the staff ItemCard) —
+// intentionally subtle (10px, not the 24px used on the staff ItemCard);
 // tap the whole card to open details; no inline action button. Staff still
 // get the original ItemCard with a quick-add button, since counter sales
 // need that one-click flow. ──
@@ -184,7 +184,7 @@ function CompactItemCard({ item, onView }) {
   )
 }
 
-// ── Pricing reference card — shown before any charge so staff know the rates ───
+// ── Pricing reference card: shown before any charge so staff know the rates ───
 function PricingRateCard() {
   return (
     <div className="rounded-lg p-4" style={{ background: T.accentLight }}>
@@ -207,7 +207,7 @@ function PricingRateCard() {
   )
 }
 
-// ── Staff in-person order panel — find a student, see their info BEFORE any
+// ── Staff in-person order panel: find a student, see their info BEFORE any
 // charge, activate membership / top up by dollar amount, build + complete a sale.
 function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, setStaffOrder, onCheckout, onTopUp, onActivateMembership }) {
   const [query, setQuery] = useState('')
@@ -215,12 +215,12 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   const [showTopUp, setShowTopUp] = useState(false)
   const [checkingOut, setCheckingOut] = useState(false)
   // Every charge (top-up, membership, checkout) goes through one confirm
-  // step instead of firing straight from the panel — { type: 'topup' |
-  // 'membership' | 'checkout', amount? }. No cash/QR choice — every counter
+  // step instead of firing straight from the panel: { type: 'topup' |
+  // 'membership' | 'checkout', amount? }. No cash/QR choice; every counter
   // charge is just recorded as a credit-card-style charge, one confirm click.
   const [confirmModal, setConfirmModal] = useState(null)
   // The context-level guard already blocks a second submit from firing a
-  // second transaction — this just reflects that back in the button so
+  // second transaction. This just reflects that back in the button so
   // staff can see the click registered instead of mashing it again.
   const handleCheckout = async () => {
     setCheckingOut(true)
@@ -238,9 +238,9 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
   const total = staffOrder.filter(o => o.item.type === 'Consumable').reduce((s, o) => s + o.item.credits * o.qty, 0)
   const creditsPreview = Math.round(Number(dollarAmount || 0) * CREDIT_RATE)
 
-  // Confirmed inside the modal below — this only closes it and fires the
+  // Confirmed inside the modal below: this only closes it and fires the
   // actual charge once staff click "Confirm Charge". No method to pass
-  // along anymore — every counter charge is just recorded the same way.
+  // along anymore; every counter charge is just recorded the same way.
   const runConfirmedCharge = () => {
     if (confirmModal?.type === 'topup') onTopUp(confirmModal.amount, 'Cash')
     if (confirmModal?.type === 'membership') onActivateMembership('Cash')
@@ -285,7 +285,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
         </>
       ) : (
         <>
-          {/* Student info card — shown before any charge is made */}
+          {/* Student info card: shown before any charge is made */}
           <div className="rounded-lg border border-border p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
@@ -320,7 +320,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
             <button onClick={() => setConfirmModal({ type: 'membership' })}
               className="flex items-center justify-center gap-2 rounded-md border-none py-2.5 text-[13px] font-bold text-white"
               style={{ background: T.red }}>
-              <BadgeCheck size={14} /> Activate Membership — ${MEMBERSHIP_PLAN.price} → +{MEMBERSHIP_PLAN.bonusCredits} cr
+              <BadgeCheck size={14} /> Activate Membership: ${MEMBERSHIP_PLAN.price} → +{MEMBERSHIP_PLAN.bonusCredits} cr
             </button>
           ) : (
             <button onClick={() => setShowTopUp(s => !s)}
@@ -342,12 +342,12 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
               )}
               <button onClick={() => { const amt = Number(dollarAmount); if (amt > 0) setConfirmModal({ type: 'topup', amount: amt }) }}
                 className="rounded-md border-none py-2 text-[13px] font-bold text-white" style={{ background: T.green }}>
-                Continue — ${dollarAmount || 0} → +{creditsPreview} cr
+                Continue: ${dollarAmount || 0} → +{creditsPreview} cr
               </button>
             </div>
           )}
 
-          {/* Order summary — same sectioned card list as the student cart:
+          {/* Order summary: same sectioned card list as the student cart:
               BORROW / PURCHASE groups, thumbnails, qty steppers, totals. */}
           {(() => {
             const borrowLines = staffOrder.filter(o => o.item.type === 'Returnable')
@@ -389,7 +389,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
                     {borrowLines.length > 0 && (
                       <div>
                         <p className="m-0 mb-1 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider" style={{ color: T.blue }}>
-                          <RotateCcw size={11} /> Borrow — Returnable
+                          <RotateCcw size={11} /> Borrow: Returnable
                         </p>
                         {borrowLines.map(o => <OrderLine key={o.item.id} o={o} />)}
                       </div>
@@ -397,7 +397,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
                     {buyLines.length > 0 && (
                       <div>
                         <p className="m-0 mb-1 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider" style={{ color: T.amber }}>
-                          <ShoppingBag size={11} /> Purchase — Consumable
+                          <ShoppingBag size={11} /> Purchase: Consumable
                         </p>
                         {buyLines.map(o => <OrderLine key={o.item.id} o={o} />)}
                       </div>
@@ -430,7 +430,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
         </>
       )}
 
-      {/* One confirm step for every charge — top-up, membership, or checkout.
+      {/* One confirm step for every charge: top-up, membership, or checkout.
           Cash/QR is chosen here (not as a separate step beforehand) for the
           two that need a payment method. */}
       {confirmModal && (
@@ -453,7 +453,7 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
             )}
             {confirmModal.type === 'checkout' && (
               <p style={{ margin: '0 0 14px', fontSize: 14, color: T.charcoal }}>
-                {staffOrder.length} item{staffOrder.length === 1 ? '' : 's'} — {total} cr purchase total
+                {staffOrder.length} item{staffOrder.length === 1 ? '' : 's'}, {total} cr purchase total
               </p>
             )}
 
@@ -505,7 +505,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
       return ex ? prev.map(ci => ci.item.id === item.id ? { ...ci, qty: ci.qty + 1 } : ci) : [...prev, { item, qty: 1, dueDate, purpose }]
     })
     showToast(`${item.name} added to cart.`)
-    // On mobile, don't auto-open the cart panel — only the explicit cart icon should.
+    // On mobile, don't auto-open the cart panel; only the explicit cart icon should.
     if (typeof window !== 'undefined' && window.innerWidth >= 640) onCartOpen?.()
   }
 
@@ -539,18 +539,18 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
       : [...prev, { item, qty: 1, dueDate, purpose }])
   }
 
-  // Staff: activate a student's membership in person — $20 charge, 200 bonus credits.
+  // Staff: activate a student's membership in person: $20 charge, 200 bonus credits.
   const activateStudentMembership = async (method = 'Cash') => {
     try {
       await ctx.topUpCounter({ studentId: staffStudent.id, amountUSD: MEMBERSHIP_PLAN.price, method: method.toLowerCase(), type: 'membership' })
       setStaffStudent(prev => ({ ...prev, membership: 'active', credits: prev.credits + MEMBERSHIP_PLAN.bonusCredits }))
-      showToast(`Activated membership for ${staffStudent.name} — $${MEMBERSHIP_PLAN.price} charged (${method}), ${MEMBERSHIP_PLAN.bonusCredits} credits added.`)
+      showToast(`Activated membership for ${staffStudent.name}. $${MEMBERSHIP_PLAN.price} charged (${method}), ${MEMBERSHIP_PLAN.bonusCredits} credits added.`)
     } catch (err) {
       showToast(err.message || 'Membership activation failed.', 'error')
     }
   }
 
-  // Staff: top up a student's credits — staff enters the dollar amount paid in cash or QR,
+  // Staff: top up a student's credits. Staff enters the dollar amount paid in cash or QR,
   // credits are computed from the shared CREDIT_RATE (not deducted from existing credits).
   const topUpStudentCredits = async (dollarAmount, method = 'Cash') => {
     const creditsToAdd = Math.round(dollarAmount * CREDIT_RATE)
@@ -563,7 +563,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     }
   }
 
-  // Staff: finalize the in-person order — the backend sells consumables (invoice +
+  // Staff: finalize the in-person order. The backend sells consumables (invoice +
   // credit charge + stock) and lends returnables (borrow_transactions) in one call.
   const completeStaffSale = async () => {
     if (!staffStudent || staffOrder.length === 0) return
@@ -590,7 +590,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
 
   return (
     <div style={{ background: 'var(--color-cream)', minHeight: '100vh' }}>
-      {/* Header banner — student side only. On the admin side the shared
+      {/* Header banner: student side only. On the admin side the shared
           teal top bar (PAGE_META in InventoryAdminArea) is the one page
           header, so rendering another banner here would duplicate it. */}
       {!isStaff && (
@@ -611,7 +611,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               Browse Equipment
             </h1>
             <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--on-dark-muted)', maxWidth: 560 }}>
-              Find what you need — borrow tools or purchase consumables with credits.
+              Find what you need: borrow tools or purchase consumables with credits.
             </p>
           </div>
         </div>
@@ -619,10 +619,10 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
 
     <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
       {/* The admin sidebar is always visible (no collapse at tablet), so the
-          two-column split only kicks in at lg — at md the content column is
+          two-column split only kicks in at lg; at md the content column is
           too squeezed by the sidebar for a 340px side panel to fit. */}
       <div className={isStaff ? 'grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]' : ''}>
-        {/* Main column — categories, search, filters, item grid */}
+        {/* Main column: categories, search, filters, item grid */}
         <div className="min-w-0">
           <CategoryTiles items={items} filterCat={filterCat} setFilterCat={setFilterCat} />
 
@@ -656,7 +656,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           <p className="m-0 mb-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{filtered.length} items</p>
 
           {isStaff ? (
-            /* Staff keep the original card + quick-add button at every size — counter
+            /* Staff keep the original card + quick-add button at every size: counter
                sales need that one-click flow, so this isn't part of the restyle below. */
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7">
               {visible.map(item => (
@@ -665,7 +665,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               ))}
             </div>
           ) : (
-            /* Student/guest — same compact card at every screen size, 2 columns on
+            /* Student/guest: same compact card at every screen size, 2 columns on
                phones up to 4 on desktop. */
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
               {visible.map(item => (
@@ -674,7 +674,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
             </div>
           )}
 
-          {/* See More — reveals the next batch of items */}
+          {/* See More: reveals the next batch of items */}
           {filtered.length > visibleCount && (
             <div className="mt-6 flex justify-center">
               <button onClick={() => setVisibleCount(c => c + PAGE_ROWS)}
@@ -686,7 +686,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           )}
         </div>
 
-        {/* Right column — sticky in-person order panel (staff/admin only) */}
+        {/* Right column: sticky in-person order panel (staff/admin only) */}
         {isStaff && (
           <div className="lg:sticky lg:top-4 lg:self-start">
             <StaffOrderPanel
@@ -699,7 +699,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         )}
       </div>
 
-      {/* Detail modal — responsive two-column */}
+      {/* Detail modal: responsive two-column */}
       {selected && (() => {
         const cat     = CATEGORIES.find(c => c.id === selected.category)
         const hasLong = selected.description?.length > 120 || selected.usage
@@ -719,7 +719,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                   <div style={{ position: 'absolute', top: 12, left: 12 }}>
                     <Badge status={selected.status} small />
                   </div>
-                  {/* Close — overlaid on the image, top-right */}
+                  {/* Close: overlaid on the image, top-right */}
                   <button onClick={() => setSelected(null)}
                     style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
                     <X size={14} color="#0f172a" />
@@ -749,7 +749,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-inv-muted)', lineHeight: 1.65 }}>{selected.description}</p>
                   )}
 
-                  {/* Stats grid — fixed minHeight + truncated values so a long
+                  {/* Stats grid: fixed minHeight + truncated values so a long
                       zone name (e.g. "Robotic Lab 2024") never grows its box
                       taller than the other two and breaks the equal-size row. */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, alignItems: 'stretch' }}>
@@ -799,7 +799,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                         <button onClick={() => { handleAddCart(selected); setSelected(null) }} disabled={!enabled}
                           className="btn-primary w-full justify-center"
                           style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                          {enabled ? (isBorrow ? '＋ Add to Cart — Borrow' : '＋ Add to Cart — Purchase') : `Not Available (${selected.status})`}
+                          {enabled ? (isBorrow ? '＋ Add to Cart: Borrow' : '＋ Add to Cart: Purchase') : `Not Available (${selected.status})`}
                         </button>
                       )
                     })()}
@@ -811,12 +811,12 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         )
       })()}
 
-      {/* Borrow/return date confirmation — shown before a returnable item is added to cart */}
+      {/* Borrow/return date confirmation: shown before a returnable item is added to cart */}
       {confirmBorrow && (() => {
         const today = new Date()
         const defaultDue = new Date(today); defaultDue.setDate(defaultDue.getDate() + LOAN_DAYS)
         const fmt = (d) => d.toISOString().split('T')[0]
-        const minDue = fmt(new Date(today.getTime() + 86400000)) // tomorrow — can't return same day
+        const minDue = fmt(new Date(today.getTime() + 86400000)) // tomorrow: can't return same day
         return (
           <div className="fixed inset-0 z-[850] flex items-center justify-center bg-charcoal/40 p-4" onClick={() => setConfirmBorrow(null)}>
             <div onClick={e => e.stopPropagation()} className="w-full max-w-[380px] rounded-3xl bg-white p-6">
@@ -838,7 +838,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               </div>
               <p className="m-0 mb-3 text-xs text-inv-muted">Choose when you'll return this item. Staff still need to approve the request.</p>
 
-              {/* Required — staff see this on the request so they know why the item's needed */}
+              {/* Required: staff see this on the request so they know why the item's needed */}
               <div className="mb-4">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-faint">Borrow Purpose</label>
                 <textarea rows={2} value={borrowPurpose} onChange={e => setBorrowPurpose(e.target.value)}
@@ -846,7 +846,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                   className="field field-textarea resize-none bg-cream outline-none focus:ring-2" style={{ borderColor: T.border, '--tw-ring-color': 'color-mix(in oklch, var(--color-inv-accent) 25%, transparent)' }} />
               </div>
 
-              {/* Late-return rule — the student agrees to this before confirming */}
+              {/* Late-return rule: the student agrees to this before confirming */}
               <div className="mb-4 flex items-start gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-amber-light)', border: '1px solid color-mix(in oklch, var(--color-amber) 40%, transparent)' }}>
                 <AlertTriangle size={13} style={{ color: 'var(--color-amber)', flexShrink: 0, marginTop: 1 }} />
                 <p className="m-0 text-xs leading-snug" style={{ color: 'color-mix(in oklch, var(--color-amber) 70%, black)' }}>

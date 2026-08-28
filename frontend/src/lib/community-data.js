@@ -1,11 +1,11 @@
 import { api } from "./api/client";
 
 // tags, likes, and comments are all real now (post_tags+tags, post_votes,
-// post_comments — all via communityPost.controller.js).
+// post_comments, all via communityPost.controller.js).
 //
-// Author IS real, though — the backend embeds it via a join (see
+// Author IS real, though: the backend embeds it via a join (see
 // crudRouter.js's embedAuthor). Most accounts have no profile_img_url, so
-// `avatar` is often null — that's intentional, not a bug: InitialAvatar
+// `avatar` is often null. That's intentional, not a bug: InitialAvatar
 // renders a letter avatar instead of inventing a fake photo. The `!author`
 // case only guards a deleted/missing user, which shouldn't happen given the
 // FK, but costs nothing to handle.
@@ -48,7 +48,7 @@ export async function fetchCommunityPosts() {
   return data.map(mapPost);
 }
 
-// Paginated variant for the Connect list page — fetchCommunityPosts() above
+// Paginated variant for the Connect list page. fetchCommunityPosts() above
 // stays full-list for HomePage, which needs everything in memory for search.
 export async function fetchCommunityPostsPage({ page = 1, limit = 12 } = {}) {
   const { data, total } = await api.get(`/api/community/posts?page=${page}&limit=${limit}`);

@@ -26,7 +26,7 @@ export function toUiItem(row, catById = {}, locById = {}) {
     credits: row.unit_credit ?? 0,
     stock: row.current_stock ?? 0,
     minStock: row.min_stock ?? 0,
-    // DB status is only available/unavailable — 'unavailable' is what the
+    // DB status is only available/unavailable. 'unavailable' is what the
     // backend sets while an item has an open damage report.
     status: row.status === 'unavailable' ? 'maintenance' : 'available',
     condition: row.status === 'unavailable' ? 'Maintenance' : 'Good',
@@ -60,7 +60,7 @@ export function toDbItem(ui, categories = [], locations = []) {
 
 export const createLocation = (loc) => api.post('/api/inventory/locations', loc)
 
-// Shelf codes only get saved if they match an existing location_items row —
+// Shelf codes only get saved if they match an existing location_items row,
 // the Add/Edit Item form lets staff type any room + shelf code combination,
 // so this creates the location on the fly the first time a new one is used,
 // instead of silently dropping it (which showed "—" for zone/room).
@@ -87,9 +87,9 @@ export function toUiBorrow(row) {
     itemName: row.inventory_items?.item_name || '—',
     action: row.status === 'returned' ? 'returned' : 'borrowed',
     qty: row.quantity_borrow,
-    // Full timestamps (not date-only) — borrow_date/return_date are real
+    // Full timestamps (not date-only): borrow_date/return_date are real
     // moments (when staff approved/processed it), shown with time on the
-    // notifications feed. dueDate stays date-only — it's a day-level
+    // notifications feed. dueDate stays date-only, it's a day-level
     // deadline, not a specific moment.
     date: row.borrow_date,
     dueDate: (row.due_date || '').slice(0, 10) || null,
@@ -177,7 +177,7 @@ export const fetchUsers = () => api.get('/api/inventory/users').then((r) => r.da
 
 // ── Student actions ──────────────────────────────────────────────────────
 
-// lines: [{ itemId, qty, dueDate?, note? }] — one request row per item,
+// lines: [{ itemId, qty, dueDate?, note? }], one request row per item,
 // grouped by a shared order id so staff can approve the cart together.
 export async function submitBorrowRequests(lines) {
   const orderId = `ORD-${Date.now()}`
@@ -199,7 +199,7 @@ export const submitPrintingRequest = ({ pages, credits, note }) =>
 export const submit3DPrintRequest = ({ filamentId, note }) =>
   api.post('/api/inventory/requests', { request_type: '3d_printing', filament_id: filamentId, note: note || null })
 
-// cart: [{ itemId, qty }] — consumables only. No longer charged instantly:
+// cart: [{ itemId, qty }], consumables only. No longer charged instantly:
 // each line becomes a pending 'purchase' request (shared order id) and
 // credits/stock only move when staff approve it in Request Management.
 export async function purchaseItems(cart) {
@@ -241,7 +241,7 @@ export const deleteItem = (itemId) => api.del(`/api/inventory/items/${itemId}`)
 export const reportMaintenance = (itemId, { notes, quantityDamaged } = {}) =>
   api.post(`/api/inventory/items/${itemId}/report-maintenance`, { notes, quantityDamaged })
 export const completeMaintenance = (itemId) => api.post(`/api/inventory/items/${itemId}/maintenance-complete`)
-// { itemId -> { notes, quantityDamaged, reportedAt } } — the open issue
+// { itemId -> { notes, quantityDamaged, reportedAt } }, the open issue
 // behind each item currently flagged unavailable/Maintenance.
 export const fetchOpenMaintenance = () =>
   api.get('/api/inventory/maintenance-open').then((r) =>
@@ -253,7 +253,7 @@ export const updateFilament = (id, f) =>
   api.put(`/api/inventory/filaments/${id}`, { name: f.name, color: f.color, hex: f.hex, stock_grams: f.stockGrams, rate: f.rate })
 export const deleteFilament = (id) => api.del(`/api/inventory/filaments/${id}`)
 
-// Multipart upload — the JSON client can't carry files, so this goes through
+// Multipart upload: the JSON client can't carry files, so this goes through
 // fetch directly with the same bearer token. Returns the public image URL.
 export async function uploadItemImage(file) {
   const form = new FormData()

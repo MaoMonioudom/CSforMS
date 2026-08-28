@@ -35,7 +35,7 @@ export default function WorkspacePage() {
   const [error, setError] = useState("");
 
   // Wait for AuthContext to finish confirming a stored token before
-  // deciding the user is logged out — otherwise a refresh bounces someone
+  // deciding the user is logged out. Otherwise a refresh bounces someone
   // who's genuinely still logged in through /login and out to /inventory,
   // since `user` briefly reads null while that check is still in flight.
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function WorkspacePage() {
     if (!user?.isMember) return;
     Promise.all([fetchWorkspaces(), fetchMyBookings()])
       .then(([ws, mine]) => { setWorkspaces(ws); setMyBookings(mine); })
-      .catch(() => setError("Couldn't load workspace data — please try refreshing."))
+      .catch(() => setError("Couldn't load workspace data. Please try refreshing."))
       .finally(() => setLoading(false));
   }, [user?.isMember]);
 
@@ -69,7 +69,7 @@ export default function WorkspacePage() {
       const fresh = await fetchTakenSlots(dateKey);
       setTakenSlots(fresh);
     } catch (err) {
-      setError(err.message || "Couldn't submit that request — please try again.");
+      setError(err.message || "Couldn't submit that request. Please try again.");
       fetchTakenSlots(dateKey).then(setTakenSlots).catch(() => {});
     } finally {
       setSubmittingKey(null);
@@ -85,7 +85,7 @@ export default function WorkspacePage() {
       const fresh = await fetchTakenSlots(dateKey);
       setTakenSlots(fresh);
     } catch (err) {
-      setError(err.message || "Couldn't cancel that request — please try again.");
+      setError(err.message || "Couldn't cancel that request. Please try again.");
     } finally {
       setCancellingId(null);
     }
@@ -141,7 +141,7 @@ export default function WorkspacePage() {
 
         {/* Seat availability */}
         <div className="mb-8">
-          <SectionLabel>Availability — {dateLabel}</SectionLabel>
+          <SectionLabel>Availability: {dateLabel}</SectionLabel>
           {loading ? (
             <p className="text-xs" style={{ color: D.muted }}>Loading…</p>
           ) : (
@@ -160,7 +160,7 @@ export default function WorkspacePage() {
                   {TIME_SLOTS.map(slot => {
                     const { count, full } = getSlotOccupancy(takenSlots, seat.id, dateKey, slot, seat.capacity);
                     // One request per person per (desk, slot) regardless of
-                    // capacity — no reason to hold more than one seat for
+                    // capacity, no reason to hold more than one seat for
                     // yourself in the same room at the same time.
                     const alreadyMine = myBookings.some((b) =>
                       b.workspaceId === seat.id && b.date === dateKey && b.slot === slot.label && (b.status === "pending" || b.status === "approved")
@@ -197,7 +197,7 @@ export default function WorkspacePage() {
           ) : myBookings.length === 0 ? (
             <div className="rounded-2xl p-8 text-center" style={{ background: D.bgCard, border: `1px solid ${D.border}` }}>
               <Clock size={22} style={{ color: D.faint }} className="mx-auto mb-2" />
-              <p className="text-xs" style={{ color: D.muted }}>No requests yet — pick an open slot above.</p>
+              <p className="text-xs" style={{ color: D.muted }}>No requests yet. Pick an open slot above.</p>
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>

@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 const CANNED_REPLIES = [
-  "Good question — let's break that down step by step.",
+  "Good question, let's break that down step by step.",
   "Think about what problem this concept solves before worrying about syntax.",
   "Try re-reading the section above, then attempt a small example yourself.",
-  "That connects to what's covered in this lesson — check the key takeaways.",
+  "That connects to what's covered in this lesson: check the key takeaways.",
   "Nice thinking! Here's a hint: focus on one part of the problem at a time.",
 ];
 
@@ -68,7 +68,7 @@ function DemoGuidePanel({ lessonTitle }) {
     <div className="mx-auto mt-5 max-w-250 rounded-[10px] border border-community-gold/20 bg-navy px-4.5 py-4">
       <div className="mb-2.5 flex items-center justify-between">
         <span className="text-xs font-semibold text-community-gold">🤖 AI Guide</span>
-        <span className="text-xs text-parchment/35">demo — canned responses</span>
+        <span className="text-xs text-parchment/35">demo: canned responses</span>
       </div>
 
       <div className="mb-3 flex max-h-55 flex-col gap-2 overflow-y-auto">

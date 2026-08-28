@@ -3,12 +3,12 @@ import { normalizeRow } from "../../shared/normalizeTimestamps.js";
 import { resolveTagIds } from "../../shared/tagResolver.js";
 import { parsePagination } from "../../shared/pagination.js";
 
-// community_posts has a real child table for tags — post_tags, a join table
+// community_posts has a real child table for tags: post_tags, a join table
 // into the shared `tags` dictionary (the same table collaboration_skills/
 // event_tags use). crudRouter only does single-table CRUD, so list/detail/
 // create/delete get dedicated handlers here, mirroring collaboration.
 // controller.js. Update isn't offered anywhere in the UI (admin only views/
-// deletes other people's posts — see AdminCommunity.jsx), so it's the one
+// deletes other people's posts (see AdminCommunity.jsx), so it's the one
 // verb still left to crudRouter.
 const MODERATOR_ROLES = ["admin", "staff"];
 const AUTHOR_COLS = "user_id, full_name, user_name, profile_img_url";
@@ -19,7 +19,7 @@ const SELECT_WITH_RELATIONS =
 // comments come through raw (comment_id/content/created_at + nested author)
 // rather than remapped here, matching how `tags`/top-level `author` are
 // already left for the frontend's mapPost/mapComment to rename into
-// camelCase — this backend layer doesn't do field renaming elsewhere either.
+// camelCase; this backend layer doesn't do field renaming elsewhere either.
 function flattenRelations(row) {
   if (!row) return row;
   const tags = (row.post_tags || []).map(t => t.tags?.tag_name).filter(Boolean);
@@ -30,7 +30,7 @@ function flattenRelations(row) {
 }
 
 // Batched into 1 round trip for the whole list rather than a per-post
-// count query — fetches every vote row for the given posts once, then
+// count query: fetches every vote row for the given posts once, then
 // tallies counts and "did the current viewer vote" in memory. currentUserId
 // is undefined for anonymous viewers (optionalAuth doesn't reject them),
 // in which case liked_by_me is just always false.
@@ -90,10 +90,10 @@ export async function getCommunityPost(req, res, next) {
   }
 }
 
-// Toggles the current user's vote on a post — one row per (post_id,
+// Toggles the current user's vote on a post: one row per (post_id,
 // user_id) in post_votes means "voted", no row means "didn't." vote_type is
 // CHECK-constrained to 'upvote'/'downvote' (a fuller up/down voting system
-// than what's built) — the UI only has a single Heart button, so every row
+// than what's built); the UI only has a single Heart button, so every row
 // is 'upvote'. Confirmed against System_Full_DB.sql's CREATE TABLE after
 // "like" (not a valid value) got rejected with a 500 in testing.
 export async function toggleLike(req, res, next) {
@@ -158,7 +158,7 @@ export async function createCommunityPost(req, res, next) {
 }
 
 // post_comments has no CHECK constraints to trip over (unlike post_votes'
-// vote_type), confirmed against System_Full_DB.sql — just post_id/user_id/
+// vote_type), confirmed against System_Full_DB.sql; just post_id/user_id/
 // content, content NOT NULL.
 export async function createComment(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -180,7 +180,7 @@ export async function createComment(req, res, next) {
 }
 
 // Explicitly clears post_tags/post_votes/post_comments before removing the
-// post, rather than assuming the live FK constraints cascade — confirmed
+// post, rather than assuming the live FK constraints cascade; confirmed
 // necessary for the equivalent collaboration_posts delete
 // (deleteCollabPost), so treated as necessary here too. Doesn't touch
 // `tags` itself: shared with collaboration_skills/event_tags, so a tag

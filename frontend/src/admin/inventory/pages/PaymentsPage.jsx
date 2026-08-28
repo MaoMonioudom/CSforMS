@@ -20,16 +20,16 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
   const [expanded,   setExpanded]   = useState(null)
 
   const completed = payments.filter(p => p.status === 'Completed')
-  // "Pending Payments" isn't a payment record at all yet — it's a credit
+  // "Pending Payments" isn't a payment record at all yet. It's a credit
   // top-up request still awaiting staff approval in Requests.
   const pendingTopups = requests.filter(r => r.type === 'credit_topup' && r.status === 'pending')
 
-  // Totals breakdown — cash is the USD in-person payments, credit is the
+  // Totals breakdown: cash is the USD in-person payments, credit is the
   // internal balance transactions.
   const sumBy = (method, currency) => completed.filter(p => p.method === method && p.currency === currency).reduce((s, p) => s + p.amount, 0)
   const totalCash   = sumBy('Cash', 'USD')
   const totalCredit = completed.filter(p => p.currency === 'CR').reduce((s, p) => s + p.amount, 0)
-  // 40 credits per $1 (see CREDIT_RATE) — revenue is cash paid plus the
+  // 40 credits per $1 (see CREDIT_RATE); revenue is cash paid plus the
   // dollar-equivalent of credits spent.
   const totalRevenue = totalCash + totalCredit / 40
 
@@ -43,7 +43,7 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  // Invoices are a permanent financial record — no client-side deletion.
+  // Invoices are a permanent financial record; no client-side deletion.
   const remove = null
 
   return (
@@ -53,7 +53,7 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
         <p className="m-0 mt-0.5 text-sm text-faint">Track membership credit top-ups and item purchases at a glance.</p>
       </div>
 
-      {/* All six stats in one row on desktop — wraps 3+3 on tablet, 2×3 on phone */}
+      {/* All six stats in one row on desktop: wraps 3+3 on tablet, 2×3 on phone */}
       <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         <GradientStatCard label="Completed Payments" value={completed.length} period="All time" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
         <GradientStatCard label="Pending Payments" value={pendingTopups.length} period="Awaiting approval" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
@@ -101,7 +101,7 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
           const isBorrow = p.method === 'Loan'
           const product = items.find(i => i.id === p.itemId || i.name === p.itemName)
           const category = product ? CATEGORIES.find(c => c.id === product.category)?.label : (isBorrow ? 'Borrow' : (p.type || null))
-          // Borrowing is never charged — only purchases and credit services show real credit values.
+          // Borrowing is never charged; only purchases and credit services show real credit values.
           const unit = isBorrow ? 0 : p.amount
           const total = isBorrow ? 0 : p.amount
           const currency = p.currency === 'USD' ? '$' : ' cr'
@@ -149,7 +149,7 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
                       </div>
                     </div>
 
-                    {/* Invoices are a permanent financial record — deletion removed. */}
+                    {/* Invoices are a permanent financial record; deletion removed. */}
                   </div>
                 </div>
               </div>

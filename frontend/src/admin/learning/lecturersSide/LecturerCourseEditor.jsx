@@ -18,7 +18,7 @@ export default function LecturerCourseEditor() {
     return <p className="text-sm text-navy-muted">Loading course…</p>;
   }
 
-  // Editing someone else's course isn't allowed — bail out rather than let a
+  // Editing someone else's course isn't allowed. Bail out rather than let a
   // lecturer reach another instructor's content via a typed URL. (The
   // backend enforces this too; this just avoids a confusing form.)
   if (!isNew && (!course || course.instructorId !== user.id)) return <NotFound />;

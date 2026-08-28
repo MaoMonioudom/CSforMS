@@ -1,8 +1,8 @@
 import { api } from "./api/client";
 
-// Author is real — the backend embeds it via a join (see
+// Author is real: the backend embeds it via a join (see
 // crudRouter.js's embedAuthor). Most accounts have no profile_img_url, so
-// `avatar` is often null — that's intentional, not a bug: InitialAvatar
+// `avatar` is often null. That's intentional, not a bug: InitialAvatar
 // renders a letter avatar instead of inventing a fake photo. year/major
 // aren't tracked anywhere (no per-user academic fields in `users`), so those
 // stay blank. The `!author` case only guards a deleted/missing user.
@@ -42,7 +42,7 @@ export async function fetchCollabPosts() {
   return data.map(mapCollab);
 }
 
-// Paginated variant for the Find Team list page — fetchCollabPosts() above
+// Paginated variant for the Find Team list page. fetchCollabPosts() above
 // stays full-list for HomePage, which needs everything in memory for search.
 export async function fetchCollabPostsPage({ page = 1, limit = 12 } = {}) {
   const { data, total } = await api.get(`/api/community/collaborations?page=${page}&limit=${limit}`);

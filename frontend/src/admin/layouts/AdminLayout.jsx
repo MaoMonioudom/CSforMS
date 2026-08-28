@@ -45,7 +45,7 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-muted">
       <AdminSidebar width={width} />
 
-      {/* Drag handle — VS Code style: invisible until hovered/dragged */}
+      {/* Drag handle: VS Code style, invisible until hovered/dragged */}
       <div
         onPointerDown={(e) => { e.preventDefault(); setResizing(true); }}
         className={`w-1 shrink-0 cursor-col-resize transition-colors ${resizing ? "bg-blue-500/70" : "hover:bg-blue-400/50"}`}

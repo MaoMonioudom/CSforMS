@@ -13,7 +13,7 @@ import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotifica
 import { fmtDateTime, cambodiaDayLabel } from '../lib/inventory/datetime'
 
 // One notification feed for all three modules (Community, Learning,
-// Inventory) — same page whether you land here from the top-nav bell or
+// Inventory): same page whether you land here from the top-nav bell or
 // from inside the Inventory module (/inventory/notifications redirects
 // here). Inventory-specific types keep their existing icon/color; anything
 // else (e.g. Community's event_reminder) gets its own entry below, with a
@@ -24,12 +24,12 @@ const NOTIF_META = {
   approved:         { Icon: CheckCircle2,  color: T.green,  bg: T.greenLight },
   denied:           { Icon: XCircle,       color: T.red,    bg: T.redLight   },
   overdue:          { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
-  // A fee deduction isn't a "denied" request — it used to reuse that type,
+  // A fee deduction isn't a "denied" request. It used to reuse that type,
   // which rendered the red ✕ "declined" icon even though nothing was
   // rejected. Own type/icon so it reads as "charged", not "denied".
   fee_charged:      { Icon: AlertTriangle, color: T.red,    bg: T.redLight   },
   event_reminder:   { Icon: MessageSquare, color: T.teal,   bg: T.tealLight  },
-  // Approve/reject used to share one "workspace_booking" type — both
+  // Approve/reject used to share one "workspace_booking" type. Both
   // outcomes rendered with the same neutral bell icon. Split the same way
   // fee_charged was, reusing the approved/denied visual language.
   workspace_approved: { Icon: CheckCircle2, color: T.green, bg: T.greenLight },
@@ -37,7 +37,7 @@ const NOTIF_META = {
   DEFAULT:          { Icon: Bell,          color: T.purple, bg: T.purpleLight },
 }
 
-// Which module a notification_type came from — drives the Community/
+// Which module a notification_type came from: drives the Community/
 // Learning/Inventory/System filter tabs below. Add an entry here whenever
 // a new notification_type is introduced; anything unlisted falls to
 // 'system' rather than silently disappearing from every module filter.
@@ -60,9 +60,9 @@ const ACTIVITY_META = {
   credit_topup: { label: 'Credit Top-Up',   Icon: CreditCard,    color: T.teal,   bg: T.tealLight   },
 }
 
-// Top-level tabs — one per source module, plus All. My Borrows/Purchases/
+// Top-level tabs: one per source module, plus All. My Borrows/Purchases/
 // History/Requests are real Inventory records (not alert types from other
-// modules), so they don't sit alongside Community/Learning/System — they're
+// modules), so they don't sit alongside Community/Learning/System. They're
 // a second-level breakdown that only appears once "Inventory" is selected
 // (see INVENTORY_SUB_FILTERS below and InventoryApp.jsx's
 // /inventory/my-borrows redirect for how you land here from that module).
@@ -75,7 +75,7 @@ const FEED_FILTERS = [
 ]
 
 // Second-level tabs, shown only when the Inventory tab is active. There's no
-// All/Alerts here — inventory alert notifications live under the top-level
+// All/Alerts here: inventory alert notifications live under the top-level
 // "All" filter; this row is purely the student's own activity records.
 const INVENTORY_SUB_FILTERS = [
   { id: 'borrows',   label: 'My Borrows',   Icon: RotateCcw },
@@ -85,7 +85,7 @@ const INVENTORY_SUB_FILTERS = [
 ]
 
 // Every entry kind (notification, borrow/purchase, request, credit top-up)
-// carries a real timestamp — always shown in full ("2:09 PM, 7-16-2026"),
+// carries a real timestamp: always shown in full ("2:09 PM, 7-16-2026"),
 // in Cambodia time, regardless of how recent it is. Module-scope (not just
 // inside NotificationsPage) since DetailModal's itemList rendering
 // (returnDate) needs it too.
@@ -141,7 +141,7 @@ function DetailModal({ title, rows, status, onClose, itemList }) {
   )
 }
 
-// Inline Badge (kept local — avoids importing the shared component into a file that
+// Inline Badge (kept local: avoids importing the shared component into a file that
 // also defines its own DetailModal styling conventions).
 function Badge({ status }) {
   const map = {
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
   const [sortDir, setSortDir] = useState('desc') // 'desc' = newest first
 
   // Wait for AuthContext to finish restoring the session before deciding
-  // no one's logged in — otherwise a page refresh here always bounces
+  // no one's logged in. Otherwise a page refresh here always bounces
   // through /login even when the session is valid (user is briefly null).
   useEffect(() => {
     if (!authLoading && !hubUser) navigate('/login')
@@ -192,7 +192,7 @@ export default function NotificationsPage() {
     setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n))
     apiMarkOne(id).catch(() => {})
   }
-  // Only real notification rows are deletable — borrow/purchase/request
+  // Only real notification rows are deletable. Borrow/purchase/request
   // entries are transactional history derived from other tables, not rows
   // of their own, so there's nothing there to delete.
   const deleteOne = (id, e) => {
@@ -202,11 +202,11 @@ export default function NotificationsPage() {
   }
 
   // Build one unified, chronological feed: system notifications + (for students)
-  // their own borrow/purchase/request activity — all in a single list, no tabs.
+  // their own borrow/purchase/request activity, all in a single list, no tabs.
   const notifEntries = notifications
     .map(n => ({ kind: 'notification', id: `n${n.id}`, raw: n, date: n.date, read: n.read }))
 
-  // Items placed in the same checkout share an orderId — group them into one
+  // Items placed in the same checkout share an orderId. Group them into one
   // "transaction" entry so a single click shows everything that was borrowed
   // or purchased together, instead of one fragmented row per item.
   const groupByOrder = (list) => {
@@ -241,7 +241,7 @@ export default function NotificationsPage() {
   const isFinishedGroup = (g) => g.every(b => b.action === 'purchased' || b.status !== 'active')
 
   // Sub-filter predicates, shared between the Inventory tab's breakdown and
-  // (now redundant top-level ids are gone) nothing else — kept as named
+  // (now redundant top-level ids are gone) nothing else, kept as named
   // functions since "history" needs two conditions and reads better named.
   const isBorrowsEntry   = (e) => e.kind === 'transaction' && !isPurchaseGroup(e.raw) && !isFinishedGroup(e.raw)
   // My Purchases covers both completed purchases (transactions) and purchase
@@ -253,7 +253,7 @@ export default function NotificationsPage() {
   const isRequestedEntry = (e) => e.kind === 'request' || e.kind === 'credit_topup'
   // Everything that "belongs to Inventory": its own alert types, plus every
   // borrow/purchase/request activity record (there's no such thing as
-  // Community or Learning activity in this feed — it's all Inventory data).
+  // Community or Learning activity in this feed, it's all Inventory data).
   const isInventoryEntry = (e) =>
     (e.kind === 'notification' && notifModule(e.raw.type) === 'inventory') ||
     e.kind === 'transaction' || isRequestedEntry(e)
@@ -264,7 +264,7 @@ export default function NotificationsPage() {
       return e.kind === 'notification' && notifModule(e.raw.type) === filter
     }
     if (filter === 'inventory') {
-      // Only the student's own activity records — inventory alert
+      // Only the student's own activity records. Inventory alert
       // notifications appear under the top-level "All" filter instead.
       if (!isInventoryEntry(e) || e.kind === 'notification') return false
       if (invSubFilter === 'borrows')   return isBorrowsEntry(e)
@@ -300,12 +300,12 @@ export default function NotificationsPage() {
     workspace_denied:   'Workspace Declined',
   }
 
-  // "Today" / "Yesterday" / actual date — judged by Cambodia's calendar date
+  // "Today" / "Yesterday" / actual date: judged by Cambodia's calendar date
   // (cambodiaDayLabel), not the viewer's browser timezone, so it always
   // matches the Cambodia time shown on each entry.
   const dateGroupLabel = cambodiaDayLabel
 
-  // Aggregate status across a transaction group — worst-case wins so an
+  // Aggregate status across a transaction group: worst-case wins so an
   // overdue/pending item isn't hidden behind an already-returned one.
   const groupStatus = (group) => {
     if (group.some(b => b.action !== 'purchased' && b.status === 'active' && b.dueDate && new Date(b.dueDate) < new Date())) return 'overdue'
@@ -327,7 +327,7 @@ export default function NotificationsPage() {
   return (
     <div style={{ background: isUser ? `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` : T.cream, minHeight: '100vh' }}>
       {/* Same subtle dot-grid + BackBar chrome as Profile/Credits, for
-          students only — admin gets its own TopBar title/back button and
+          students only. Admin gets its own TopBar title/back button and
           keeps the plain cream background it already had. */}
       {isUser && (
         <div aria-hidden className="fixed inset-0 pointer-events-none"
@@ -335,7 +335,7 @@ export default function NotificationsPage() {
       )}
 
       {/* This page is reached from every module (top-nav bell, inventory's own
-          nav), not just from inside InventoryApp/InventoryAdminArea — those
+          nav), not just from inside InventoryApp/InventoryAdminArea. Those
           normally provide TopNav themselves, but at this shared route nothing
           else does, so it's rendered here unconditionally. */}
       <TopNav />
@@ -379,7 +379,7 @@ export default function NotificationsPage() {
             )
           })}
 
-          {/* Inventory's own borrow/purchase/request/history breakdown — shown
+          {/* Inventory's own borrow/purchase/request/history breakdown, shown
               inline on the same row right after the module tabs, only once
               Inventory is the active filter, instead of a separate row below. */}
           {filter === 'inventory' && (
@@ -490,7 +490,7 @@ export default function NotificationsPage() {
                   <meta.Icon size={16} color={meta.color} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600 }}>Credit Top-Up — ${e.raw.amountUSD}</p>
+                  <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600 }}>Credit Top-Up: ${e.raw.amountUSD}</p>
                   <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{meta.label} · {formatEntryDateTime(e.date)}</p>
                 </div>
                 <Badge status={e.raw.status} />
@@ -520,7 +520,7 @@ export default function NotificationsPage() {
           <DetailModal
             title={selected.raw.length === 1
               ? selected.raw[0].itemName
-              : `${isPurchaseReq ? 'Purchase' : 'Borrow'} Request — ${selected.raw.length} items`}
+              : `${isPurchaseReq ? 'Purchase' : 'Borrow'} Request: ${selected.raw.length} items`}
             status={selected.raw[0].status}
             onClose={() => setSelected(null)}
             itemList={selected.raw.map(r => enrich({ itemName: r.itemName, itemId: r.itemId, action: isPurchaseReq ? 'purchased' : 'borrowed', dueDate: r.dueDate, qty: r.qty }))}
@@ -548,7 +548,7 @@ export default function NotificationsPage() {
         const totalCr = selected.raw.reduce((s, b) => s + (b.credits || 0), 0)
         return (
           <DetailModal
-            title={selected.raw.length === 1 ? selected.raw[0].itemName : `Transaction — ${selected.raw.length} items`}
+            title={selected.raw.length === 1 ? selected.raw[0].itemName : `Transaction: ${selected.raw.length} items`}
             status={groupStatus(selected.raw)}
             onClose={() => setSelected(null)}
             itemList={selected.raw.map(enrich)}

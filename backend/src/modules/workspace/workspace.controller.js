@@ -6,7 +6,7 @@ const LOCATION_COLS = "location_id, location_name, zone_name, shelf_code";
 const WORKSPACE_COLS = `workspace_id, workspace_name, workspace_type, capacity, status, location:location_items(${LOCATION_COLS})`;
 
 // Wall-clock labeled as UTC, same convention events already use (see
-// events-data.js's formatEventDate) — no real timezone conversion.
+// events-data.js's formatEventDate); no real timezone conversion.
 function formatSlot(startIso, endIso) {
   const date = new Date(startIso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   const start = new Date(startIso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
@@ -14,7 +14,7 @@ function formatSlot(startIso, endIso) {
   return `${date}, ${start} – ${end}`;
 }
 
-// Desks/rooms open for booking — 'unavailable' ones (out for repair, etc.)
+// Desks/rooms open for booking. 'unavailable' ones (out for repair, etc.)
 // are hidden entirely rather than shown disabled, since there's no admin UI
 // yet to explain why one's off-limits.
 export async function listWorkspaces(req, res, next) {
@@ -32,7 +32,7 @@ export async function listWorkspaces(req, res, next) {
   }
 }
 
-// Bookings that block a slot on a given day — deliberately strips identity
+// Bookings that block a slot on a given day; deliberately strips identity
 // (no user join) since this only feeds the "already taken" grayed-out state
 // on the member's availability grid, not a lookup of who booked what.
 export async function listTakenSlots(req, res, next) {
@@ -60,8 +60,8 @@ export async function listMyBookings(req, res, next) {
       .from("workspace_bookings")
       .select(`*, workspace:workspaces(${WORKSPACE_COLS})`)
       .eq("user_id", req.user.user_id)
-      // Self-cancelled requests have no reason to reappear in "My Requests"
-      // — STATUS_STYLE on the frontend only knows pending/approved/rejected.
+      // Self-cancelled requests have no reason to reappear in "My Requests":
+      // STATUS_STYLE on the frontend only knows pending/approved/rejected.
       .neq("status", "cancelled")
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -71,11 +71,11 @@ export async function listMyBookings(req, res, next) {
   }
 }
 
-// Up to the desk's capacity can share a (workspace, start_time) slot — this
+// Up to the desk's capacity can share a (workspace, start_time) slot; this
 // count gets re-checked here server-side, not just trusted from whatever
 // availability the client already had loaded, so two members racing for the
 // last spot in a slot can't both win it.
-// Caps how many pending requests one member can have open at once — without
+// Caps how many pending requests one member can have open at once; without
 // this, a single member could submit a request for every slot on every
 // desk (pending requests count toward capacity below, same as approved
 // ones, so those slots would look full to everyone else) and lock the
@@ -98,7 +98,7 @@ export async function createBooking(req, res, next) {
     if (pendingErr) throw pendingErr;
     if (myPending.length >= PENDING_CAP) {
       return res.status(429).json({
-        error: `You already have ${PENDING_CAP} pending requests — cancel one or wait for a decision before submitting more.`,
+        error: `You already have ${PENDING_CAP} pending requests. Cancel one or wait for a decision before submitting more.`,
       });
     }
 
@@ -114,14 +114,14 @@ export async function createBooking(req, res, next) {
       .eq("start_time", start_time)
       .in("status", ["pending", "approved"]);
     if (clashError) throw clashError;
-    // One request per person per (desk, slot), regardless of capacity — a
+    // One request per person per (desk, slot), regardless of capacity: a
     // multi-person room has no reason to hold more than one seat for the
     // same person at the same time.
     if (existing.some((b) => b.user_id === req.user.user_id)) {
       return res.status(409).json({ error: "You already have a request for this slot." });
     }
     if (existing.length >= (workspace.capacity || 1)) {
-      return res.status(409).json({ error: "That slot is fully booked — pick another." });
+      return res.status(409).json({ error: "That slot is fully booked. Pick another." });
     }
 
     const { data, error } = await supabaseAdmin
@@ -136,7 +136,7 @@ export async function createBooking(req, res, next) {
   }
 }
 
-// Self-service — a member cancelling their own still-pending request. Not
+// Self-service: a member cancelling their own still-pending request. Not
 // available once it's been approved/denied (own the ownership + status
 // check right in the query, rather than a separate lookup): frees both
 // their spot in the PENDING_CAP above and the slot itself for others.
@@ -159,7 +159,7 @@ export async function cancelBooking(req, res, next) {
   }
 }
 
-// Admin/staff only — every desk regardless of status, so a disabled one can
+// Admin/staff only: every desk regardless of status, so a disabled one can
 // still be found and re-enabled (listWorkspaces above only shows
 // 'available' ones, for the member-facing booking grid).
 export async function listAllWorkspaces(req, res, next) {
@@ -178,7 +178,7 @@ export async function listAllWorkspaces(req, res, next) {
 
 // location_id links to the same location_items table inventory storage
 // spots use (System_Full_DB.sql's comment: "reuses location_items rather
-// than inventing a second location concept") — optional, since not every
+// than inventing a second location concept"); optional, since not every
 // desk needs a tracked physical location yet.
 export async function createWorkspace(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -201,7 +201,7 @@ export async function createWorkspace(req, res, next) {
   }
 }
 
-// Soft on/off switch rather than delete — workspace_bookings has
+// Soft on/off switch rather than delete: workspace_bookings has
 // ON DELETE CASCADE on workspace_id, so hard-deleting a desk would silently
 // wipe its whole booking history. Toggling status keeps that history intact
 // and just stops it from showing up for new bookings.
@@ -226,10 +226,10 @@ export async function setWorkspaceStatus(req, res, next) {
   }
 }
 
-// Admin/staff only — every booking, newest first, with the requester's
+// Admin/staff only: every booking, newest first, with the requester's
 // identity embedded (unlike listTakenSlots, which deliberately hides it).
 // workspace_bookings has two FKs into users (user_id AND approved_by), so
-// the plain "!user_id" hint is ambiguous to PostgREST (PGRST201) — has to
+// the plain "!user_id" hint is ambiguous to PostgREST (PGRST201); has to
 // be the full constraint name to pick the booker, not the approver.
 export async function listAllBookings(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
@@ -245,7 +245,7 @@ export async function listAllBookings(req, res, next) {
   }
 }
 
-// Shared by approve/reject below — stamps who decided it, then notifies the
+// Shared by approve/reject below: stamps who decided it, then notifies the
 // requester in-app (same notifications table/pattern the event-reminder
 // feature already uses), so the two sides of this action are no longer
 // stuck in separate browsers with no way to hear back from each other.
@@ -262,7 +262,7 @@ async function finalizeBooking(req, res, status, messageFor) {
   const { error: notifyError } = await supabaseAdmin.from("notifications").insert({
     user_id: data.user_id,
     message: messageFor(data.workspace?.workspace_name || "your workspace request", formatSlot(data.start_time, data.end_time)),
-    // Distinct per outcome — approved vs rejected used to share one
+    // Distinct per outcome: approved vs rejected used to share one
     // "workspace_booking" type, so both rendered with the same icon.
     notification_type: status === "approved" ? "workspace_approved" : "workspace_denied",
   });
@@ -271,7 +271,7 @@ async function finalizeBooking(req, res, status, messageFor) {
   res.json({ data: { ok: true } });
 }
 
-// Blocks approving past a desk's capacity — counts bookings already
+// Blocks approving past a desk's capacity; counts bookings already
 // approved for the same (workspace, start_time), not counting this one, and
 // re-checks it here rather than trusting whatever the admin's screen had
 // loaded, so two admins approving near-simultaneously can't both push a
@@ -298,7 +298,7 @@ export async function approveBooking(req, res, next) {
 
     const capacity = booking.workspace?.capacity || 1;
     if (approved.length >= capacity) {
-      return res.status(409).json({ error: "This slot is already full — can't approve any more requests for it." });
+      return res.status(409).json({ error: "This slot is already full. Can't approve any more requests for it." });
     }
 
     await finalizeBooking(req, res, "approved", (name, slot) => `Your request for ${name} (${slot}) was approved.`);

@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
-// Shared "Home > Module > Page" trail — originally Community-only (duplicated
+// Shared "Home > Module > Page" trail. Originally Community-only (duplicated
 // across SectionPage.jsx and each detail page), now the one implementation
 // every module's list/detail pages use.
 //
-// items: [{ label, to? }] — the last item (or any item without `to`) renders
+// items: [{ label, to? }]: the last item (or any item without `to`) renders
 // as plain text instead of a link, since it's the current page.
 // light: true for text sitting on a dark/photo background, false for
 // ordinary page backgrounds.

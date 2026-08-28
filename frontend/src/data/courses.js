@@ -1,5 +1,5 @@
 /**
- * Course data — each lesson has body HTML and key takeaway points
+ * Course data: each lesson has body HTML and key takeaway points
  * so the BookReader can render a full page per lesson.
  */
 export const courses = [
@@ -17,7 +17,7 @@ export const courses = [
     paths: ["basic", "stepByStep", "interactive"],
     interactivePrice: 24.99,
     description:
-      "Master Python programming through hands-on projects. From variables and control flow to file handling — you'll write real scripts by week two.",
+      "Master Python programming through hands-on projects. From variables and control flow to file handling, you'll write real scripts by week two.",
     instructor: "Dr. Sarah Chen",
     instructorId: "lect-1",
     tags: ["Python", "Scripting", "Beginner"],
@@ -29,7 +29,7 @@ export const courses = [
       },
       {
         id: 2, title: "Variables & Data Types", duration: "60 min", type: "reading",
-        body: "<p>Variables are containers for data. Python is dynamically typed — you don't declare a type upfront.</p><ul><li>Strings, integers, floats, booleans</li><li>Type checking with type()</li><li>String formatting with f-strings</li><li>Mutable vs immutable types</li></ul>",
+        body: "<p>Variables are containers for data. Python is dynamically typed: you don't declare a type upfront.</p><ul><li>Strings, integers, floats, booleans</li><li>Type checking with type()</li><li>String formatting with f-strings</li><li>Mutable vs immutable types</li></ul>",
         points: ["x = 5 creates an integer", "Use str(), int() to convert types", "F-strings: f'Hello {name}'"],
       },
       {
@@ -134,7 +134,7 @@ export const courses = [
     paths: ["basic", "stepByStep", "interactive"],
     interactivePrice: 19.99,
     description:
-      "Build responsive websites from the ground up. Learn HTML, CSS, and JavaScript — then tie it all together in a portfolio project.",
+      "Build responsive websites from the ground up. Learn HTML, CSS, and JavaScript, then tie it all together in a portfolio project.",
     instructor: "Lena Müller",
     instructorId: "lect-3",
     tags: ["HTML", "CSS", "JavaScript"],
@@ -146,7 +146,7 @@ export const courses = [
       },
       {
         id: 2, title: "CSS Styling", duration: "60 min", type: "video",
-        body: "<p>CSS controls how HTML looks. Select elements and apply properties — colours, fonts, spacing, and layout rules.</p><ul><li>Selectors: element, class, ID, pseudo-class</li><li>The box model: margin, border, padding, content</li><li>Colours, fonts, and units (px, rem, %)</li><li>The cascade and specificity rules</li></ul>",
+        body: "<p>CSS controls how HTML looks. Select elements and apply properties: colours, fonts, spacing, and layout rules.</p><ul><li>Selectors: element, class, ID, pseudo-class</li><li>The box model: margin, border, padding, content</li><li>Colours, fonts, and units (px, rem, %)</li><li>The cascade and specificity rules</li></ul>",
         points: ["Specificity: ID wins over class wins over element", "rem units scale with the root font size", "The box model defines how element space is calculated"],
       },
       {
@@ -212,7 +212,7 @@ export const courses = [
       },
       {
         id: 4, title: "Classification", duration: "80 min", type: "video",
-        body: "<p>Classification predicts which category an input belongs to. From spam detection to medical diagnosis — it powers countless real applications.</p><ul><li>Logistic regression for binary classification</li><li>Decision trees and random forests</li><li>Evaluation: accuracy, precision, recall, F1</li><li>Confusion matrices explained</li></ul>",
+        body: "<p>Classification predicts which category an input belongs to. From spam detection to medical diagnosis, it powers countless real applications.</p><ul><li>Logistic regression for binary classification</li><li>Decision trees and random forests</li><li>Evaluation: accuracy, precision, recall, F1</li><li>Confusion matrices explained</li></ul>",
         points: ["Classification output is a category, not a number", "Precision = correct positive predictions / all positive predictions", "Random forests reduce overfitting via ensemble voting"],
       },
       {
@@ -257,7 +257,7 @@ export const courses = [
       },
       {
         id: 3, title: "Sensors", duration: "60 min", type: "reading",
-        body: "<p>Sensors let your Arduino perceive the world — temperature, distance, light, and motion. This lesson covers the most useful ones.</p><ul><li>Analog vs digital sensor signals</li><li>Reading a temperature sensor (DHT11)</li><li>Ultrasonic distance with HC-SR04</li><li>analogRead() and mapping values</li></ul>",
+        body: "<p>Sensors let your Arduino perceive the world: temperature, distance, light, and motion. This lesson covers the most useful ones.</p><ul><li>Analog vs digital sensor signals</li><li>Reading a temperature sensor (DHT11)</li><li>Ultrasonic distance with HC-SR04</li><li>analogRead() and mapping values</li></ul>",
         points: ["analogRead() returns 0–1023 on a 10-bit ADC", "map() scales values between ranges", "Pull-up resistors prevent floating input pins"],
       },
       {
@@ -268,7 +268,7 @@ export const courses = [
       {
         id: 5, title: "Mini Robot Build", duration: "150 min", type: "project",
         body: "<p>Put it all together: build a two-wheeled robot that drives forward, detects obstacles with an ultrasonic sensor, and turns to avoid them.</p><ul><li>Assembling the chassis and wiring motors</li><li>Mounting and wiring the ultrasonic sensor</li><li>Writing the obstacle-avoidance sketch</li><li>Calibrating turn timing and speed</li></ul>",
-        points: ["Test each component individually before combining", "Cable management matters — loose wires cause bugs", "Tune the stop distance threshold for your floor surface"],
+        points: ["Test each component individually before combining", "Cable management matters: loose wires cause bugs", "Tune the stop distance threshold for your floor surface"],
       },
     ],
   },
@@ -297,8 +297,8 @@ export const courses = [
       },
       {
         id: 2, title: "React Components", duration: "65 min", type: "video",
-        body: "<p>Components are the building blocks of React apps. Every piece of UI is a component — a function that returns JSX.</p><ul><li>Function components and JSX syntax</li><li>Props: passing data into components</li><li>Children and component composition</li><li>Thinking in components: breaking down a UI</li></ul>",
-        points: ["Components must start with a capital letter", "Props flow one-way: parent to child", "JSX is not HTML — it compiles to React.createElement()"],
+        body: "<p>Components are the building blocks of React apps. Every piece of UI is a component: a function that returns JSX.</p><ul><li>Function components and JSX syntax</li><li>Props: passing data into components</li><li>Children and component composition</li><li>Thinking in components: breaking down a UI</li></ul>",
+        points: ["Components must start with a capital letter", "Props flow one-way: parent to child", "JSX is not HTML; it compiles to React.createElement()"],
       },
       {
         id: 3, title: "Hooks Deep Dive", duration: "85 min", type: "lab",
@@ -308,7 +308,7 @@ export const courses = [
       {
         id: 4, title: "State Management", duration: "80 min", type: "video",
         body: "<p>As apps grow, lifting state up and prop drilling become painful. This lesson covers practical state management patterns.</p><ul><li>Lifting state to the nearest common ancestor</li><li>useContext for app-wide state without prop drilling</li><li>useReducer for complex state logic</li><li>When to reach for an external library</li></ul>",
-        points: ["Context avoids prop drilling through many layers", "useReducer works like a mini Redux", "Avoid over-engineering — useState is often enough"],
+        points: ["Context avoids prop drilling through many layers", "useReducer works like a mini Redux", "Avoid over-engineering; useState is often enough"],
       },
       {
         id: 5, title: "Routing", duration: "60 min", type: "lab",
@@ -335,7 +335,7 @@ export const courses = [
     rating: 4.6,
     paths: ["basic", "stepByStep"],
     description:
-      "Learn the full 3D printing workflow — from designing models in CAD to slicing and printing on an FDM printer. No prior design experience required.",
+      "Learn the full 3D printing workflow: from designing models in CAD to slicing and printing on an FDM printer. No prior design experience required.",
     instructor: "Marco Villanueva",
     instructorId: "lect-7",
     tags: ["3D Printing", "CAD", "Hardware"],
@@ -367,8 +367,8 @@ export const courses = [
       },
       {
         id: 6, title: "Final Build", duration: "150 min", type: "project",
-        body: "<p>Design, slice, and print a functional object of your choosing — a phone stand, enclosure, or tool holder — from scratch.</p><ul><li>Sketch and plan your design requirements</li><li>Model the part in CAD with correct tolerances</li><li>Slice with settings suited to your part's purpose</li><li>Print, post-process, and evaluate the result</li></ul>",
-        points: ["Design for the printer's limitations, not just the ideal shape", "Test-fit small features before printing the full part", "Iterate — the first print rarely matches the plan exactly"],
+        body: "<p>Design, slice, and print a functional object of your choosing (a phone stand, enclosure, or tool holder) from scratch.</p><ul><li>Sketch and plan your design requirements</li><li>Model the part in CAD with correct tolerances</li><li>Slice with settings suited to your part's purpose</li><li>Print, post-process, and evaluate the result</li></ul>",
+        points: ["Design for the printer's limitations, not just the ideal shape", "Test-fit small features before printing the full part", "Iterate: the first print rarely matches the plan exactly"],
       },
     ],
   },

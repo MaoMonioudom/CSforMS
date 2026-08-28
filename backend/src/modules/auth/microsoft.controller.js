@@ -19,7 +19,7 @@ function isDomainAllowed(email) {
   return allowedDomains.some((d) => emailDomain === d || emailDomain.endsWith(`.${d}`));
 }
 
-// Confidential (server-side) client — Microsoft is discovered/configured
+// Confidential (server-side) client. Microsoft is discovered/configured
 // once and cached, not PKCE'd (PKCE is for public/browser clients; we hold
 // a client secret here).
 let configPromise;
@@ -69,7 +69,7 @@ export async function microsoftLogin(req, res, next) {
   try {
     const intent = req.query.intent === "reset" ? "reset" : "login";
     // For resets the user already told us which account they're recovering
-    // (forgotPasswordCheck) — carry that email in the signed state so the
+    // (forgotPasswordCheck), carry that email in the signed state so the
     // callback can insist the Microsoft account actually matches it.
     const claimedEmail = intent === "reset" ? normalizeEmail(req.query.email) : undefined;
     if (intent === "reset" && !claimedEmail) {
@@ -118,7 +118,7 @@ export async function microsoftCallback(req, res, next) {
 
     if (intent === "reset" && email !== claimedEmail) {
       // They asked to recover one account but signed into Microsoft as
-      // someone else — proving ownership of a *different* email doesn't count.
+      // someone else; proving ownership of a *different* email doesn't count.
       return res.redirect(frontendRedirect("/forgot-password", { error: "email_mismatch" }));
     }
 
@@ -133,7 +133,7 @@ export async function microsoftCallback(req, res, next) {
     }
 
     // intent === "login", no existing account: Microsoft only verified the
-    // email here — it doesn't get to create the account too. Hand off to a
+    // email here, it doesn't get to create the account too. Hand off to a
     // real signup form so the person picks their own name and password.
     if (!user) {
       if (!isDomainAllowed(email)) {
@@ -182,7 +182,7 @@ export async function microsoftCompleteSignup(req, res, next) {
     const { msId, email } = payload;
 
     // The token could in theory outlive a domain-policy change in its 15
-    // minute window — re-check rather than trust the token blindly.
+    // minute window, so re-check rather than trust the token blindly.
     if (!isDomainAllowed(email)) {
       return res.status(403).json({ error: "That email isn't eligible to sign up here" });
     }

@@ -133,7 +133,7 @@ function EnrollPage({ course, enrolled, onEnroll }) {
         }`}
         onClick={onEnroll}
       >
-        {enrolled ? "✓ Enrolled — start learning" : "Enroll Now"}
+        {enrolled ? "✓ Enrolled, start learning" : "Enroll Now"}
       </button>
     </div>
   );

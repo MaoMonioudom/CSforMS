@@ -1,6 +1,6 @@
 import { api } from "./api/client";
 
-// Real per-user counts + a merged recent-activity feed — see
+// Real per-user counts + a merged recent-activity feed, see
 // backend/src/modules/profile/profile.controller.js.
 export async function fetchProfileSummary() {
   const { data } = await api.get("/api/profile/summary");

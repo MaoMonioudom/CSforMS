@@ -33,7 +33,7 @@ function EnrollPromptModal({ course, signedIn, enrolling, onEnroll, onSignIn, on
         </h2>
         <p className="mb-6 text-sm leading-relaxed text-ink-soft">
           Enroll in <span className="font-semibold text-ink">{course.title}</span> to
-          open its lessons and rate the course. It's free — paid paths are unlocked separately.
+          open its lessons and rate the course. It's free; paid paths are unlocked separately.
         </p>
         <div className="flex justify-center gap-3">
           {signedIn ? (
@@ -105,7 +105,7 @@ export default function CourseDetail() {
   // Fresh average after the student rates, without refetching the course.
   const [liveRating, setLiveRating] = useState(null);
 
-  // The course arrives async — once it does, start on its first path.
+  // The course arrives async. Once it does, start on its first path.
   useEffect(() => {
     if (course?.paths?.length) setActivePath(course.paths[0]);
   }, [course]);
@@ -173,7 +173,7 @@ export default function CourseDetail() {
       const result = await rate(stars);
       if (result) setLiveRating(result);
     } catch {
-      /* rating failed (offline?) — keep the previous value */
+      /* rating failed (offline?): keep the previous value */
     } finally {
       setRatingSaving(false);
     }

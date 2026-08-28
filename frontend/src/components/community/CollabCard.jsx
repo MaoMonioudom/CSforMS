@@ -47,7 +47,7 @@ export function CollabCard({ post, index = 0 }) {
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = paperShadowHover; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = paperShadow; }}
     >
-      {/* Colored header band — signup sheet style */}
+      {/* Colored header band: signup sheet style */}
       <div className="bg-collaboration px-5 py-3 flex items-center gap-2 shrink-0">
         <span className="text-sm font-extrabold text-collaboration-foreground tracking-wide">
           {collabTypeLabel[post.type]}

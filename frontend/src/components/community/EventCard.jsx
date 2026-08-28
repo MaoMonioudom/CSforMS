@@ -30,7 +30,7 @@ export function EventCard({ event, index = 0, registered = false }) {
   const canRegister = status === "upcoming" && !isFull && !registered;
   const hasGallery = status === "ended" && !!event.galleryUrl;
 
-  // The card is one big <Link> to the detail page — an external-link event's
+  // The card is one big <Link> to the detail page. An external-link event's
   // Register button needs to open that link directly instead, so it stops
   // the click from also navigating into the card (can't nest an <a> inside
   // the outer <Link>'s <a>, hence window.open rather than a real anchor).
@@ -69,7 +69,7 @@ export function EventCard({ event, index = 0, registered = false }) {
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = paperShadowHover; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow = paperShadow; }}
     >
-      {/* Colored header band — like a flyer's title strip */}
+      {/* Colored header band: like a flyer's title strip */}
       <div className="h-2 bg-events w-full shrink-0" />
 
       {/* Image */}

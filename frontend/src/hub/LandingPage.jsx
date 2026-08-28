@@ -47,12 +47,12 @@ export function CurtainWallDecoration() {
   );
 }
 
-// Camera range constants — must match HubScene.jsx
+// Camera range constants: must match HubScene.jsx
 const CAM_MIN = -600;
 const CAM_MAX  =  640;
 // Extra scroll height for the scene wrapper (px). This is how many pixels the
 // user needs to scroll to sweep the camera from CAM_MIN to CAM_MAX.
-const SCENE_SCROLL_HEIGHT = (CAM_MAX - CAM_MIN) * 2; // 2480 px — smooth feel
+const SCENE_SCROLL_HEIGHT = (CAM_MAX - CAM_MIN) * 2; // 2480 px, smooth feel
 
 // ── Landing Page ──────────────────────────────────────────────────────────────
 export default function HubLandingPage() {
@@ -112,7 +112,7 @@ export default function HubLandingPage() {
           justifyContent: "center",
         }}
       >
-        {/* Glass curtain wall pattern — same visual as the scene */}
+        {/* Glass curtain wall pattern: same visual as the scene */}
         <CurtainWallDecoration />
 
         {/* Soft vignette edges */}
@@ -193,7 +193,7 @@ export default function HubLandingPage() {
         }} />
       </section>
 
-      {/* ── 2. SCENE — sticky inside a tall wrapper ────────────────────── */}
+      {/* ── 2. SCENE: sticky inside a tall wrapper ────────────────────── */}
       {/* The wrapper is taller than the viewport so the user scrolls through it.
           The sticky inner stays pinned, and scroll progress drives the camera. */}
       <div

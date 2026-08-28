@@ -63,7 +63,7 @@ function InfoRow({ label, value }) {
   )
 }
 
-// ── Requests Manager (staff/admin approve) — handles borrow requests, credit
+// ── Requests Manager (staff/admin approve): handles borrow requests, credit
 // top-ups, document printing, and 3D print jobs (which need a weight entered
 // by staff before they can be charged) in one queue ───────────────────────────
 export default function RequestsManager({ requests, borrows, items, users, user, showToast, filaments = [] }) {
@@ -81,7 +81,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const getUser  = (id) => users.find(u => u.id === id)
   const getCategory = (itemId) => { const p = items.find(i => i.id === itemId); return p ? CATEGORIES.find(c => c.id === p.category)?.label : null }
 
-  // All mutations go through the backend now — these wrappers just add toasts.
+  // All mutations go through the backend now; these wrappers just add toasts.
   const tryAction = async (fn, successMsg) => {
     try {
       await fn()
@@ -91,19 +91,19 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     }
   }
 
-  // Approve or decline every request in a multi-item borrow transaction together —
+  // Approve or decline every request in a multi-item borrow transaction together;
   // the backend creates the borrow rows, adjusts stock, and notifies the student.
   const approveGroup = (group) =>
     tryAction(() => ctx.approveBorrowGroup(group.map(r => r.id)),
       group.length === 1 ? `Approved: ${group[0].itemName}` : `Approved ${group.length} items`)
 
-  // Purchases charge the student at approval time — this is where credits
+  // Purchases charge the student at approval time. This is where credits
   // are actually deducted and stock reduced, so precheck the balance.
   const approvePurchase = (e) => {
     const student = getUser(e.first.userId)
     const total = e.group.reduce((s, r) => s + ((items.find(i => i.id === r.itemId)?.credits ?? 0) * (r.qty || 1)), 0)
     if (student && student.credits < total) { showToast('Student has insufficient credits for this purchase.', 'error'); return }
-    return tryAction(() => ctx.approvePurchaseGroup(e.group.map(r => r.id)), `Approved purchase — ${total} cr deducted`)
+    return tryAction(() => ctx.approvePurchaseGroup(e.group.map(r => r.id)), `Approved purchase: ${total} cr deducted`)
   }
 
   const denyGroup = (group) =>
@@ -118,10 +118,10 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const approvePrinting = (req) => {
     const student = getUser(req.userId)
     if (student && student.credits < req.credits) { showToast('Student has insufficient credits for this print job.', 'error'); return }
-    return tryAction(() => ctx.approvePrinting(req.id), `Approved printing — ${req.credits} cr`)
+    return tryAction(() => ctx.approvePrinting(req.id), `Approved printing: ${req.credits} cr`)
   }
 
-  // Staff weigh the finished 3D print and enter grams here — cost is computed
+  // Staff weigh the finished 3D print and enter grams here; cost is computed
   // by the backend from the assigned filament's credit-per-gram rate.
   const confirm3DWeight = (req) => {
     const grams = Number(gramsInput[req.id])
@@ -131,7 +131,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     return tryAction(() => ctx.confirm3DWeight(req.id, grams), `Charged ~${credits} cr for ${grams}g`)
   }
 
-  // Only credit top-up, printing, and 3D print jobs route here — borrow requests
+  // Only credit top-up, printing, and 3D print jobs route here; borrow requests
   // are always approved/declined as a whole transaction via approveGroup/denyGroup.
   const approve = (req) => {
     if (req.type === 'credit_topup') return approveTopUp(req)
@@ -142,9 +142,9 @@ export default function RequestsManager({ requests, borrows, items, users, user,
   const deny = (req) => tryAction(() => ctx.denyRequests([req.id]), 'Declined request')
 
   const rowMeta = (req) => {
-    if (req.type === 'credit_topup') return { icon: <CreditCard size={14} color={T.amber} />, title: `Credit Top-Up — $${req.amountUSD} (${Math.round(req.amountUSD * CREDIT_RATE)} cr)`, category: 'Credit Top-Up' }
-    if (req.type === 'printing') return { icon: <Printer size={14} color={T.blue} />, title: `Document Printing — ${req.pages} page${req.pages === 1 ? '' : 's'} (${req.credits} cr)`, category: 'Lab Service' }
-    if (req.type === '3d_printing') return { icon: <Box size={14} color={T.purple} />, title: `3D Print Job — ${req.filamentName || 'filament TBD'}`, category: 'Lab Service' }
+    if (req.type === 'credit_topup') return { icon: <CreditCard size={14} color={T.amber} />, title: `Credit Top-Up: $${req.amountUSD} (${Math.round(req.amountUSD * CREDIT_RATE)} cr)`, category: 'Credit Top-Up' }
+    if (req.type === 'printing') return { icon: <Printer size={14} color={T.blue} />, title: `Document Printing: ${req.pages} page${req.pages === 1 ? '' : 's'} (${req.credits} cr)`, category: 'Lab Service' }
+    if (req.type === '3d_printing') return { icon: <Box size={14} color={T.purple} />, title: `3D Print Job: ${req.filamentName || 'filament TBD'}`, category: 'Lab Service' }
     return { icon: <Package2 size={14} color={T.blue} />, title: req.itemName, category: getCategory(req.itemId) }
   }
 
@@ -190,13 +190,13 @@ export default function RequestsManager({ requests, borrows, items, users, user,
     return approve(e.first)
   }
   // Approving a purchase, top-up, or print job charges real credits at that
-  // moment — gate those behind one confirm step. Borrows aren't charged on
+  // moment; gate those behind one confirm step. Borrows aren't charged on
   // approval, and 3D print jobs already have their own weight-confirm step.
   const needsChargeConfirm = (e) => e.kind === 'purchase' || (e.kind === 'other' && ['credit_topup', 'printing'].includes(e.first.type))
   const approveEntry = (e) => needsChargeConfirm(e) ? setConfirmApprove(e) : runApproveEntry(e)
   const denyEntry = (e) => e.isGroup ? denyGroup(e.group) : deny(e.first)
   // Only ever offered once a request is resolved (see the Actions column and
-  // detail modal below) — the backend also refuses to delete a pending one.
+  // detail modal below); the backend also refuses to delete a pending one.
   const deleteEntry = (e) => {
     const ids = e.isGroup ? e.group.map(r => r.id) : [e.first.id]
     return tryAction(() => ctx.deleteRequestGroup(ids), 'Deleted')
@@ -226,8 +226,8 @@ export default function RequestsManager({ requests, borrows, items, users, user,
 
   const buildHistory = (e) => {
     const h = [{ action: 'Request submitted', by: e.student?.name || `User #${e.first.userId}`, date: e.first.date }]
-    if (e.status === 'Approved') h.push({ action: 'Approved', by: `Staff — ${user.name}`, date: e.first.date })
-    if (e.status === 'Declined') h.push({ action: 'Declined', by: `Staff — ${user.name}`, date: e.first.date })
+    if (e.status === 'Approved') h.push({ action: 'Approved', by: `Staff: ${user.name}`, date: e.first.date })
+    if (e.status === 'Declined') h.push({ action: 'Declined', by: `Staff: ${user.name}`, date: e.first.date })
     return h
   }
 
@@ -344,7 +344,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                 <div className="req-truncate" style={{ fontSize: 12, color: 'var(--color-charcoal)' }}>{fmtDateTime(e.first.date)}</div>
                 <div className="req-truncate" style={{ fontSize: 12, color: e.first.dueDate ? 'var(--color-charcoal)' : T.faint }}>{e.first.dueDate ? fmtDateTime(e.first.dueDate) : '—'}</div>
                 <div><StatusPill status={e.status} /></div>
-                {/* 3D print jobs need a weight entered before they can be charged —
+                {/* 3D print jobs need a weight entered before they can be charged;
                     that control lives here in Actions only, not as a separate
                     full-width strip under the row. */}
                 <div className="req-actions" onClick={ev => ev.stopPropagation()} style={needsWeight ? { flexDirection: 'column', alignItems: 'flex-end', gap: 4 } : undefined}>
@@ -370,7 +370,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
                           <button className="req-icon-btn" title="Approve" style={{ background: T.green, color: '#fff' }} onClick={() => approveEntry(e)}><Check size={13} /></button>
                         </>
                       ) : (
-                        // Only once resolved — clears it off the list without
+                        // Only once resolved. Clears it off the list without
                         // touching anything still awaiting a decision.
                         <button className="req-icon-btn" title="Delete" style={{ background: '#fff', color: T.red, border: `1.5px solid ${T.red}33` }} onClick={() => setDelEntry(e)}><Trash2 size={13} /></button>
                       )}
@@ -520,13 +520,13 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         </div>
       )}
 
-      {/* Confirm delete — only ever reachable for an already-resolved entry */}
+      {/* Confirm delete: only ever reachable for an already-resolved entry */}
       {delEntry && (
         <div onClick={() => setDelEntry(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 950, padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: T.white, borderRadius: 16, padding: '1.75rem', width: 340, textAlign: 'center' }}>
             <Trash2 size={30} color={T.red} style={{ marginBottom: 10 }} />
             <p style={{ color: T.charcoal, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Delete this request?</p>
-            <p style={{ color: T.muted, fontSize: 13, marginBottom: 18 }}>This just clears it off the list — it won't undo the {delEntry.status.toLowerCase()} action.</p>
+            <p style={{ color: T.muted, fontSize: 13, marginBottom: 18 }}>This just clears it off the list; it won't undo the {delEntry.status.toLowerCase()} action.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => setDelEntry(null)} style={{ padding: '9px 20px', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => { deleteEntry(delEntry); setDelEntry(null) }}
@@ -538,7 +538,7 @@ export default function RequestsManager({ requests, borrows, items, users, user,
         </div>
       )}
 
-      {/* Confirm charge — purchases, top-ups, and print jobs all deduct/add
+      {/* Confirm charge: purchases, top-ups, and print jobs all deduct/add
           real credits the moment they're approved, so this is the one gate
           before that happens (Cash/QR for top-ups is chosen here too). */}
       {confirmApprove && (() => {

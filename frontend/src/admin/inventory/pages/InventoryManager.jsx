@@ -31,7 +31,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   const fileInputRef = useRef(null)
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  // Open maintenance issues, keyed by item id — refetched whenever an item's
+  // Open maintenance issues, keyed by item id. Refetched whenever an item's
   // maintenance status changes (report/complete/expand) so the reported
   // problem shows up on the item without a full page reload.
   const [openIssues, setOpenIssues] = useState({})
@@ -54,7 +54,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   }
 
   // "Low Stock" and "Unavailable" are both derived from stock, not a stored
-  // status — Unavailable means "out of stock" here, since that's what makes
+  // status. Unavailable means "out of stock" here, since that's what makes
   // an item genuinely unavailable to borrow or purchase.
   const matchesStatus = (i) => {
     if (statusTab === 'All') return true
@@ -68,7 +68,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   const visibleItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const save = async () => {
-    // Consumables are sold for credits — a free/0-credit "purchase" makes no
+    // Consumables are sold for credits; a free/0-credit "purchase" makes no
     // sense, so this is enforced here rather than trusting the input.
     if (form.type === 'Consumable' && (!form.credits || form.credits <= 0)) {
       ctx.showToast?.('Consumable items need a credit cost greater than 0.', 'error')
@@ -155,7 +155,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 {isLow && <AlertTriangle size={12} color={T.amber} />}
                 <span style={{ fontWeight: 600, fontSize: 13, color: isLow ? T.amber : T.charcoal }}>{item.stock}</span>
               </div>
-              {/* "available" with zero stock is misleading — show Out of Stock */}
+              {/* "available" with zero stock is misleading: show Out of Stock */}
               <div><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
                 {user.role !== 'user' && (
@@ -190,7 +190,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4" style={{ padding: '0 16px 14px 56px' }}>
                   {[['Description', item.description], ['Zone', `${item.zone} · ${item.room}`], ['Condition', item.condition], ['Borrow Count', item.borrowCount ?? 0],
                     ...(item.status === 'maintenance' && openIssues[item.id]
-                      ? [['Reported Issue', `${openIssues[item.id].notes || 'No notes provided'} — ${fmtDateTime(openIssues[item.id].reportedAt)}`]]
+                      ? [['Reported Issue', `${openIssues[item.id].notes || 'No notes provided'}: ${fmtDateTime(openIssues[item.id].reportedAt)}`]]
                       : [])].map(([k, v]) => (
                     <div key={k} style={{ background: T.cream, borderRadius: 8, padding: '8px 10px' }}>
                       <p style={{ margin: 0, color: T.faint, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</p>
@@ -218,7 +218,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
         </div>
       </div>
 
-      {/* Filament inventory — used to price & stock 3D print jobs */}
+      {/* Filament inventory: used to price & stock 3D print jobs */}
       <div style={{ marginTop: '1.5rem', background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -240,7 +240,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
               <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ width: 26, height: 26, borderRadius: '50%', background: f.hex, border: `1px solid ${T.border}`, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.charcoal }}>{f.name} — {f.color}</p>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.charcoal }}>{f.name}: {f.color}</p>
                   <p style={{ margin: 0, fontSize: 11, color: T.faint }}>{f.stockGrams}g in stock · {f.rate ?? 0} cr/g</p>
                 </div>
                 {user.role !== 'user' && (
@@ -320,7 +320,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
           <div style={{ background: T.white, borderRadius: 18, padding: '2rem', width: '100%', maxWidth: 540, maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
             <h3 style={{ margin: '0 0 1.5rem', fontSize: 18, fontWeight: 700, color: T.charcoal }}>{editing ? 'Edit Item' : 'Add New Item'}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
-              {/* No price field — everything is credit-based. */}
+              {/* No price field: everything is credit-based. */}
               {[['name','Item Name'],['zone','Zone Code'],['credits','Credits'],['stock','Stock Qty'],['minStock','Min Stock']].map(([k, label]) => (
                 <div key={k}>
                   <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</label>
@@ -343,7 +343,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Type</label>
                 <select value={form.type} onChange={e => {
                   const type = e.target.value
-                  // Consumables must be priced — default to 50cr so switching
+                  // Consumables must be priced. Default to 50cr so switching
                   // to Consumable never leaves a 0-credit "Free" purchase.
                   setForm(f => ({ ...f, type, credits: type === 'Consumable' && !f.credits ? 50 : f.credits }))
                 }} style={inp}>
@@ -354,7 +354,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Description</label>
                 <textarea value={form.description} onChange={e => setF('description', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
               </div>
-              {/* Item photo — uploads to storage immediately, URL saved with the item */}
+              {/* Item photo: uploads to storage immediately, URL saved with the item */}
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ color: T.faint, fontSize: 12, display: 'block', marginBottom: 4 }}>Item Photo</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -401,7 +401,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
         </div>
       )}
 
-      {/* Report Issue — flips the item to Maintenance and logs the problem
+      {/* Report Issue: flips the item to Maintenance and logs the problem
           (the note staff see on this row until the item is marked repaired). */}
       {maintItem && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

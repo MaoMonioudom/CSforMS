@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 
-// Inventory module — student/guest side, mounted at /inventory/*.
-// Chrome (nav, cursor, footer) and auth are the hub's — this module only owns
+// Inventory module: student/guest side, mounted at /inventory/*.
+// Chrome (nav, cursor, footer) and auth are the hub's; this module only owns
 // its own routes/state. State lives in InventoryProvider so the admin area at
 // /admin/inventory/* shares the same data.
 import { useInventory } from '../../lib/inventory/InventoryContext'
@@ -52,7 +52,7 @@ export default function InventoryApp() {
               />
             } />
 
-            {/* Guest-accessible read-only browse — no account needed to look
+            {/* Guest-accessible read-only browse. No account needed to look
                 around. If you're actually signed in when you land here (e.g.
                 the TopNav menu link, a bookmark), send you to the real
                 catalog instead of the read-only preview. */}
@@ -77,7 +77,7 @@ export default function InventoryApp() {
                     onCartOpen={() => setCartOpen(true)} borrows={borrows}
                   />
                 } />
-                {/* Notifications page is now shared across all 3 modules — one
+                {/* Notifications page is now shared across all 3 modules: one
                     implementation at /notifications (see hub/NotificationsPage.jsx),
                     still reachable from here for anything that links to the old path. */}
                 <Route path="my-borrows" element={<Navigate to="/notifications" replace />} />

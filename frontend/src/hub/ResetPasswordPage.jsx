@@ -62,7 +62,7 @@ export default function ResetPasswordPage() {
         ) : (
           <>
             <h1 className="text-2xl font-extrabold" style={{ color: D.text }}>Set a new password</h1>
-            <p className="text-sm" style={{ color: D.muted }}>Your identity is verified — choose a new password below.</p>
+            <p className="text-sm" style={{ color: D.muted }}>Your identity is verified. Choose a new password below.</p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <ErrorBox message={error} />

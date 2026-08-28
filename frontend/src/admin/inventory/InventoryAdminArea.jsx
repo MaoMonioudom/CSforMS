@@ -12,14 +12,14 @@ import RequestsManager from './pages/RequestsManager'
 import Catalog from '../../components/inventory/Catalog'
 
 // Titles for the shared page header (same plain style as Community/Learning's
-// admin dashboards). This header is the ONLY page header — the pages
+// admin dashboards). This header is the ONLY page header; the pages
 // themselves don't render their own duplicate title banners underneath it.
 const PAGE_META = {
   '':          { title: 'Dashboard',          subtitle: 'Inventory overview & management' },
   'catalog':   { title: 'Browse Items',       subtitle: 'Manage inventory, or select a student to sell consumables and lend tools at the counter' },
-  'services':  { title: 'Lab Services',       subtitle: 'Fulfill walk-up print and 3D print jobs — find a student, charge credits directly' },
-  'requests':  { title: 'Request Management', subtitle: 'Review and approve student requests — borrow items, credit top-ups, and print jobs' },
-  'borrows':   { title: 'Borrow Tracker',     subtitle: 'Track all active borrowed and returns — click any row for full transaction details' },
+  'services':  { title: 'Lab Services',       subtitle: 'Fulfill walk-up print and 3D print jobs: find a student, charge credits directly' },
+  'requests':  { title: 'Request Management', subtitle: 'Review and approve student requests: borrow items, credit top-ups, and print jobs' },
+  'borrows':   { title: 'Borrow Tracker',     subtitle: 'Track all active borrowed and returns: click any row for full transaction details' },
   'manage':    { title: 'Manage Stock',       subtitle: 'Manage items, stock, and availability' },
   'payments':  { title: 'Payment List',       subtitle: 'Track credit top-ups and item purchases' },
 }
@@ -43,14 +43,14 @@ export default function InventoryAdminArea() {
   const [cart, setCart] = useState([])
 
   // Brief flash right after login, before InventoryContext finishes creating
-  // this hub account's inventory profile — nothing meaningful to render yet.
+  // this hub account's inventory profile, nothing meaningful to render yet.
   if (!user) return null
 
   const sharedBorrow = { borrows, setBorrows, items, setItems }
 
   return (
     <div className="inv-root">
-      {/* Plain page header — same style as the Community/Learning admin
+      {/* Plain page header: same style as the Community/Learning admin
           dashboards. The shared AdminSidebar already shows the signed-in
           user's name/role and provides sign out, so this doesn't duplicate
           that with its own profile chip. */}

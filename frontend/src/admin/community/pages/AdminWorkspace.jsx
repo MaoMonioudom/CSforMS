@@ -11,14 +11,14 @@ const STATUS_STYLE = {
   pending:   { label: "Pending",   cls: "bg-amber-50 text-amber-600" },
   approved:  { label: "Approved",  cls: "bg-emerald-50 text-emerald-600" },
   denied:    { label: "Denied",    cls: "bg-red-50 text-red-500" },
-  // Member cancelled their own still-pending request — not one of the
+  // Member cancelled their own still-pending request. Not one of the
   // filter tabs (nothing to action), but still shows correctly under "All".
   cancelled: { label: "Cancelled", cls: "bg-muted text-muted-foreground" },
 };
 
 const FILTERS = ["pending", "approved", "denied", "all"];
 
-// Starting suggestions only — workspace_type is free text in the database
+// Starting suggestions only. workspace_type is free text in the database
 // (no CHECK constraint), so this isn't the full list of allowed values,
 // just what shows up first before any custom types have been added yet.
 const DEFAULT_DESK_TYPES = ["desk", "bench", "private_room"];
@@ -37,7 +37,7 @@ function DesksPanel() {
   useEffect(() => {
     Promise.all([fetchAllWorkspacesAdmin(), fetchLocations()])
       .then(([ws, locs]) => { setDesks(ws); setLocations(locs); })
-      .catch(() => setError("Couldn't load desks — please try refreshing."))
+      .catch(() => setError("Couldn't load desks. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -55,7 +55,7 @@ function DesksPanel() {
       setForm(EMPTY_DESK_FORM);
       setFormOpen(false);
     } catch (err) {
-      setError(err.message || "Couldn't add that desk — please try again.");
+      setError(err.message || "Couldn't add that desk. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -69,7 +69,7 @@ function DesksPanel() {
       await setWorkspaceStatus(desk.id, nextStatus);
       setDesks((prev) => prev.map((d) => (d.id === desk.id ? { ...d, status: nextStatus } : d)));
     } catch (err) {
-      setError(err.message || "Couldn't update that desk — please try again.");
+      setError(err.message || "Couldn't update that desk. Please try again.");
     } finally {
       setTogglingId(null);
     }
@@ -132,7 +132,7 @@ function DesksPanel() {
             {loading ? (
               <tr><td className="px-5 py-6 text-center text-sm text-muted-foreground">Loading…</td></tr>
             ) : desks.length === 0 ? (
-              <tr><td className="px-5 py-6 text-center text-sm text-muted-foreground">No desks yet — add one above.</td></tr>
+              <tr><td className="px-5 py-6 text-center text-sm text-muted-foreground">No desks yet. Add one above.</td></tr>
             ) : desks.map((desk) => (
               <tr key={desk.id} className="hover:bg-muted transition-colors">
                 <td className="px-5 py-3">
@@ -162,7 +162,7 @@ function DesksPanel() {
   );
 }
 
-// How many OTHER requests for the same desk+slot are already approved —
+// How many OTHER requests for the same desk+slot are already approved,
 // used to show occupancy and to stop an admin from approving past capacity
 // before they even click (the backend blocks it too, but this avoids the
 // round-trip error for the common case).
@@ -182,12 +182,12 @@ export default function AdminWorkspace() {
   useEffect(() => {
     fetchAllBookings()
       .then(setRequests)
-      .catch(() => setError("Couldn't load requests — please try refreshing."))
+      .catch(() => setError("Couldn't load requests. Please try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
   // Reversible with one more click (the other action is still right there
-  // in the row), so no confirmation dialog here — unlike the destructive
+  // in the row), so no confirmation dialog here, unlike the destructive
   // deletes elsewhere in admin.
   const act = async (id, status) => {
     setActingId(id);
@@ -197,7 +197,7 @@ export default function AdminWorkspace() {
       else await rejectBooking(id);
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     } catch (err) {
-      setError(err.message || "Couldn't update that request — please try again.");
+      setError(err.message || "Couldn't update that request. Please try again.");
     } finally {
       setActingId(null);
     }
@@ -210,7 +210,7 @@ export default function AdminWorkspace() {
     denied:   requests.filter(r => r.status === "denied").length,
   };
 
-  // Newest submitted first — shows the full history (including requests
+  // Newest submitted first. Shows the full history (including requests
   // for dates that have already passed) rather than filtering anything out.
   const visible = requests
     .filter(r => filter === "all" || r.status === filter)

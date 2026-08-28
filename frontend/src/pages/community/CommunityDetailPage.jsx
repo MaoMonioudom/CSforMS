@@ -32,7 +32,7 @@ export default function CommunityDetailPage() {
       .finally(() => setLoading(false));
   }, [postId]);
 
-  // Optimistic toggle, same pattern as CommunityPage's feed — flip local
+  // Optimistic toggle, same pattern as CommunityPage's feed: flip local
   // state immediately, reconcile with the server's real values, roll back
   // on failure.
   const handleToggleLike = async () => {
@@ -56,7 +56,7 @@ export default function CommunityDetailPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard unavailable (unsupported browser/permissions) — nothing to fall back to
+      // clipboard unavailable (unsupported browser/permissions); nothing to fall back to
     }
   };
 
@@ -92,7 +92,7 @@ export default function CommunityDetailPage() {
         <h1 className="text-4xl font-semibold">{loadFailed ? "Couldn't load this post" : "Post not found"}</h1>
         <p className="mt-2 text-muted-foreground">
           {loadFailed
-            ? "Something went wrong loading this page — please try again."
+            ? "Something went wrong loading this page. Please try again."
             : "This community post doesn't exist or has been removed."}
         </p>
         <Link to="/community/communityspace" className="mt-6 inline-block text-community underline">
@@ -187,7 +187,7 @@ export default function CommunityDetailPage() {
           <ul className="mt-5 space-y-4">
             {post.comments.length === 0 ? (
               <li className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                No comments yet — be the first to chime in.
+                No comments yet. Be the first to chime in.
               </li>
             ) : (
               post.comments.map((c) => (

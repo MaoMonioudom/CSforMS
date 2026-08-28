@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { LogIn, User } from "lucide-react";
+import { LogIn, User, Mail, Send } from "lucide-react";
 import { useAuth } from "../hub/AuthContext";
+import { TEAM_CONTACT } from "../lib/inventory/data";
 import bbgLogo from "../assets/ms_bbg_logo.png";
 
 // ── Column data ───────────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ const COLUMNS = [
   {
     label:  "Learn",
     // Plain --color-oxblood(-deep) is a dark red built for use on Learning's
-    // light parchment background — against this footer's near-black bg it
+    // light parchment background; against this footer's near-black bg it
     // reads as almost no color at all. Lightened just for this on-dark spot
     // so it's as legible as the gold/inv-accent columns next to it.
     accent: "color-mix(in oklch, var(--color-oxblood) 65%, white)",
@@ -71,8 +72,20 @@ export function AppFooter() {
               <img src={bbgLogo} alt="Makerspace" className="h-8 w-auto object-contain" />
             </Link>
             <p className="text-xs font-medium leading-relaxed max-w-[200px]" style={{ color: "var(--on-dark-muted)" }}>
-              Your makerspace community — learn, build, and collaborate at CADT.
+              Your makerspace community: learn, build, and collaborate at CADT.
             </p>
+            <div className="flex items-center gap-3">
+              <a href={`mailto:${TEAM_CONTACT.email}`} aria-label="Email"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:text-white"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--on-dark-muted)" }}>
+                <Mail size={14} />
+              </a>
+              <a href={TEAM_CONTACT.telegram} target="_blank" rel="noreferrer" aria-label="Telegram"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:text-white"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--on-dark-muted)" }}>
+                <Send size={14} />
+              </a>
+            </div>
           </div>
 
           {/* ── Link columns ── */}
