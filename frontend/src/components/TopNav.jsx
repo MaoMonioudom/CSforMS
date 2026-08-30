@@ -29,6 +29,9 @@ const MODULE_CFG = {
     accent:      "var(--color-inv-accent)",
     placeholder: "Search items and equipment…",
     root:        "/inventory",
+    // The landing/home page at root doesn't read ?q= — searches need to land
+    // on the actual catalog so the query is applied to the item list.
+    searchTarget: "/inventory/browse",
   },
   // Account pages (Profile, Notifications, ...) aren't tied to a module:
   // no search bar, and the info box shows the page name instead of a module.
@@ -390,7 +393,7 @@ function NavSearch({ cfg, dark }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmed = q.trim();
-    navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
   };
 
   return (
@@ -432,7 +435,7 @@ function MobileSearch({ cfg, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmed = q.trim();
-    navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
     onClose?.();
   };
   return (
@@ -472,7 +475,7 @@ function MobileSearchTakeover({ cfg, dark, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmed = q.trim();
-    navigate(`${cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
     onClose();
   };
 

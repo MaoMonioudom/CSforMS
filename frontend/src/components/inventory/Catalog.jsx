@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar, MapPin } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar } from 'lucide-react'
 import Badge from './ui/Badge'
 import { Breadcrumb } from '../Breadcrumb'
 import { T } from '../../lib/inventory/theme'
-import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE, isLowStock, isOutOfStock } from '../../lib/inventory/data'
+import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE } from '../../lib/inventory/data'
 import { useInventory } from '../../lib/inventory/InventoryContext'
 
 const LOAN_DAYS = 7 // standard borrow period, shown to the student before they confirm
@@ -32,82 +33,70 @@ function ItemImage({ item, cat, size = 48, className = '' }) {
 
 const TEAL = 'var(--color-inv-accent)'
 
-function TileTooltip({ label, count }) {
-  return (
-    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-semibold opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
-      style={{ background: '#0f172a', color: '#fff' }}>
-      {label} · {count} {count === 1 ? 'item' : 'items'}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent" style={{ borderBottomColor: '#0f172a' }} />
-    </div>
-  )
-}
-
 function CategoryTiles({ items, filterCat, setFilterCat }) {
   const countFor = (id) => id === 'all' ? items.length : items.filter(i => i.category === id).length
 
   return (
     // Mobile/tablet: Telegram-folder style, one horizontal scrollable row of
     // compact icon tabs (kept through tablet widths so tiles never wrap to a
-    // second line). Only large desktop switches to a wrapping label+count grid.
+    // second line). Only large desktop switches to a wrapping label+count
+    // grid — the count is shown right in the tile there, so no hover
+    // tooltip is needed (it used to duplicate that count and could double up
+    // with the previous tile's tooltip mid-transition when moving the mouse
+    // quickly between tiles).
     <div className="inv-hscroll mb-5 flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-2.5 lg:overflow-visible lg:pb-0"
       style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))' }}>
-      <div className="group relative flex-shrink-0 lg:flex-shrink">
-        <button onClick={() => setFilterCat('all')}
-          className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
-          style={filterCat === 'all'
-            ? { background: `${TEAL}12`, border: `1.5px solid ${TEAL}55`, boxShadow: `0 0 0 3px ${TEAL}10` }
-            : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
-          <Boxes size={15} color={filterCat === 'all' ? TEAL : '#64748b'} className="lg:hidden" />
-          <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: filterCat === 'all' ? `${TEAL}18` : '#f1f5f9' }}>
-            <Boxes size={17} color={filterCat === 'all' ? TEAL : '#64748b'} />
-          </div>
-          <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: filterCat === 'all' ? TEAL : '#0f172a' }}>All</span>
-          <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor('all')}</span>
-        </button>
-        <TileTooltip label="All" count={countFor('all')} />
-      </div>
+      <button onClick={() => setFilterCat('all')}
+        className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-shrink lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+        style={filterCat === 'all'
+          ? { background: `color-mix(in oklch, ${TEAL} 12%, white)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 55%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 10%, transparent)` }
+          : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
+        <Boxes size={15} color={filterCat === 'all' ? TEAL : '#64748b'} className="lg:hidden" />
+        <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: filterCat === 'all' ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
+          <Boxes size={17} color={filterCat === 'all' ? TEAL : '#64748b'} />
+        </div>
+        <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: filterCat === 'all' ? TEAL : '#0f172a' }}>All</span>
+        <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor('all')}</span>
+      </button>
       {CATEGORIES.map(c => {
         const active = filterCat === c.id
         return (
-          <div key={c.id} className="group relative flex-shrink-0 lg:flex-shrink">
-            <button onClick={() => setFilterCat(c.id)}
-              className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
-              style={active
-                ? { background: `${TEAL}12`, border: `1.5px solid ${TEAL}55`, boxShadow: `0 0 0 3px ${TEAL}10` }
-                : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
-              <c.Icon size={15} color={active ? TEAL : c.iconColor} className="lg:hidden" />
-              <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: active ? `${TEAL}18` : '#f1f5f9' }}>
-                <c.Icon size={17} color={active ? TEAL : '#64748b'} />
-              </div>
-              <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: active ? TEAL : '#0f172a' }}>{c.label}</span>
-              <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor(c.id)}</span>
-            </button>
-            <TileTooltip label={c.label} count={countFor(c.id)} />
-          </div>
+          <button key={c.id} onClick={() => setFilterCat(c.id)}
+            className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-shrink lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+            style={active
+              ? { background: `color-mix(in oklch, ${TEAL} 12%, white)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 55%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 10%, transparent)` }
+              : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
+            <c.Icon size={15} color={active ? TEAL : c.iconColor} className="lg:hidden" />
+            <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: active ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
+              <c.Icon size={17} color={active ? TEAL : '#64748b'} />
+            </div>
+            <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: active ? TEAL : '#0f172a' }}>{c.label}</span>
+            <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor(c.id)}</span>
+          </button>
         )
       })}
     </div>
   )
 }
 
-// ── Item Card: staff/admin catalog card. Pixel-matched to the student's
-// CompactItemCard below (same image size, corner radius, layout), except
-// the bottom-right action label is a real button. Staff need one-click
-// add for counter sales, students just tap the card to view details. ──
-export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMode, staffStudent, onStaffAdd }) {
+// ── Item Card — one shared card design for both the student browse grid and
+// the admin/staff "Inventory Operations" grid, so items look identical on
+// both sides. Staff additionally get a quick-add button in the footer (in
+// place of the plain action label) since counter sales need a one-click
+// flow; tapping the rest of the card still opens the detail view for both. ──
+function CompactItemCard({ item, onView, staffMode, staffStudent, onStaffAdd }) {
   const cat = CATEGORIES.find(c => c.id === item.category)
   const available = item.status === 'available' && item.stock > 0
   const statusLabel = item.status === 'available' ? (available ? 'Available' : 'Unavailable') : item.status === 'borrowed' ? 'Borrowed' : 'Maintenance'
   const statusColor = available ? { bg: '#dcfce7', fg: '#16a34a' } : { bg: '#e2e8f0', fg: '#64748b' }
   const actionLabel = available ? (item.type === 'Returnable' ? 'Borrow' : 'Add Purchase') : 'Unavailable'
   const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? '#2563eb' : '#16a34a')
-
-  const enabled = staffMode ? (!!staffStudent && available) : available
+  const canStaffAdd = staffMode && !!staffStudent && available
 
   return (
     <div onClick={() => onView(item)}
-      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px]"
-      style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px] border border-[#e2e8f0] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#cbd5e1] hover:shadow-md"
+      style={{ background: '#fff' }}>
       <div className="relative h-[118px] flex-shrink-0 sm:h-[150px] lg:h-[180px]">
         <ItemImage item={item} cat={cat} size={34} className="h-full w-full" />
         <span className="absolute right-2 top-2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: statusColor.bg, color: statusColor.fg }}>
@@ -116,68 +105,19 @@ export function ItemCard({ item, onView, onAddCart, user, onRequireAuth, staffMo
       </div>
 
       <div className="flex flex-1 flex-col gap-0.5 p-2.5">
-        {staffMode && cat && (
-          <span className="mb-0.5 inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-            style={{ background: '#f1f5f9', color: '#64748b' }}>
-            <cat.Icon size={10} color={cat.iconColor} />
-            {cat.label}
-          </span>
-        )}
         <p className="m-0 truncate text-[14px] font-bold" style={{ color: '#0f172a' }}>{item.name}</p>
-        {staffMode && (
-          <span className="flex items-center gap-1 truncate text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
-            <MapPin size={10} style={{ flexShrink: 0, color: 'var(--muted-foreground)' }} />
-            {item.room}{item.zone ? ` · Zone ${item.zone}` : ''} · {item.stock} in stock
-          </span>
-        )}
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-1.5" style={{ borderColor: '#f1f5f9' }}>
           <span className="whitespace-nowrap text-[13px] font-bold" style={{ color: TEAL }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
           {staffMode ? (
             <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
-              disabled={!enabled}
-              className={`-my-1 -mr-1 whitespace-nowrap rounded-md px-1.5 py-1 text-[11px] font-bold transition-colors duration-150 ${enabled ? 'hover:bg-blue-50' : ''}`}
-              style={{ background: 'transparent', border: 'none', color: enabled ? actionColor : '#94a3b8', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-              {enabled ? actionLabel : (!staffStudent ? 'Select student' : 'Unavailable')}
+              disabled={!canStaffAdd}
+              className="whitespace-nowrap rounded-full border-none px-2.5 py-1 text-[11px] font-bold"
+              style={{ background: canStaffAdd ? TEAL : '#f1f5f9', color: canStaffAdd ? '#fff' : '#94a3b8', cursor: canStaffAdd ? 'pointer' : 'not-allowed' }}>
+              {item.type === 'Returnable' ? 'Borrow' : 'Purchase'}
             </button>
           ) : (
             <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: actionColor }}>{actionLabel}</span>
           )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Compact Item Card: used for the student/guest browse grid at every
-// screen size (mobile through desktop), not just phones. Corners are
-// intentionally subtle (10px, not the 24px used on the staff ItemCard);
-// tap the whole card to open details; no inline action button. Staff still
-// get the original ItemCard with a quick-add button, since counter sales
-// need that one-click flow. ──
-function CompactItemCard({ item, onView }) {
-  const cat = CATEGORIES.find(c => c.id === item.category)
-  const available = item.status === 'available' && item.stock > 0
-  const statusLabel = item.status === 'available' ? (available ? 'Available' : 'Unavailable') : item.status === 'borrowed' ? 'Borrowed' : 'Maintenance'
-  const statusColor = available ? { bg: '#dcfce7', fg: '#16a34a' } : { bg: '#e2e8f0', fg: '#64748b' }
-  const actionLabel = available ? (item.type === 'Returnable' ? 'Borrow' : 'Add Purchase') : 'Unavailable'
-  const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? '#2563eb' : '#16a34a')
-
-  return (
-    <div onClick={() => onView(item)}
-      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[10px]"
-      style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
-      <div className="relative h-[118px] flex-shrink-0 sm:h-[150px] lg:h-[180px]">
-        <ItemImage item={item} cat={cat} size={34} className="h-full w-full" />
-        <span className="absolute right-2 top-2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: statusColor.bg, color: statusColor.fg }}>
-          {statusLabel}
-        </span>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-0.5 p-2.5">
-        <p className="m-0 truncate text-[14px] font-bold" style={{ color: '#0f172a' }}>{item.name}</p>
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-1.5" style={{ borderColor: '#f1f5f9' }}>
-          <span className="whitespace-nowrap text-[13px] font-bold" style={{ color: TEAL }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
-          <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: actionColor }}>{actionLabel}</span>
         </div>
       </div>
     </div>
@@ -471,8 +411,13 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
 // ── Catalog Page ──────────────────────────────────────────────────────────────
 export default function Catalog({ items, user, cart, setCart, showToast, onRequireAuth, users, onCartOpen, borrows = [] }) {
   const ctx = useInventory()
-  const [search,     setSearch]     = useState('')
-  const [filterCat,  setFilterCat]  = useState('all')
+  // Entry points elsewhere (landing page category cards, home page "View
+  // All", the top-nav search bar) link here with ?category=<id> and/or
+  // ?q=<query> so the catalog opens pre-filtered instead of dumping the
+  // visitor on the full unfiltered list.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [search,     setSearch]     = useState(() => searchParams.get('q') || '')
+  const [filterCat,  setFilterCat]  = useState(() => searchParams.get('category') || 'all')
   const [filterType, setFilterType] = useState('all')
   const [selected,   setSelected]   = useState(null)
 
@@ -488,6 +433,22 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     (filterType === 'all' || i.type === filterType) &&
     i.name.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Keep the URL in sync with the active category so it stays shareable/
+  // back-button-friendly. Deliberately NOT done for `search`: the top-nav
+  // search bar also reads ?q= from the URL, so live-syncing every keystroke
+  // here would make it visibly update while you type in this page's own
+  // search box. The nav bar can still search items (it links here with
+  // ?q=, read once on load below) — it just won't stay bound afterward.
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (filterCat === 'all') next.delete('category')
+      else next.set('category', filterCat)
+      return next
+    }, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCat])
 
   // Show 3 rows of cards first (3 columns on desktop → 9 items); each
   // "See More" click reveals 9 more. Resets whenever the filters change.
@@ -656,11 +617,12 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
           <p className="m-0 mb-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{filtered.length} items</p>
 
           {isStaff ? (
-            /* Staff keep the original card + quick-add button at every size: counter
-               sales need that one-click flow, so this isn't part of the restyle below. */
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-7">
+            /* Staff/admin — same card design as the student side, just with a
+               quick-add button in the footer for one-click counter sales. One
+               fewer column at lg since the sticky order panel shares the row. */
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
               {visible.map(item => (
-                <ItemCard key={item.id} item={item} onView={setSelected} onAddCart={handleAddCart} user={user} onRequireAuth={onRequireAuth}
+                <CompactItemCard key={item.id} item={item} onView={setSelected}
                   staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
               ))}
             </div>
@@ -699,34 +661,44 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         )}
       </div>
 
-      {/* Detail modal: responsive two-column */}
+      {/* Detail modal — image column widened to ~46%, and the modal sizes to
+          its own content (image/info columns stay matched via grid stretch)
+          instead of a fixed height, so short-description items don't get
+          stranded with dead space above the CTA button. */}
       {selected && (() => {
-        const cat     = CATEGORIES.find(c => c.id === selected.category)
-        const hasLong = selected.description?.length > 120 || selected.usage
+        const cat = CATEGORIES.find(c => c.id === selected.category)
         return (
           <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: hasLong ? 780 : 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
+              className="relative overflow-y-auto"
+              style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 780, maxHeight: '90vh', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
 
-              {/* Mobile: image stacked ON TOP of the info. sm+: two columns when there's long content. */}
-              <div className={`grid grid-cols-1 ${hasLong ? 'sm:grid-cols-[minmax(200px,40%)_1fr]' : ''}`} style={{ minHeight: 0 }}>
+              {/* Close — anchored to the card itself (not the image), so it always
+                  sits in the plain top-right corner regardless of column widths */}
+              <button onClick={() => setSelected(null)}
+                style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
+                <X size={14} color="#0f172a" />
+              </button>
+
+              {/* Both columns stretch to match whichever is taller (grid rows
+                  stretch by default) — so the image always fills the info
+                  column's real height instead of the modal being pinned to a
+                  fixed size that leaves dead space for short-content items. */}
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(260px,46%)_1fr]" style={{ minHeight: 0 }}>
 
                 {/* Image panel */}
                 <div className="relative h-40 sm:h-auto" style={{ minHeight: 160 }}>
                   <ItemImage item={selected} cat={cat} size={60}
-                    className={`h-full w-full rounded-t-[24px] ${hasLong ? 'sm:rounded-tr-none sm:rounded-l-[24px]' : ''}`} />
-                  {/* Status badge */}
-                  <div style={{ position: 'absolute', top: 12, left: 12 }}>
-                    <Badge status={selected.status} small />
-                  </div>
-                  {/* Close: overlaid on the image, top-right */}
-                  <button onClick={() => setSelected(null)}
-                    style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
-                    <X size={14} color="#0f172a" />
-                  </button>
-                  {/* Credit chip */}
-                  <div style={{ position: 'absolute', bottom: 12, right: 12, padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 800, background: 'rgba(255,255,255,0.95)', color: 'var(--color-inv-accent)', border: 'none', backdropFilter: 'blur(4px)' }}>
-                    {selected.credits > 0 ? `${selected.credits} cr` : 'Free'}
+                    className="h-full w-full rounded-t-[24px] sm:rounded-tr-none sm:rounded-l-[24px]" />
+                  {/* Status + type badges — stacked top-left, same on both student and staff views */}
+                  <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                    <Badge status={selected.status === 'available' && selected.stock <= 0 ? 'out_of_stock' : selected.status} small />
+                    <span className="badge badge-sm"
+                      style={selected.type === 'Returnable'
+                        ? { background: '#dbeafe', color: '#2563eb' }
+                        : { background: '#dcfce7', color: '#16a34a' }}>
+                      {selected.type === 'Returnable' ? 'Borrowable' : 'Purchasable'}
+                    </span>
                   </div>
                 </div>
 
@@ -744,36 +716,47 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                     <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--muted-foreground)' }}>{selected.room} · Zone {selected.zone}</p>
                   </div>
 
+                  {/* Price — shown as a plain, prominent line rather than a chip on the image */}
+                  <p style={{ margin: 0, lineHeight: 1 }}>
+                    {selected.credits > 0
+                      ? <>
+                          <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-inv-accent)' }}>{selected.credits}</span>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--muted-foreground)', marginLeft: 6 }}>{selected.credits === 1 ? 'credit' : 'credits'}</span>
+                        </>
+                      : <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-inv-accent)' }}>Free</span>}
+                  </p>
+
+                  <div style={{ borderTop: '1px solid var(--border)' }} />
+
                   {/* Description */}
                   {selected.description && (
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--color-inv-muted)', lineHeight: 1.65 }}>{selected.description}</p>
                   )}
 
-                  {/* Stats grid: fixed minHeight + truncated values so a long
-                      zone name (e.g. "Robotic Lab 2024") never grows its box
-                      taller than the other two and breaks the equal-size row. */}
+                  {/* Stats grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, alignItems: 'stretch' }}>
                     {[
                       ['Stock', selected.stock],
                       ['Room',  selected.room],
                       ['Zone',  selected.zone],
                     ].map(([k, v]) => (
-                      <div key={k} style={{ background: 'var(--color-cream)', borderRadius: 12, padding: '10px 12px', border: '1.5px solid var(--border)', minHeight: 56, boxSizing: 'border-box' }}>
-                        <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{k}</p>
-                        <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--color-charcoal)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={String(v)}>{String(v)}</p>
+                      <div key={k} style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 12px', border: '1.5px solid #e2e8f0', minHeight: 56, boxSizing: 'border-box' }}>
+                        <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em' }}>{k}</p>
+                        <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={String(v)}>{String(v)}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* Usage note */}
                   {selected.usage && (
-                    <div style={{ background: 'var(--color-inv-accent-light)', borderRadius: 12, padding: '10px 14px', display: 'flex', gap: 10, border: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)' }}>
+                    <div style={{ background: 'var(--color-inv-accent-light)', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 10, border: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)' }}>
                       <Info size={13} color="var(--color-inv-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
                       <p style={{ margin: 0, fontSize: 12, color: 'var(--color-inv-accent-text)', lineHeight: 1.55 }}>{selected.usage}</p>
                     </div>
                   )}
 
                   {/* CTA */}
+                  <div style={{ height: 1, background: '#f1f5f9', marginTop: 4 }} />
                   <div style={{ marginTop: 'auto' }}>
                     {!isStaff && !user && onRequireAuth && (
                       <button onClick={onRequireAuth}
@@ -786,9 +769,9 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                       const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0
                       return (
                         <button onClick={() => { addToStaffOrder(selected); setSelected(null) }} disabled={!enabled}
-                          className="w-full py-2.5 text-[13px] sm:py-3 sm:text-sm"
-                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 14, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                          {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : `Not Available`}
+                          className="w-full py-2.5 text-sm sm:py-3 sm:text-sm"
+                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 12, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                          {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : 'Not Available'}
                         </button>
                       )
                     })()}

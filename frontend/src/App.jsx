@@ -11,7 +11,7 @@ import CommunityDetailPage from "./pages/community/CommunityDetailPage";
 import AdminLayout from "./admin/layouts/AdminLayout";
 import AdminGuard from "./admin/components/AdminGuard";
 import InventoryAdminArea from "./admin/inventory/InventoryAdminArea";
-import { InventoryProvider } from "./lib/inventory/InventoryContext";
+import { InventoryProvider, useInventory } from "./lib/inventory/InventoryContext";
 import AdminDashboard from "./admin/community/pages/AdminDashboard";
 import AdminEvents from "./admin/community/pages/AdminEvents";
 import AdminCollaboration from "./admin/community/pages/AdminCollaboration";
@@ -50,8 +50,12 @@ import LearningCourseDetail from "./pages/learning/CourseDetail";
 import LearningLessonDetail from "./pages/learning/LessonDetail";
 import LearningAbout from "./pages/learning/About";
 import LearningContact from "./pages/learning/Contact";
-import InventoryApp from "./pages/inventory/InventoryApp";
-import { AuthProvider } from "./hub/AuthContext";
+import InventoryLandingPage from "./pages/inventory/LandingPage";
+import InventoryHomePage from "./pages/inventory/HomePage";
+import InventoryBrowseItem from "./pages/inventory/BrowseItem";
+import Toast from "./components/inventory/ui/Toast";
+import CartPanel from "./components/inventory/CartPanel";
+import { AuthProvider, useAuth } from "./hub/AuthContext";
 import NotFound from "./pages/NotFound";
 
 function UserLayout() {
@@ -77,6 +81,40 @@ function LearningLayout() {
   );
 }
 
+// Inventory module — student/guest side, mounted at /inventory/*. Chrome
+// (nav, cursor, footer) and auth are the hub's; state lives in
+// InventoryProvider so the admin area at /admin/inventory/* shares the same
+// data. Staff/admin manage the module from the shared admin panel instead.
+function InventoryLayout() {
+  const { user: hubUser } = useAuth();
+  const { toast, setToast, cart, setCart, cartOpen, setCartOpen, user, showToast } = useInventory();
+
+  if (hubUser && (hubUser.role === "Staff" || hubUser.role === "Admin")) {
+    return <Navigate to="/admin/inventory" replace />;
+  }
+
+  return (
+    <div className="inv-root min-h-screen bg-cream flex flex-col">
+      <TopNav />
+      <div className="flex-1 flex min-h-[calc(100vh-56px)] sm:min-h-[calc(100vh-60px)]">
+        <main className="min-w-0 flex-1"><Outlet /></main>
+        {cartOpen && user && (
+          <CartPanel cart={cart} setCart={setCart} user={user} showToast={showToast} onClose={() => setCartOpen(false)} />
+        )}
+      </div>
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      <AppFooter />
+    </div>
+  );
+}
+
+// /inventory has one URL for two different views: guests see the marketing
+// landing page, signed-in members see their personal home.
+function InventoryHome() {
+  const { user } = useAuth();
+  return user ? <InventoryHomePage /> : <InventoryLandingPage />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -100,8 +138,20 @@ export default function App() {
         <Route path="/membership" element={<MembershipPage />} />
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/workspace" element={<WorkspacePage />} />
-        {/* Inventory module (Makerspace): self-contained app with its own auth */}
-        <Route path="/inventory/*" element={<InventoryApp />} />
+        {/* Inventory spaces — TopNav + Footer, same flat pattern as Community/Learning */}
+        <Route element={<InventoryLayout />}>
+          <Route path="/inventory" element={<InventoryHome />} />
+          <Route path="/inventory/home" element={<InventoryHome />} />
+          <Route path="/inventory/browse" element={<InventoryBrowseItem mode="browse" />} />
+          <Route path="/inventory/catalog" element={<InventoryBrowseItem mode="catalog" />} />
+
+          {/* Notifications page is shared across all 3 modules — one implementation
+              at /notifications (see hub/NotificationsPage.jsx); these redirect
+              anything that still links to the old inventory-scoped paths. */}
+          <Route path="/inventory/my-borrows" element={<Navigate to="/notifications" replace />} />
+          <Route path="/inventory/notifications" element={<Navigate to="/notifications" replace />} />
+          <Route path="/inventory/*" element={<Navigate to="/inventory" replace />} />
+        </Route>
 
         {/* Community spaces: TopNav + Footer */}
         <Route element={<UserLayout />}>

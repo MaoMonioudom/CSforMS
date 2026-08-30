@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   Cpu, Wrench, Layers, Box, Zap, Monitor, Hammer,
   Settings, MapPin, DoorOpen, ShoppingCart,
@@ -7,6 +8,7 @@ import {
 } from "lucide-react";
 import { T as THEME } from "../../lib/inventory/theme";
 import { LOGO_IMAGE, BROWSE_LANDING_IMAGE, PRINT_SERVICES, MEMBERSHIP_PLAN, CREDIT_RATE, CREDIT_TIERS } from "../../lib/inventory/data.js";
+import { useInventory } from "../../lib/inventory/InventoryContext";
 
 /* ── palette ─────────────────────────────────────────────────────────────── */
 /* Reuses the shared inventory/global tokens instead of its own one-off hex.
@@ -20,15 +22,18 @@ const BORDER  = "var(--border)";
 const MUTED   = "var(--color-inv-muted)";
 
 /* ── data ────────────────────────────────────────────────────────────────── */
+// `catId` matches the real category ids in lib/inventory/data.js (the
+// Catalog page filters on these) — `id` stays the short display key used
+// only for local list keys/the ticker below.
 const CATEGORIES = [
-  { id: "et",  label: "Electronic Tools",     icon: Zap,      desc: "Soldering stations, multimeters, probes",    tag: "TOOL",   room: "Makerspace Room" },
-  { id: "ee",  label: "Electronic Equipment", icon: Cpu,      desc: "Power supplies, oscilloscopes, generators",  tag: "EQUIP",  room: "Makerspace Room" },
-  { id: "ec",  label: "Electronic Components",icon: Settings, desc: "Arduino, sensors, modules, ICs, resistors",  tag: "COMP",   room: "Makerspace Room" },
-  { id: "cnc", label: "CNC Machines",         icon: Drill,    desc: "Laser cutters, 3-axis routers, plotters",    tag: "CNC",    room: "Makerspace Room" },
-  { id: "mm",  label: "Mechanical Tools",     icon: Wrench,   desc: "Drill press, bench grinder, hand tools",     tag: "MECH",   room: "Mechanic Room"   },
-  { id: "mf",  label: "Fasteners & Hardware", icon: Layers,   desc: "Bolts, nuts, screws, standoffs, washers",    tag: "FIX",    room: "Mechanic Room"   },
-  { id: "dd",  label: "Digital Devices",      icon: Monitor,  desc: "Raspberry Pi, logic analyzers, peripherals", tag: "DEVICE", room: "Makerspace Room" },
-  { id: "rm",  label: "Raw Materials",        icon: Box,      desc: "PLA filament, acrylic, plywood, foam",       tag: "MAT",    room: "Makerspace Room" },
+  { id: "et",  catId: "electronic_tool",      label: "Electronic Tools",     icon: Zap,      desc: "Soldering stations, multimeters, probes",    tag: "TOOL",   room: "Makerspace Room" },
+  { id: "ee",  catId: "electronic_equipment", label: "Electronic Equipment", icon: Cpu,      desc: "Power supplies, oscilloscopes, generators",  tag: "EQUIP",  room: "Makerspace Room" },
+  { id: "ec",  catId: "electronic_component", label: "Electronic Components",icon: Settings, desc: "Arduino, sensors, modules, ICs, resistors",  tag: "COMP",   room: "Makerspace Room" },
+  { id: "cnc", catId: "cnc_machines",         label: "CNC Machines",         icon: Drill,    desc: "Laser cutters, 3-axis routers, plotters",    tag: "CNC",    room: "Makerspace Room" },
+  { id: "mm",  catId: "manual_mechanical",    label: "Mechanical Tools",     icon: Wrench,   desc: "Drill press, bench grinder, hand tools",     tag: "MECH",   room: "Mechanic Room"   },
+  { id: "mf",  catId: "mechanical_fasteners", label: "Fasteners & Hardware", icon: Layers,   desc: "Bolts, nuts, screws, standoffs, washers",    tag: "FIX",    room: "Mechanic Room"   },
+  { id: "dd",  catId: "digital_device",       label: "Digital Devices",      icon: Monitor,  desc: "Raspberry Pi, logic analyzers, peripherals", tag: "DEVICE", room: "Makerspace Room" },
+  { id: "rm",  catId: "raw_material",         label: "Raw Materials",        icon: Box,      desc: "PLA filament, acrylic, plywood, foam",       tag: "MAT",    room: "Makerspace Room" },
 ];
 
 const STEPS = [
@@ -112,9 +117,14 @@ function Eyebrow({ label, light = false }) {
 }
 
 /* ── page ────────────────────────────────────────────────────────────────── */
-export default function LandingPage({ onEnter, onBrowse, items = [], users = [], borrows = [] }) {
-  const go     = () => onEnter?.();
-  const browse = () => (onBrowse ? onBrowse() : onEnter?.());
+export default function LandingPage() {
+  const navigate = useNavigate();
+  const { items = [], users = [], borrows = [] } = useInventory();
+  const go     = () => navigate("/login", { state: { from: "/inventory" } });
+  const browse = () => navigate("/inventory/browse");
+  // A specific category card opens the browse page pre-filtered to that
+  // category, instead of dumping the visitor on the full unfiltered list.
+  const browseCategory = (catId) => navigate(`/inventory/browse?category=${catId}`);
 
   const liveStats = [
     { value: String(items.length),                                                                    label: "Items",        icon: Package    },
@@ -281,7 +291,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
             const roomColor = isMechanic ? "var(--community)" : TEAL;
             const roomBg    = isMechanic ? "color-mix(in oklch, var(--community) 12%, white)"  : "var(--color-inv-accent-light)";
             return (
-              <div key={cat.id} className="mv-cat-cell border-b lg:border-b-0" onClick={browse}
+              <div key={cat.id} className="mv-cat-cell border-b lg:border-b-0" onClick={() => browseCategory(cat.catId)}
                 style={{ borderRight: isLastCol ? "none" : `1px solid ${BORDER}`, borderBottomColor: BORDER }}>
                 <span style={{ position: "absolute", top: 12, right: 16, fontSize: 48, fontWeight: 700, color: "rgba(15,23,42,.04)" }}>
                   {String(i + 1).padStart(2, "0")}
@@ -541,7 +551,7 @@ export default function LandingPage({ onEnter, onBrowse, items = [], users = [],
         </div>
       </section>
 
-      {/* Footer removed: InventoryApp already renders the shared <AppFooter />. */}
+      {/* Footer removed — InventoryLayout already renders the shared <AppFooter />. */}
     </div>
   );
 }
