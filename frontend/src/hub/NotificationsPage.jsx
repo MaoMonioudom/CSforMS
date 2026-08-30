@@ -10,6 +10,8 @@ import { BackBar } from '../components/BackBar'
 import { AppFooter } from '../components/AppFooter'
 import { HUB as D } from './hubTheme'
 import { fetchNotifications, markNotificationRead as apiMarkOne, markAllNotificationsRead as apiMarkAll, deleteNotification as apiDeleteOne } from '../lib/notifications-data'
+import ItemDetailModal from '../components/inventory/ItemDetailModal'
+import ItemImage from '../components/inventory/ItemImage'
 import { fmtDateTime, cambodiaDayLabel } from '../lib/inventory/datetime'
 
 // One notification feed for all three modules (Community, Learning,
@@ -91,7 +93,7 @@ const INVENTORY_SUB_FILTERS = [
 // (returnDate) needs it too.
 const formatEntryDateTime = fmtDateTime
 
-function DetailModal({ title, rows, status, onClose, itemList }) {
+function DetailModal({ title, rows, status, onClose, itemList, onViewItem }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: T.white, borderRadius: 18, padding: '1.75rem 2rem', width: '100%', maxWidth: 460, maxHeight: '85vh', overflowY: 'auto' }}>
@@ -106,9 +108,16 @@ function DetailModal({ title, rows, status, onClose, itemList }) {
         {itemList && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1rem' }}>
             {itemList.map((it, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.cream, borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: it.action === 'purchased' ? T.amberLight : T.blueLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {it.action === 'purchased' ? <ShoppingBag size={13} color={T.amber} /> : <RotateCcw size={13} color={T.blue} />}
+              <div key={i} onClick={() => it.fullItem && onViewItem?.(it.fullItem)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.cream, borderRadius: 10, padding: '10px 12px', cursor: it.fullItem ? 'pointer' : 'default' }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                  {it.fullItem
+                    ? <ItemImage item={it.fullItem} cat={CATEGORIES.find(c => c.id === it.fullItem.category)} size={22} className="h-full w-full" />
+                    : (
+                      <div style={{ width: '100%', height: '100%', background: it.action === 'purchased' ? T.amberLight : T.blueLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {it.action === 'purchased' ? <ShoppingBag size={15} color={T.amber} /> : <RotateCcw size={15} color={T.blue} />}
+                      </div>
+                    )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.charcoal }}>{it.itemName}</p>
@@ -165,6 +174,9 @@ export default function NotificationsPage() {
   const [notifLoading, setNotifLoading] = useState(true)
   const isUser = user?.role === 'user'
   const [selected, setSelected] = useState(null)
+  // Item clicked inside a request/transaction's item list — opens the same
+  // item detail view used in the catalog, layered on top of this modal.
+  const [viewingItem, setViewingItem] = useState(null)
   const [filter, setFilter] = useState('all')
   const [invSubFilter, setInvSubFilter] = useState('borrows')
   const [sortDir, setSortDir] = useState('desc') // 'desc' = newest first
@@ -276,11 +288,13 @@ export default function NotificationsPage() {
     return false
   })
 
-  // Category label + per-item credits for the detail breakdown.
+  // Category label + per-item credits for the detail breakdown, plus the
+  // full catalog item (image, stock, description, ...) so a row can open
+  // the same item detail view used in the catalog itself.
   const enrich = (rec) => {
     const item = items.find(i => i.id === rec.itemId)
     const cat  = item && CATEGORIES.find(c => c.id === item.category)
-    return { ...rec, category: cat?.label, unitCredits: item?.credits }
+    return { ...rec, category: cat?.label, unitCredits: item?.credits, fullItem: item }
   }
 
   const openEntry = (e) => {
@@ -422,12 +436,12 @@ export default function NotificationsPage() {
               const cfg = NOTIF_META[n.type] || NOTIF_META.DEFAULT
               return (
                 <div key={e.id} onClick={() => openEntry(e)}
-                  style={{ background: n.read ? T.white : T.cream, border: `1px solid ${n.read ? T.border : T.borderDark}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+                  style={{ background: n.read ? T.white : T.cream, border: `1px solid ${n.read ? T.border : T.borderDark}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', minHeight: 76, boxSizing: 'border-box' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <cfg.Icon size={16} color={cfg.color} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                    <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: n.read ? 400 : 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.message}</p>
                     <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{formatEntryDateTime(n.date)}</p>
                   </div>
                   {!n.read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.red, flexShrink: 0, marginTop: 4 }} />}
@@ -445,13 +459,13 @@ export default function NotificationsPage() {
               const title = group.length === 1 ? group[0].itemName : `${group.length} items`
               return (
                 <div key={e.id} onClick={() => openEntry(e)}
-                  style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                  style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', minHeight: 76, boxSizing: 'border-box' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <meta.Icon size={16} color={meta.color} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>
+                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {group.length > 1 ? group.map(b => b.itemName).join(', ') : (group[0].action === 'purchased' ? 'Purchased' : 'Borrowed')} · {formatEntryDateTime(e.date)}
                     </p>
                   </div>
@@ -468,13 +482,13 @@ export default function NotificationsPage() {
               const title = group.length === 1 ? group[0].itemName : `${group.length} item ${reqLabel.toLowerCase()}`
               return (
                 <div key={e.id} onClick={() => openEntry(e)}
-                  style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                  style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', minHeight: 76, boxSizing: 'border-box' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <meta.Icon size={16} color={meta.color} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{reqLabel} · {formatEntryDateTime(e.date)}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reqLabel} · {formatEntryDateTime(e.date)}</p>
                   </div>
                   <Badge status={group[0].status} />
                 </div>
@@ -485,13 +499,13 @@ export default function NotificationsPage() {
             const meta = ACTIVITY_META.credit_topup
             return (
               <div key={e.id} onClick={() => openEntry(e)}
-                style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', minHeight: 76, boxSizing: 'border-box' }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <meta.Icon size={16} color={meta.color} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600 }}>Credit Top-Up: ${e.raw.amountUSD}</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint }}>{meta.label} · {formatEntryDateTime(e.date)}</p>
+                  <p style={{ margin: 0, fontSize: 14, color: T.charcoal, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Credit Top-Up: ${e.raw.amountUSD}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 12, color: T.faint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.label} · {formatEntryDateTime(e.date)}</p>
                 </div>
                 <Badge status={e.raw.status} />
               </div>
@@ -523,6 +537,7 @@ export default function NotificationsPage() {
               : `${isPurchaseReq ? 'Purchase' : 'Borrow'} Request: ${selected.raw.length} items`}
             status={selected.raw[0].status}
             onClose={() => setSelected(null)}
+            onViewItem={setViewingItem}
             itemList={selected.raw.map(r => enrich({ itemName: r.itemName, itemId: r.itemId, action: isPurchaseReq ? 'purchased' : 'borrowed', dueDate: r.dueDate, qty: r.qty }))}
             rows={[
               ['Requested', formatEntryDateTime(selected.raw[0].date)],
@@ -551,6 +566,7 @@ export default function NotificationsPage() {
             title={selected.raw.length === 1 ? selected.raw[0].itemName : `Transaction: ${selected.raw.length} items`}
             status={groupStatus(selected.raw)}
             onClose={() => setSelected(null)}
+            onViewItem={setViewingItem}
             itemList={selected.raw.map(enrich)}
             rows={[
               ['Date', formatEntryDateTime(selected.raw[0].date)],
@@ -560,6 +576,9 @@ export default function NotificationsPage() {
           />
         )
       })()}
+      {viewingItem && (
+        <ItemDetailModal item={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
       </div>
       {isUser && <AppFooter />}
     </div>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, AlertTriangle, X, Info, RotateCcw, ShoppingBag, Boxes, Lock, UserCheck, CreditCard, Minus, Plus, CheckCircle2, BadgeCheck, Wallet, Calendar } from 'lucide-react'
 import Badge from './ui/Badge'
+import ItemDetailModal from './ItemDetailModal'
+import ItemImage from './ItemImage'
 import { Breadcrumb } from '../Breadcrumb'
 import { T } from '../../lib/inventory/theme'
 import { CATEGORIES, MEMBERSHIP_PLAN, CREDIT_RATE, OVERDUE_RATE } from '../../lib/inventory/data'
@@ -14,22 +16,6 @@ const TYPE_FILTERS = [
   { id: 'Returnable',  label: 'Borrow',    Icon: RotateCcw },
   { id: 'Consumable',  label: 'Purchase',  Icon: ShoppingBag },
 ]
-
-// ── Item Image (falls back to category icon if photo is missing/broken) ───────
-function ItemImage({ item, cat, size = 48, className = '' }) {
-  const [broken, setBroken] = useState(false)
-  const showPhoto = item.image && !broken
-
-  return (
-    <div className={`flex items-center justify-center ${className}`}
-      style={{ background: `linear-gradient(160deg, ${cat?.color || T.stone} 0%, ${T.white} 100%)` }}>
-      {showPhoto
-        ? <img src={item.image} alt={item.name} onError={() => setBroken(true)} className="h-full w-full object-cover" />
-        : cat && <cat.Icon size={size} color={cat.iconColor} strokeWidth={1.5} className="opacity-85" />
-      }
-    </div>
-  )
-}
 
 const TEAL = 'var(--color-inv-accent)'
 
@@ -438,8 +424,8 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   // back-button-friendly. Deliberately NOT done for `search`: the top-nav
   // search bar also reads ?q= from the URL, so live-syncing every keystroke
   // here would make it visibly update while you type in this page's own
-  // search box. The nav bar can still search items (it links here with
-  // ?q=, read once on load below) — it just won't stay bound afterward.
+  // search box. The nav bar can still search items — it just won't stay
+  // bound afterward.
   useEffect(() => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
@@ -449,6 +435,15 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     }, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCat])
+
+  // Picks up a *new* nav-bar search made while already on this page — the
+  // lazy useState initializer above only ever runs once on mount, so
+  // without this a second nav-bar search (same route, new ?q=) would change
+  // the URL but leave the visible results untouched.
+  useEffect(() => {
+    setSearch(searchParams.get('q') || '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get('q')])
 
   // Show 3 rows of cards first (3 columns on desktop → 9 items); each
   // "See More" click reveals 9 more. Resets whenever the filters change.
@@ -661,138 +656,44 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         )}
       </div>
 
-      {/* Detail modal — image column widened to ~46%, and the modal sizes to
-          its own content (image/info columns stay matched via grid stretch)
-          instead of a fixed height, so short-description items don't get
-          stranded with dead space above the CTA button. */}
-      {selected && (() => {
-        const cat = CATEGORIES.find(c => c.id === selected.category)
-        return (
-          <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
-            <div onClick={e => e.stopPropagation()}
-              className="relative overflow-y-auto"
-              style={{ background: '#fff', borderRadius: 24, width: '100%', maxWidth: 780, maxHeight: '90vh', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
-
-              {/* Close — anchored to the card itself (not the image), so it always
-                  sits in the plain top-right corner regardless of column widths */}
-              <button onClick={() => setSelected(null)}
-                style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
-                <X size={14} color="#0f172a" />
+      {/* Detail modal — shared with the Notifications panel (ItemDetailModal);
+          only the CTA footer here is Catalog-specific. */}
+      {selected && (
+        <ItemDetailModal
+          item={selected}
+          onClose={() => setSelected(null)}
+          footer={<>
+            {!isStaff && !user && onRequireAuth && (
+              <button onClick={onRequireAuth}
+                className="btn-primary w-full justify-center"
+                style={{ background: 'var(--color-inv-accent)', border: 'none', color: '#fff', cursor: 'pointer' }}>
+                <Lock size={13} /> Join to {selected.type === 'Returnable' ? 'Borrow' : 'Purchase'}
               </button>
-
-              {/* Both columns stretch to match whichever is taller (grid rows
-                  stretch by default) — so the image always fills the info
-                  column's real height instead of the modal being pinned to a
-                  fixed size that leaves dead space for short-content items. */}
-              <div className="grid grid-cols-1 sm:grid-cols-[minmax(260px,46%)_1fr]" style={{ minHeight: 0 }}>
-
-                {/* Image panel */}
-                <div className="relative h-40 sm:h-auto" style={{ minHeight: 160 }}>
-                  <ItemImage item={selected} cat={cat} size={60}
-                    className="h-full w-full rounded-t-[24px] sm:rounded-tr-none sm:rounded-l-[24px]" />
-                  {/* Status + type badges — stacked top-left, same on both student and staff views */}
-                  <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
-                    <Badge status={selected.status === 'available' && selected.stock <= 0 ? 'out_of_stock' : selected.status} small />
-                    <span className="badge badge-sm"
-                      style={selected.type === 'Returnable'
-                        ? { background: '#dbeafe', color: '#2563eb' }
-                        : { background: '#dcfce7', color: '#16a34a' }}>
-                      {selected.type === 'Returnable' ? 'Borrowable' : 'Purchasable'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-6" style={{ minHeight: 0 }}>
-                  {/* Title */}
-                  <div>
-                    {cat && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <cat.Icon size={13} color={cat.iconColor} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', letterSpacing: '.04em', textTransform: 'uppercase' }}>{cat.label}</span>
-                      </div>
-                    )}
-                    <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--color-charcoal)', lineHeight: 1.2 }}>{selected.name}</h2>
-                    <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--muted-foreground)' }}>{selected.room} · Zone {selected.zone}</p>
-                  </div>
-
-                  {/* Price — shown as a plain, prominent line rather than a chip on the image */}
-                  <p style={{ margin: 0, lineHeight: 1 }}>
-                    {selected.credits > 0
-                      ? <>
-                          <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-inv-accent)' }}>{selected.credits}</span>
-                          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--muted-foreground)', marginLeft: 6 }}>{selected.credits === 1 ? 'credit' : 'credits'}</span>
-                        </>
-                      : <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-inv-accent)' }}>Free</span>}
-                  </p>
-
-                  <div style={{ borderTop: '1px solid var(--border)' }} />
-
-                  {/* Description */}
-                  {selected.description && (
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-inv-muted)', lineHeight: 1.65 }}>{selected.description}</p>
-                  )}
-
-                  {/* Stats grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, alignItems: 'stretch' }}>
-                    {[
-                      ['Stock', selected.stock],
-                      ['Room',  selected.room],
-                      ['Zone',  selected.zone],
-                    ].map(([k, v]) => (
-                      <div key={k} style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 12px', border: '1.5px solid #e2e8f0', minHeight: 56, boxSizing: 'border-box' }}>
-                        <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em' }}>{k}</p>
-                        <p style={{ margin: '3px 0 0', fontSize: 13, fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={String(v)}>{String(v)}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Usage note */}
-                  {selected.usage && (
-                    <div style={{ background: 'var(--color-inv-accent-light)', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 10, border: '1px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)' }}>
-                      <Info size={13} color="var(--color-inv-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
-                      <p style={{ margin: 0, fontSize: 12, color: 'var(--color-inv-accent-text)', lineHeight: 1.55 }}>{selected.usage}</p>
-                    </div>
-                  )}
-
-                  {/* CTA */}
-                  <div style={{ height: 1, background: '#f1f5f9', marginTop: 4 }} />
-                  <div style={{ marginTop: 'auto' }}>
-                    {!isStaff && !user && onRequireAuth && (
-                      <button onClick={onRequireAuth}
-                        className="btn-primary w-full justify-center"
-                        style={{ background: 'var(--color-inv-accent)', border: 'none', color: '#fff', cursor: 'pointer' }}>
-                        <Lock size={13} /> Join to {selected.type === 'Returnable' ? 'Borrow' : 'Purchase'}
-                      </button>
-                    )}
-                    {isStaff && (() => {
-                      const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0
-                      return (
-                        <button onClick={() => { addToStaffOrder(selected); setSelected(null) }} disabled={!enabled}
-                          className="w-full py-2.5 text-sm sm:py-3 sm:text-sm"
-                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 12, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                          {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : 'Not Available'}
-                        </button>
-                      )
-                    })()}
-                    {!isStaff && user?.role === 'user' && (() => {
-                      const enabled = selected.status === 'available' && selected.stock > 0
-                      const isBorrow = selected.type === 'Returnable'
-                      return (
-                        <button onClick={() => { handleAddCart(selected); setSelected(null) }} disabled={!enabled}
-                          className="btn-primary w-full justify-center"
-                          style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                          {enabled ? (isBorrow ? '＋ Add to Cart: Borrow' : '＋ Add to Cart: Purchase') : `Not Available (${selected.status})`}
-                        </button>
-                      )
-                    })()}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+            )}
+            {isStaff && (() => {
+              const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0
+              return (
+                <button onClick={() => { addToStaffOrder(selected); setSelected(null) }} disabled={!enabled}
+                  className="w-full py-2.5 text-sm sm:py-3 sm:text-sm"
+                  style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 12, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                  {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : 'Not Available'}
+                </button>
+              )
+            })()}
+            {!isStaff && user?.role === 'user' && (() => {
+              const enabled = selected.status === 'available' && selected.stock > 0
+              const isBorrow = selected.type === 'Returnable'
+              return (
+                <button onClick={() => { handleAddCart(selected); setSelected(null) }} disabled={!enabled}
+                  className="btn-primary w-full justify-center"
+                  style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed' }}>
+                  {enabled ? (isBorrow ? '＋ Add to Cart: Borrow' : '＋ Add to Cart: Purchase') : `Not Available (${selected.status})`}
+                </button>
+              )
+            })()}
+          </>}
+        />
+      )}
 
       {/* Borrow/return date confirmation: shown before a returnable item is added to cart */}
       {confirmBorrow && (() => {

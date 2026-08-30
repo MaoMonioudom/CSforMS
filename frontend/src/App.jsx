@@ -119,7 +119,7 @@ export default function App() {
   return (
     <AuthProvider>
     <InventoryProvider>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <ScrollToTop />
       <PageViewTracker />
       <Routes>

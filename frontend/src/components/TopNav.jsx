@@ -33,12 +33,14 @@ const MODULE_CFG = {
     // on the actual catalog so the query is applied to the item list.
     searchTarget: "/inventory/browse",
   },
-  // Account pages (Profile, Notifications, ...) aren't tied to a module:
-  // no search bar, and the info box shows the page name instead of a module.
+  // Account pages (Profile, Notifications, ...) aren't tied to a module —
+  // the info box shows the page name instead of a module — but the search
+  // bar still works here, searching inventory items same as elsewhere.
   hub: {
     accent:      "var(--color-inv-accent)",
-    placeholder: "",
+    placeholder: "Search items and equipment…",
     root:        "/",
+    searchTarget: "/inventory/browse",
   },
 };
 
@@ -382,22 +384,49 @@ function CreditBox({ credits, dark }) {
   );
 }
 
-// ── Search bar ────────────────────────────────────────────────────────────────
-function NavSearch({ cfg, dark }) {
+// ── Shared live-search state: updates the URL (and therefore whatever page
+// is reading ?q=) a beat after typing stops, instead of waiting for Enter —
+// same instant-filter feel as the in-page search box, just debounced since
+// this one drives an actual navigation rather than a local array filter.
+// Enter/submit still fires immediately, bypassing the debounce.
+function useLiveSearch(cfg, onNavigate) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [q, setQ] = useState(params.get("q") || "");
+  const [q, setQState] = useState(params.get("q") || "");
+  const debounceRef = useRef(null);
 
-  useEffect(() => { setQ(params.get("q") || ""); }, [params]);
+  useEffect(() => { setQState(params.get("q") || ""); }, [params]);
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = q.trim();
-    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
+  const goTo = (value, opts) => {
+    const trimmed = value.trim();
+    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`, opts);
   };
 
+  const setQ = (value) => {
+    setQState(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    // replace: true so live-typing updates one history entry instead of
+    // piling one up per keystroke — only an explicit submit below pushes.
+    debounceRef.current = setTimeout(() => goTo(value, { replace: true }), 200);
+  };
+
+  const submit = (e) => {
+    e?.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    goTo(q);
+    onNavigate?.();
+  };
+
+  return { q, setQ, submit };
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+function NavSearch({ cfg, dark }) {
+  const { q, setQ, submit } = useLiveSearch(cfg);
+
   return (
-    <form onSubmit={handleSubmit} className="hidden sm:flex flex-1 justify-center px-4">
+    <form onSubmit={submit} className="hidden sm:flex flex-1 justify-center px-4">
       <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none text-muted-foreground" />
         {dark ? (
@@ -428,18 +457,9 @@ function NavSearch({ cfg, dark }) {
 
 // ── Mobile search (inside overlay) ───────────────────────────────────────────
 function MobileSearch({ cfg, onClose }) {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const [q, setQ] = useState(params.get("q") || "");
-  useEffect(() => { setQ(params.get("q") || ""); }, [params]);
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = q.trim();
-    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
-    onClose?.();
-  };
+  const { q, setQ, submit } = useLiveSearch(cfg, onClose);
   return (
-    <form onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
+    <form onSubmit={submit} onClick={e => e.stopPropagation()}>
       <div className="relative">
         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-white" />
         <input
@@ -465,22 +485,13 @@ function MobileSearch({ cfg, onClose }) {
 // ── Mobile search takeover: tapping the search icon turns the header itself
 // into a focused input (YouTube-style), instead of opening the full menu.
 function MobileSearchTakeover({ cfg, dark, onClose }) {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const [q, setQ] = useState(params.get("q") || "");
+  const { q, setQ, submit } = useLiveSearch(cfg, onClose);
   const inputRef = useRef(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = q.trim();
-    navigate(`${cfg.searchTarget || cfg.root}${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ""}`);
-    onClose();
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 items-center gap-2">
+    <form onSubmit={submit} className="flex flex-1 items-center gap-2">
       <button type="button" aria-label="Cancel search" onClick={onClose}
         className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200"
         style={{ color: dark ? "white" : "#1a1a2e" }}
@@ -757,30 +768,26 @@ export function TopNav() {
                 />
               </Link>
 
-              {/* 2 · Search bar: expands to fill center on sm+ (hidden on account pages) */}
-              {isHub
-                ? <div className="hidden sm:flex flex-1" />
-                : <NavSearch cfg={cfg} dark={open} />
-              }
+              {/* 2 · Search bar: expands to fill center on sm+. Works on account
+                  pages too — it searches inventory items there. */}
+              <NavSearch cfg={cfg} dark={open} />
 
-              {/* Mobile spacer (search is hidden on mobile) */}
+              {/* Mobile spacer (search bar itself is hidden below sm) */}
               <div className="flex-1 sm:hidden" />
 
               {/* Mobile search icon: turns the header into a focused search field, YouTube-style */}
-              {!isHub && (
-                <button
-                  type="button"
-                  aria-label="Search"
-                  onClick={() => setMobileSearchOpen(true)}
-                  className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
-                  style={{
-                    color: open ? "white" : "#1a1a2e",
-                    background: open ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
-                  }}
-                >
-                  <Search size={16} />
-                </button>
-              )}
+              <button
+                type="button"
+                aria-label="Search"
+                onClick={() => setMobileSearchOpen(true)}
+                className="sm:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
+                style={{
+                  color: open ? "white" : "#1a1a2e",
+                  background: open ? "var(--nav-pill-bg)" : "var(--nav-pill-bg-light)",
+                }}
+              >
+                <Search size={16} />
+              </button>
 
               {/* 3 · Module box / account-page box: desktop/tablet only, no room on mobile */}
               <div className="hidden sm:block">
