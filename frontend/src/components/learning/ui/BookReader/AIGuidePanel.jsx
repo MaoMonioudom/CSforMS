@@ -34,7 +34,7 @@ export default function AIGuidePanel({ lessonTitle, agentUrl }) {
             </h3>
             <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-relaxed text-parchment/60">
               Get help with "{lessonTitle}" from an AI trained on this course.
-              Opens in a new tab — come back anytime.
+              Opens in a new tab, come back anytime.
             </p>
           </div>
             <a href={agentUrl}
