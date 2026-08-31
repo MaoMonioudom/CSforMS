@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ImagePlus } from "lucide-react";
+import { ArrowLeft, ImagePlus, Lock } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { TopNav } from "../components/TopNav";
-import { updateMyProfile, uploadMyAvatar } from "../lib/user-profile-data";
+import { updateMyProfile, uploadMyAvatar, changeMyPassword } from "../lib/user-profile-data";
 
 const D = {
   bg:     "#eef5fc",
@@ -38,6 +38,15 @@ export default function EditProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
+
+  // Change-password panel: separate from the profile form above (own
+  // fields, own submit, own error) since it's a distinct action with its
+  // own server check (current password must match).
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -86,6 +95,24 @@ export default function EditProfilePage() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPwError("");
+    if (!pwForm.current || !pwForm.next) { setPwError("Fill in both password fields."); return; }
+    if (pwForm.next.length < 6) { setPwError("New password must be at least 6 characters."); return; }
+    if (pwForm.next !== pwForm.confirm) { setPwError("New passwords don't match."); return; }
+    setPwSaving(true);
+    try {
+      await changeMyPassword({ current_password: pwForm.current, new_password: pwForm.next });
+      setPwSuccess(true);
+      setPwForm({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      setPwError(err.message || "Couldn't change your password.");
+    } finally {
+      setPwSaving(false);
     }
   };
 
@@ -154,6 +181,69 @@ export default function EditProfilePage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Separate card: a distinct action from the profile fields above,
+            with its own server-side check (current password must match). */}
+        <div className="mt-5 rounded-2xl p-8" style={{ background: D.card, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.08)" }}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-extrabold" style={{ color: D.text }}>Password</h2>
+              {!pwOpen && <p className="mt-0.5 text-xs" style={{ color: D.muted }}>Change the password you use to sign in.</p>}
+            </div>
+            {!pwOpen && (
+              <button type="button" onClick={() => { setPwOpen(true); setPwSuccess(false); setPwError(""); }}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ color: D.text, borderColor: D.border }}>
+                <Lock size={14} /> Change password
+              </button>
+            )}
+          </div>
+
+          {pwOpen && (
+            pwSuccess ? (
+              <div className="mt-5 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(16,185,129,0.1)", color: "#059669" }}>
+                Password updated.
+                <button type="button" onClick={() => setPwOpen(false)}
+                  className="ml-2 font-semibold underline">Done</button>
+              </div>
+            ) : (
+              <form onSubmit={handleChangePassword} className="mt-5 space-y-4">
+                {pwError && (
+                  <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#dc2626" }}>
+                    {pwError}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: D.muted }}>Current password</label>
+                  <input type="password" required autoComplete="current-password" className={inputCls} style={{ borderColor: D.border, color: D.text }}
+                    value={pwForm.current} onChange={(e) => setPwForm((f) => ({ ...f, current: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: D.muted }}>New password</label>
+                  <input type="password" required autoComplete="new-password" placeholder="Min. 6 characters" className={inputCls} style={{ borderColor: D.border, color: D.text }}
+                    value={pwForm.next} onChange={(e) => setPwForm((f) => ({ ...f, next: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: D.muted }}>Confirm new password</label>
+                  <input type="password" required autoComplete="new-password" className={inputCls} style={{ borderColor: D.border, color: D.text }}
+                    value={pwForm.confirm} onChange={(e) => setPwForm((f) => ({ ...f, confirm: e.target.value }))} />
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => { setPwOpen(false); setPwForm({ current: "", next: "", confirm: "" }); setPwError(""); }}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+                    style={{ color: D.text, border: `1px solid ${D.border}`, background: D.card }}>
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={pwSaving}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
+                    style={{ background: "linear-gradient(135deg,var(--community-gold),var(--color-inv-accent))" }}>
+                    {pwSaving ? "Saving…" : "Update password"}
+                  </button>
+                </div>
+              </form>
+            )
+          )}
         </div>
         </div>
       </main>

@@ -83,7 +83,7 @@ export default function AdminCourseStudents() {
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Purchases</p>
             <p className="text-xl font-bold text-foreground tabular-nums">
-              {buyers.length} <span className="text-sm font-medium text-muted-foreground">(${revenue.toFixed(2)})</span>
+              {buyers.length} <span className="text-sm font-medium text-muted-foreground">({revenue} credits)</span>
             </p>
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function AdminCourseStudents() {
                   <td className="px-5 py-3.5 hidden md:table-cell">
                     {s.purchasedInteractive ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium px-2.5 py-1">
-                        Purchased{s.pricePaid != null ? ` · $${s.pricePaid.toFixed(2)}` : ""}
+                        Purchased{s.pricePaid != null ? ` · ${s.pricePaid} credits` : ""}
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>

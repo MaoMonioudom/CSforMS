@@ -64,19 +64,30 @@ async function findOrLinkUser({ msId, email }) {
   return { ...byEmail, microsoft_id: msId };
 }
 
+const VALID_INTENTS = ["login", "reset", "signup_verify"];
+
 export async function microsoftLogin(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const intent = req.query.intent === "reset" ? "reset" : "login";
-    // For resets the user already told us which account they're recovering
-    // (forgotPasswordCheck), carry that email in the signed state so the
-    // callback can insist the Microsoft account actually matches it.
-    const claimedEmail = intent === "reset" ? normalizeEmail(req.query.email) : undefined;
-    if (intent === "reset" && !claimedEmail) {
-      return res.redirect(frontendRedirect("/forgot-password", { error: "missing_email" }));
+    const intent = VALID_INTENTS.includes(req.query.intent) ? req.query.intent : "login";
+    // For resets and verified sign-up, the caller already told us which
+    // email they're claiming (forgotPasswordCheck, or the plain sign-up
+    // form itself), so that email rides along in the signed state and the
+    // callback insists the Microsoft account actually matches it.
+    const claimedEmail = (intent === "reset" || intent === "signup_verify") ? normalizeEmail(req.query.email) : undefined;
+    if ((intent === "reset" || intent === "signup_verify") && !claimedEmail) {
+      return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : "/register", { error: "missing_email" }));
+    }
+    // The pending signup (name/email/password hash from startVerifiedSignup)
+    // rides through the same signed state, the same trick claimedEmail uses,
+    // so nothing has to be persisted server-side just to survive the
+    // redirect to Microsoft and back.
+    const pendingToken = intent === "signup_verify" ? req.query.pendingToken : undefined;
+    if (intent === "signup_verify" && !pendingToken) {
+      return res.redirect(frontendRedirect("/register", { error: "invalid_state" }));
     }
     const cfg = await getConfig();
-    const state = signPurposeToken({ intent, claimedEmail, purpose: "oauth_state" }, "10m");
+    const state = signPurposeToken({ intent, claimedEmail, pendingToken, purpose: "oauth_state" }, "10m");
     const url = client.buildAuthorizationUrl(cfg, {
       redirect_uri: process.env.MICROSOFT_REDIRECT_URI,
       scope: "openid profile email",
@@ -94,13 +105,15 @@ export async function microsoftCallback(req, res, next) {
   const stateParam = req.query.state;
   let intent = "login";
   let claimedEmail;
+  let pendingToken;
   try {
     const statePayload = verifyToken(stateParam);
     if (statePayload.purpose !== "oauth_state") throw new Error("wrong purpose");
     intent = statePayload.intent;
     claimedEmail = statePayload.claimedEmail;
+    pendingToken = statePayload.pendingToken;
   } catch {
-    return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : "/login", { error: "invalid_state" }));
+    return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : intent === "signup_verify" ? "/register" : "/login", { error: "invalid_state" }));
   }
 
   try {
@@ -113,13 +126,60 @@ export async function microsoftCallback(req, res, next) {
     const name = claims.name || email;
 
     if (!email) {
-      return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : "/login", { error: "no_email" }));
+      return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : intent === "signup_verify" ? "/register" : "/login", { error: "no_email" }));
     }
 
-    if (intent === "reset" && email !== claimedEmail) {
-      // They asked to recover one account but signed into Microsoft as
-      // someone else; proving ownership of a *different* email doesn't count.
-      return res.redirect(frontendRedirect("/forgot-password", { error: "email_mismatch" }));
+    if ((intent === "reset" || intent === "signup_verify") && email !== claimedEmail) {
+      // They asked to verify/recover one account but signed into Microsoft
+      // as someone else; proving ownership of a *different* email doesn't count.
+      return res.redirect(frontendRedirect(intent === "reset" ? "/forgot-password" : "/register", { error: "email_mismatch" }));
+    }
+
+    // Signup verification: Microsoft just proved the person actually owns
+    // this exact email. The account gets created now, using the name/
+    // password they chose on the plain form (carried via pendingToken),
+    // NOT anything from Microsoft's own profile — same principle as the
+    // ms_signup flow below (Microsoft verifies, it doesn't get to dictate
+    // the account's details).
+    if (intent === "signup_verify") {
+      if (!isDomainAllowed(email)) {
+        return res.redirect(frontendRedirect("/register", { error: "domain_not_allowed" }));
+      }
+      let pending;
+      try {
+        pending = verifyToken(pendingToken);
+      } catch {
+        return res.redirect(frontendRedirect("/register", { error: "invalid_state" }));
+      }
+      if (pending.purpose !== "pending_signup" || pending.email !== email) {
+        return res.redirect(frontendRedirect("/register", { error: "invalid_state" }));
+      }
+
+      // Re-check uniqueness — time has passed since startVerifiedSignup, and
+      // this is the actual point of account creation, so this check (not
+      // that one) is the one that has to be race-safe against a duplicate.
+      const { data: existing, error: existErr } = await supabaseAdmin
+        .from("users").select("user_id").eq("email", email).maybeSingle();
+      if (existErr) throw existErr;
+      if (existing) return res.redirect(frontendRedirect("/login", { error: "already_registered" }));
+
+      const user_name = await uniqueUserNameFromEmail(email);
+      const { data: newUser, error: insertError } = await supabaseAdmin
+        .from("users")
+        .insert({
+          full_name: pending.full_name,
+          email,
+          user_name,
+          password_hash: pending.password_hash,
+          microsoft_id: msId,
+          microsoft_linked_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      const sessionToken = signToken({ user_id: newUser.user_id, role: newUser.role });
+      return res.redirect(frontendRedirect("/auth/callback", { token: sessionToken }));
     }
 
     let user = await findOrLinkUser({ msId, email });

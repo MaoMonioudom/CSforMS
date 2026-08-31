@@ -36,7 +36,7 @@ export default function PathSelector({ course, activePath, unlocked, onSelect })
             </span>
             {showPrice && (
               <span className="ml-1 shrink-0 text-sm font-bold text-oxblood">
-                ${course.interactivePrice.toFixed(2)}
+                {course.interactivePrice} credits
               </span>
             )}
             {isPaid && unlocked && (

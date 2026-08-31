@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
                 <TextField icon={Mail} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com" autoComplete="email" />
+                  placeholder="example@student.cadt.edu.kh" autoComplete="email" />
               </div>
 
               <button type="submit" disabled={loading}

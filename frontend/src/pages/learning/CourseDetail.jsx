@@ -137,12 +137,13 @@ export default function CourseDetail() {
     setActivePath(pathId);
   };
 
-  const handlePaymentSuccess = () => {
-    unlock(course.id);
+  // Called by CheckoutModal once credits are spent; it shows its own success
+  // state and closes itself (via onClose) afterwards.
+  const handlePaymentSuccess = async () => {
+    await unlock(course.id);
     // The unlock endpoint also enrolls the buyer server-side; mirror it here.
     if (signedIn) setEnrolled(true);
     setActivePath("interactive");
-    setShowCheckout(false);
   };
 
   const handleEnroll = async () => {

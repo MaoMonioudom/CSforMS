@@ -15,7 +15,7 @@ export const courses = [
     students: 1240,
     rating: 4.8,
     paths: ["basic", "stepByStep", "interactive"],
-    interactivePrice: 24.99,
+    interactivePrice: 25,
     description:
       "Master Python programming through hands-on projects. From variables and control flow to file handling, you'll write real scripts by week two.",
     instructor: "Dr. Sarah Chen",
@@ -76,7 +76,7 @@ export const courses = [
     students: 870,
     rating: 4.9,
     paths: ["basic", "interactive"],
-    interactivePrice: 29.99,
+    interactivePrice: 30,
     description:
       "Dive into ROS and learn to program autonomous robots. Sensor integration, path planning, and real hardware deployment from day one.",
     instructor: "Prof. Marcus Webb",
@@ -132,7 +132,7 @@ export const courses = [
     students: 2100,
     rating: 4.7,
     paths: ["basic", "stepByStep", "interactive"],
-    interactivePrice: 19.99,
+    interactivePrice: 20,
     description:
       "Build responsive websites from the ground up. Learn HTML, CSS, and JavaScript, then tie it all together in a portfolio project.",
     instructor: "Lena Müller",
@@ -188,7 +188,7 @@ export const courses = [
     students: 680,
     rating: 4.9,
     paths: ["basic", "stepByStep", "interactive"],
-    interactivePrice: 34.99,
+    interactivePrice: 35,
     description:
       "A comprehensive journey through ML algorithms, from linear regression to deep neural networks, with practical Python and scikit-learn projects.",
     instructor: "Dr. Aiko Tanaka",

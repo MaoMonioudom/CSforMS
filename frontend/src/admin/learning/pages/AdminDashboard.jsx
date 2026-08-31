@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         <StatCard label="Lecturers"   value={lecturers.length}                  icon={GraduationCap}   bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/learning/lecturers" />
         <StatCard label="Students"    value={overview?.uniqueStudents ?? 0}     icon={Users2}          bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/learning/courses" />
         <StatCard label="Enrollments" value={overview?.totalEnrollments ?? 0}   icon={ClipboardList}   bg="bg-sky-50"     iconColor="text-sky-500"     to="/admin/learning/courses" />
-        <StatCard label="Revenue"     value={`$${(overview?.totalRevenue ?? 0).toFixed(2)}`} icon={BadgeDollarSign} bg="bg-amber-50" iconColor="text-amber-500" to="/admin/learning/courses" />
+        <StatCard label="Credits spent" value={overview?.totalRevenue ?? 0}      icon={BadgeDollarSign} bg="bg-amber-50" iconColor="text-amber-500" to="/admin/learning/courses" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                     {a.type === "purchase" ? " purchased " : " enrolled in "}
                     <span className="font-medium text-foreground">{a.courseTitle}</span>
                     {a.type === "purchase" && a.price != null && (
-                      <span className="text-amber-600"> (${a.price.toFixed(2)})</span>
+                      <span className="text-amber-600"> ({a.price} credits)</span>
                     )}
                   </p>
                   <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">{timeAgo(a.at)}</span>

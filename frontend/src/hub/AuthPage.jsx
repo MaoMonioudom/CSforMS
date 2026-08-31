@@ -5,7 +5,7 @@ import { useAuth } from "./AuthContext";
 import msBbgLogo from "../assets/ms_bbg_logo.png";
 import { HubNav } from "./HubNav";
 import { AppFooter } from "../components/AppFooter";
-import { BASE_URL } from "../lib/api/client";
+import { BASE_URL, api } from "../lib/api/client";
 import { D, GRADIENT, ErrorBox, TextField, PasswordField, MicrosoftButton, OrDivider } from "./authUi";
 import { destinationFor } from "./authNav";
 // Single shared page for both /login and /register. Which mode is active
@@ -25,6 +25,9 @@ const OAUTH_ERROR_MESSAGES = {
   no_email: "Microsoft didn't share an email address for that account.",
   inactive: "This account is inactive.",
   domain_not_allowed: "That Microsoft account isn't eligible to sign up here.",
+  email_mismatch: "Please verify with the Microsoft account that matches the email you typed.",
+  already_registered: "An account with this email already exists. Try signing in instead.",
+  missing_email: "Please enter an email before continuing with Microsoft.",
 };
 
 function continueWithMicrosoft() {
@@ -42,7 +45,7 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
-        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" autoComplete="email" />
+        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="example@student.cadt.edu.kh" autoComplete="email" />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -94,7 +97,7 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
-        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" autoComplete="email" />
+        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="example@student.cadt.edu.kh" autoComplete="email" />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -111,8 +114,11 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
         className="mt-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white text-sm transition-opacity hover:opacity-85 disabled:opacity-60"
         style={{ background: GRADIENT }}>
         {loading ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <UserPlus size={14} />}
-        {loading ? "Creating account…" : "Create Account"}
+        {loading ? "Redirecting to Microsoft…" : "Continue"}
       </button>
+      <p className="-mt-1.5 text-center text-xs" style={{ color: D.faint }}>
+        You'll confirm this email with Microsoft before your account is created.
+      </p>
 
       <OrDivider />
       <MicrosoftButton onClick={continueWithMicrosoft} />
@@ -124,7 +130,7 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
-  const { user, login, signup } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = location.pathname === "/register";
@@ -176,6 +182,13 @@ export default function AuthPage() {
     }
   };
 
+  // Doesn't create the account directly — the plain form can't prove the
+  // typed email is real on its own, so this only hashes the password and
+  // hands back a short-lived token, then sends the browser to Microsoft to
+  // actually prove ownership of that exact email. The account only gets
+  // created once they come back from a successful Microsoft login (see
+  // MicrosoftCallbackPage, landed on via the same /auth/callback?token=...
+  // redirect "Continue with Microsoft" already uses).
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
@@ -184,8 +197,11 @@ export default function AuthPage() {
     if (regForm.password !== regForm.confirm) { setError("Passwords don't match."); return; }
     setLoading(true);
     try {
-      const newUser = await signup({ name: regForm.name, email: regForm.email, password: regForm.password });
-      navigate(destinationFor(newUser.role, from), { replace: true, state: destState });
+      const { pendingToken } = await api.post("/api/auth/signup/verify-start", {
+        full_name: regForm.name, email: regForm.email, password: regForm.password,
+      });
+      const params = new URLSearchParams({ intent: "signup_verify", email: regForm.email, pendingToken });
+      window.location.href = `${BASE_URL}/api/auth/microsoft/login?${params.toString()}`;
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
       setLoading(false);

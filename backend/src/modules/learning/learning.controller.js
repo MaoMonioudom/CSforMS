@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { uniqueUserNameFromEmail } from "../../shared/userAccounts.js";
+import { adjustCredits, CreditsError } from "../../shared/credits.js";
 
 const SALT_ROUNDS = 10;
 const STAFF_ROLES = ["admin", "staff"];
@@ -355,7 +356,7 @@ export async function unlockCoursePath(req, res, next) {
     const courseId = Number(req.params.id);
     const { data: course, error: findError } = await supabaseAdmin
       .from("courses")
-      .select("course_id, paths, interactive_price")
+      .select("course_id, title, paths, interactive_price")
       .eq("course_id", courseId)
       .maybeSingle();
     if (findError) throw findError;
@@ -364,8 +365,31 @@ export async function unlockCoursePath(req, res, next) {
       return res.status(400).json({ error: "This course has no interactive path" });
     }
 
-    // Mock checkout: no payment provider yet, so this just records the
-    // unlock at today's price. Swap in a real payment flow later.
+    const { data: alreadyUnlocked, error: unlockLookupError } = await supabaseAdmin
+      .from("course_unlocks")
+      .select("unlock_id")
+      .eq("course_id", courseId)
+      .eq("user_id", req.user.user_id)
+      .eq("path", "interactive")
+      .maybeSingle();
+    if (unlockLookupError) throw unlockLookupError;
+
+    const cost = course.interactive_price || 0;
+    // Spend credits before recording the unlock, so a failed/insufficient
+    // spend never leaves a course_unlocks row behind.
+    if (!alreadyUnlocked && cost > 0) {
+      try {
+        await adjustCredits(req.user.user_id, -cost, {
+          sourceType: "learning",
+          sourceId: courseId,
+          description: `Unlocked interactive path: ${course.title}`,
+        });
+      } catch (err) {
+        if (err instanceof CreditsError) return res.status(err.status).json({ error: err.message });
+        throw err;
+      }
+    }
+
     const { error } = await supabaseAdmin
       .from("course_unlocks")
       .upsert(
@@ -373,7 +397,7 @@ export async function unlockCoursePath(req, res, next) {
           course_id: courseId,
           user_id: req.user.user_id,
           path: "interactive",
-          price_paid: course.interactive_price,
+          price_paid: cost,
         },
         { onConflict: "course_id,user_id,path", ignoreDuplicates: true }
       );

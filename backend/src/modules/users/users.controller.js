@@ -41,6 +41,44 @@ export async function updateMe(req, res, next) {
   }
 }
 
+// Self-service password change: requires the current password (not just
+// being logged in), so a session left open on a shared/unlocked device
+// can't be used to lock the real owner out by changing it to something
+// unknown.
+export async function changeMyPassword(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: "current_password and new_password are required" });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    }
+
+    const { data: user, error: lookupError } = await supabaseAdmin
+      .from("users")
+      .select("password_hash")
+      .eq("user_id", req.user.user_id)
+      .single();
+    if (lookupError) throw lookupError;
+
+    const matches = await bcrypt.compare(current_password, user.password_hash);
+    if (!matches) return res.status(401).json({ error: "Current password is incorrect" });
+
+    const password_hash = await bcrypt.hash(new_password, SALT_ROUNDS);
+    const { error: updateError } = await supabaseAdmin
+      .from("users")
+      .update({ password_hash })
+      .eq("user_id", req.user.user_id);
+    if (updateError) throw updateError;
+
+    res.json({ data: { ok: true } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Multipart upload, same pattern as event-images/achievement-icons: buffer
 // straight to Supabase Storage, return the public URL for the edit form to
 // save as profile_img_url via updateMe above.

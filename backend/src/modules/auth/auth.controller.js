@@ -1,14 +1,21 @@
 import bcrypt from "bcrypt";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
-import { signToken, verifyToken } from "../../utils/jwt.js";
+import { signToken, verifyToken, signPurposeToken } from "../../utils/jwt.js";
 import { toPublicUser } from "../../shared/sanitizeUser.js";
-import { uniqueUserNameFromEmail } from "../../shared/userAccounts.js";
 
 const SALT_ROUNDS = 10;
 
 export const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
-export async function signup(req, res, next) {
+// Step 1 of "verify with Microsoft" sign-up: validates the form and hashes
+// the password, but does NOT create the account yet — that only happens
+// once the person actually proves they own this exact email by logging
+// into it via Microsoft (see microsoft.controller.js's "signup_verify"
+// intent). The pending signup (name/email/password hash) travels through
+// that Microsoft round trip as a short-lived signed token rather than
+// anything saved server-side, the same way the OAuth `state` param already
+// carries data through a redirect elsewhere in this codebase.
+export async function startVerifiedSignup(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
     const { full_name, email, password } = req.body;
@@ -28,18 +35,12 @@ export async function signup(req, res, next) {
     if (lookupError) throw lookupError;
     if (existing) return res.status(409).json({ error: "An account with this email already exists" });
 
-    const user_name = await uniqueUserNameFromEmail(normalizedEmail);
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const { data: user, error: insertError } = await supabaseAdmin
-      .from("users")
-      .insert({ full_name, email: normalizedEmail, user_name, password_hash })
-      .select()
-      .single();
-    if (insertError) throw insertError;
-
-    const token = signToken({ user_id: user.user_id, role: user.role });
-    res.status(201).json({ token, user: toPublicUser(user) });
+    const pendingToken = signPurposeToken(
+      { full_name, email: normalizedEmail, password_hash, purpose: "pending_signup" },
+      "15m"
+    );
+    res.json({ pendingToken });
   } catch (err) {
     next(err);
   }

@@ -179,7 +179,7 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
     if (form.paths.includes("interactive")) {
       if (form.interactivePrice !== "") {
         const price = Number(form.interactivePrice);
-        if (Number.isNaN(price) || price < 0) errs.interactivePrice = "Enter a valid, non-negative price.";
+        if (!Number.isInteger(price) || price < 0) errs.interactivePrice = "Enter a whole, non-negative number of credits.";
       }
       if (form.aiAgentUrl.trim()) {
         try {
@@ -421,8 +421,8 @@ export default function CourseEditorForm({ initialCourse, lecturers, lockInstruc
         {form.paths.includes("interactive") && (
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
-              <label className={labelCls}>Interactive price (USD)</label>
-              <input type="number" min="0" step="0.01" className={errors.interactivePrice ? errorInputCls : inputCls} value={form.interactivePrice} onChange={set("interactivePrice")} placeholder="24.99" />
+              <label className={labelCls}>Interactive path cost (credits)</label>
+              <input type="number" min="0" step="1" className={errors.interactivePrice ? errorInputCls : inputCls} value={form.interactivePrice} onChange={set("interactivePrice")} placeholder="25" />
               {errors.interactivePrice && <p className={fieldErrorCls}>{errors.interactivePrice}</p>}
             </div>
             <div className="sm:col-span-2">

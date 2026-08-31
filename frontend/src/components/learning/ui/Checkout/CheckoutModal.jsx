@@ -1,70 +1,32 @@
 import { useState } from "react";
-
-const INITIAL_FORM = { name: "", cardNumber: "", expiry: "", cvc: "" };
-
-const FIELD = "flex min-w-0 flex-col gap-1.5";
-const FIELD_LABEL =
-  "text-xs font-semibold uppercase tracking-[0.04em] text-[#2C2C2C]/60";
-const FIELD_INPUT =
-  "field border-black/15 bg-white text-ink focus:border-community-gold focus:shadow-[0_0_0_3px_rgba(201,168,76,0.2)] focus:outline-none disabled:opacity-60";
-const FIELD_ERROR = "text-xs text-[#8B2020]";
-
-function formatCardNumber(value) {
-  return value
-    .replace(/\D/g, "")
-    .slice(0, 16)
-    .replace(/(.{4})/g, "$1 ")
-    .trim();
-}
-
-function formatExpiry(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
-}
+import { useAuth } from "../../../../hub/AuthContext";
 
 /**
- * Simulated checkout. No real payment gateway is wired up (this app has
- * no backend yet). Validates basic card-shaped input, fakes a short
- * "processing" delay, then reports success. Swap the fake delay in
- * `submit()` for a real gateway call when a backend exists.
+ * Spends credits (the same wallet Membership/Inventory use) to unlock a
+ * course's interactive path. Requires an active membership, since credits
+ * only exist on a membership row — see backend/src/shared/credits.js.
  */
 export default function CheckoutModal({ course, price, onSuccess, onClose }) {
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [errors, setErrors] = useState({});
+  const { user, refreshMembership } = useAuth();
   const [status, setStatus] = useState("idle"); // idle | processing | success
+  const [error, setError] = useState("");
 
-  const update = (field) => (e) => {
-    let value = e.target.value;
-    if (field === "cardNumber") value = formatCardNumber(value);
-    if (field === "expiry") value = formatExpiry(value);
-    if (field === "cvc") value = value.replace(/\D/g, "").slice(0, 3);
-    setForm((f) => ({ ...f, [field]: value }));
-  };
+  const isMember = !!user?.isMember;
+  const balance = user?.credits ?? 0;
+  const canAfford = isMember && balance >= price;
 
-  const validate = () => {
-    const errs = {};
-    if (!form.name.trim()) errs.name = "Name on card is required.";
-    if (form.cardNumber.replace(/\s/g, "").length !== 16)
-      errs.cardNumber = "Enter a 16-digit card number.";
-    if (!/^\d{2}\/\d{2}$/.test(form.expiry)) errs.expiry = "Use MM/YY.";
-    if (form.cvc.length !== 3) errs.cvc = "3 digits.";
-    return errs;
-  };
-
-  const submit = (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
-    }
-    setErrors({});
+  const submit = async () => {
+    setError("");
     setStatus("processing");
-    // Simulated payment. No real gateway/backend exists yet.
-    setTimeout(() => {
+    try {
+      await onSuccess();
+      await refreshMembership();
       setStatus("success");
-      setTimeout(() => onSuccess(), 700);
-    }, 1100);
+      setTimeout(onClose, 700);
+    } catch (err) {
+      setError(err.message || "Couldn't unlock this path. Please try again.");
+      setStatus("idle");
+    }
   };
 
   return (
@@ -79,7 +41,7 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
         {status === "success" ? (
           <div className="py-6 text-center">
             <div className="mb-3 text-4xl">✅</div>
-            <h3 className="mb-2 text-ink">Payment Successful</h3>
+            <h3 className="mb-2 text-ink">Unlocked!</h3>
             <p className="text-sm text-[#2C2C2C]/70">
               Interactive path unlocked for {course.title}.
             </p>
@@ -104,80 +66,32 @@ export default function CheckoutModal({ course, price, onSuccess, onClose }) {
               Get an AI guide alongside every lesson to explain concepts,
               answer questions, and keep you unstuck.
             </p>
-            <div className="mb-5 text-4xl font-bold text-ink">
-              ${price.toFixed(2)}
+            <div className="mb-1 text-4xl font-bold text-ink">
+              {price} credits
             </div>
+            <p className="mb-5 text-xs text-[#2C2C2C]/60">
+              {isMember
+                ? `Your balance: ${balance} credits`
+                : "You need an active membership to spend credits."}
+            </p>
 
-            <form className="flex flex-col gap-4" onSubmit={submit}>
-              <div className={FIELD}>
-                <label className={FIELD_LABEL} htmlFor="cc-name">Name on card</label>
-                <input
-                  id="cc-name"
-                  className={FIELD_INPUT}
-                  value={form.name}
-                  onChange={update("name")}
-                  placeholder="Jane Doe"
-                  disabled={status === "processing"}
-                />
-                {errors.name && <span className={FIELD_ERROR}>{errors.name}</span>}
-              </div>
-
-              <div className={FIELD}>
-                <label className={FIELD_LABEL} htmlFor="cc-number">Card number</label>
-                <input
-                  id="cc-number"
-                  className={FIELD_INPUT}
-                  value={form.cardNumber}
-                  onChange={update("cardNumber")}
-                  placeholder="4242 4242 4242 4242"
-                  inputMode="numeric"
-                  disabled={status === "processing"}
-                />
-                {errors.cardNumber && (
-                  <span className={FIELD_ERROR}>{errors.cardNumber}</span>
-                )}
-              </div>
-
-              <div className="flex gap-4">
-                <div className={`${FIELD} flex-1`}>
-                  <label className={FIELD_LABEL} htmlFor="cc-expiry">Expiry</label>
-                  <input
-                    id="cc-expiry"
-                    className={FIELD_INPUT}
-                    value={form.expiry}
-                    onChange={update("expiry")}
-                    placeholder="MM/YY"
-                    inputMode="numeric"
-                    disabled={status === "processing"}
-                  />
-                  {errors.expiry && <span className={FIELD_ERROR}>{errors.expiry}</span>}
-                </div>
-                <div className={`${FIELD} w-[100px] shrink-0`}>
-                  <label className={FIELD_LABEL} htmlFor="cc-cvc">CVC</label>
-                  <input
-                    id="cc-cvc"
-                    className={FIELD_INPUT}
-                    value={form.cvc}
-                    onChange={update("cvc")}
-                    placeholder="123"
-                    inputMode="numeric"
-                    disabled={status === "processing"}
-                  />
-                  {errors.cvc && <span className={FIELD_ERROR}>{errors.cvc}</span>}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="btn-primary mt-2 w-full cursor-pointer justify-center bg-navy text-community-gold hover:bg-[#253a50] disabled:cursor-default disabled:opacity-70"
-                disabled={status === "processing"}
-              >
-                {status === "processing" ? "Processing…" : `Pay $${price.toFixed(2)}`}
-              </button>
-              <p className="text-center text-xs text-[#2C2C2C]/45">
-                Simulated checkout. No real payment is processed.
+            {error && (
+              <p className="mb-4 text-xs text-[#8B2020]">{error}</p>
+            )}
+            {isMember && !canAfford && !error && (
+              <p className="mb-4 text-xs text-[#8B2020]">
+                Not enough credits — top up on your Credits page first.
               </p>
-            </form>
+            )}
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={status === "processing" || !canAfford}
+              className="btn-primary w-full cursor-pointer justify-center bg-navy text-community-gold hover:bg-[#253a50] disabled:cursor-default disabled:opacity-70"
+            >
+              {status === "processing" ? "Unlocking…" : `Spend ${price} credits`}
+            </button>
           </>
         )}
       </div>

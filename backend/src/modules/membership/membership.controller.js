@@ -1,5 +1,5 @@
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
-import { adjustCredits, CreditsError } from "../../shared/credits.js";
+import { adjustCredits, getMembershipByUserId, CreditsError } from "../../shared/credits.js";
 
 // Membership is deliberately not staff-actioned through a request/approval
 // queue: payment always happens in person at the front desk (cash/QR), so
@@ -50,6 +50,31 @@ export async function getMembershipForUser(req, res, next) {
   }
 }
 
+// Admin/Staff only. Recent credit_transactions rows for one student's
+// membership — every earn/spend already gets logged here by adjustCredits()
+// regardless of which module triggered it (membership top-up, bulk upload,
+// inventory spend, ...); this just reads that existing ledger back out, it
+// doesn't need to write anything new.
+export async function getCreditHistoryForUser(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const userId = Number(req.params.userId);
+    const membership = await getMembershipByUserId(userId);
+    if (!membership) return res.json({ data: [] });
+
+    const { data, error } = await supabaseAdmin
+      .from("credit_transactions")
+      .select("transaction_id, transaction_type, source_type, amount, description, created_at")
+      .eq("membership_id", membership.membership_id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Admin/Staff only. Activates or renews a membership for the given user;
 // upserts the one membership row per user (creates it on first activation).
 export async function activateMembership(req, res, next) {
@@ -82,6 +107,70 @@ export async function activateMembership(req, res, next) {
     if (error) throw error;
 
     res.json({ data: toPublicMembership(data) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+const MAX_BULK_ROWS = 500;
+
+// Admin only (tighter than the single top-up above: a typo'd amount column
+// here can hit dozens of accounts in one request, so the blast radius is
+// much bigger than one click). Takes rows already parsed client-side from a
+// CSV upload — { student_id, amount }[] — and applies each one independently
+// through the same adjustCredits() ledger the single top-up uses. One bad
+// row (unknown student, bad amount, not a member yet) doesn't stop the rest;
+// every row's outcome comes back so the admin can see exactly what happened.
+export async function bulkTopUpCredits(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+    if (rows.length === 0) return res.status(400).json({ error: "No rows provided" });
+    if (rows.length > MAX_BULK_ROWS) {
+      return res.status(400).json({ error: `Too many rows (max ${MAX_BULK_ROWS} per upload)` });
+    }
+
+    const results = [];
+    for (const row of rows) {
+      const studentId = String(row.student_id ?? "").trim();
+      const amount = Number(row.amount);
+
+      if (!studentId) {
+        results.push({ student_id: row.student_id ?? "", status: "error", message: "Missing student ID" });
+        continue;
+      }
+      if (!Number.isFinite(amount) || amount <= 0) {
+        results.push({ student_id: studentId, status: "error", message: "Amount must be a positive number" });
+        continue;
+      }
+
+      const { data: user, error: lookupError } = await supabaseAdmin
+        .from("users")
+        .select("user_id, full_name, student_id")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (!user) {
+        results.push({ student_id: studentId, status: "error", message: "No student found with this ID" });
+        continue;
+      }
+
+      try {
+        const updated = await adjustCredits(user.user_id, amount, {
+          sourceType: "membership",
+          description: "Bulk credit top-up (CSV upload)",
+        });
+        results.push({ student_id: studentId, name: user.full_name, status: "success", credits: updated.credits });
+      } catch (err) {
+        if (err instanceof CreditsError) {
+          results.push({ student_id: studentId, name: user.full_name, status: "error", message: err.message });
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    res.json({ data: results });
   } catch (err) {
     next(err);
   }

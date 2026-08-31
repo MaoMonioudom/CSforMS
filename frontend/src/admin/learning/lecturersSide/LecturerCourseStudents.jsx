@@ -91,7 +91,7 @@ export default function LecturerCourseStudents() {
                   <td className="px-5 py-3.5 hidden md:table-cell">
                     {s.purchasedInteractive ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 text-emerald-300 text-xs font-medium px-2.5 py-1">
-                        Purchased{s.pricePaid != null ? ` · $${s.pricePaid.toFixed(2)}` : ""}
+                        Purchased{s.pricePaid != null ? ` · ${s.pricePaid} credits` : ""}
                       </span>
                     ) : (
                       <span className="text-xs text-navy-muted">—</span>

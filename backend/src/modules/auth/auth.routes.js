@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { requireAuth } from "../../middleware/requireAuth.js";
-import { signup, login, resetPassword, forgotPasswordCheck } from "./auth.controller.js";
+import { login, resetPassword, forgotPasswordCheck, startVerifiedSignup } from "./auth.controller.js";
 import { microsoftLogin, microsoftCallback, microsoftCompleteSignup } from "./microsoft.controller.js";
 
 const router = Router();
 
-router.post("/signup", signup);
+router.post("/signup/verify-start", startVerifiedSignup);
 router.post("/login", login);
 router.post("/forgot-password/check", forgotPasswordCheck);
 router.post("/reset-password", resetPassword);
