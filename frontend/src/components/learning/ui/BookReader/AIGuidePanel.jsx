@@ -48,12 +48,6 @@ export default function AIGuidePanel({ lessonTitle, agentUrl }) {
             </span>
           </a>
         </div>
-        <iframe
-          src={agentUrl}
-          title={`AI guide for ${lessonTitle}`}
-          className="h-105 w-full rounded-md border border-white/10 bg-white"
-          allow="clipboard-write"
-        />
       </div>
     );
   }
