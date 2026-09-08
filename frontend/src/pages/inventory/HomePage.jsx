@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, CreditCard, Bell, Package2, ChevronRight, BadgeCheck,
   X, Printer, Box, Zap, Layers, MapPin, Clock, Users, Star,
-  FileText, Cpu, Wrench, CheckCircle2, RotateCcw, ShoppingBag,
+  FileText, Cpu, Wrench, CheckCircle2,
 } from 'lucide-react'
 import { T as THEME } from '../../lib/inventory/theme'
 import { CATEGORIES, PRINT_SERVICES, BROWSE_LANDING_IMAGE } from '../../lib/inventory/data'
@@ -15,6 +15,14 @@ const TEAL   = 'var(--color-inv-accent)'
 const CYAN   = 'color-mix(in oklch, var(--color-inv-accent) 55%, white)'
 const CREAM  = THEME.cream
 const BORDER = THEME.border
+
+// Short tag codes matching the landing page's category tiles, for the same
+// editorial-grid look on this page's "Equipment Rooms" section.
+const CATEGORY_TAG = {
+  electronic_tool: 'TOOL', electronic_equipment: 'EQUIP', electronic_component: 'COMP',
+  cnc_machines: 'CNC', manual_mechanical: 'MECH', mechanical_fasteners: 'FIX',
+  digital_device: 'DEVICE', raw_material: 'MAT',
+}
 
 // ── Small section label ────────────────────────────────────────────────────────
 function Tag({ children, color = NAVY }) {
@@ -46,19 +54,15 @@ export default function HomePage() {
   const setPage = (p) => navigate(p === '/notifications' ? '/notifications' : `/inventory${p}`)
   const user = { ...invUser, credits: hubUser?.credits ?? 0, membership: hubUser?.isMember ? 'active' : 'inactive' }
 
-  const [activeCat, setActiveCat]   = useState('all')
-
   const activeLoans = borrows.filter(b => b.userId === user.id && b.action !== 'purchased' && b.status === 'active').length
   const unread      = notifications.filter(n => !n.read && (n.forRoles?.includes('user') || n.userId === user.id)).length
   const available   = items.filter(i => i.status === 'available').length
-  const totalItems  = items.length
 
   // Membership & credits live on the shared "Your Credits" hub page (same one
   // the top-nav credits pill opens) — not a modal on this page.
   const goToCredits = () => navigate('/credits')
-  // Carries whatever category is selected here through to the full catalog,
-  // instead of dropping it and dumping the visitor on the unfiltered list.
-  const goToCatalog = () => setPage(activeCat === 'all' ? '/catalog' : `/catalog?category=${activeCat}`)
+  // Equipment Rooms tiles link straight to the full catalog, pre-filtered.
+  const goToCategory = (catId) => setPage(`/catalog?category=${catId}`)
 
   // Due-date reminder — briefly toast once per visit if the student has a borrow
   // due soon or overdue, so they don't find out only after a late fee.
@@ -78,9 +82,6 @@ export default function HomePage() {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const catItems    = activeCat === 'all' ? items : items.filter(i => i.category === activeCat)
-  const visibleItems = catItems.slice(0, 8)
 
   // Both print services are walk-up only — staff run and charge them at the
   // front desk, so there's no remote request flow for either.
@@ -178,22 +179,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Document Printing */}
-          <div className="group relative flex overflow-hidden rounded-2xl border bg-white" style={{ borderColor: BORDER }}>
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl" style={{ background: THEME.blue }} />
-            <div className="flex flex-1 flex-col p-6">
-              <div className="mb-4 flex items-start justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: THEME.blueLight }}>
-                  <Printer size={22} color={THEME.blue} />
+          <div className="group relative flex overflow-hidden rounded-[20px] border bg-white" style={{ borderColor: BORDER }}>
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-[20px]" style={{ background: THEME.blue }} />
+            <div className="flex flex-1 flex-col p-7">
+              <div className="mb-5 flex items-start justify-between">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl" style={{ background: THEME.blueLight }}>
+                  <Printer size={24} color={THEME.blue} />
                 </div>
                 <span className="badge" style={{ color: THEME.blue, background: THEME.blueLight }}>Document</span>
               </div>
               <h3 className="text-lg font-bold text-charcoal">Document Printing</h3>
               <p className="mt-1 text-sm leading-relaxed text-inv-muted">Black & white or color printing at the makerspace front desk. Staff will print your file on request.</p>
 
-              <div className="mt-5 flex items-baseline gap-1">
-                <span style={{ fontSize: 36, fontWeight: 800, color: NAVY, lineHeight: 1 }}>2</span>
+              <div className="mt-5 flex items-baseline gap-1.5">
+                <span style={{ fontSize: 44, fontWeight: 800, color: NAVY, lineHeight: 1 }}>2</span>
                 <span className="text-sm font-bold text-inv-muted">credits / page</span>
               </div>
 
@@ -214,20 +215,20 @@ export default function HomePage() {
           </div>
 
           {/* 3D Printing */}
-          <div className="group relative flex overflow-hidden rounded-2xl border bg-white" style={{ borderColor: BORDER }}>
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl" style={{ background: THEME.purple }} />
-            <div className="flex flex-1 flex-col p-6">
-              <div className="mb-4 flex items-start justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: THEME.purpleLight }}>
-                  <Box size={22} color={THEME.purple} />
+          <div className="group relative flex overflow-hidden rounded-[20px] border bg-white" style={{ borderColor: BORDER }}>
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-[20px]" style={{ background: THEME.purple }} />
+            <div className="flex flex-1 flex-col p-7">
+              <div className="mb-5 flex items-start justify-between">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl" style={{ background: THEME.purpleLight }}>
+                  <Box size={24} color={THEME.purple} />
                 </div>
                 <span className="badge" style={{ color: THEME.purple, background: THEME.purpleLight }}>3D Print</span>
               </div>
               <h3 className="text-lg font-bold text-charcoal">3D Printing</h3>
               <p className="mt-1 text-sm leading-relaxed text-inv-muted">Submit your model file and choose a filament. Staff will print and weigh it — you pay based on filament used.</p>
 
-              <div className="mt-5 flex items-baseline gap-1">
-                <span style={{ fontSize: 36, fontWeight: 800, color: NAVY, lineHeight: 1 }}>4</span>
+              <div className="mt-5 flex items-baseline gap-1.5">
+                <span style={{ fontSize: 44, fontWeight: 800, color: NAVY, lineHeight: 1 }}>4</span>
                 <span className="text-sm font-bold text-inv-muted">credits / gram</span>
               </div>
 
@@ -239,10 +240,10 @@ export default function HomePage() {
                 ))}
               </ul>
 
-              {/* Filament swatches */}
+              {/* Filament swatches — plain text row, no boxed background. */}
               {filaments.length > 0 && (
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-inv-muted uppercase tracking-wider">Available:</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-inv-muted">Filaments in stock</span>
                   {filaments.map(f => (
                     <div key={f.id} title={`${f.name} ${f.color} · ${f.stockGrams}g`}
                       style={{ width: 18, height: 18, borderRadius: '50%', background: f.hex, border: `2px solid ${BORDER}` }} />
@@ -260,111 +261,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── EQUIPMENT CATEGORIES ── */}
-      <section style={{ background: '#fff', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-        <div className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Tag color={THEME.amber}>Equipment</Tag>
-              <h2 className="inv-sec-h mt-3 text-3xl font-bold text-charcoal sm:text-4xl">Browse by Category</h2>
-              <p className="mt-2 text-sm text-inv-muted">{totalItems} items across {CATEGORIES.length} categories — borrow with your membership credits.</p>
-            </div>
-            <button onClick={goToCatalog}
-              className="btn-secondary shrink-0 hover:bg-cream"
-              style={{ borderColor: BORDER, color: NAVY }}>
-              View All <ArrowRight size={14} />
-            </button>
-          </div>
-
-          {/* Item type explainer — Returnable vs Consumable */}
-          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {[
-              { Icon: RotateCcw,   label: 'Returnable', color: TEAL,           bg: 'var(--color-inv-accent-light)', desc: "Borrow and return by your due date — no charge unless it's late or damaged." },
-              { Icon: ShoppingBag, label: 'Consumable',  color: THEME.green,   bg: THEME.greenLight, desc: 'Materials you keep — purchased outright with your credits.' },
-            ].map(({ Icon, label, color, bg, desc }) => (
-              <div key={label} className="flex items-start gap-3 rounded-xl p-3.5" style={{ border: `1px solid ${BORDER}`, background: THEME.cream }}>
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: bg }}>
-                  <Icon size={16} color={color} />
-                </div>
-                <div>
-                  <p className="m-0 text-xs font-bold text-charcoal">{label}</p>
-                  <p className="m-0 mt-0.5 text-xs leading-relaxed text-inv-muted">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Category filter chips */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            <button onClick={() => setActiveCat('all')}
-              className="chip"
-              style={{ background: activeCat === 'all' ? NAVY : '#fff', color: activeCat === 'all' ? '#fff' : THEME.charcoal, borderColor: activeCat === 'all' ? NAVY : BORDER }}>
-              All Items
-            </button>
-            {CATEGORIES.map(c => (
-              <button key={c.id} onClick={() => setActiveCat(c.id)}
-                className="chip"
-                style={{ background: activeCat === c.id ? c.iconColor : '#fff', color: activeCat === c.id ? '#fff' : THEME.charcoal, borderColor: activeCat === c.id ? c.iconColor : BORDER }}>
-                <c.Icon size={12} color={activeCat === c.id ? '#fff' : c.iconColor} />
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Item grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-4">
-            {visibleItems.map(item => {
-              const cat = CATEGORIES.find(c => c.id === item.category)
-              const isAvail = item.status === 'available'
-              return (
-                <button key={item.id} onClick={goToCatalog}
-                  className="group flex flex-col overflow-hidden rounded-2xl border bg-white text-left transition-all hover:-translate-y-1 hover:shadow-lg"
-                  style={{ borderColor: BORDER }}>
-                  {/* Icon area */}
-                  <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden"
-                    style={{ background: `linear-gradient(145deg, ${cat?.color || CREAM} 0%, #fff 70%)` }}>
-                    {cat && <cat.Icon size={38} color={cat.iconColor} strokeWidth={1.4} />}
-                    <span className="badge badge-sm absolute right-2 top-2"
-                      style={{ background: isAvail ? THEME.greenLight : THEME.amberLight, color: isAvail ? THEME.green : THEME.amber }}>
-                      {isAvail ? 'Available' : item.status}
-                    </span>
-                  </div>
-                  {/* Details */}
-                  <div className="flex flex-1 flex-col gap-1.5 p-3">
-                    <p className="m-0 truncate text-sm font-semibold text-charcoal leading-snug">{item.name}</p>
-                    <p className="m-0 text-xs text-inv-muted truncate">{cat?.label}</p>
-                    <div className="mt-auto flex items-center justify-between pt-2" style={{ borderTop: `1px solid ${BORDER}` }}>
-                      <span className="text-xs font-bold" style={{ color: NAVY }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
-                      <span className="text-xs text-inv-muted">{item.type}</span>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {catItems.length > 8 && (
-            <div className="mt-6 text-center">
-              <button onClick={goToCatalog}
-                className="btn-secondary text-charcoal hover:bg-cream"
-                style={{ borderColor: BORDER }}>
-                See all {catItems.length} items <ArrowRight size={14} className="inline ml-1" />
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── CATEGORY INFO CARDS ── */}
+      {/* ── CATEGORY INFO CARDS — same editorial bordered-grid tile design as
+          the guest landing page's "Browse by Category" section, so the look
+          is consistent whether you've joined yet or not. ── */}
+      <style>{`
+        .home-cat-cell { padding:24px 20px;cursor:pointer;position:relative;overflow:hidden;transition:background .15s;background:transparent; }
+        .home-cat-cell:hover { background:var(--color-inv-accent-light); }
+        .home-cat-browse { transition:transform .2s;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em; }
+        .home-cat-cell:hover .home-cat-browse { transform:translateX(4px); }
+      `}</style>
       <section className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
         <Tag color={THEME.teal}>What's Here</Tag>
         <h2 className="inv-sec-h mt-3 mb-2 text-3xl font-bold text-charcoal sm:text-4xl">Equipment Rooms</h2>
         <p className="mb-8 max-w-lg text-sm text-inv-muted">The makerspace is organized into dedicated rooms for each discipline. You'll need a valid membership to borrow.</p>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {CATEGORIES.map(c => {
-            const roomItems = items.filter(i => i.category === c.id)
-            const avail = roomItems.filter(i => i.status === 'available').length
+        <div className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ display: 'grid', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', background: '#fff' }}>
+          {CATEGORIES.map((c, i) => {
             const DESC_MAP = {
               electronic_equipment: 'Power supplies, oscilloscopes, signal generators & lab instruments.',
               electronic_component: 'Arduino, ESP32, sensors, ICs, resistors, capacitors & modules.',
@@ -375,20 +287,29 @@ export default function HomePage() {
               raw_material:         'PLA filament, acrylic sheets, plywood, foam & craft materials.',
               electronic_tool:      'Soldering stations, multimeters, wire strippers & PCB tools.',
             }
+            const isLastCol = (i + 1) % 4 === 0
             return (
-              <button key={c.id} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                className="group flex flex-col rounded-2xl border bg-white p-5 text-left transition-all hover:-translate-y-1 hover:shadow-md"
-                style={{ borderColor: BORDER }}>
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: c.color }}>
+              <div key={c.id} className="home-cat-cell border-b lg:border-b-0"
+                onClick={() => goToCategory(c.id)}
+                style={{ borderRight: isLastCol ? 'none' : `1px solid ${BORDER}`, borderBottomColor: BORDER }}>
+                <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 48, fontWeight: 700, color: 'rgba(15,23,42,.04)' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                   <c.Icon size={20} color={c.iconColor} />
                 </div>
-                <h3 className="m-0 text-sm font-bold text-charcoal">{c.label}</h3>
-                <p className="m-0 mt-1 text-xs leading-relaxed text-inv-muted">{DESC_MAP[c.id] || c.room}</p>
-                <div className="mt-4 flex items-center justify-between" style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-                  <span className="text-xs font-medium text-inv-muted">{c.room}</span>
-                  <span className="text-xs font-bold" style={{ color: avail > 0 ? THEME.green : THEME.red }}>{avail} ready</span>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                  <span className="badge badge-sm uppercase tracking-[0.1em]" style={{ color: c.iconColor, background: c.color }}>
+                    {CATEGORY_TAG[c.id] || c.label.slice(0, 4).toUpperCase()}
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 9, fontWeight: 600, color: c.iconColor, opacity: .75 }}>
+                    <MapPin size={8} />{c.room}
+                  </span>
                 </div>
-              </button>
+                <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, color: THEME.charcoal }}>{c.label}</p>
+                <p style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.5, marginBottom: 14 }}>{DESC_MAP[c.id] || c.room}</p>
+                <span className="home-cat-browse" style={{ color: c.iconColor }}>Browse <ChevronRight size={11} /></span>
+              </div>
             )
           })}
         </div>
