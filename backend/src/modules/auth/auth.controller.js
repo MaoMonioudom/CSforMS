@@ -8,6 +8,19 @@ const SALT_ROUNDS = 10;
 
 export const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
+// Comma-separated domains; subdomains count (cadt.edu.kh admits
+// student.cadt.edu.kh too). Shared with microsoft.controller.js's OAuth
+// signup gate — a Microsoft-verified email and a plain-form email go
+// through the exact same domain check, since only that (not the sign-in
+// method) is what actually stops a Gmail address from registering here.
+export function isDomainAllowed(email) {
+  const allowedDomains = (process.env.MICROSOFT_ALLOWED_EMAIL_DOMAIN || "")
+    .split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
+  if (allowedDomains.length === 0) return true;
+  const emailDomain = email.split("@")[1] || "";
+  return allowedDomains.some((d) => emailDomain === d || emailDomain.endsWith(`.${d}`));
+}
+
 export async function signup(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
@@ -18,6 +31,9 @@ export async function signup(req, res, next) {
     }
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    if (!isDomainAllowed(normalizedEmail)) {
+      return res.status(403).json({ error: "Sign up with your CADT email address (e.g. @cadt.edu.kh)." });
     }
 
     const { data: existing, error: lookupError } = await supabaseAdmin

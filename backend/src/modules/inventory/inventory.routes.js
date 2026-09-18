@@ -53,6 +53,7 @@ router.get("/users", requireAuth, STAFF, ctrl.listInventoryUsers);
 // Lab Services counter + Browse Items counter: staff-only, instant charge.
 router.post("/services/print", requireAuth, STAFF, ctrl.chargePrintingNow);
 router.post("/services/3d-print", requireAuth, STAFF, ctrl.charge3DNow);
+router.post("/services/machine-time", requireAuth, STAFF, ctrl.chargeMachineTimeNow);
 router.post("/sale", requireAuth, STAFF, ctrl.staffSale);
 router.post("/topup-counter", requireAuth, STAFF, ctrl.topUpCounter);
 

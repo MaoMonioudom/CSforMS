@@ -64,36 +64,57 @@ export function InventoryProvider({ children }) {
   const refreshPayments = useCallback(() => inv.fetchPayments().then(setPayments), [])
   const refreshUsers = useCallback(() => inv.fetchUsers().then(setUsers), [])
 
-  // Public catalog: guests can browse.
+  // Live-ish sync interval. There's no websocket/realtime channel here, so
+  // this is what makes one person's action (student submits a request,
+  // staff approves it, another admin edits stock...) show up in everyone
+  // else's already-open tab without them having to hit reload.
+  const POLL_MS = 20000
+
+  // Public catalog: guests can browse. Polled too — stock/availability
+  // changes made by staff should show up for anyone already browsing.
   useEffect(() => {
     refreshCatalog().catch(() => {}).finally(() => setLoading(false))
+    const interval = setInterval(() => { refreshCatalog().catch(() => {}) }, POLL_MS)
+    return () => clearInterval(interval)
   }, [refreshCatalog])
 
-  // Authed collections.
+  // Authed collections: polled so a request/borrow/notification created or
+  // resolved by someone else (staff approving a student's request, another
+  // session on the same account, etc.) appears without a manual reload.
   useEffect(() => {
     if (!hubUser) { setBorrows([]); setRequests([]); setNotifications([]); return }
     refreshBorrows().catch(() => {})
     refreshRequests().catch(() => {})
     refreshNotifications().catch(() => {})
+    const interval = setInterval(() => {
+      refreshBorrows().catch(() => {})
+      refreshRequests().catch(() => {})
+      refreshNotifications().catch(() => {})
+    }, POLL_MS)
+    return () => clearInterval(interval)
   }, [hubUser, refreshBorrows, refreshRequests, refreshNotifications])
 
-  // Staff-only collections.
+  // Staff-only collections: also polled, so one admin's counter sale or
+  // credit top-up shows up for a different admin's already-open tab.
   useEffect(() => {
     if (!staff) { setPayments([]); setUsers([]); return }
     refreshPayments().catch(() => {})
     refreshUsers().catch(() => {})
+    const interval = setInterval(() => {
+      refreshPayments().catch(() => {})
+      refreshUsers().catch(() => {})
+    }, POLL_MS)
+    return () => clearInterval(interval)
   }, [staff, refreshPayments, refreshUsers])
 
-  // Staff-only: poll for new pending requests so a toast pops up when a
-  // student submits one, without needing a websocket. `seenPendingIds`
-  // starts null so the first load (whatever's already pending) doesn't
-  // trigger a toast. Only requests that appear after that do.
+  // Staff-only: pop a toast when a new pending request appears (piggybacks
+  // on the requests poll above). `seenPendingIds` starts null so the first
+  // load (whatever's already pending) doesn't trigger a toast — only
+  // requests that appear after that do.
   const seenPendingIds = useRef(null)
   useEffect(() => {
-    if (!staff) { seenPendingIds.current = null; return }
-    const interval = setInterval(() => { refreshRequests().catch(() => {}) }, 30000)
-    return () => clearInterval(interval)
-  }, [staff, refreshRequests])
+    if (!staff) seenPendingIds.current = null
+  }, [staff])
 
   useEffect(() => {
     if (!staff) return
@@ -139,6 +160,7 @@ export function InventoryProvider({ children }) {
     deductCredits: (p) => run(() => inv.deductCredits(p), [refreshPayments, refreshUsers, creditsChanged]),
     chargePrint:   (p) => run(() => inv.chargePrint(p), [refreshPayments, refreshUsers, creditsChanged]),
     charge3D:      (p) => run(() => inv.charge3D(p), [refreshPayments, refreshUsers, refreshCatalog, creditsChanged]),
+    chargeMachineTime: (p) => run(() => inv.chargeMachineTime(p), [refreshPayments, refreshUsers, creditsChanged]),
     staffSale:     (p) => run(() => inv.staffSale(p), [refreshPayments, refreshUsers, refreshBorrows, refreshCatalog, creditsChanged]),
     topUpCounter:  (p) => run(() => inv.topUpCounter(p), [refreshPayments, refreshUsers, creditsChanged]),
 

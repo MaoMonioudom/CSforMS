@@ -2,22 +2,11 @@ import * as client from "openid-client";
 import bcrypt from "bcrypt";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { signToken, signPurposeToken, verifyToken } from "../../utils/jwt.js";
-import { normalizeEmail } from "./auth.controller.js";
+import { normalizeEmail, isDomainAllowed } from "./auth.controller.js";
 import { uniqueUserNameFromEmail } from "../../shared/userAccounts.js";
 import { toPublicUser } from "../../shared/sanitizeUser.js";
 
 const SALT_ROUNDS = 10;
-
-// Comma-separated domains; subdomains count (cadt.edu.kh admits
-// student.cadt.edu.kh too). Shared by the callback's first-time-signup gate
-// and complete-signup's defense-in-depth re-check.
-function isDomainAllowed(email) {
-  const allowedDomains = (process.env.MICROSOFT_ALLOWED_EMAIL_DOMAIN || "")
-    .split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
-  if (allowedDomains.length === 0) return true;
-  const emailDomain = email.split("@")[1] || "";
-  return allowedDomains.some((d) => emailDomain === d || emailDomain.endsWith(`.${d}`));
-}
 
 // Confidential (server-side) client. Microsoft is discovered/configured
 // once and cached, not PKCE'd (PKCE is for public/browser clients; we hold
@@ -162,9 +151,9 @@ export async function microsoftCallback(req, res, next) {
 export async function microsoftCompleteSignup(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const { token, full_name, password } = req.body;
-    if (!full_name || !password) {
-      return res.status(400).json({ error: "full_name and password are required" });
+    const { token, full_name, password, student_id } = req.body;
+    if (!full_name || !password || !student_id) {
+      return res.status(400).json({ error: "full_name, password, and student_id are required" });
     }
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
@@ -195,6 +184,15 @@ export async function microsoftCompleteSignup(req, res, next) {
     if (lookupError) throw lookupError;
     if (existing) return res.status(409).json({ error: "An account with this email already exists" });
 
+    const trimmedStudentId = student_id.trim();
+    const { data: existingStudentId, error: studentIdLookupError } = await supabaseAdmin
+      .from("users")
+      .select("user_id")
+      .eq("student_id", trimmedStudentId)
+      .maybeSingle();
+    if (studentIdLookupError) throw studentIdLookupError;
+    if (existingStudentId) return res.status(409).json({ error: "An account with this Student ID already exists" });
+
     const user_name = await uniqueUserNameFromEmail(email);
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const { data: user, error: insertError } = await supabaseAdmin
@@ -204,6 +202,7 @@ export async function microsoftCompleteSignup(req, res, next) {
         email,
         user_name,
         password_hash,
+        student_id: trimmedStudentId,
         microsoft_id: msId,
         microsoft_linked_at: new Date().toISOString(),
       })

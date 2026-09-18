@@ -7,7 +7,7 @@ import { CATEGORIES } from '../../lib/inventory/data'
 // CTA passed in as `footer`) and by the Notifications panel (no footer, it's
 // just showing what a pending/past request was for). Keeping this in one
 // place means both surfaces always look identical and stay in sync.
-export default function ItemDetailModal({ item, onClose, footer }) {
+export default function ItemDetailModal({ item, onClose, footer, hideStatusBadge }) {
   const cat = CATEGORIES.find(c => c.id === item.category)
 
   return (
@@ -35,7 +35,9 @@ export default function ItemDetailModal({ item, onClose, footer }) {
               className="h-full w-full rounded-t-[24px] sm:rounded-tr-none sm:rounded-l-[24px]" />
             {/* Status + type badges — stacked top-left, same on both student and staff views */}
             <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
-              <Badge status={item.status === 'available' && item.stock <= 0 ? 'out_of_stock' : item.status} small />
+              {!hideStatusBadge && (
+                <Badge status={item.status === 'available' && item.stock <= 0 ? 'out_of_stock' : item.status} small />
+              )}
               <span className="badge badge-sm"
                 style={item.type === 'Returnable'
                   ? { background: '#dbeafe', color: '#2563eb' }

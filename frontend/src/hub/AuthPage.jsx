@@ -71,6 +71,10 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
 }
 
 // ── Register form ────────────────────────────────────────────────────────────
+// Plain email/password signup is still allowed here, but only with a CADT
+// email address — the backend rejects anything else (see auth.controller.js
+// isDomainAllowed), so a Gmail/etc. address can't self-register through
+// either this form or the Microsoft button below.
 function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit, mobileToggle }) {
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   return (
@@ -94,7 +98,7 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
-        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" autoComplete="email" />
+        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="you@cadt.edu.kh" autoComplete="email" />
       </div>
 
       <div className="flex flex-col gap-1.5">

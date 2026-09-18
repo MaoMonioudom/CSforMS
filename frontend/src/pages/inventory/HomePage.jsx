@@ -200,7 +200,7 @@ export default function HomePage() {
 
               <ul className="mt-4 space-y-2">
                 {['Black & white or color', 'A4 / Letter format', 'Submit file + page count'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-inv-muted">
+                  <li key={f} className="flex items-center gap-2 text-sm text-inv-muted">
                     <CheckCircle2 size={13} color={THEME.green} /> {f}
                   </li>
                 ))}
@@ -208,7 +208,7 @@ export default function HomePage() {
 
               {/* Walk-up only — staff charge this instantly at the front desk,
                   so there's no remote request to submit. */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.blueLight, color: THEME.blue, border: `1px solid color-mix(in oklch, ${THEME.blue} 20%, transparent)`, justifyContent: 'center' }}>
+              <div className="mt-auto flex items-center gap-2 pt-8 text-sm font-bold" style={{ color: THEME.blue }}>
                 <MapPin size={13} /> Available at the front desk — visit in makerspace
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function HomePage() {
 
               <ul className="mt-4 space-y-2">
                 {['PLA, PETG, ABS, TPU', 'Staff weigh finished print', 'Credits charged post-print'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-inv-muted">
+                  <li key={f} className="flex items-center gap-2 text-sm text-inv-muted">
                     <CheckCircle2 size={13} color={THEME.purple} /> {f}
                   </li>
                 ))}
@@ -243,7 +243,7 @@ export default function HomePage() {
               {/* Filament swatches — plain text row, no boxed background. */}
               {filaments.length > 0 && (
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-inv-muted">Filaments in stock</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-inv-muted">Filaments in stock</span>
                   {filaments.map(f => (
                     <div key={f.id} title={`${f.name} ${f.color} · ${f.stockGrams}g`}
                       style={{ width: 18, height: 18, borderRadius: '50%', background: f.hex, border: `2px solid ${BORDER}` }} />
@@ -253,7 +253,7 @@ export default function HomePage() {
 
               {/* Walk-up only, same as document printing — staff run and weigh
                   the print at the counter, so no remote request either. */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl py-3 text-center text-xs font-bold" style={{ background: THEME.purpleLight, color: THEME.purple, border: `1px solid color-mix(in oklch, ${THEME.purple} 20%, transparent)`, justifyContent: 'center' }}>
+              <div className="mt-auto flex items-center gap-2 pt-8 text-sm font-bold" style={{ color: THEME.purple }}>
                 <MapPin size={13} /> Available at the front desk — visit in makerspace
               </div>
             </div>
@@ -288,6 +288,12 @@ export default function HomePage() {
               electronic_tool:      'Soldering stations, multimeters, wire strippers & PCB tools.',
             }
             const isLastCol = (i + 1) % 4 === 0
+            // Same two-color, room-based scheme as the Landing page's own
+            // Browse by Category section — teal for Makerspace Room, the
+            // community accent for Mechanic Room — not each category's own color.
+            const isMechanic = c.room === 'Mechanic Room'
+            const roomColor = isMechanic ? 'var(--community)' : TEAL
+            const roomBg    = isMechanic ? 'color-mix(in oklch, var(--community) 12%, white)' : 'var(--color-inv-accent-light)'
             return (
               <div key={c.id} className="home-cat-cell border-b lg:border-b-0"
                 onClick={() => goToCategory(c.id)}
@@ -295,20 +301,20 @@ export default function HomePage() {
                 <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 48, fontWeight: 700, color: 'rgba(15,23,42,.04)' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <c.Icon size={20} color={c.iconColor} />
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: roomBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                  <c.Icon size={20} color={roomColor} />
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                  <span className="badge badge-sm uppercase tracking-[0.1em]" style={{ color: c.iconColor, background: c.color }}>
+                  <span className="badge badge-sm uppercase tracking-[0.1em]" style={{ color: roomColor, background: roomBg }}>
                     {CATEGORY_TAG[c.id] || c.label.slice(0, 4).toUpperCase()}
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 9, fontWeight: 600, color: c.iconColor, opacity: .75 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 9, fontWeight: 600, color: roomColor, opacity: .75 }}>
                     <MapPin size={8} />{c.room}
                   </span>
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, color: THEME.charcoal }}>{c.label}</p>
                 <p style={{ fontSize: 12, color: THEME.muted, lineHeight: 1.5, marginBottom: 14 }}>{DESC_MAP[c.id] || c.room}</p>
-                <span className="home-cat-browse" style={{ color: c.iconColor }}>Browse <ChevronRight size={11} /></span>
+                <span className="home-cat-browse" style={{ color: roomColor }}>Browse <ChevronRight size={11} /></span>
               </div>
             )
           })}
@@ -362,14 +368,41 @@ export default function HomePage() {
               </button>
             )}
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border p-5" style={{ background: 'var(--color-blue-light)', borderColor: 'color-mix(in oklch, ' + THEME.blue + ' 25%, transparent)' }}>
-            <Package2 size={28} color={THEME.blue} />
+          <div className="flex items-center gap-4 rounded-2xl border p-5" style={{ background: THEME.accentLight, borderColor: 'color-mix(in oklch, ' + THEME.accent + ' 25%, transparent)' }}>
+            <Package2 size={28} color={NAVY} />
             <div>
               <p className="m-0 text-sm font-bold text-charcoal">{available} items available right now</p>
               <p className="m-0 mt-0.5 text-xs text-inv-muted">Ready to borrow or purchase with your credits.</p>
             </div>
-            <button onClick={() => setPage('/catalog')} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: THEME.blue }}>
+            <button onClick={() => setPage('/catalog')} className="btn-primary ml-auto shrink-0 border-none text-white" style={{ background: NAVY }}>
               Browse
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CLOSING CTA — same gradient treatment as the hero ── */}
+      <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(145deg, color-mix(in oklch, var(--color-inv-accent) 40%, black) 0%, var(--color-inv-accent-text) 55%, var(--color-inv-accent) 100%)' }}>
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+        <div className="relative z-10 mx-auto max-w-[720px] px-5 py-14 text-center sm:px-8 sm:py-16">
+          <span className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: CYAN }}>Ready to make?</span>
+          <h2 className="font-display leading-[1.15] tracking-tight" style={{ fontSize: 'clamp(26px,4vw,42px)', margin: '10px 0 0', color: '#fff' }}>
+            Your next project is one click away.
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: 'var(--on-dark-muted)' }}>
+            Borrow the tools, print your files, or grab materials — everything's ready in the catalog.
+          </p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <button onClick={() => setPage('/catalog')} className="btn-primary text-white" style={{ background: '#fff', color: NAVY }}>
+              Browse Inventory <ArrowRight size={14} />
+            </button>
+            <button onClick={() => setPage('/notifications')} className="btn-secondary text-white"
+              style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)' }}>
+              <Bell size={14} /> View Notifications
             </button>
           </div>
         </div>

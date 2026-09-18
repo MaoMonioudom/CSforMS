@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Printer, BadgeCheck, Box } from 'lucide-react'
+import { Search, Printer, BadgeCheck, Box, Cog } from 'lucide-react'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { PRINT_SERVICES } from '../../../lib/inventory/data'
@@ -7,18 +7,28 @@ import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const PRINT_RATE = PRINT_SERVICES.find(s => s.id === 'printing').rate
 
-// ── Lab Services: walk-up print & 3D print fulfillment. Staff find a student by
-// name or ID, enter pages or grams, and charge credits directly. No request/
-// approval step needed since the student is standing at the counter. 3D print
-// cost is driven entirely by the selected filament's own credit-per-gram rate,
-// so editing that rate in Manage Stock changes the price here immediately.
-export default function ServicePage({ users = [], filaments = [], showToast, user }) {
+// ── Lab Services: walk-up print, 3D print, and CNC/3D-printer machine-time
+// fulfillment. Staff find a student by name or ID, enter pages/grams/minutes,
+// and charge credits directly. No request/approval step needed since the
+// student is standing at the counter. 3D print cost is driven entirely by
+// the selected filament's own credit-per-gram rate, so editing that rate in
+// Manage Stock changes the price here immediately. Machine time works the
+// same way off each machine's own Credits field (repurposed as cr/hour,
+// since a Returnable item never has a real per-unit price) — also edited
+// from Manage Stock, not here. Total = hours × hourly rate + material cost
+// (material cost is a flat credits amount staff enters for whatever
+// filament/stock got consumed during the job).
+export default function ServicePage({ users = [], items = [], filaments = [], showToast, user }) {
   const ctx = useInventory()
   const [query,      setQuery]      = useState('')
   const [student,    setStudent]    = useState(null)
   const [pages,      setPages]      = useState('')
   const [filamentId, setFilamentId] = useState(filaments[0]?.id || '')
   const [grams,      setGrams]      = useState('')
+  const machines = items.filter(i => i.category === 'cnc_machines')
+  const [machineId,    setMachineId]    = useState('')
+  const [hours,        setHours]        = useState('')
+  const [materialCost, setMaterialCost] = useState('')
 
   const results = query.trim()
     ? users.filter(u => u.role === 'user' && (
@@ -32,6 +42,10 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
   const filamentRate  = filament?.rate ?? 4
   const printCredits = Math.round(Number(pages || 0) * PRINT_RATE)
   const printCost3D  = Math.round(Number(grams || 0) * filamentRate)
+
+  const machine     = machines.find(m => m.id === Number(machineId))
+  const machineRate = machine?.credits ?? 0
+  const machineCost = Math.round(Number(hours || 0) * machineRate + Number(materialCost || 0))
 
   const chargePrinting = async () => {
     const p = Number(pages)
@@ -57,6 +71,22 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
       setStudent(prev => ({ ...prev, credits: prev.credits - printCost3D }))
       showToast?.(`Charged ${printCost3D} cr for ${g}g (${filament.name} ${filament.color}): ${student.name}`)
       setGrams('')
+    } catch (err) {
+      showToast?.(err.message || 'Charge failed.', 'error')
+    }
+  }
+
+  const chargeMachine = async () => {
+    const h = Number(hours)
+    if (!h || h <= 0) { showToast?.('Enter how many hours it ran.', 'error'); return }
+    if (!machine) { showToast?.('Select a machine first.', 'error'); return }
+    if (student.credits < machineCost) { showToast?.(`${student.name} needs ${machineCost} cr but only has ${student.credits}.`, 'error'); return }
+    try {
+      await ctx.chargeMachineTime({ studentId: student.id, itemId: machine.id, hours: h, materialCost: Number(materialCost) || 0 })
+      setStudent(prev => ({ ...prev, credits: prev.credits - machineCost }))
+      showToast?.(`Charged ${machineCost} cr for ${h}h on ${machine.name}: ${student.name}`)
+      setHours('')
+      setMaterialCost('')
     } catch (err) {
       showToast?.(err.message || 'Charge failed.', 'error')
     }
@@ -117,10 +147,35 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
         )}
       </div>
 
+      {/* ── CNC / 3D-printer machines: rate is that machine's own Credits
+          field, edited from Manage Stock (same caveat as filament rates
+          above — shown here read-only so it's clear where it comes from). ── */}
+      <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+        <div style={{ padding: '0.85rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Cog size={15} color={T.red} />
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: T.charcoal }}>Machines</h3>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: T.faint }}>Credits per minute — edit each machine's rate in Manage Stock</span>
+        </div>
+        {machines.length === 0 ? (
+          <p style={{ color: T.faint, textAlign: 'center', padding: '1.5rem', margin: 0, fontSize: 13 }}>No machines configured. Add them in Manage Stock under CNC Machines.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4" style={{ padding: '0.85rem 1.5rem' }}>
+            {machines.map(m => (
+              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${T.border}`, borderRadius: 10, padding: '9px 12px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: T.charcoal, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: T.faint }}>{m.credits ?? 0} cr/hour</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream, display: 'flex', alignItems: 'center', gap: 8 }}>
           <Printer size={15} color={T.blue} />
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.charcoal }}>Print &amp; 3D Print Service</h3>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.charcoal }}>Print, 3D Print &amp; Machine Time</h3>
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem' }}>
@@ -168,7 +223,7 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
               {student.membership !== 'active' ? (
                 <p style={{ color: T.red, fontSize: 13, margin: 0 }}>This student doesn't have an active membership.</p>
               ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {/* Document printing: flex column so both Charge buttons align on the same line */}
                   <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
                     <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: T.charcoal, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -197,6 +252,27 @@ export default function ServicePage({ users = [], filaments = [], showToast, use
                     {grams > 0 && <p style={{ margin: '0 0 8px', fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{printCost3D} cr</strong> at {filamentRate}cr/g</p>}
                     <button onClick={charge3D} style={{ width: '100%', marginTop: 'auto', padding: '8px 0', background: T.purple, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: 'pointer' }}>
                       <BadgeCheck size={13} /> Charge & Print
+                    </button>
+                  </div>
+
+                  {/* CNC / 3D-printer machine time: staff enters minutes once the job's
+                      done, no live timer. Rate comes from the machine's own Credits field. */}
+                  <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
+                    <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: T.charcoal, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Cog size={13} color={T.red} /> Machine Time
+                    </p>
+                    <select value={machineId} onChange={e => setMachineId(e.target.value)}
+                      style={{ width: '100%', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}>
+                      <option value="">Select a machine…</option>
+                      {machines.map(m => <option key={m.id} value={m.id}>{m.name} ({m.credits ?? 0}cr/hr)</option>)}
+                    </select>
+                    <input type="number" min="0.1" step="0.1" placeholder="Hours used" value={hours} onChange={e => setHours(e.target.value)}
+                      style={{ width: '100%', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+                    <input type="number" min="0" placeholder="Material cost (credits, optional)" value={materialCost} onChange={e => setMaterialCost(e.target.value)}
+                      style={{ width: '100%', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+                    {(hours > 0 || materialCost > 0) && <p style={{ margin: '0 0 8px', fontSize: 12, color: T.muted }}>= <strong style={{ color: T.charcoal }}>{machineCost} cr</strong> ({hours || 0}h × {machineRate}cr/hr + {materialCost || 0} cr material)</p>}
+                    <button onClick={chargeMachine} style={{ width: '100%', marginTop: 'auto', padding: '8px 0', background: T.red, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: 'pointer' }}>
+                      <BadgeCheck size={13} /> Charge
                     </button>
                   </div>
                 </div>
