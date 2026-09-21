@@ -608,6 +608,48 @@ export async function charge3DNow(req, res, next) {
   }
 }
 
+// CNC / 3D-printer machine time: staff picks the machine and types in how
+// long it ran once the job's done (no live timer), plus any material cost
+// for whatever got consumed. Rate is that machine's own unit_credit — a
+// Returnable item never has a real per-unit price, so this reuses the field
+// as "credits per hour" instead, editable the same way any other item's
+// Credits field already is from Manage Stock.
+// credits = hours × hourly rate + material cost
+export async function chargeMachineTimeNow(req, res, next) {
+  try {
+    const { studentId, itemId, hours, materialCost = 0 } = req.body;
+    if (!studentId || !itemId || !hours || hours <= 0) {
+      return res.status(400).json({ error: "studentId, itemId, and positive hours are required" });
+    }
+
+    const { data: machine, error: itemErr } = await supabaseAdmin
+      .from("inventory_items").select("item_id, item_name, unit_credit").eq("item_id", itemId).maybeSingle();
+    if (itemErr) throw itemErr;
+    if (!machine) return res.status(404).json({ error: "Machine not found" });
+
+    const rate = machine.unit_credit ?? 0;
+    const credits = Math.round(hours * rate + (Number(materialCost) || 0));
+
+    const membership = await adjustCredits(studentId, -credits, {
+      description: `${machine.item_name} — ${hours}h${materialCost ? ` + ${materialCost} cr material` : ""} (walk-up)`,
+    });
+
+    await createPaidInvoice({
+      userId: studentId, invoiceType: "machine_time", totalCredit: credits,
+      method: "credit", verifiedBy: req.user.user_id,
+    });
+    await insertNotification({
+      userId: studentId, type: "approved",
+      message: `Machine time charged: ${machine.item_name}, ${hours}h, ${credits} cr.`,
+    });
+
+    res.json({ data: { credits: membership.credits } });
+  } catch (err) {
+    if (creditsErrorToResponse(err, res)) return;
+    next(err);
+  }
+}
+
 // ── Counter sale (staff checkout) & self-serve purchase ──────────────────
 // cart: [{ itemId, qty, action: 'purchase' | 'borrow' }]
 export async function staffSale(req, res, next) {

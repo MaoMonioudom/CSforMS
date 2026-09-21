@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Search, Receipt, ChevronDown, Trash2 } from 'lucide-react'
-import GradientStatCard from '../../../components/inventory/ui/GradientStatCard'
+import { Search, Receipt, ChevronDown, Trash2, CheckCircle2, Clock, DollarSign, CreditCard, TrendingUp } from 'lucide-react'
+import { StatCard } from '../../components/charts'
 import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES } from '../../../lib/inventory/data'
@@ -48,18 +48,13 @@ export default function PaymentsPage({ payments, setPayments, items = [], reques
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-2">
-        <h1 className="m-0 font-heading text-xl font-bold text-charcoal">Payment Lists</h1>
-        <p className="m-0 mt-0.5 text-sm text-faint">Track membership credit top-ups and item purchases at a glance.</p>
-      </div>
-
-      {/* All six stats in one row on desktop: wraps 3+3 on tablet, 2×3 on phone */}
-      <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        <GradientStatCard label="Completed Payments" value={completed.length} period="All time" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
-        <GradientStatCard label="Pending Payments" value={pendingTopups.length} period="Awaiting approval" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
-        <GradientStatCard label="Total Cash" value={`$${totalCash}`} period="Completed" gradient="linear-gradient(135deg,var(--color-blue-light),var(--color-inv-accent-light))" />
-        <GradientStatCard label="Total Credit" value={`${totalCredit} cr`} period="Completed" gradient="linear-gradient(135deg,var(--color-amber-light),color-mix(in oklch, var(--color-amber-light) 50%, white))" />
-        <GradientStatCard label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} period="Cash + Credit÷40" gradient="linear-gradient(135deg,var(--color-green-light),color-mix(in oklch, var(--color-green-light) 50%, white))" />
+      {/* All five stats in one row on desktop: wraps 3+2 on tablet, 2×3 on phone */}
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        <StatCard label="Completed Payments" value={completed.length}      icon={CheckCircle2} bg="bg-emerald-50" iconColor="text-emerald-500" to="/admin/inventory/payments" />
+        <StatCard label="Pending Payments"   value={pendingTopups.length}  icon={Clock}         bg="bg-amber-50"   iconColor="text-amber-500"   to="/admin/inventory/requests" />
+        <StatCard label="Total Cash"         value={`$${totalCash}`}       icon={DollarSign}    bg="bg-blue-50"    iconColor="text-blue-500"    to="/admin/inventory/payments" />
+        <StatCard label="Total Credit"       value={`${totalCredit} cr`}   icon={CreditCard}    bg="bg-violet-50"  iconColor="text-violet-500"  to="/admin/inventory/payments" />
+        <StatCard label="Total Revenue"      value={`$${totalRevenue.toFixed(2)}`} icon={TrendingUp} bg="bg-teal-50" iconColor="text-teal-500" to="/admin/inventory/payments" />
       </div>
 
       {/* List */}

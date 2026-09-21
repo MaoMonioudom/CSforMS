@@ -62,7 +62,7 @@ export default function InventoryAdminArea() {
       <Routes>
         <Route index element={<AdminDashboard items={items} users={users} borrows={borrows} requests={requests} payments={payments} />} />
         <Route path="manage"   element={<InventoryManager items={items} setItems={setItems} user={user} filaments={filaments} setFilaments={setFilaments} />} />
-        <Route path="services" element={<ServicePage user={user} users={users} setUsers={setUsers} filaments={filaments} setFilaments={setFilaments} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} />} />
+        <Route path="services" element={<ServicePage user={user} users={users} setUsers={setUsers} items={items} filaments={filaments} setFilaments={setFilaments} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} />} />
         <Route path="borrows"  element={<BorrowsTracker {...sharedBorrow} users={users} setUsers={setUsers} showToast={showToast} user={user} />} />
         <Route path="requests" element={<RequestsManager requests={requests} setRequests={setRequests} {...sharedBorrow} users={users} setUsers={setUsers} user={user} setNotifications={setNotifications} setPayments={setPayments} showToast={showToast} filaments={filaments} setFilaments={setFilaments} />} />
         <Route path="payments" element={<PaymentsPage payments={payments} setPayments={setPayments} items={items} requests={requests} users={users} />} />

@@ -1,17 +1,18 @@
 /**
- * One-off import: rows 173-213 of "Makerspace Inventory 2026 - DB Import v2.xlsx"
- * (Robocon electronics tail of CAT3 + all of CAT4 consumables/raw materials)
- * into the live inventory_items table, including uploading each item's photo
- * to the item-images storage bucket.
+ * One-off import of "Makerspace Inventory 2026 - DB Import v2.xlsx" into the
+ * live inventory_items table, including uploading each item's photo to the
+ * item-images storage bucket. CNC Machines rows and in-sheet duplicate rows
+ * are excluded at manifest-build time, not by this script.
  *
  * The manifest (item fields + base64 photo data) is pre-built by a separate
  * script from the source spreadsheet — see MANIFEST_PATH below. Kept out of
- * the repo since it embeds ~12MB of photo data.
+ * the repo since it embeds tens of MB of photo data.
  *
  * Usage (from backend/):  node scripts/seedInventoryImport2026.js [manifestPath]
  *
  * Idempotent: skips any item whose name already exists in inventory_items
- * (case-insensitive), so it's safe to re-run after a partial failure.
+ * (case-insensitive), so it's safe to re-run after a partial failure or with
+ * a later batch of rows from the same spreadsheet.
  */
 import "dotenv/config";
 import fs from "fs";
@@ -38,16 +39,26 @@ function normalizeRoom(raw) {
 
 // Mirrors frontend/src/lib/inventory/api.js resolveLocation() so imported
 // rows use the exact same location_items shape the app's own UI creates.
+// For a plain room with no zone, reuses (or creates) a generic room-level
+// location row (zone_name/shelf_code left null) instead of leaving
+// location_id unset.
 async function resolveLocationId(locationStr, locationCache) {
   const parts = locationStr.split(" - ");
   const room = normalizeRoom(parts[0].trim());
   const zone = parts[1]?.trim() || null;
 
   if (!zone) {
-    const hit = locationCache.find((l) => l.location_name === room && !l._imported);
+    const hit = locationCache.find((l) => l.location_name === room && !l.shelf_code);
     if (hit) return hit.location_id;
-    console.warn(`  ! no existing location row for room "${room}" with no zone — leaving location_id null`);
-    return null;
+    const { data, error } = await db
+      .from("location_items")
+      .insert({ location_name: room, zone_name: null, shelf_code: null })
+      .select("location_id, location_name, zone_name, shelf_code")
+      .single();
+    if (error) throw error;
+    locationCache.push(data);
+    console.log(`  created generic location row for room: ${room}`);
+    return data.location_id;
   }
 
   const existing = locationCache.find((l) => l.shelf_code === zone);
@@ -60,7 +71,6 @@ async function resolveLocationId(locationStr, locationCache) {
     .select("location_id, location_name, zone_name, shelf_code")
     .single();
   if (error) throw error;
-  data._imported = true;
   locationCache.push(data);
   console.log(`  created location: ${room} / ${data.zone_name} / ${zone}`);
   return data.location_id;

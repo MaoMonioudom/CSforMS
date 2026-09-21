@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { UserPlus, User as UserIcon } from "lucide-react";
+import { UserPlus, User as UserIcon, IdCard } from "lucide-react";
 import { HubNav } from "./HubNav";
 import { api } from "../lib/api/client";
 import { useAuth } from "./AuthContext";
@@ -19,6 +19,7 @@ export default function CompleteSignupPage() {
   const email = params.get("email") || "";
 
   const [fullName, setFullName] = useState(params.get("name") || "");
+  const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
   const [showPw, setShowPw]     = useState(false);
@@ -29,12 +30,13 @@ export default function CompleteSignupPage() {
     e.preventDefault();
     setError("");
     if (!fullName.trim()) { setError("Please enter your name."); return; }
+    if (!studentId.trim()) { setError("Please enter your Student ID."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (password !== confirm) { setError("Passwords don't match."); return; }
     setLoading(true);
     try {
       const { token: sessionToken } = await api.post("/api/auth/microsoft/complete-signup", {
-        token, full_name: fullName.trim(), password,
+        token, full_name: fullName.trim(), student_id: studentId.trim(), password,
       });
       const user = await loginWithToken(sessionToken);
       navigate(destinationFor(user.role), { replace: true });
@@ -82,6 +84,12 @@ export default function CompleteSignupPage() {
                 <label className="text-xs font-semibold" style={{ color: D.muted }}>Full name</label>
                 <TextField icon={UserIcon} type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
                   placeholder="Your name" autoComplete="name" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold" style={{ color: D.muted }}>Student ID</label>
+                <TextField icon={IdCard} type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)}
+                  placeholder="e.g. e20230123" autoComplete="off" />
               </div>
 
               <div className="flex flex-col gap-1.5">

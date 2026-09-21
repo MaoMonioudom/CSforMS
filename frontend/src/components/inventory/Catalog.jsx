@@ -22,42 +22,38 @@ const TEAL = 'var(--color-inv-accent)'
 function CategoryTiles({ items, filterCat, setFilterCat }) {
   const countFor = (id) => id === 'all' ? items.length : items.filter(i => i.category === id).length
 
+  // Phone: compact inline pill (icon + label, no count) — the original
+  // mobile look. Tablet and up: Telegram-folder fixed-width box tiles (icon
+  // box, label, count), one horizontally scrolling row that never stretches
+  // to fill/wrap the width.
   return (
-    // Mobile/tablet: Telegram-folder style, one horizontal scrollable row of
-    // compact icon tabs (kept through tablet widths so tiles never wrap to a
-    // second line). Only large desktop switches to a wrapping label+count
-    // grid — the count is shown right in the tile there, so no hover
-    // tooltip is needed (it used to duplicate that count and could double up
-    // with the previous tile's tooltip mid-transition when moving the mouse
-    // quickly between tiles).
-    <div className="inv-hscroll mb-5 flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-2.5 lg:overflow-visible lg:pb-0"
-      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))' }}>
+    <div className="inv-hscroll mb-5 flex gap-2 overflow-x-auto pb-1 sm:gap-2.5">
       <button onClick={() => setFilterCat('all')}
-        className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-shrink lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+        className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all sm:flex-col sm:gap-1 sm:rounded-2xl sm:p-2.5"
         style={filterCat === 'all'
           ? { background: `color-mix(in oklch, ${TEAL} 12%, white)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 55%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 10%, transparent)` }
           : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
-        <Boxes size={15} color={filterCat === 'all' ? TEAL : '#64748b'} className="lg:hidden" />
-        <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: filterCat === 'all' ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
+        <Boxes size={15} color={filterCat === 'all' ? TEAL : '#64748b'} className="sm:hidden" />
+        <div className="hidden h-9 w-9 items-center justify-center rounded-xl sm:flex" style={{ background: filterCat === 'all' ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
           <Boxes size={17} color={filterCat === 'all' ? TEAL : '#64748b'} />
         </div>
-        <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: filterCat === 'all' ? TEAL : '#0f172a' }}>All</span>
-        <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor('all')}</span>
+        <span className="whitespace-nowrap text-[13px] font-bold sm:w-[88px] sm:whitespace-normal sm:text-center sm:text-[11px] sm:font-semibold sm:leading-tight" style={{ color: filterCat === 'all' ? TEAL : '#0f172a' }}>All</span>
+        <span className="hidden text-[9px] font-medium sm:block" style={{ color: '#94a3b8' }}>{countFor('all')}</span>
       </button>
       {CATEGORIES.map(c => {
         const active = filterCat === c.id
         return (
           <button key={c.id} onClick={() => setFilterCat(c.id)}
-            className="inv-tile flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all lg:w-full lg:flex-shrink lg:flex-col lg:items-center lg:gap-1 lg:rounded-2xl lg:p-2.5"
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 transition-all sm:flex-col sm:gap-1 sm:rounded-2xl sm:p-2.5"
             style={active
               ? { background: `color-mix(in oklch, ${TEAL} 12%, white)`, border: `1.5px solid color-mix(in oklch, ${TEAL} 55%, transparent)`, boxShadow: `0 0 0 3px color-mix(in oklch, ${TEAL} 10%, transparent)` }
               : { background: '#fff', border: '1.5px solid #e2e8f0' }}>
-            <c.Icon size={15} color={active ? TEAL : c.iconColor} className="lg:hidden" />
-            <div className="hidden h-9 w-9 items-center justify-center rounded-xl lg:flex" style={{ background: active ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
+            <c.Icon size={15} color={active ? TEAL : '#64748b'} className="sm:hidden" />
+            <div className="hidden h-9 w-9 items-center justify-center rounded-xl sm:flex" style={{ background: active ? `color-mix(in oklch, ${TEAL} 18%, white)` : '#f1f5f9' }}>
               <c.Icon size={17} color={active ? TEAL : '#64748b'} />
             </div>
-            <span className="whitespace-nowrap text-[13px] font-bold lg:w-full lg:truncate lg:text-center lg:text-[11px] lg:font-semibold" style={{ color: active ? TEAL : '#0f172a' }}>{c.label}</span>
-            <span className="hidden text-[9px] font-medium lg:block" style={{ color: '#94a3b8' }}>{countFor(c.id)}</span>
+            <span className="whitespace-nowrap text-[13px] font-bold sm:w-[88px] sm:whitespace-normal sm:text-center sm:text-[11px] sm:font-semibold sm:leading-tight" style={{ color: active ? TEAL : '#0f172a' }}>{c.label}</span>
+            <span className="hidden text-[9px] font-medium sm:block" style={{ color: '#94a3b8' }}>{countFor(c.id)}</span>
           </button>
         )
       })}
@@ -95,14 +91,21 @@ function CompactItemCard({ item, onView, staffMode, staffStudent, onStaffAdd }) 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-1.5" style={{ borderColor: '#f1f5f9' }}>
           <span className="whitespace-nowrap text-[13px] font-bold" style={{ color: TEAL }}>{item.credits > 0 ? `${item.credits} cr` : 'Free'}</span>
           {staffMode ? (
+            /* Same pill-button treatment as the student side below — one
+               shared look either way, just wired to the counter order here. */
             <button onClick={e => { e.stopPropagation(); onStaffAdd(item) }}
               disabled={!canStaffAdd}
               className="whitespace-nowrap rounded-full border-none px-2.5 py-1 text-[11px] font-bold"
-              style={{ background: canStaffAdd ? TEAL : '#f1f5f9', color: canStaffAdd ? '#fff' : '#94a3b8', cursor: canStaffAdd ? 'pointer' : 'not-allowed' }}>
+              style={{ background: canStaffAdd ? `color-mix(in oklch, ${actionColor} 14%, white)` : '#f1f5f9', color: canStaffAdd ? actionColor : '#94a3b8', cursor: canStaffAdd ? 'pointer' : 'not-allowed' }}>
               {item.type === 'Returnable' ? 'Borrow' : 'Purchase'}
             </button>
           ) : (
-            <span className="whitespace-nowrap text-[11px] font-bold" style={{ color: actionColor }}>{actionLabel}</span>
+            <button onClick={e => { e.stopPropagation(); onView(item) }}
+              disabled={!available}
+              className="whitespace-nowrap rounded-full border-none px-2.5 py-1 text-[11px] font-bold"
+              style={{ background: available ? `color-mix(in oklch, ${actionColor} 14%, white)` : '#f1f5f9', color: actionColor, cursor: available ? 'pointer' : 'not-allowed' }}>
+              {actionLabel}
+            </button>
           )}
         </div>
       </div>
@@ -573,79 +576,110 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         </div>
       )}
 
-    <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+    {/* Staff/admin: same flat full-width padding as every other admin page
+        (Manage Stock, Requests, Payments...) instead of the student side's
+        centered 1280px column, so this page's content sits at the same
+        left edge and width as the rest of the admin area. */}
+    <div className={isStaff ? 'p-4 sm:p-6 lg:p-8' : 'mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-10 lg:px-12'}>
       {/* The admin sidebar is always visible (no collapse at tablet), so the
           two-column split only kicks in at lg; at md the content column is
           too squeezed by the sidebar for a 340px side panel to fit. */}
       <div className={isStaff ? 'grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]' : ''}>
         {/* Main column: categories, search, filters, item grid */}
         <div className="min-w-0">
-          <CategoryTiles items={items} filterCat={filterCat} setFilterCat={setFilterCat} />
+          {/* Pinned in place while the item grid below scrolls — categories,
+              search, and type filters stay visible instead of scrolling away
+              with the page. Solid background so items don't show through. */}
+          <div className={isStaff ? 'sticky top-0 z-30 pt-2' : 'sticky top-16 z-30 pt-2'} style={{ background: isStaff ? '#fff' : 'var(--color-cream)' }}>
+            <CategoryTiles items={items} filterCat={filterCat} setFilterCat={setFilterCat} />
 
-          {/* Search + type filters */}
-          <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-            <div className="relative flex-1 sm:max-w-[360px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }} />
-              <input placeholder="Search by name…" value={search} onChange={e => setSearch(e.target.value)}
-                className="field outline-none"
-                style={{ paddingLeft: 32, background: '#fff', borderColor: 'var(--border)', color: 'var(--color-charcoal)' }}
-                onFocus={e => e.target.style.borderColor = TEAL}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            {/* Search + type filters */}
+            <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+              <div className="relative flex-1 sm:max-w-[360px]">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }} />
+                <input placeholder="Search by name…" value={search} onChange={e => setSearch(e.target.value)}
+                  className="field outline-none"
+                  style={{ paddingLeft: 32, background: '#fff', borderColor: 'var(--border)', color: 'var(--color-charcoal)' }}
+                  onFocus={e => e.target.style.borderColor = TEAL}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+              </div>
+              <div className="inv-hscroll flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+                {TYPE_FILTERS.map(t => {
+                  const active = filterType === t.id
+                  return (
+                    <button key={t.id} onClick={() => setFilterType(t.id)}
+                      className="chip flex-shrink-0"
+                      style={active
+                        ? { background: TEAL, color: '#fff', border: 'none' }
+                        : { background: '#fff', color: 'var(--muted-foreground)', border: '1.5px solid var(--border)' }}>
+                      <t.Icon size={12} color={active ? '#fff' : 'var(--muted-foreground)'} />
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div className="inv-hscroll flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-              {TYPE_FILTERS.map(t => {
-                const active = filterType === t.id
-                return (
-                  <button key={t.id} onClick={() => setFilterType(t.id)}
-                    className="chip flex-shrink-0"
-                    style={active
-                      ? { background: TEAL, color: '#fff', border: 'none' }
-                      : { background: '#fff', color: 'var(--muted-foreground)', border: '1.5px solid var(--border)' }}>
-                    <t.Icon size={12} color={active ? '#fff' : 'var(--muted-foreground)'} />
-                    {t.label}
-                  </button>
-                )
-              })}
-            </div>
+
+            <p className="m-0 mb-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{filtered.length} items</p>
           </div>
 
-          <p className="m-0 mb-3 text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>{filtered.length} items</p>
-
           {isStaff ? (
-            /* Staff/admin — same card design as the student side, just with a
-               quick-add button in the footer for one-click counter sales. One
-               fewer column at lg since the sticky order panel shares the row. */
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
-              {visible.map(item => (
-                <CompactItemCard key={item.id} item={item} onView={setSelected}
-                  staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
-              ))}
+            /* Staff/admin: item grid scrolls in its own bounded box instead of
+               growing the whole page — only the category row above keeps its
+               own (horizontal) scroll. Same card design as the student side,
+               with a quick-add button in the footer for one-click counter sales. */
+            <div className="lg:max-h-[calc(100vh-180px)] lg:min-h-[400px] lg:overflow-y-auto lg:pr-1">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+                {visible.map(item => (
+                  <CompactItemCard key={item.id} item={item} onView={setSelected}
+                    staffMode={isStaff} staffStudent={staffStudent} onStaffAdd={addToStaffOrder} />
+                ))}
+              </div>
+
+              {/* See More: reveals the next batch of items */}
+              {filtered.length > visibleCount && (
+                <div className="mt-6 flex justify-center">
+                  <button onClick={() => setVisibleCount(c => c + PAGE_ROWS)}
+                    className="btn-secondary"
+                    style={{ background: '#fff', borderColor: `color-mix(in oklch, ${TEAL} 33%, transparent)`, color: TEAL, cursor: 'pointer' }}>
+                    See More ({filtered.length - visibleCount} more)
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            /* Student/guest: same compact card at every screen size, 2 columns on
-               phones up to 4 on desktop. */
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-              {visible.map(item => (
-                <CompactItemCard key={item.id} item={item} onView={setSelected} />
-              ))}
-            </div>
-          )}
+            /* Student/guest: normal page scroll — the sticky category/search/
+               filter bar above is what keeps them visible, no nested scroll
+               box needed here (one competed with the other and broke the
+               sticky positioning once the page scrolled past this block). */
+            <>
+              {/* Same compact card at every screen size, 2 columns on
+                  phones up to 4 on desktop. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+                {visible.map(item => (
+                  <CompactItemCard key={item.id} item={item} onView={setSelected} />
+                ))}
+              </div>
 
-          {/* See More: reveals the next batch of items */}
-          {filtered.length > visibleCount && (
-            <div className="mt-6 flex justify-center">
-              <button onClick={() => setVisibleCount(c => c + PAGE_ROWS)}
-                className="btn-secondary"
-                style={{ background: '#fff', borderColor: `color-mix(in oklch, ${TEAL} 33%, transparent)`, color: TEAL, cursor: 'pointer' }}>
-                See More ({filtered.length - visibleCount} more)
-              </button>
-            </div>
+              {/* See More: reveals the next batch of items */}
+              {filtered.length > visibleCount && (
+                <div className="mt-6 flex justify-center">
+                  <button onClick={() => setVisibleCount(c => c + PAGE_ROWS)}
+                    className="btn-secondary"
+                    style={{ background: '#fff', borderColor: `color-mix(in oklch, ${TEAL} 33%, transparent)`, color: TEAL, cursor: 'pointer' }}>
+                    See More ({filtered.length - visibleCount} more)
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* Right column: sticky in-person order panel (staff/admin only) */}
+        {/* Right column: in-person order panel (staff/admin only) — its own
+            bounded, independently-scrolling box, sized to (almost) the full
+            screen height rather than sharing the item grid's shorter box. */}
         {isStaff && (
-          <div className="lg:sticky lg:top-4 lg:self-start">
+          <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-32px)] lg:self-start lg:overflow-y-auto">
             <StaffOrderPanel
               users={users}
               staffStudent={staffStudent} setStaffStudent={setStaffStudent}
@@ -662,6 +696,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         <ItemDetailModal
           item={selected}
           onClose={() => setSelected(null)}
+          hideStatusBadge={isStaff}
           footer={<>
             {!isStaff && !user && onRequireAuth && (
               <button onClick={onRequireAuth}
@@ -701,6 +736,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
         const defaultDue = new Date(today); defaultDue.setDate(defaultDue.getDate() + LOAN_DAYS)
         const fmt = (d) => d.toISOString().split('T')[0]
         const minDue = fmt(new Date(today.getTime() + 86400000)) // tomorrow: can't return same day
+        const maxDue = fmt(new Date(today.getTime() + 28 * 86400000)) // cap: 4 weeks out
         return (
           <div className="fixed inset-0 z-[850] flex items-center justify-center bg-charcoal/40 p-4" onClick={() => setConfirmBorrow(null)}>
             <div onClick={e => e.stopPropagation()} className="w-full max-w-[380px] rounded-3xl bg-white p-6">
@@ -715,9 +751,10 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
                 </div>
                 <div className="rounded-xl p-3" style={{ background: T.cream }}>
                   <p className="m-0 mb-1 text-[10px] uppercase tracking-wide text-faint">Return Date</p>
-                  <input type="date" min={minDue} value={borrowDueDate || fmt(defaultDue)}
+                  <input type="date" min={minDue} max={maxDue} value={borrowDueDate || fmt(defaultDue)}
                     onChange={e => setBorrowDueDate(e.target.value)}
                     className="w-full rounded-md border-none bg-transparent p-0 text-sm font-bold text-charcoal outline-none" />
+                  <p className="m-0 mt-1 text-[10px] text-faint">Pick any day, up to 4 weeks out</p>
                 </div>
               </div>
               <p className="m-0 mb-3 text-xs text-inv-muted">Choose when you'll return this item. Staff still need to approve the request.</p>

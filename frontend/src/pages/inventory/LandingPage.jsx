@@ -461,22 +461,40 @@ export default function LandingPage() {
             </p>
             <div style={{ position: "absolute", bottom: 0, left: 0, width: 44, height: 3, background: TEAL, borderRadius: 2 }} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, justifyContent: "center" }}>
-            {STEPS.map(({ n, icon: Icon, title, desc }) => (
-              <div key={n} className="mv-step-card"
-                style={{ display: "flex", gap: 16, padding: "18px 20px", borderRadius: 12, background: "#fff", border: `1px solid ${BORDER}` }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--color-inv-accent-light)", border: "1.5px solid color-mix(in oklch, var(--color-inv-accent) 20%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icon size={16} style={{ color: TEAL }} />
-                </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".1em", color: TEAL }}>{n}</span>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: DARK }}>{title}</p>
+          {/* Numbered steps, connected by a dotted line — each circle fades a
+              little lighter than the last to read as progress. */}
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            {STEPS.map(({ n, title, desc }, i) => {
+              const isLast = i === STEPS.length - 1
+              const circleBg = `color-mix(in oklch, ${TEAL} ${100 - i * 15}%, white)`
+              return (
+                <div key={n} style={{ display: "flex", gap: 20 }}>
+                  {/* Circle + connector column */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: "50%", background: circleBg, color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 15, fontWeight: 800, flexShrink: 0, boxShadow: `0 4px 12px color-mix(in oklch, ${TEAL} 25%, transparent)`,
+                    }}>
+                      {i + 1}
+                    </div>
+                    {!isLast && (
+                      <div style={{
+                        flex: 1, minHeight: 36, width: 2, margin: "6px 0",
+                        backgroundImage: `linear-gradient(${TEAL} 40%, transparent 0%)`,
+                        backgroundPosition: "left", backgroundSize: "2px 9px", backgroundRepeat: "repeat-y",
+                        opacity: 0.4,
+                      }} />
+                    )}
                   </div>
-                  <p style={{ fontSize: 13, color: MUTED, lineHeight: 1.55 }}>{desc}</p>
+                  {/* Text */}
+                  <div style={{ paddingBottom: isLast ? 0 : 28 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, color: DARK, margin: "6px 0 4px" }}>{title}</h3>
+                    <p style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.6, maxWidth: 380 }}>{desc}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>

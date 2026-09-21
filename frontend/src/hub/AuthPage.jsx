@@ -74,6 +74,10 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
 }
 
 // ── Register form ────────────────────────────────────────────────────────────
+// Plain email/password signup is still allowed here, but only with a CADT
+// email address — the backend rejects anything else (see auth.controller.js
+// isDomainAllowed), so a Gmail/etc. address can't self-register through
+// either this form or the Microsoft button below.
 function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit, mobileToggle }) {
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   return (

@@ -12,12 +12,13 @@ const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', 
 const FIL_BLANK = { name: 'PLA', color: '', hex: 'var(--muted-foreground)', stockGrams: 0, rate: 4 }
 
 const ROOMS = ['Makerspace Room', 'Mechanic Room']
-const STATUS_FILTERS = ['All', 'Available', 'Borrowed', 'Maintenance', 'Low Stock', 'Unavailable']
+const STATUS_FILTERS = ['All', 'Available', 'Maintenance', 'Low Stock', 'Unavailable']
 const PAGE_SIZE = 10
 export default function InventoryManager({ items, user, filaments = [] }) {
   const ctx = useInventory()
   const [search,  setSearch]  = useState('')
   const [cat,     setCat]     = useState('all')
+  const [typeTab, setTypeTab] = useState('all')
   const [statusTab, setStatusTab] = useState('All')
   const [page,    setPage]    = useState(1)
   const [modal,   setModal]   = useState(false)
@@ -60,10 +61,13 @@ export default function InventoryManager({ items, user, filaments = [] }) {
     if (statusTab === 'All') return true
     if (statusTab === 'Low Stock') return isLowStock(i.stock)
     if (statusTab === 'Unavailable') return isOutOfStock(i.stock)
+    // "Available" is a lie if stock is actually zero — match the same
+    // derived status the Status column itself shows (see Badge above).
+    if (statusTab === 'Available') return i.status === 'available' && !isOutOfStock(i.stock)
     return i.status === statusTab.toLowerCase()
   }
 
-  const filtered = items.filter(i => (cat === 'all' || i.category === cat) && matchesStatus(i) && i.name.toLowerCase().includes(search.toLowerCase()))
+  const filtered = items.filter(i => (cat === 'all' || i.category === cat) && (typeTab === 'all' || i.type === typeTab) && matchesStatus(i) && i.name.toLowerCase().includes(search.toLowerCase()))
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visibleItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -93,6 +97,12 @@ export default function InventoryManager({ items, user, filaments = [] }) {
             <input placeholder="Search items…" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               style={{ width: '100%', background: T.white, border: `1px solid ${T.border}`, borderRadius: 10, padding: '9px 14px 9px 36px', fontSize: 14, color: T.charcoal, outline: 'none', boxSizing: 'border-box' }} />
           </div>
+          <select value={typeTab} onChange={e => { setTypeTab(e.target.value); setPage(1) }}
+            style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 10, padding: '9px 14px', fontSize: 14, color: T.muted }}>
+            <option value="all">All Types</option>
+            <option value="Returnable">Returnable</option>
+            <option value="Consumable">Consumable</option>
+          </select>
           <select value={cat} onChange={e => { setCat(e.target.value); setPage(1) }}
             style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 10, padding: '9px 14px', fontSize: 14, color: T.muted }}>
             <option value="all">All Categories</option>
