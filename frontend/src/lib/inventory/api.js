@@ -227,8 +227,8 @@ export const deductCredits = ({ userId, amount, reason }) =>
   api.post('/api/inventory/borrows/deduct-credits', { userId, amount, reason })
 export const chargePrint = ({ studentId, pages, rate }) =>
   api.post('/api/inventory/services/print', { studentId, pages, rate })
-export const charge3D = ({ studentId, filamentId, grams }) =>
-  api.post('/api/inventory/services/3d-print', { studentId, filamentId, grams })
+export const charge3D = ({ studentId, filamentId, grams, machineId, hours }) =>
+  api.post('/api/inventory/services/3d-print', { studentId, filamentId, grams, machineId, hours })
 export const chargeMachineTime = ({ studentId, itemId, hours, materialCost }) =>
   api.post('/api/inventory/services/machine-time', { studentId, itemId, hours, materialCost })
 export const staffSale = ({ studentId, cart }) => api.post('/api/inventory/sale', { studentId, cart })

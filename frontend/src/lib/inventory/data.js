@@ -60,6 +60,18 @@ export const PRINT_SERVICES = [
     desc: 'Submit your model, staff will print and weigh it. Credits are charged by filament weight used.' },
 ]
 
+// The one physical printer at the front desk — not an inventory item, just
+// a fixed info card for the Document Printing service view.
+export const DOCUMENT_PRINTER = { name: 'Epson PX-M730F', type: 'Document Printer', status: 'Available' }
+
+// Per-page rate by paper size × color mode. Not admin-managed data (no
+// stock tracked here) — a plain rate table, same idea as PRINT_SERVICES'
+// flat rate above, just split out by size/color instead of one flat number.
+export const PAPER_PRICING = {
+  A4: { label: 'A4', bw: 2, color: 4 },
+  A3: { label: 'A3', bw: 4, color: 8 },
+}
+
 // Default filament inventory: admin/staff can add, edit, and restock these.
 // Each filament carries its own credit-per-gram rate so pricing can differ by material.
 export const INITIAL_FILAMENTS = [

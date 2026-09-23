@@ -571,17 +571,27 @@ export async function chargePrintingNow(req, res, next) {
 
 export async function charge3DNow(req, res, next) {
   try {
-    const { studentId, filamentId, grams } = req.body;
+    const { studentId, filamentId, grams, machineId, hours = 0 } = req.body;
     if (!studentId || !grams || grams <= 0) return res.status(400).json({ error: "studentId and positive grams are required" });
 
     const { data: filament, error: filErr } = await supabaseAdmin
       .from("filaments").select("*").eq("filament_id", filamentId).maybeSingle();
     if (filErr) throw filErr;
     const rate = filament?.rate ?? 4;
-    const credits = Math.round(grams * rate);
+
+    // Machine time, same logic as CNC machine time: hours × that machine's
+    // own Credits field (cr/hour), added on top of the filament cost.
+    let machineRate = 0;
+    if (machineId && hours > 0) {
+      const { data: machine, error: machErr } = await supabaseAdmin
+        .from("inventory_items").select("unit_credit").eq("item_id", machineId).maybeSingle();
+      if (machErr) throw machErr;
+      machineRate = machine?.unit_credit ?? 0;
+    }
+    const credits = Math.round(grams * rate + hours * machineRate);
 
     const membership = await adjustCredits(studentId, -credits, {
-      description: `3D printing ${grams}g ${filament?.name || ""} (walk-up)`.trim(),
+      description: `3D printing ${grams}g ${filament?.name || ""}${hours > 0 ? ` + ${hours}h machine time` : ""} (walk-up)`.trim(),
     });
 
     if (filament) {
