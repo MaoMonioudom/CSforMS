@@ -221,8 +221,10 @@ export const deleteRequestGroup = (requestIds) => api.post('/api/inventory/reque
 export const approveTopUp = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-topup`)
 export const approvePrinting = (requestId) => api.post(`/api/inventory/requests/${requestId}/approve-printing`)
 export const confirm3DWeight = (requestId, grams) => api.post(`/api/inventory/requests/${requestId}/confirm-3d-weight`, { grams })
-export const returnBorrow = (borrowId, { isDamaged = false, notes } = {}) =>
-  api.post(`/api/inventory/borrows/${borrowId}/return`, { isDamaged, notes })
+export const returnBorrow = (borrowId, { goodQty = 0, maintenanceQty = 0, notes } = {}) =>
+  api.post(`/api/inventory/borrows/${borrowId}/return`, { goodQty, maintenanceQty, notes })
+export const deleteBorrowRecord = (borrowId) => api.del(`/api/inventory/borrows/${borrowId}`)
+export const fetchMaintenanceQuantities = () => api.get('/api/inventory/maintenance-quantities').then((r) => r.data)
 export const deductCredits = ({ userId, amount, reason }) =>
   api.post('/api/inventory/borrows/deduct-credits', { userId, amount, reason })
 export const chargePrint = ({ studentId, pages, rate }) =>
@@ -254,6 +256,18 @@ export const createFilament = (f) =>
 export const updateFilament = (id, f) =>
   api.put(`/api/inventory/filaments/${id}`, { name: f.name, color: f.color, hex: f.hex, stock_grams: f.stockGrams, rate: f.rate })
 export const deleteFilament = (id) => api.del(`/api/inventory/filaments/${id}`)
+
+// ── Lab Services CRUD (staff) — what shows as a service card on the Lab
+// Service page. `s` uses DB column names directly (name, description,
+// pricing_type, linked_item_id, config, image_url, is_active, sort_order),
+// same convention as createFilament above.
+export const fetchLabServices = () => api.get('/api/inventory/lab-services').then((r) => r.data)
+export const createLabService = (s) => api.post('/api/inventory/lab-services', s)
+// Strip `id` before sending — the table's real PK column is service_id, not
+// id, so an `id` field in the body makes Supabase try to update a column
+// that doesn't exist ("could not find the 'id' column of 'lab_services'").
+export const updateLabService = (id, s) => { const { id: _omit, ...rest } = s; return api.put(`/api/inventory/lab-services/${id}`, rest) }
+export const deleteLabService = (id) => api.del(`/api/inventory/lab-services/${id}`)
 
 // Multipart upload: the JSON client can't carry files, so this goes through
 // fetch directly with the same bearer token. Returns the public image URL.

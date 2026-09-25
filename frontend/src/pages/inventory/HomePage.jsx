@@ -153,7 +153,7 @@ export default function HomePage() {
       <section style={{ background: 'color-mix(in oklch, var(--color-inv-accent) 40%, black)', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-0 px-5 sm:px-8 md:grid-cols-4 lg:px-12">
           {[
-            { Icon: MapPin,  label: 'Location',    value: 'CADT Campus, Room MS-01' },
+            { Icon: MapPin,  label: 'Location',    value: 'CADT, Innovation Center - Makerspace Room' },
             { Icon: Clock,   label: 'Open Hours',  value: 'Mon – Fri · 8am – 5pm'  },
             { Icon: Users,   label: 'Members',     value: `${items.filter(i=>i.status!=='maintenance').length} items ready` },
             { Icon: Star,    label: 'Membership',  value: user.membership === 'active' ? 'Active ✓' : 'Inactive — renew' },

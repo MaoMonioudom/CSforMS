@@ -19,6 +19,11 @@ const TYPE_FILTERS = [
 
 const TEAL = 'var(--color-inv-accent)'
 
+// CNC machines are walk-up Lab Service equipment (billed per hour from the
+// Lab Service page), not something a student checks out — even though
+// they're stored as type "Returnable" for stock-tracking purposes.
+const isBorrowable = (item) => item.type === 'Returnable' && item.category !== 'cnc_machines'
+
 function CategoryTiles({ items, filterCat, setFilterCat }) {
   const countFor = (id) => id === 'all' ? items.length : items.filter(i => i.category === id).length
 
@@ -71,9 +76,10 @@ function CompactItemCard({ item, onView, staffMode, staffStudent, onStaffAdd }) 
   const available = item.status === 'available' && item.stock > 0
   const statusLabel = item.status === 'available' ? (available ? 'Available' : 'Unavailable') : item.status === 'borrowed' ? 'Borrowed' : 'Maintenance'
   const statusColor = available ? { bg: '#dcfce7', fg: '#16a34a' } : { bg: '#e2e8f0', fg: '#64748b' }
-  const actionLabel = available ? (item.type === 'Returnable' ? 'Borrow' : 'Add Purchase') : 'Unavailable'
-  const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? '#2563eb' : '#16a34a')
-  const canStaffAdd = staffMode && !!staffStudent && available
+  const canBorrow = isBorrowable(item)
+  const actionLabel = available ? (item.type === 'Returnable' ? (canBorrow ? 'Borrow' : 'Lab Service Only') : 'Add Purchase') : 'Unavailable'
+  const actionColor = !available ? '#64748b' : (item.type === 'Returnable' ? (canBorrow ? '#2563eb' : '#64748b') : '#16a34a')
+  const canStaffAdd = staffMode && !!staffStudent && available && (item.type !== 'Returnable' || canBorrow)
 
   return (
     <div onClick={() => onView(item)}
@@ -97,11 +103,12 @@ function CompactItemCard({ item, onView, staffMode, staffStudent, onStaffAdd }) 
               disabled={!canStaffAdd}
               className="whitespace-nowrap rounded-full border-none px-2.5 py-1 text-[11px] font-bold"
               style={{ background: canStaffAdd ? `color-mix(in oklch, ${actionColor} 14%, white)` : '#f1f5f9', color: canStaffAdd ? actionColor : '#94a3b8', cursor: canStaffAdd ? 'pointer' : 'not-allowed' }}>
-              {item.type === 'Returnable' ? 'Borrow' : 'Purchase'}
+              {item.type === 'Returnable' ? (canBorrow ? 'Borrow' : 'Lab Service Only') : 'Purchase'}
             </button>
           ) : (
             <button onClick={e => { e.stopPropagation(); onView(item) }}
               disabled={!available}
+              title={item.type === 'Returnable' && !canBorrow ? 'Available through the Lab Service page (walk-up only), not for borrowing' : undefined}
               className="whitespace-nowrap rounded-full border-none px-2.5 py-1 text-[11px] font-bold"
               style={{ background: available ? `color-mix(in oklch, ${actionColor} 14%, white)` : '#f1f5f9', color: actionColor, cursor: available ? 'pointer' : 'not-allowed' }}>
               {actionLabel}
@@ -387,8 +394,8 @@ function StaffOrderPanel({ users, staffStudent, setStaffStudent, staffOrder, set
             )}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-              <button onClick={() => setConfirmModal(null)} style={{ flex: 1, padding: '10px 0', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={runConfirmedCharge} style={{ flex: 1, padding: '10px 0', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Confirm Charge</button>
+              <button onClick={() => setConfirmModal(null)} style={{ flex: 1, padding: '8px 0', background: T.cream, border: 'none', borderRadius: 8, color: T.muted, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={runConfirmedCharge} style={{ flex: 1, padding: '8px 0', background: T.green, border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Confirm Charge</button>
             </div>
           </div>
         </div>
@@ -474,6 +481,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
     if (!user || user.role !== 'user')        { showToast('Log in as a student to borrow or purchase.', 'error'); return }
     if (user.membership !== 'active')          { showToast('Active membership required.', 'error'); return }
     if (item.status !== 'available')           { showToast('This item is not currently available.', 'error'); return }
+    if (item.type === 'Returnable' && !isBorrowable(item)) { showToast('This machine is Lab Service walk-up only — see the Lab Service page.', 'error'); return }
     if (item.type === 'Returnable') { setConfirmBorrow(item); return }
     addCart(item)
   }
@@ -483,6 +491,7 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
   // side (return date + purpose) before landing in the order.
   const addToStaffOrder = (item) => {
     if (!staffStudent) { showToast('Select a student first.', 'error'); return }
+    if (item.type === 'Returnable' && !isBorrowable(item)) { showToast('This machine is Lab Service walk-up only — see the Lab Service page.', 'error'); return }
     if (item.type === 'Returnable') { setConfirmBorrow(item); return }
     setStaffOrder(prev => {
       const ex = prev.find(o => o.item.id === item.id)
@@ -679,7 +688,12 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
             bounded, independently-scrolling box, sized to (almost) the full
             screen height rather than sharing the item grid's shorter box. */}
         {isStaff && (
-          <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-32px)] lg:self-start lg:overflow-y-auto">
+          // z-40: this sticky wrapper forms its own stacking context, which
+          // otherwise traps StaffOrderPanel's confirm modal (z-900) inside
+          // it — leaving it unable to paint over the left column's sticky
+          // category/search bar (z-30) since that's a sibling stacking
+          // context, not a z-index comparison within this one.
+          <div className="lg:sticky lg:top-4 lg:z-40 lg:max-h-[calc(100vh-32px)] lg:self-start lg:overflow-y-auto">
             <StaffOrderPanel
               users={users}
               staffStudent={staffStudent} setStaffStudent={setStaffStudent}
@@ -706,23 +720,25 @@ export default function Catalog({ items, user, cart, setCart, showToast, onRequi
               </button>
             )}
             {isStaff && (() => {
-              const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0
+              const blocked = selected.type === 'Returnable' && !isBorrowable(selected)
+              const enabled = !!staffStudent && selected.status === 'available' && selected.stock > 0 && !blocked
               return (
                 <button onClick={() => { addToStaffOrder(selected); setSelected(null) }} disabled={!enabled}
                   className="w-full py-2.5 text-sm sm:py-3 sm:text-sm"
                   style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', borderRadius: 12, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                  {!staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : 'Not Available'}
+                  {blocked ? 'Lab Service Only — see Lab Service page' : !staffStudent ? 'Select a student first' : enabled ? (selected.type === 'Returnable' ? 'Borrow for Student' : 'Add to Order') : 'Not Available'}
                 </button>
               )
             })()}
             {!isStaff && user?.role === 'user' && (() => {
-              const enabled = selected.status === 'available' && selected.stock > 0
+              const blocked = selected.type === 'Returnable' && !isBorrowable(selected)
+              const enabled = selected.status === 'available' && selected.stock > 0 && !blocked
               const isBorrow = selected.type === 'Returnable'
               return (
                 <button onClick={() => { handleAddCart(selected); setSelected(null) }} disabled={!enabled}
                   className="btn-primary w-full justify-center"
                   style={{ background: enabled ? 'var(--color-inv-accent)' : 'var(--muted)', color: enabled ? '#fff' : 'var(--muted-foreground)', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed' }}>
-                  {enabled ? (isBorrow ? '＋ Add to Cart: Borrow' : '＋ Add to Cart: Purchase') : `Not Available (${selected.status})`}
+                  {blocked ? 'Lab Service Only — see Lab Service page' : enabled ? (isBorrow ? '＋ Add to Cart: Borrow' : '＋ Add to Cart: Purchase') : `Not Available (${selected.status})`}
                 </button>
               )
             })()}

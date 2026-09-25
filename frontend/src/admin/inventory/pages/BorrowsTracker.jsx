@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import {
   Search, X, Check, Trash2, Pencil, Coins, Package,
-  ArrowUpDown, AlertTriangle, CheckCircle2, Clock, Wrench, ImagePlus,
+  ArrowUpDown, AlertTriangle, CheckCircle2, Clock, Wrench,
   ChevronDown, User, Calendar, FileText, History as HistoryIcon,
 } from 'lucide-react'
 import { T } from '../../../lib/inventory/theme'
@@ -220,18 +220,19 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
 
   // ── Actions: all persisted through the backend ─────────────────────────
   const confirmReturnGroup = async (rec, itemStates) => {
-    const anyIssue = rec.activeItems.some(b => itemStates[b.id]?.condition !== 'Good')
+    const anyIssue = rec.activeItems.some(b => (itemStates[b.id]?.maintenanceQty || 0) > 0)
     try {
       for (const b of rec.activeItems) {
         const state = itemStates[b.id]
         if (!state) continue
         await ctx.returnBorrow(b.id, {
-          isDamaged: state.condition !== 'Good',
-          notes: state.issue || (state.condition !== 'Good' ? `Returned as ${state.condition}` : undefined),
+          goodQty: state.goodQty || 0,
+          maintenanceQty: state.maintenanceQty || 0,
+          notes: state.issue || undefined,
         })
       }
       setReturning(null)
-      showToast?.(anyIssue ? 'Items returned. Some flagged for repair; maintenance log created and borrowing disabled until fixed.' : 'All items confirmed returned in good condition.')
+      showToast?.(anyIssue ? 'Items returned. Units needing repair are logged and held back; the rest of the stock stays borrowable.' : 'All items confirmed returned in good condition.')
     } catch (err) {
       showToast?.(err.message || 'Return failed.', 'error')
     }
@@ -248,16 +249,21 @@ export default function BorrowsTracker({ borrows, items, users = [], showToast, 
     }
   }
 
-  // Borrow history is an immutable ledger now; due dates are set at approval
-  // and completed transactions can't be edited or deleted from the UI.
+  // Due dates are still set at approval, not edited after the fact — but
+  // staff can now actually delete a borrow record (confirm dialog first).
   const saveEdit = () => {
     setEditing(null)
     showToast?.('Borrow records can no longer be edited. Set the due date when approving the request.', 'error')
   }
 
-  const deleteRecord = () => {
-    setDeleting(null)
-    showToast?.('Borrow history is permanent and cannot be deleted.', 'error')
+  const deleteRecord = async (rec) => {
+    try {
+      for (const b of rec.raw) await ctx.deleteBorrowRecord(b.id)
+      setDeleting(null)
+      showToast?.(`Deleted ${rec.student?.name || 'this'} record.`)
+    } catch (err) {
+      showToast?.(err.message || 'Delete failed.', 'error')
+    }
   }
 
   return (
@@ -487,45 +493,64 @@ function DeductModal({ record, onClose, onConfirm }) {
 }
 
 // ── Return condition modal (per item) ────────────────────────────────────
+// Only Good / Maintenance now (Damaged folded into Maintenance). A line
+// borrowed as qty > 1 can be split — e.g. 1 good + 1 needing maintenance —
+// instead of one condition applying to the whole line.
 function ReturnModal({ record, onClose, onConfirm }) {
   const [itemStates, setItemStates] = useState(
-    Object.fromEntries(record.activeItems.map(b => [b.id, { condition: null, issue: '' }]))
+    Object.fromEntries(record.activeItems.map(b => [b.id, { goodQty: null, maintenanceQty: 0, issue: '' }]))
   )
 
-  const setCondition = (id, condition) => setItemStates(m => ({ ...m, [id]: { ...m[id], condition } }))
-  const setIssue     = (id, issue)     => setItemStates(m => ({ ...m, [id]: { ...m[id], issue } }))
+  const setGoodQty = (id, qty, total) => setItemStates(m => ({ ...m, [id]: { ...m[id], goodQty: qty, maintenanceQty: total - qty } }))
+  const setIssue    = (id, issue)     => setItemStates(m => ({ ...m, [id]: { ...m[id], issue } }))
 
   const allSet = record.activeItems.every(b => {
     const s = itemStates[b.id]
-    const needsIssue = s.condition === 'Damaged' || s.condition === 'Maintenance'
-    return s.condition && (!needsIssue || s.issue.trim().length > 0)
+    const total = b.qty || 1
+    const split = s.goodQty !== null && s.goodQty + s.maintenanceQty === total
+    return split && (s.maintenanceQty === 0 || s.issue.trim().length > 0)
   })
 
   return (
     <ModalShell onClose={onClose} title="Return Items" subtitle={`${record.student?.name || 'Student'} · ${record.activeItems.length} item${record.activeItems.length !== 1 ? 's' : ''} to confirm`}>
       {record.activeItems.map(b => {
         const s = itemStates[b.id]
-        const needsIssue = s.condition === 'Damaged' || s.condition === 'Maintenance'
+        const total = b.qty || 1
+        const needsIssue = s.maintenanceQty > 0
         return (
           <div key={b.id} style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: T.charcoal }}>{b.itemName}</div>
-              <div style={{ fontSize: 11, color: T.faint }}>Qty {b.qty || 1}</div>
+              <div style={{ fontSize: 11, color: T.faint }}>Qty {total}</div>
             </div>
-            <div>
-              <label style={labelStyle}>Item Condition</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className={`bt-cond-chip ${s.condition === 'Good' ? 'active-good' : ''}`} onClick={() => setCondition(b.id, 'Good')}>
-                  <CheckCircle2 size={14} /> Good
-                </button>
-                <button className={`bt-cond-chip ${s.condition === 'Damaged' ? 'active-bad' : ''}`} onClick={() => setCondition(b.id, 'Damaged')}>
-                  <AlertTriangle size={14} /> Damaged
-                </button>
-                <button className={`bt-cond-chip ${s.condition === 'Maintenance' ? 'active-bad' : ''}`} onClick={() => setCondition(b.id, 'Maintenance')}>
-                  <Wrench size={14} /> Maintenance
-                </button>
+            {total === 1 ? (
+              <div>
+                <label style={labelStyle}>Item Condition</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className={`bt-cond-chip ${s.goodQty === 1 ? 'active-good' : ''}`} onClick={() => setGoodQty(b.id, 1, total)}>
+                    <CheckCircle2 size={14} /> Good
+                  </button>
+                  <button className={`bt-cond-chip ${s.goodQty === 0 ? 'active-bad' : ''}`} onClick={() => setGoodQty(b.id, 0, total)}>
+                    <Wrench size={14} /> Maintenance
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <label style={labelStyle}>Split by condition (must total {total})</label>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: T.green, marginBottom: 4 }}><CheckCircle2 size={12} /> Good</div>
+                    <input type="number" min={0} max={total} value={s.goodQty ?? ''} placeholder="0"
+                      onChange={e => setGoodQty(b.id, Math.max(0, Math.min(total, Number(e.target.value) || 0)), total)} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: T.red, marginBottom: 4 }}><Wrench size={12} /> Maintenance</div>
+                    <div style={{ ...inputStyle, background: T.cream, color: T.muted }}>{s.goodQty !== null ? s.maintenanceQty : '—'}</div>
+                  </div>
+                </div>
+              </div>
+            )}
             {needsIssue && (
               <>
                 <div>
@@ -533,12 +558,9 @@ function ReturnModal({ record, onClose, onConfirm }) {
                   <textarea value={s.issue} onChange={e => setIssue(b.id, e.target.value)} rows={2}
                     placeholder="Describe what's wrong with this item…" style={{ ...inputStyle, resize: 'none', fontFamily: 'inherit' }} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1.5px dashed ${T.border}`, borderRadius: 8, padding: 10, color: T.faint, fontSize: 11.5, cursor: 'pointer' }}>
-                  <ImagePlus size={15} /> Click to attach a photo of the damage
-                </div>
                 <div style={{ display: 'flex', gap: 8, background: T.amberLight, color: T.amber, fontSize: 11.5, padding: '8px 10px', borderRadius: 8 }}>
                   <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-                  This will create a maintenance log and disable borrowing for this item until repaired.
+                  {s.maintenanceQty} unit{s.maintenanceQty !== 1 ? 's' : ''} will be logged for maintenance and held back — the rest of the stock stays available to borrow.
                 </div>
               </>
             )}

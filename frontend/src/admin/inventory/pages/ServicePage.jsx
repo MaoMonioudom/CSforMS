@@ -3,11 +3,11 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Search, Printer, BadgeCheck, Box,
 import Badge from '../../../components/inventory/ui/Badge'
 import ItemImage from '../../../components/inventory/ItemImage'
 import { T } from '../../../lib/inventory/theme'
-import { PRINT_SERVICES, CATEGORIES, DOCUMENT_PRINTER, PAPER_PRICING } from '../../../lib/inventory/data'
+import { CATEGORIES } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
 
 const CNC_CAT = CATEGORIES.find(c => c.id === 'cnc_machines')
-const PAPER_SIZES = Object.keys(PAPER_PRICING)
+const PRICING_ICON = { per_page: Printer, material_hourly: Box, hourly: Cog }
 
 // Plus/minus quantity control, standing in for a plain number input wherever
 // the amount being charged (pages/grams/hours) is the main thing staff set.
@@ -49,11 +49,7 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
   const [materialCost, setMaterialCost] = useState('')
   const moreServicesRef = useRef(null)
 
-  // The Bambu Lab 3D printer got filed under "CNC Machines" in the source
-  // data even though it's a 3D printer — it represents the 3D Printing
-  // service card (photo + info) instead of getting its own CNC card.
-  const bambuMachine = items.find(i => i.category === 'cnc_machines' && i.name.toLowerCase().includes('bambu'))
-  const cncMachines = items.filter(i => i.category === 'cnc_machines' && i.id !== bambuMachine?.id)
+  const labServices = (ctx.labServices || []).filter(s => s.is_active)
 
   // Filament "type" (PLA/PETG/...) is the Size-style picker, colors within
   // that type are the swatches — both drawn from the same filaments list,
@@ -67,18 +63,19 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
     if (firstColor) setFilamentId(firstColor.id)
   }
 
-  // One card per machine — no grouping into Router/Lathe/Milling/etc. Same
-  // blue theme for every service now (was blue/purple/red per service type).
-  const serviceCards = [
-    { id: 'printing', label: PRINT_SERVICES[0].label, desc: PRINT_SERVICES[0].desc, Icon: Printer, color: T.blue, bg: T.blueLight },
-    { id: '3d_printing', label: PRINT_SERVICES[1].label, desc: PRINT_SERVICES[1].desc, Icon: Box, color: T.blue, bg: T.blueLight, machine: bambuMachine },
-    ...cncMachines.map(m => ({
-      id: `machine_${m.id}`, label: m.name, desc: m.description || 'CNC machine time, billed per hour of use.',
-      Icon: Cog, color: T.blue, bg: T.blueLight, machine: m,
-    })),
-  ]
+  // One card per active lab_services row — editable/addable from Manage
+  // Stock (LabServicesManager) instead of hardcoded. Same blue theme for
+  // every service. pricingType drives which options/charge flow a card uses:
+  // 'per_page' (Document Printing), 'material_hourly' (3D Printing, filament
+  // + machine time), 'hourly' (CNC-style, machine time only).
+  const serviceCards = labServices.map(s => ({
+    id: s.service_id, label: s.name, desc: s.description || '', pricingType: s.pricing_type,
+    Icon: PRICING_ICON[s.pricing_type] || Cog, color: T.blue, bg: T.blueLight,
+    image: s.image_url, config: s.config || {},
+    machine: s.linked_item_id ? items.find(i => i.id === s.linked_item_id) : null,
+  }))
   const activeCard = serviceCards.find(s => s.id === selectedService)
-  const isMachineCard = selectedService?.startsWith('machine_')
+  const isMachineCard = activeCard?.pricingType === 'hourly'
   const activeMachine = activeCard?.machine
 
   const results = query.trim()
@@ -91,7 +88,8 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
   const filament     = filaments.find(f => f.id === Number(filamentId))
   // 3D printing deducts the filament's own credit-per-gram rate; 4 cr/g default.
   const filamentRate  = filament?.rate ?? 4
-  const printRate     = PAPER_PRICING[paperSize]?.[colorMode] ?? 2
+  const PAPER_SIZES   = Object.keys(activeCard?.config || {})
+  const printRate     = activeCard?.config?.[paperSize]?.[colorMode] ?? 2
   const printCredits  = Math.round(Number(pages || 0) * printRate)
   const machineRate = activeMachine?.credits ?? 0
   // 3D print cost = filament (grams × cr/g) + machine time (hours × cr/hr),
@@ -212,7 +210,9 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
           <button key={svc.id} onClick={() => openService(svc.id)}
             style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, width: 200, overflow: 'hidden', background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, cursor: 'pointer', textAlign: 'left' }}>
             <div style={{ position: 'relative', width: 200, height: 110, flexShrink: 0 }}>
-              {svc.machine
+              {svc.image
+                ? <img src={svc.image} alt={svc.label} className="h-full w-full object-contain" style={{ background: T.white }} />
+                : svc.machine
                 ? <ItemImage item={svc.machine} cat={CNC_CAT} size={30} plainBg className="h-full w-full" />
                 : <div className="flex h-full w-full items-center justify-center" style={{ background: T.white }}>
                     <svc.Icon size={28} color={svc.color} strokeWidth={1.5} className="opacity-85" />
@@ -238,7 +238,9 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
               className="flex cursor-pointer flex-col overflow-hidden text-left transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
               style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 0 }}>
               <div className="relative h-[160px] flex-shrink-0">
-                {svc.machine
+                {svc.image
+                  ? <img src={svc.image} alt={svc.label} className="h-full w-full object-contain" style={{ background: T.white }} />
+                  : svc.machine
                   ? <ItemImage item={svc.machine} cat={CNC_CAT} size={44} fit="contain" plainBg className="h-full w-full" />
                   : <div className="flex h-full w-full items-center justify-center" style={{ background: T.white }}>
                       <svc.Icon size={44} color={svc.color} strokeWidth={1.5} className="opacity-85" />
@@ -258,12 +260,12 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
   // ── Detail view: e-commerce product-page layout (image on the left,
   // title/options/price/action on the right), wired to our real walk-up
   // charge process instead of an actual cart. ─────────────────────────────
-  const estimate = selectedService === 'printing' ? printCredits
-    : selectedService === '3d_printing' ? printCost3D
+  const estimate = activeCard.pricingType === 'per_page' ? printCredits
+    : activeCard.pricingType === 'material_hourly' ? printCost3D
     : machineCost
-  const estimateNote = selectedService === 'printing'
+  const estimateNote = activeCard.pricingType === 'per_page'
     ? `${pages || 0} page(s) · ${paperSize} ${colorMode === 'bw' ? 'B&W' : 'Color'} at ${printRate} cr/page`
-    : selectedService === '3d_printing'
+    : activeCard.pricingType === 'material_hourly'
     ? `${grams || 0} g at ${filamentRate} cr/g${Number(hours) > 0 ? ` + ${hours}h × ${machineRate} cr/hr` : ''}`
     : `${hours || 0} h × ${machineRate} cr/hr${Number(materialCost) > 0 ? ` + ${materialCost} cr material` : ''}`
 
@@ -292,7 +294,9 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* ── Left: image, same fixed size on every service ── */}
         <div className="relative h-[320px] w-full overflow-hidden lg:h-[480px]" style={{ borderRadius: 18, border: `1px solid ${T.border}` }}>
-          {activeMachine
+          {activeCard.image
+            ? <img src={activeCard.image} alt={activeCard.label} className="h-full w-full object-contain" style={{ background: T.white }} />
+            : activeMachine
             ? <ItemImage item={activeMachine} cat={CNC_CAT} size={80} fit="contain" plainBg className="h-full w-full" />
             : <div className="flex h-full w-full items-center justify-center" style={{ background: T.white }}>
                 <activeCard.Icon size={80} color={activeCard.color} strokeWidth={1.2} className="opacity-80" />
@@ -305,12 +309,6 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
           <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: T.faint, textTransform: 'uppercase', letterSpacing: '.08em' }}>Lab Services</p>
           <h2 style={{ margin: '4px 0 6px', fontSize: 28, fontWeight: 800, color: T.charcoal, lineHeight: 1.15 }}>{activeCard.label}</h2>
           <p style={{ margin: '0 0 10px', fontSize: 14, color: T.muted, lineHeight: 1.45 }}>{activeCard.desc}</p>
-          {selectedService === 'printing' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontSize: 13, color: T.charcoal, fontWeight: 600 }}>{DOCUMENT_PRINTER.name}</span>
-              <Badge status="available" small />
-            </div>
-          )}
           {activeMachine && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <Badge status={activeMachine.stock > 0 ? 'available' : 'out_of_stock'} small />
@@ -338,7 +336,7 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
                 </div>
 
                 {/* ── Document Printing options — Size+Color paired, Sides+Pages paired ── */}
-                {selectedService === 'printing' && (
+                {activeCard.pricingType === 'per_page' && (
                   <>
                     <div className="grid grid-cols-2 gap-4" style={{ marginBottom: 9 }}>
                       <div>
@@ -373,8 +371,8 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
                   </>
                 )}
 
-                {/* ── 3D Printing options ── */}
-                {selectedService === '3d_printing' && (
+                {/* ── Material + Hourly options (3D Printing and similar) ── */}
+                {activeCard.pricingType === 'material_hourly' && (
                   filaments.length === 0 ? (
                     <p style={{ color: T.faint, fontSize: 13, margin: '0 0 9px' }}>No filaments configured. Add them in Manage Stock.</p>
                   ) : (
@@ -435,10 +433,10 @@ export default function ServicePage({ users = [], items = [], filaments = [], sh
 
                 <button
                   disabled={!canCharge}
-                  onClick={selectedService === 'printing' ? chargePrinting : selectedService === '3d_printing' ? charge3D : chargeMachine}
+                  onClick={activeCard.pricingType === 'per_page' ? chargePrinting : activeCard.pricingType === 'material_hourly' ? charge3D : chargeMachine}
                   title={canCharge ? undefined : 'Select a student with an active membership first'}
                   style={{ width: '100%', maxWidth: 340, padding: '11px 0', background: canCharge ? activeCard.color : '#e2e8f0', border: 'none', borderRadius: 8, color: canCharge ? '#fff' : '#94a3b8', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: canCharge ? 'pointer' : 'not-allowed' }}>
-                  <BadgeCheck size={15} /> {selectedService === 'printing' ? 'Charge & Print' : selectedService === '3d_printing' ? 'Charge & Print' : 'Charge'}
+                  <BadgeCheck size={15} /> {activeCard.pricingType !== 'hourly' ? 'Charge & Print' : 'Charge'}
                 </button>
               </>
             )
