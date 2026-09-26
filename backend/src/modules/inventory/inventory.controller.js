@@ -358,20 +358,35 @@ export async function deleteRequestGroup(req, res, next) {
 
 // ── Returns & fees ───────────────────────────────────────────────────────
 
+// goodQty of the returned quantity goes straight back into current_stock;
+// maintenanceQty does NOT — it's logged as an open maintenance_logs entry
+// instead (quantity_damaged), so only those specific units are held back.
+// The rest of current_stock — including every other unit already in the
+// building — stays borrowable; a maintenance report on part of a return no
+// longer flips the whole item to "unavailable" the way it used to.
 export async function returnBorrow(req, res, next) {
   try {
-    const { isDamaged = false, notes, quantityReturned } = req.body;
+    const { goodQty = 0, maintenanceQty = 0, notes } = req.body;
+    const good = Number(goodQty) || 0;
+    const maintenance = Number(maintenanceQty) || 0;
+    if (good < 0 || maintenance < 0 || good + maintenance <= 0) {
+      return res.status(400).json({ error: "goodQty and maintenanceQty must be non-negative and sum to more than 0" });
+    }
+
     const { data: borrow, error: readErr } = await supabaseAdmin
       .from("borrow_transactions").select("*, inventory_items(item_name)")
       .eq("borrow_id", req.params.id).single();
     if (readErr) throw readErr;
     if (borrow.status === "returned") return res.status(409).json({ error: "Already returned" });
 
-    const qty = quantityReturned || borrow.quantity_borrow;
+    const qty = good + maintenance;
+    if (qty > borrow.quantity_borrow) {
+      return res.status(400).json({ error: `Returned quantity (${qty}) exceeds the ${borrow.quantity_borrow} borrowed` });
+    }
 
     const { error: retErr } = await supabaseAdmin.from("return_transactions").insert({
       borrow_id: borrow.borrow_id, quantity_returned: qty,
-      is_damaged: isDamaged, notes: notes || null, received_by: req.user.user_id,
+      is_damaged: maintenance > 0, notes: notes || null, received_by: req.user.user_id,
     });
     if (retErr) throw retErr;
 
@@ -379,22 +394,59 @@ export async function returnBorrow(req, res, next) {
       .from("borrow_transactions").update({ status: "returned" }).eq("borrow_id", borrow.borrow_id);
     if (updErr) throw updErr;
 
-    await changeStock(borrow.item_id, qty);
+    if (good > 0) await changeStock(borrow.item_id, good);
 
-    if (isDamaged) {
+    if (maintenance > 0) {
       const { error: maintErr } = await supabaseAdmin.from("maintenance_logs").insert({
         item_id: borrow.item_id, reported_by: req.user.user_id,
-        quantity_damaged: qty, notes: notes || `Returned damaged`,
+        quantity_damaged: maintenance, notes: notes || "Returned needing maintenance",
       });
       if (maintErr) throw maintErr;
-      const { error: itemErr } = await supabaseAdmin
-        .from("inventory_items").update({ status: "unavailable" }).eq("item_id", borrow.item_id);
-      if (itemErr) throw itemErr;
     }
 
     res.json({ data: { returned: true } });
   } catch (err) {
     if (creditsErrorToResponse(err, res)) return;
+    next(err);
+  }
+}
+
+// Borrow history used to be a permanent, undeletable ledger; staff now want
+// a real delete (with the confirm dialog already in the UI). Any linked
+// return_transactions rows are cleared first since they FK to this one.
+export async function deleteBorrowRecord(req, res, next) {
+  try {
+    const { data: borrow, error: readErr } = await supabaseAdmin
+      .from("borrow_transactions").select("borrow_id").eq("borrow_id", req.params.id).maybeSingle();
+    if (readErr) throw readErr;
+    if (!borrow) return res.status(404).json({ error: "Borrow record not found" });
+
+    const { error: retDelErr } = await supabaseAdmin
+      .from("return_transactions").delete().eq("borrow_id", borrow.borrow_id);
+    if (retDelErr) throw retDelErr;
+
+    const { error: delErr } = await supabaseAdmin
+      .from("borrow_transactions").delete().eq("borrow_id", borrow.borrow_id);
+    if (delErr) throw delErr;
+
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Total units of an item currently sitting in maintenance — the sum of open
+// (unresolved) maintenance_logs entries. Not a stored column: derived live
+// so it can never drift from the actual open-log state.
+export async function getMaintenanceQuantities(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("maintenance_logs").select("item_id, quantity_damaged").is("resolved_at", null);
+    if (error) throw error;
+    const byItem = {};
+    for (const row of data) byItem[row.item_id] = (byItem[row.item_id] || 0) + (row.quantity_damaged || 1);
+    res.json({ data: byItem });
+  } catch (err) {
     next(err);
   }
 }
@@ -571,17 +623,27 @@ export async function chargePrintingNow(req, res, next) {
 
 export async function charge3DNow(req, res, next) {
   try {
-    const { studentId, filamentId, grams } = req.body;
+    const { studentId, filamentId, grams, machineId, hours = 0 } = req.body;
     if (!studentId || !grams || grams <= 0) return res.status(400).json({ error: "studentId and positive grams are required" });
 
     const { data: filament, error: filErr } = await supabaseAdmin
       .from("filaments").select("*").eq("filament_id", filamentId).maybeSingle();
     if (filErr) throw filErr;
     const rate = filament?.rate ?? 4;
-    const credits = Math.round(grams * rate);
+
+    // Machine time, same logic as CNC machine time: hours × that machine's
+    // own Credits field (cr/hour), added on top of the filament cost.
+    let machineRate = 0;
+    if (machineId && hours > 0) {
+      const { data: machine, error: machErr } = await supabaseAdmin
+        .from("inventory_items").select("unit_credit").eq("item_id", machineId).maybeSingle();
+      if (machErr) throw machErr;
+      machineRate = machine?.unit_credit ?? 0;
+    }
+    const credits = Math.round(grams * rate + hours * machineRate);
 
     const membership = await adjustCredits(studentId, -credits, {
-      description: `3D printing ${grams}g ${filament?.name || ""} (walk-up)`.trim(),
+      description: `3D printing ${grams}g ${filament?.name || ""}${hours > 0 ? ` + ${hours}h machine time` : ""} (walk-up)`.trim(),
     });
 
     if (filament) {
@@ -827,6 +889,10 @@ export async function listOpenMaintenance(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// Reporting an issue on N units pulls exactly those N out of current_stock
+// (same "hold back only what's actually broken" rule the return flow
+// uses) — the rest of the item's stock stays borrowable, no item-wide
+// status flip.
 export async function reportMaintenance(req, res, next) {
   try {
     const { notes, quantityDamaged = 1 } = req.body;
@@ -835,17 +901,21 @@ export async function reportMaintenance(req, res, next) {
       quantity_damaged: quantityDamaged, notes: notes || null,
     });
     if (logErr) throw logErr;
-    const { error: itemErr } = await supabaseAdmin
-      .from("inventory_items").update({ status: "unavailable" }).eq("item_id", req.params.id);
-    if (itemErr) throw itemErr;
+    await changeStock(req.params.id, -quantityDamaged);
     res.status(201).json({ data: { reported: true } });
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (creditsErrorToResponse(err, res)) return;
+    next(err);
+  }
 }
 
+// Mirrors reportMaintenance: resolving the open log(s) hands that same
+// quantity back to current_stock — this was the missing half of the fix,
+// stock was never coming back after a repair.
 export async function completeMaintenance(req, res, next) {
   try {
     const { data: openLogs, error: readErr } = await supabaseAdmin
-      .from("maintenance_logs").select("maintenance_id")
+      .from("maintenance_logs").select("maintenance_id, quantity_damaged")
       .eq("item_id", req.params.id).is("resolved_at", null)
       .order("reported_at", { ascending: false });
     if (readErr) throw readErr;
@@ -856,14 +926,19 @@ export async function completeMaintenance(req, res, next) {
         .update({ resolved_at: new Date().toISOString(), resolved_by: req.user.user_id })
         .in("maintenance_id", openLogs.map((l) => l.maintenance_id));
       if (resolveErr) throw resolveErr;
+
+      const repairedQty = openLogs.reduce((sum, l) => sum + (l.quantity_damaged || 1), 0);
+      await changeStock(req.params.id, repairedQty);
     }
 
     const { data, error } = await supabaseAdmin
-      .from("inventory_items").update({ status: "available", updated_at: new Date().toISOString() })
-      .eq("item_id", req.params.id).select().single();
+      .from("inventory_items").select("*").eq("item_id", req.params.id).single();
     if (error) throw error;
     res.json({ data });
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (creditsErrorToResponse(err, res)) return;
+    next(err);
+  }
 }
 
 // ── Notifications ────────────────────────────────────────────────────────

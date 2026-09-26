@@ -14,6 +14,7 @@ function toFrontendUser(row) {
     id: row.user_id,
     name: row.full_name,
     email: row.email,
+    studentId: row.student_id || "",
     role: ROLE_MAP[row.role] || "User",
     avatar: row.profile_img_url || null,
     phone: row.phone_number || "",

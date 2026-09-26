@@ -6,8 +6,8 @@ import { requireAuth, requireRole } from "../../middleware/requireAuth.js";
 import { optionalAuth } from "../../middleware/optionalAuth.js";
 import eventRegistrationsRoutes from "./eventRegistrations.routes.js";
 import { listEvents, getEvent, createEvent, updateEvent, deleteEvent } from "./events.controller.js";
-import { listCollabPosts, getCollabPost, createCollabPost, deleteCollabPost } from "./collaboration.controller.js";
-import { listCommunityPosts, getCommunityPost, createCommunityPost, deleteCommunityPost, toggleLike, createComment } from "./communityPost.controller.js";
+import { listCollabPosts, getCollabPost, createCollabPost, deleteCollabPost, listMyCollabPosts } from "./collaboration.controller.js";
+import { listCommunityPosts, getCommunityPost, createCommunityPost, deleteCommunityPost, toggleLike, createComment, listMyCommunityPosts } from "./communityPost.controller.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -58,6 +58,8 @@ router.delete("/events/:id", requireAuth, requireRole("admin", "staff"), deleteE
 // generic router. Update isn't used anywhere in the UI, so it's the one
 // verb still left to crudRouter.
 router.get("/collaborations", listCollabPosts);
+// Ahead of /collaborations/:id so "mine" isn't swallowed as a collab_id.
+router.get("/collaborations/mine", requireAuth, listMyCollabPosts);
 router.get("/collaborations/:id", getCollabPost);
 router.post("/collaborations", requireAuth, createCollabPost);
 router.delete("/collaborations/:id", requireAuth, deleteCollabPost);
@@ -90,6 +92,8 @@ router.get("/tags", async (req, res, next) => {
 // guests, optionalAuth just attaches req.user when a token IS present so
 // the handler can compute "did I already like this" per viewer.
 router.get("/posts", optionalAuth, listCommunityPosts);
+// Ahead of /posts/:id so "mine" isn't swallowed as a post_id.
+router.get("/posts/mine", requireAuth, listMyCommunityPosts);
 router.get("/posts/:id", optionalAuth, getCommunityPost);
 router.post("/posts", requireAuth, createCommunityPost);
 router.delete("/posts/:id", requireAuth, deleteCommunityPost);

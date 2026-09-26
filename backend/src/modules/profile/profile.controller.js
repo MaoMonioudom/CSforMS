@@ -1,9 +1,11 @@
 import { assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { getUserActionCounts, getRecentActivity } from "../../shared/userActivityCounts.js";
 
-// Real per-user counts + a merged recent-activity feed for the Profile
-// page: same counts the achievement award-check uses, so the stat cards
-// and the badges never disagree with each other.
+// Real per-user counts for the Profile page's stat cards: same counts the
+// achievement award-check uses, so the stat cards and the badges never
+// disagree with each other, plus a merged recent-activity feed across
+// every module. "My Content" (posts/events) still comes from each
+// module's own /mine endpoint.
 export async function getProfileSummary(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {

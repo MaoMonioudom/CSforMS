@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { toPublicUser } from "../../shared/sanitizeUser.js";
 import { uniqueUserNameFromEmail } from "../../shared/userAccounts.js";
-import { normalizeEmail } from "../auth/auth.controller.js";
+import { normalizeEmail, isStudentIdTaken } from "../auth/auth.controller.js";
 
 const SALT_ROUNDS = 10;
 const ASSIGNABLE_ROLES = ["admin", "staff", "user"];
@@ -11,14 +11,24 @@ export async function getMe(req, res) {
   res.json({ data: req.user });
 }
 
-// Self-service profile edit, deliberately narrow: name/phone/bio/avatar
-// only. Role/status/email/student_id aren't editable here (those are
-// admin-controlled or identity-critical), so there's no need to guard
-// individual fields beyond just not accepting them.
+// Self-service profile edit, deliberately narrow: name/phone/bio/avatar.
+// Role/status/email aren't editable here (admin-controlled or identity-
+// critical). student_id is the one exception: it can be set once, only if
+// the account doesn't have one yet (accounts made before signup required
+// it), and is locked after that since membership/inventory key off it.
 export async function updateMe(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
     const payload = {};
+    if (req.body.student_id !== undefined && !req.user.student_id) {
+      const studentId = String(req.body.student_id).trim();
+      if (studentId) {
+        if (await isStudentIdTaken(studentId, req.user.user_id)) {
+          return res.status(409).json({ error: "An account with this Student ID already exists" });
+        }
+        payload.student_id = studentId;
+      }
+    }
     if (req.body.full_name !== undefined) {
       const name = req.body.full_name.trim();
       if (!name) return res.status(400).json({ error: "Name can't be empty." });

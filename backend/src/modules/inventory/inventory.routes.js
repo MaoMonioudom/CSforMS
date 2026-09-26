@@ -18,6 +18,9 @@ router.use("/items", createCrudRouter("inventory_items", { pkColumn: "item_id", 
 router.use("/filaments", createCrudRouter("filaments", { pkColumn: "filament_id", orderBy: { column: "created_at", ascending: false } }));
 router.use("/categories", createCrudRouter("categories", { pkColumn: "category_id" }));
 router.use("/locations", createCrudRouter("location_items", { pkColumn: "location_id" }));
+// Lab Service page cards (Document Printing, 3D Printing, CNC machines, and
+// whatever staff add later) — editable from Manage Stock instead of code.
+router.use("/lab-services", createCrudRouter("lab_services", { pkColumn: "service_id", writeRoles: ["admin", "staff"], orderBy: { column: "sort_order", ascending: true } }));
 
 // Item photo upload: staff only, multipart field "image", returns { url }.
 router.post("/items/upload-image", requireAuth, STAFF, upload.single("image"), ctrl.uploadItemImage);
@@ -31,7 +34,9 @@ router.get("/maintenance-open", requireAuth, STAFF, ctrl.listOpenMaintenance);
 // Borrows: students see their own, staff see all.
 router.get("/borrows", requireAuth, ctrl.listBorrows);
 router.post("/borrows/:id/return", requireAuth, STAFF, ctrl.returnBorrow);
+router.delete("/borrows/:id", requireAuth, STAFF, ctrl.deleteBorrowRecord);
 router.post("/borrows/deduct-credits", requireAuth, STAFF, ctrl.deductCredits);
+router.get("/maintenance-quantities", requireAuth, STAFF, ctrl.getMaintenanceQuantities);
 
 // Requests: students submit their own; staff list/approve/deny all.
 router.get("/requests", requireAuth, ctrl.listRequests);

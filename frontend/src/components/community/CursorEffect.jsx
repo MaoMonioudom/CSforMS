@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const COLORS = [
   "var(--events)",
@@ -11,11 +11,20 @@ const COLORS = [
 const MAX_TRAIL = 55;
 const TRAIL_LIFETIME = 500; // ms before a point fades out
 
+// Only devices with a real hovering mouse get the plane: on touch screens
+// there's no cursor to follow, so it would just sit stuck on screen and
+// jump around wherever the user taps.
+const HAS_MOUSE = "(hover: hover) and (pointer: fine)";
+
 export function CursorEffect() {
   const planeRef  = useRef(null);
   const canvasRef = useRef(null);
+  const [enabled] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(HAS_MOUSE).matches,
+  );
 
   useEffect(() => {
+    if (!enabled) return;
     const plane  = planeRef.current;
     const canvas = canvasRef.current;
     if (!plane || !canvas) return;
@@ -126,6 +135,7 @@ export function CursorEffect() {
     };
 
     const onMove = (e) => {
+      plane.style.opacity = "1"; // stays hidden until the mouse first moves
       const dx = e.clientX - prevX;
       const dy = e.clientY - prevY;
 
@@ -158,7 +168,9 @@ export function CursorEffect() {
       window.removeEventListener("resize", onResize);
       styleTag.remove();
     };
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
     <>
@@ -187,6 +199,7 @@ export function CursorEffect() {
           height: "32px",
           pointerEvents: "none",
           zIndex: 9999,
+          opacity: 0,
           willChange: "transform",
         }}
       >

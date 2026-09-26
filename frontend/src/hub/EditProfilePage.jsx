@@ -33,7 +33,7 @@ function Avatar({ name, avatar, size = 76 }) {
 export default function EditProfilePage() {
   const { user, loading: authLoading, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ full_name: "", phone_number: "", bio: "", profile_img_url: "" });
+  const [form, setForm] = useState({ full_name: "", student_id: "", phone_number: "", bio: "", profile_img_url: "" });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -53,6 +53,7 @@ export default function EditProfilePage() {
     if (!user) { navigate("/login"); return; }
     setForm({
       full_name: user.name || "",
+      student_id: user.studentId || "",
       phone_number: user.phone || "",
       bio: user.bio || "",
       profile_img_url: user.avatar || "",
@@ -78,18 +79,24 @@ export default function EditProfilePage() {
     }
   };
 
+  // Student ID is set-once: editable only while the account has none yet
+  // (older accounts), read-only after that — the server enforces the same.
+  const studentIdLocked = Boolean(user.studentId);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!studentIdLocked && !form.student_id.trim()) { setError("Please enter your Student ID."); return; }
     setSaving(true);
     setError("");
     try {
       const updated = await updateMyProfile({
         full_name: form.full_name.trim(),
+        ...(studentIdLocked ? {} : { student_id: form.student_id.trim() }),
         phone_number: form.phone_number.trim(),
         bio: form.bio.trim(),
         profile_img_url: form.profile_img_url || null,
       });
-      updateUser({ name: updated.full_name, avatar: updated.profile_img_url, phone: updated.phone_number, bio: updated.bio });
+      updateUser({ name: updated.full_name, studentId: updated.student_id || "", avatar: updated.profile_img_url, phone: updated.phone_number, bio: updated.bio });
       navigate("/profile");
     } catch (err) {
       setError(err.message);
@@ -154,6 +161,17 @@ export default function EditProfilePage() {
               <label className="block text-xs font-semibold mb-1.5" style={{ color: D.muted }}>Full name</label>
               <input required className={inputCls} style={{ borderColor: D.border, color: D.text }}
                 value={form.full_name} onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))} />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: D.muted }}>Student ID</label>
+              <input required={!studentIdLocked} readOnly={studentIdLocked} className={`${inputCls} ${studentIdLocked ? "cursor-not-allowed" : ""}`}
+                style={{ borderColor: D.border, color: studentIdLocked ? D.muted : D.text, background: studentIdLocked ? D.bg : undefined }}
+                placeholder="Your CADT Student ID"
+                value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))} />
+              <p className="mt-1 text-xs" style={{ color: D.faint }}>
+                {studentIdLocked ? "Contact an admin if your Student ID needs to be changed." : "Can only be set once, so double-check it."}
+              </p>
             </div>
 
             <div>

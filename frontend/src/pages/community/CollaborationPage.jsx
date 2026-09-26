@@ -32,17 +32,27 @@ const PAGE_SIZE = 12;
 
 // author-profile (year/major) has nowhere to live yet: no per-user academic
 // fields on `users`, so that one's still left out (see collaboration-data.js).
+// Telegram usernames are 5-32 chars of letters/digits/underscores and must
+// start with a letter (never a digit) - this rejects someone pasting a raw
+// phone number in here instead of a handle.
+const TELEGRAM_PATTERN = "^@?[A-Za-z][A-Za-z0-9_]{4,31}$";
+
 function CreateCollabDialog({ open, onOpenChange, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [skills, setSkills] = useState([]);
+  // Most people posting here already have a project and want teammates, so
+  // that's the pre-selected type.
+  const [postType, setPostType] = useState("recruiting");
   const formRef = useRef(null);
 
   const parseList = (v) => (v || "").split(",").map(s => s.trim()).filter(Boolean);
+  const isRecruiting = postType === "recruiting";
 
   const closeAndReset = () => {
     formRef.current?.reset();
     setSkills([]);
+    setPostType("recruiting");
     onOpenChange(false);
   };
 
@@ -50,16 +60,19 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
     e.preventDefault();
     setError("");
     const form = new FormData(e.target);
+    const type = form.get("type");
     const payload = {
-      post_type: form.get("type") === "looking-for-team" ? "looking_for_team" : "recruiting",
+      post_type: type === "looking-for-team" ? "looking_for_team" : "recruiting",
       project_title: form.get("projectTitle")?.trim(),
       category: form.get("category")?.trim() || null,
-      short_pitch: form.get("shortPitch")?.trim() || null,
       description: form.get("description")?.trim() || null,
-      roles_needed: parseList(form.get("rolesNeeded")),
+      // Roles needed / target team size only apply when recruiting for a
+      // project you already have - someone looking to join a team doesn't
+      // set either of those.
+      roles_needed: type === "recruiting" ? parseList(form.get("rolesNeeded")) : [],
       skills,
       team_size_current: Number(form.get("currentSize")),
-      team_size_target: Number(form.get("targetSize")) || null,
+      team_size_target: type === "recruiting" ? (Number(form.get("targetSize")) || null) : null,
       contact_email: form.get("contactEmail")?.trim() || null,
       contact_telegram: form.get("contactTelegram")?.trim() || null,
     };
@@ -94,23 +107,10 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
                   <input
                     type="radio"
                     name="type"
-                    value="looking-for-team"
-                    required
-                    className="accent-collaboration"
-                  />
-                  Looking for Team
-                </span>
-                <span className="pl-5 text-xs text-muted-foreground">
-                  You want to join a project. Describe your skills and what kind of team you're hoping to find.
-                </span>
-              </label>
-              <label className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-accent has-[:checked]:border-collaboration has-[:checked]:bg-collaboration/5">
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <input
-                    type="radio"
-                    name="type"
                     value="recruiting"
                     required
+                    checked={postType === "recruiting"}
+                    onChange={() => setPostType("recruiting")}
                     className="accent-collaboration"
                   />
                   Recruiting Teammates
@@ -119,22 +119,40 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
                   You already have a project and need more people to join you.
                 </span>
               </label>
+              <label className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 cursor-pointer hover:bg-accent has-[:checked]:border-collaboration has-[:checked]:bg-collaboration/5">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="looking-for-team"
+                    required
+                    checked={postType === "looking-for-team"}
+                    onChange={() => setPostType("looking-for-team")}
+                    className="accent-collaboration"
+                  />
+                  Looking for Team
+                </span>
+                <span className="pl-5 text-xs text-muted-foreground">
+                  You want to join a project. Describe your skills and what kind of team you're hoping to find.
+                </span>
+              </label>
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Label htmlFor="projectTitle" className="mb-1.5 block">
-                Project title
+                {isRecruiting ? "Project title" : "Headline"}
               </Label>
-              <Input id="projectTitle" name="projectTitle" placeholder="e.g. AI Hackathon Team" required />
+              <Input
+                id="projectTitle"
+                name="projectTitle"
+                placeholder={isRecruiting ? "e.g. AI Hackathon Team" : "e.g. Frontend dev looking for a hackathon team"}
+                required
+              />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <Label htmlFor="category" className="mb-1.5 block">Category</Label>
               <Input id="category" name="category" placeholder="e.g. Competition" required />
-            </div>
-            <div>
-              <Label htmlFor="shortPitch" className="mb-1.5 block">Short pitch</Label>
-              <Input id="shortPitch" name="shortPitch" placeholder="One sentence summary" required />
             </div>
           </div>
           <div>
@@ -144,38 +162,60 @@ function CreateCollabDialog({ open, onOpenChange, onCreated }) {
               name="description"
               required
               rows={4}
-              placeholder="Tell people about the project, goals, and what you're looking for..."
+              placeholder={isRecruiting
+                ? "Tell people about the project, goals, and what you're looking for..."
+                : "Tell people about your skills, experience, and the kind of team you'd like to join..."}
             />
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="rolesNeeded" className="mb-1.5 block">Roles needed</Label>
-              <Input id="rolesNeeded" name="rolesNeeded" placeholder="e.g. Frontend Dev, Designer" />
-              <p className="mt-1 text-xs text-muted-foreground">Comma-separated</p>
-            </div>
-            <div>
+            {isRecruiting && (
+              <div>
+                <Label htmlFor="rolesNeeded" className="mb-1.5 block">Roles needed</Label>
+                <Input id="rolesNeeded" name="rolesNeeded" placeholder="e.g. Frontend Dev, Designer" />
+                <p className="mt-1 text-xs text-muted-foreground">Comma-separated</p>
+              </div>
+            )}
+            <div className={isRecruiting ? "" : "sm:col-span-2"}>
               <Label className="mb-1.5 block">Skills & tech</Label>
               <TagsInput value={skills} onChange={setSkills} noun="skill" />
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <Label htmlFor="currentSize" className="mb-1.5 block">Current team size</Label>
+              <Label htmlFor="currentSize" className="mb-1.5 block">
+                {isRecruiting ? "Current team size" : "Your team size"}
+              </Label>
               <Input id="currentSize" name="currentSize" type="number" min={0} placeholder="0" required />
             </div>
-            <div>
-              <Label htmlFor="targetSize" className="mb-1.5 block">Target team size</Label>
-              <Input id="targetSize" name="targetSize" type="number" min={1} placeholder="3" required />
-            </div>
+            {isRecruiting && (
+              <div>
+                <Label htmlFor="targetSize" className="mb-1.5 block">Target team size</Label>
+                <Input id="targetSize" name="targetSize" type="number" min={1} placeholder="3" required />
+              </div>
+            )}
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <Label htmlFor="contactEmail" className="mb-1.5 block">Email</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" placeholder="you@example.edu" required />
+              <Input
+                id="contactEmail"
+                name="contactEmail"
+                type="email"
+                placeholder="you@example.edu"
+                pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                title="Enter a valid email address, e.g. you@example.edu"
+                required
+              />
             </div>
             <div>
               <Label htmlFor="contactTelegram" className="mb-1.5 block">Telegram (optional)</Label>
-              <Input id="contactTelegram" name="contactTelegram" placeholder="@username" />
+              <Input
+                id="contactTelegram"
+                name="contactTelegram"
+                placeholder="@username"
+                pattern={TELEGRAM_PATTERN}
+                title="A Telegram handle: starts with a letter, then letters/digits/underscores, 5-32 characters (no phone numbers)"
+              />
             </div>
           </div>
           {error && (
@@ -253,10 +293,11 @@ export default function CollaborationPage() {
   const hasMore = collabPosts.length < total;
   // Filtering only looks at posts already loaded. If a rare filter has
   // matches sitting on a later page, "Load more" first, same as an
-  // unfiltered feed.
-  const visiblePosts = activeFilter === "all"
-    ? collabPosts
-    : collabPosts.filter(p => p.type === activeFilter);
+  // unfiltered feed. Closed posts never show here; an owner finds and
+  // reopens theirs from "My Find Team Posts" on their Profile.
+  const visiblePosts = collabPosts.filter(
+    p => p.status !== "closed" && (activeFilter === "all" || p.type === activeFilter),
+  );
 
   // Posts load newest-first, so this stays accurate off what's loaded so
   // far as long as there aren't more than a page's worth of new posts in a
@@ -321,7 +362,14 @@ export default function CollaborationPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visiblePosts.map((post, i) => (
-            <CollabCard key={post.id} post={post} index={i} />
+            <CollabCard
+              key={post.id}
+              post={post}
+              index={i}
+              onStatusChange={(id, status) =>
+                setCollabPosts((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
+              }
+            />
           ))}
         </div>
       )}

@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Check } from "lucide-react";
-import { formatRelativeTime, fetchCommunityPostById, toggleLike, createComment } from "@/lib/community-data";
+import { Heart, MessageCircle, Share2, Check, Trash2 } from "lucide-react";
+import { formatRelativeTime, fetchCommunityPostById, toggleLike, createComment, deleteCommunityPost } from "@/lib/community-data";
 import { Button } from "@/components/community/ui/button";
 import { InitialAvatar } from "@/components/community/InitialAvatar";
 import { useAuth } from "@/hub/AuthContext";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "@/components/community/ui/alert-dialog";
 
 export default function CommunityDetailPage() {
   const { postId } = useParams();
@@ -19,6 +23,9 @@ export default function CommunityDetailPage() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -57,6 +64,20 @@ export default function CommunityDetailPage() {
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard unavailable (unsupported browser/permissions); nothing to fall back to
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteCommunityPost(postId);
+      navigate("/community/communityspace");
+    } catch (err) {
+      setDeleteError(err.message || "Couldn't delete this post. Please try again.");
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -101,6 +122,10 @@ export default function CommunityDetailPage() {
       </div>
     );
   }
+
+  // Owners can delete their own post; staff/admin can remove anyone's (the
+  // backend enforces the same rule).
+  const canDelete = !!user && (user.id === post.userId || user.role === "Admin" || user.role === "Staff");
 
   return (
     <main className="bg-background">
@@ -164,8 +189,36 @@ export default function CommunityDetailPage() {
             >
               {copied ? <Check className="size-4" /> : <Share2 className="size-4" />} {copied ? "Copied!" : "Share"}
             </button>
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 className="size-4" /> Delete
+              </button>
+            )}
           </div>
+          {deleteError && (
+            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{deleteError}</p>
+          )}
         </article>
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This also removes its likes and comments. This can't be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700">
+                {deleting ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Comments</h2>
           <form onSubmit={handleSubmitComment} className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-card p-4">

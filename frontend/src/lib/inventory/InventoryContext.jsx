@@ -23,6 +23,7 @@ export function InventoryProvider({ children }) {
   const [categories,    setCategories]    = useState([])
   const [locations,     setLocations]     = useState([])
   const [users,         setUsers]         = useState([])
+  const [labServices,   setLabServices]   = useState([])
   const [borrows,       setBorrows]       = useState([])
   const [requests,      setRequests]      = useState([])
   const [notifications, setNotifications] = useState([])
@@ -63,6 +64,7 @@ export function InventoryProvider({ children }) {
   const refreshNotifications = useCallback(() => inv.fetchNotifications().then(setNotifications), [])
   const refreshPayments = useCallback(() => inv.fetchPayments().then(setPayments), [])
   const refreshUsers = useCallback(() => inv.fetchUsers().then(setUsers), [])
+  const refreshLabServices = useCallback(() => inv.fetchLabServices().then(setLabServices), [])
 
   // Live-ish sync interval. There's no websocket/realtime channel here, so
   // this is what makes one person's action (student submits a request,
@@ -97,15 +99,17 @@ export function InventoryProvider({ children }) {
   // Staff-only collections: also polled, so one admin's counter sale or
   // credit top-up shows up for a different admin's already-open tab.
   useEffect(() => {
-    if (!staff) { setPayments([]); setUsers([]); return }
+    if (!staff) { setPayments([]); setUsers([]); setLabServices([]); return }
     refreshPayments().catch(() => {})
     refreshUsers().catch(() => {})
+    refreshLabServices().catch(() => {})
     const interval = setInterval(() => {
       refreshPayments().catch(() => {})
       refreshUsers().catch(() => {})
+      refreshLabServices().catch(() => {})
     }, POLL_MS)
     return () => clearInterval(interval)
-  }, [staff, refreshPayments, refreshUsers])
+  }, [staff, refreshPayments, refreshUsers, refreshLabServices])
 
   // Staff-only: pop a toast when a new pending request appears (piggybacks
   // on the requests poll above). `seenPendingIds` starts null so the first
@@ -157,6 +161,7 @@ export function InventoryProvider({ children }) {
 
     // staff: borrows & counter
     returnBorrow:  (id, opts) => run(() => inv.returnBorrow(id, opts), [refreshBorrows, refreshCatalog]),
+    deleteBorrowRecord: (id) => run(() => inv.deleteBorrowRecord(id), [refreshBorrows]),
     deductCredits: (p) => run(() => inv.deductCredits(p), [refreshPayments, refreshUsers, creditsChanged]),
     chargePrint:   (p) => run(() => inv.chargePrint(p), [refreshPayments, refreshUsers, creditsChanged]),
     charge3D:      (p) => run(() => inv.charge3D(p), [refreshPayments, refreshUsers, refreshCatalog, creditsChanged]),
@@ -177,6 +182,8 @@ export function InventoryProvider({ children }) {
     deleteFilament: (id) => run(() => inv.deleteFilament(id), [refreshCatalog]),
     reportMaintenance:   (id, opts) => run(() => inv.reportMaintenance(id, opts), [refreshCatalog]),
     completeMaintenance: (id) => run(() => inv.completeMaintenance(id), [refreshCatalog]),
+    saveLabService:   (s) => run(() => (s.id ? inv.updateLabService(s.id, s) : inv.createLabService(s)), [refreshLabServices]),
+    deleteLabService: (id) => run(() => inv.deleteLabService(id), [refreshLabServices]),
 
     // notifications
     markNotificationRead:     (id) => run(() => inv.markNotificationRead(id), [refreshNotifications]),
@@ -200,10 +207,10 @@ export function InventoryProvider({ children }) {
   const value = {
     user, loading,
     items, filaments, categories, locations,
-    users, borrows, requests, notifications, payments,
+    users, labServices, borrows, requests, notifications, payments,
     // raw setters kept for optimistic tweaks; prefer the actions
-    setItems, setUsers, setBorrows, setRequests, setNotifications, setPayments, setFilaments,
-    refreshCatalog, refreshBorrows, refreshRequests, refreshNotifications, refreshPayments, refreshUsers,
+    setItems, setUsers, setBorrows, setRequests, setNotifications, setPayments, setFilaments, setLabServices,
+    refreshCatalog, refreshBorrows, refreshRequests, refreshNotifications, refreshPayments, refreshUsers, refreshLabServices,
     ...guardedActions,
     toast, setToast, showToast,
     cart, setCart, cartOpen, setCartOpen,

@@ -22,8 +22,16 @@ import { InitialAvatar } from "@/components/community/InitialAvatar";
 const filters = ["All", "Technical", "Showcase", "Question", "Social", "Announcement"];
 const categories = filters.slice(1);
 const PAGE_SIZE = 12;
+const STAFF_ROLES = ["Admin", "Staff"];
+const TOP_TAGS = 6;
 
 function CreatePostDialog({ open, onOpenChange, onCreated }) {
+  const { user } = useAuth();
+  // "Announcement" is the makerspace's own voice: only staff/admin can pick
+  // it (the backend enforces the same rule).
+  const postableCategories = STAFF_ROLES.includes(user?.role)
+    ? categories
+    : categories.filter((c) => c !== "Announcement");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [tags, setTags] = useState([]);
@@ -47,7 +55,7 @@ function CreatePostDialog({ open, onOpenChange, onCreated }) {
     const payload = {
       title: form.get("title")?.trim() || null,
       content,
-      category: form.get("category") || categories[0],
+      category: form.get("category"),
       tags,
     };
 
@@ -78,10 +86,12 @@ function CreatePostDialog({ open, onOpenChange, onCreated }) {
             <select
               id="category"
               name="category"
-              defaultValue={categories[0]}
+              defaultValue=""
+              required
               className="field border-input bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {categories.map((c) => (
+              <option value="" disabled>Choose a category</option>
+              {postableCategories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -137,6 +147,7 @@ export default function CommunityPage() {
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
+  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     fetchCommunityPostsPage({ page: 1, limit: PAGE_SIZE })
@@ -201,9 +212,21 @@ export default function CommunityPage() {
   // Filtering only looks at posts already loaded. If a rare category has
   // matches sitting on a later page, "Load more" first, same as the
   // unfiltered feed.
-  const visiblePosts = activeFilter === "All"
-    ? communityPosts
-    : communityPosts.filter(p => p.category === activeFilter);
+  const visiblePosts = communityPosts.filter(p =>
+    (activeFilter === "All" || p.category === activeFilter) &&
+    (!activeTag || p.tags.includes(activeTag)),
+  );
+
+  // Most-used tags across the posts loaded so far (real data, not a fixed
+  // list); clicking one filters the feed to it.
+  const tagCounts = new Map();
+  for (const p of communityPosts) for (const t of p.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+  const popularTags = [...tagCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, TOP_TAGS)
+    .map(([tag]) => tag);
+  // Keep a selected tag in the list even if later loads push it out of the top few.
+  if (activeTag && !popularTags.includes(activeTag)) popularTags.push(activeTag);
 
   // There's no per-user activity tracking in the DB, so "active users
   // today" isn't something we can honestly compute. This counts real
@@ -293,19 +316,36 @@ export default function CommunityPage() {
           )}
         </div>
         <aside className="hidden lg:block space-y-5">
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Trending tags</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["esp32", "3d-printing", "pcb", "raspberry-pi", "low-power", "meetup"].map((t) => (
-                <span
-                  key={t}
-                  className="badge badge-sm bg-muted text-muted-foreground"
+          {popularTags.length > 0 && (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Popular tags</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {popularTags.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setActiveTag(activeTag === t ? null : t)}
+                    className={`badge badge-sm transition-colors ${
+                      activeTag === t
+                        ? "bg-community text-community-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    #{t}
+                  </button>
+                ))}
+              </div>
+              {activeTag && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTag(null)}
+                  className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
-                  #{t}
-                </span>
-              ))}
+                  Clear tag filter
+                </button>
+              )}
             </div>
-          </div>
+          )}
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Be excellent</p>
             <p className="mt-2 text-sm text-muted-foreground">

@@ -51,13 +51,28 @@ export async function markNotificationRead(req, res, next) {
 }
 
 // Admin/staff-only: runs the same query and email content the daily cron
-// job uses, but only logs + returns it as JSON. Nothing is actually sent
-// yet (no Mail.Send permission wired up); this is purely for the
-// makerspace team to check the content/list is right before that's turned on.
+// job uses, but forces dryRun so this preview never actually sends —
+// purely for the makerspace team to check the content/recipient list
+// before the real 8am run goes out.
 export async function previewOverdueReminders(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
-    const result = await runOverdueReminderJob();
+    const result = await runOverdueReminderJob({ dryRun: true });
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Admin/staff-only: fires the real send immediately instead of waiting for
+// the 8am cron — for testing the mailer end to end, or catching up if a
+// day's run was somehow missed. Real students with overdue items get a
+// real email; there's no separate "already reminded today" tracking, so
+// calling this and then letting the 8am run fire too means two emails.
+export async function sendOverdueRemindersNow(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const result = await runOverdueReminderJob({ dryRun: false });
     res.json({ data: result });
   } catch (err) {
     next(err);

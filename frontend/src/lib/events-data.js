@@ -103,6 +103,15 @@ export async function fetchMyEventRegistrations() {
   return data;
 }
 
+// Full event objects (not just ids) for the Profile page's "My Content"
+// section - joins fetchMyEventRegistrations' bare ids against the full
+// events list since /registrations/me doesn't embed event details itself.
+export async function fetchMyRegisteredEvents() {
+  const [ids, events] = await Promise.all([fetchMyEventRegistrations(), fetchEvents()]);
+  const idSet = new Set(ids);
+  return events.filter((e) => idSet.has(e.id));
+}
+
 // One-way: there's no self-service unregister. If you can't make it,
 // an admin removes you (removeEventRegistrant below) so the spot frees up
 // for someone else without letting registration be a no-commitment toggle.

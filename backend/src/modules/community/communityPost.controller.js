@@ -73,6 +73,25 @@ export async function listCommunityPosts(req, res, next) {
   }
 }
 
+// Mirrors listMyCollabPosts (collaboration.controller.js): the Profile
+// page's "My Content" section needs everything the caller has posted, no
+// pagination needed since it's scoped to one user.
+export async function listMyCommunityPosts(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("community_posts")
+      .select(SELECT_WITH_RELATIONS)
+      .eq("user_id", req.user.user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    const posts = await attachVotes(data.map(flattenRelations), req.user.user_id);
+    res.json({ data: posts });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getCommunityPost(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {
@@ -128,6 +147,16 @@ export async function createCommunityPost(req, res, next) {
   try {
     const { tags, ...postFields } = req.body;
     const tagNames = Array.isArray(tags) ? tags : [];
+
+    // "Announcement" is the makerspace's own voice, so only staff/admin can
+    // post it; the frontend hides the option from everyone else, but that
+    // alone doesn't stop a hand-made request.
+    if (
+      String(postFields.category || "").trim().toLowerCase() === "announcement" &&
+      !MODERATOR_ROLES.includes(req.user.role)
+    ) {
+      return res.status(403).json({ error: "Only staff can post announcements." });
+    }
 
     const { data: post, error: postErr } = await supabaseAdmin
       .from("community_posts")

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Layers, Mail, Lock, User, LogIn, UserPlus } from "lucide-react";
+import { Layers, Mail, Lock, User, LogIn, UserPlus, IdCard } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import msBbgLogo from "../assets/ms_bbg_logo.png";
 import { HubNav } from "./HubNav";
@@ -28,6 +28,7 @@ const OAUTH_ERROR_MESSAGES = {
   email_mismatch: "Please verify with the Microsoft account that matches the email you typed.",
   already_registered: "An account with this email already exists. Try signing in instead.",
   missing_email: "Please enter an email before continuing with Microsoft.",
+  student_id_taken: "An account with this Student ID already exists.",
 };
 
 function continueWithMicrosoft() {
@@ -81,7 +82,7 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
 function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit, mobileToggle }) {
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   return (
-    <form onSubmit={onSubmit} className="w-full flex flex-col gap-3.5">
+    <form onSubmit={onSubmit} className="w-full my-auto flex flex-col gap-2.5">
       {/* <div className="flex gap-1.5 mb-1">
         {MODULES.map(m => (
           <span key={m.label} className="text-[9px] font-bold px-2 py-0.5 rounded-full"
@@ -94,22 +95,27 @@ function RegisterForm({ form, setForm, error, loading, showPw, setShowPw, onSubm
       <p className="text-sm" style={{ color: D.muted }}>Join CADT Makerspace and access all three modules.</p>
       <ErrorBox message={error} />
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Full Name</label>
         <TextField icon={User} type="text" value={form.name} onChange={set("name")} placeholder="Your name" autoComplete="name" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
         <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="example@student.cadt.edu.kh" autoComplete="email" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-semibold" style={{ color: D.muted }}>Student ID</label>
+        <TextField icon={IdCard} type="text" value={form.studentId} onChange={set("studentId")} placeholder="Your CADT Student ID" autoComplete="off" />
+      </div>
+
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Password</label>
         <PasswordField value={form.password} onChange={set("password")} placeholder="Min. 6 characters" autoComplete="new-password" show={showPw} onToggleShow={() => setShowPw(v => !v)} />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Confirm Password</label>
         <PasswordField value={form.confirm} onChange={set("confirm")} placeholder="Repeat password" autoComplete="new-password" show={showPw} onToggleShow={() => setShowPw(v => !v)} />
       </div>
@@ -148,7 +154,7 @@ export default function AuthPage() {
   const destState = reopen ? { reopen } : undefined;
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [regForm, setRegForm]     = useState({ name: "", email: "", password: "", confirm: "" });
+  const [regForm, setRegForm]     = useState({ name: "", email: "", studentId: "", password: "", confirm: "" });
   const [showPw, setShowPw]       = useState(false);
   const [error, setError]         = useState("");
   const [loading, setLoading]     = useState(false);
@@ -196,13 +202,13 @@ export default function AuthPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-    if (!regForm.name || !regForm.email || !regForm.password) { setError("Please fill in all fields."); return; }
+    if (!regForm.name || !regForm.email || !regForm.studentId.trim() || !regForm.password) { setError("Please fill in all fields."); return; }
     if (regForm.password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (regForm.password !== regForm.confirm) { setError("Passwords don't match."); return; }
     setLoading(true);
     try {
       const { pendingToken } = await api.post("/api/auth/signup/verify-start", {
-        full_name: regForm.name, email: regForm.email, password: regForm.password,
+        full_name: regForm.name, email: regForm.email, student_id: regForm.studentId.trim(), password: regForm.password,
       });
       const params = new URLSearchParams({ intent: "signup_verify", email: regForm.email, pendingToken });
       window.location.href = `${BASE_URL}/api/auth/microsoft/login?${params.toString()}`;
@@ -229,7 +235,7 @@ export default function AuthPage() {
 
       {/* ── Desktop: sliding overlay panel ──────────────────────────── */}
       <div className="relative z-10 hidden md:block w-full max-w-[840px] rounded-3xl overflow-hidden "
-        style={{ height: 580, background: D.card, boxShadow: "0 24px 64px rgba(0,0,30,0.35)" }}>
+        style={{ height: "min(700px, calc(100vh - 100px))", background: D.card, boxShadow: "0 24px 64px rgba(0,0,30,0.35)" }}>
 
         {/* Sign-in form: lives in the left half, slides right and fades out when registering */}
         <div className="absolute top-0 left-0 h-full w-1/2 flex items-center px-10 transition-all duration-700 ease-in-out"
@@ -244,7 +250,7 @@ export default function AuthPage() {
         </div>
 
         {/* Sign-up form: lives in the left half too, revealed on the right when registering */}
-        <div className="absolute top-0 left-0 h-full w-1/2 flex items-center px-10 py-8 overflow-y-auto transition-all duration-700 ease-in-out"
+        <div className="absolute top-0 left-0 h-full w-1/2 flex px-10 py-6 overflow-y-auto transition-all duration-700 ease-in-out"
           style={{
             transform: isRegister ? "translateX(100%)" : "translateX(0)",
             opacity: isRegister ? 1 : 0,

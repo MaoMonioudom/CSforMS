@@ -43,6 +43,24 @@ export async function listCollabPosts(req, res, next) {
   }
 }
 
+// The Profile page's "My Content" section needs the caller's own posts
+// regardless of status (open + closed), unlike the public feed which only
+// ever needs pagination - no page/limit here, just everything they own.
+export async function listMyCollabPosts(req, res, next) {
+  if (!assertSupabaseConfigured(res)) return;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("collaboration_posts")
+      .select(SELECT_WITH_RELATIONS)
+      .eq("user_id", req.user.user_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    res.json({ data: data.map(flattenRelations) });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getCollabPost(req, res, next) {
   if (!assertSupabaseConfigured(res)) return;
   try {

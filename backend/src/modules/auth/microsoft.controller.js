@@ -2,7 +2,7 @@ import * as client from "openid-client";
 import bcrypt from "bcrypt";
 import { supabaseAdmin, assertSupabaseConfigured } from "../../config/supabaseClient.js";
 import { signToken, signPurposeToken, verifyToken } from "../../utils/jwt.js";
-import { normalizeEmail, isDomainAllowed } from "./auth.controller.js";
+import { normalizeEmail, isDomainAllowed, isStudentIdTaken } from "./auth.controller.js";
 import { uniqueUserNameFromEmail } from "../../shared/userAccounts.js";
 import { toPublicUser } from "../../shared/sanitizeUser.js";
 
@@ -20,6 +20,10 @@ function getConfig() {
       process.env.MICROSOFT_CLIENT_ID,
       process.env.MICROSOFT_CLIENT_SECRET
     );
+    // Don't cache a failure: one network blip (e.g. a connect timeout to
+    // login.microsoftonline.com) would otherwise break Microsoft sign-in
+    // for every request until the server restarts.
+    configPromise.catch(() => { configPromise = undefined; });
   }
   return configPromise;
 }
@@ -151,6 +155,9 @@ export async function microsoftCallback(req, res, next) {
         .from("users").select("user_id").eq("email", email).maybeSingle();
       if (existErr) throw existErr;
       if (existing) return res.redirect(frontendRedirect("/login", { error: "already_registered" }));
+      if (!pending.student_id || await isStudentIdTaken(pending.student_id)) {
+        return res.redirect(frontendRedirect("/register", { error: pending.student_id ? "student_id_taken" : "invalid_state" }));
+      }
 
       const user_name = await uniqueUserNameFromEmail(email);
       const { data: newUser, error: insertError } = await supabaseAdmin
@@ -159,6 +166,7 @@ export async function microsoftCallback(req, res, next) {
           full_name: pending.full_name,
           email,
           user_name,
+          student_id: pending.student_id,
           password_hash: pending.password_hash,
           microsoft_id: msId,
           microsoft_linked_at: new Date().toISOString(),
@@ -245,13 +253,9 @@ export async function microsoftCompleteSignup(req, res, next) {
     if (existing) return res.status(409).json({ error: "An account with this email already exists" });
 
     const trimmedStudentId = student_id.trim();
-    const { data: existingStudentId, error: studentIdLookupError } = await supabaseAdmin
-      .from("users")
-      .select("user_id")
-      .eq("student_id", trimmedStudentId)
-      .maybeSingle();
-    if (studentIdLookupError) throw studentIdLookupError;
-    if (existingStudentId) return res.status(409).json({ error: "An account with this Student ID already exists" });
+    if (await isStudentIdTaken(trimmedStudentId)) {
+      return res.status(409).json({ error: "An account with this Student ID already exists" });
+    }
 
     const user_name = await uniqueUserNameFromEmail(email);
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);

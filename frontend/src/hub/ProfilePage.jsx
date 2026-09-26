@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  LogOut, Settings, Award, Lock, Phone, FileText, Mail, CalendarDays, ShieldCheck, ShieldOff,
-  Calendar, BookOpen, Package, Armchair, MessageSquare, Coins, ChevronRight,
+  LogOut, Settings, Award, Lock, LockOpen, Phone, FileText, Mail, CalendarDays, ShieldCheck, ShieldOff,
+  Calendar, BookOpen, Package, Armchair, MessageSquare, Coins, ChevronRight, MapPin, Trash2,
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { SignOutConfirmDialog } from "../components/SignOutConfirmDialog";
@@ -10,6 +10,13 @@ import { TopNav } from "../components/TopNav";
 import { BackBar } from "../components/BackBar";
 import { fetchMyAchievements, MODULE_BY_REQUIREMENT, MODULE_COLORS } from "../lib/achievements-data";
 import { fetchProfileSummary, formatActivityDate } from "../lib/profile-data";
+import { fetchMyCollabPosts, updateCollabPostStatus, collabTypeLabel } from "../lib/collaboration-data";
+import { fetchMyRegisteredEvents, formatEventDateShort } from "../lib/events-data";
+import { fetchMyCommunityPosts, deleteCommunityPost, formatRelativeTime } from "../lib/community-data";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "../components/community/ui/alert-dialog";
 import { HUB as D } from "./hubTheme";
 
 // Stat tiles pull straight from the same per-user counts the achievement
@@ -24,11 +31,6 @@ const STATS = [
   { key: "workspace_bookings", label: "Workspace", icon: Armchair, module: "community" },
   { key: "posts", label: "Posts", icon: MessageSquare, module: "community" },
 ];
-
-// Recent-activity entries carry a `link` from the backend (a specific
-// event/course detail page, or a module list page when there's no single
-// item to land on), fall back to the module root if it's ever missing.
-const MODULE_FALLBACK_LINK = { learning: "/learning", inventory: "/inventory", community: "/community" };
 
 // Shows the real uploaded photo (profile_img_url) when one exists, falling
 // back to initials-on-gradient otherwise. Previously this always ignored
@@ -91,14 +93,78 @@ function BadgeMedal({ achievement }) {
   );
 }
 
+// A single "My Content" row: a colored dot, title + subtitle, optional
+// right-side action (e.g. Close/Reopen), the whole row otherwise a link to
+// the item's detail page. Mirrors the old Recent Activity row layout.
+function ContentRow({ to, color, title, subtitle, action, isLast }) {
+  const inner = (
+    <>
+      <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: color }} />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs truncate" style={{ color: D.text }}>{title}</p>
+        <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{subtitle}</p>
+      </div>
+      {action ?? <ChevronRight size={13} className="shrink-0 mt-0.5" style={{ color: D.faint }} />}
+    </>
+  );
+  const style = { borderBottom: isLast ? "none" : "1px solid rgba(15,50,80,0.08)" };
+  return to ? (
+    <Link to={to} className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-black/[0.03]" style={style}>
+      {inner}
+    </Link>
+  ) : (
+    <div className="flex items-start gap-3 px-4 py-3.5" style={style}>{inner}</div>
+  );
+}
+
+// One "My Content" subsection: a header (with a "Create/Browse" link when
+// there's nothing yet) over a card of rows. Only the first `limit` rows show
+// until "Show all" is clicked, so a very active user's profile stays short.
+function ContentSection({ title, items, emptyLabel, emptyTo, renderRow, limit = 5 }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = items.length > limit;
+  const visible = expanded ? items : items.slice(0, limit);
+  return (
+    <div className="mt-6">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>{title}</p>
+      <div className="rounded-xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
+        {items.length === 0 ? (
+          <p className="text-xs px-4 py-4" style={{ color: D.muted }}>
+            {emptyLabel} <Link to={emptyTo} className="font-semibold underline">Browse</Link>
+          </p>
+        ) : (
+          <>
+            {visible.map((item, i) => renderRow(item, i === visible.length - 1 && !hasMore))}
+            {hasMore && (
+              <button type="button" onClick={() => setExpanded((v) => !v)}
+                className="w-full px-4 py-3 text-xs font-semibold transition-colors hover:bg-black/[0.03]"
+                style={{ color: D.muted }}>
+                {expanded ? "Show less" : `Show all (${items.length})`}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const ACTIVITY_MODULE = { course: "learning", borrow: "inventory", workspace: "inventory" };
+const ACTIVITY_FALLBACK_LINK = { course: "/learning", borrow: "/inventory/catalog", workspace: "/workspace" };
+
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [achievements, setAchievements] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [myCollabPosts, setMyCollabPosts] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
+  const [myCommunityPosts, setMyCommunityPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [deletingPost, setDeletingPost] = useState(false);
 
   // Wait for AuthContext to finish confirming a stored token before
   // deciding the user is logged out. Otherwise a refresh bounces someone
@@ -110,17 +176,54 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([fetchMyAchievements(), fetchProfileSummary()])
-      .then(([badges, sum]) => { setAchievements(badges); setSummary(sum); })
+    Promise.all([
+      fetchMyAchievements(),
+      fetchProfileSummary(),
+      fetchMyCollabPosts(),
+      fetchMyRegisteredEvents(),
+      fetchMyCommunityPosts(),
+    ])
+      .then(([badges, sum, collabPosts, events, communityPosts]) => {
+        setAchievements(badges);
+        setSummary(sum);
+        setMyCollabPosts(collabPosts);
+        setMyEvents(events);
+        setMyCommunityPosts(communityPosts);
+      })
       .catch(() => setError("Couldn't load your profile data. Please try refreshing."))
       .finally(() => setLoading(false));
   }, [user]);
 
   if (!user) return null;
 
-  const activity = summary?.activity ?? [];
   const counts = summary?.counts ?? {};
   const earnedCount = achievements.filter(a => a.earned).length;
+
+  const handleDeletePost = async () => {
+    if (!postToDelete) return;
+    setDeletingPost(true);
+    try {
+      await deleteCommunityPost(postToDelete.id);
+      setMyCommunityPosts((prev) => prev.filter((p) => p.id !== postToDelete.id));
+      // The stat cards count posts too; keep them in step without a refetch.
+      setSummary((s) => s && ({
+        ...s,
+        counts: { ...s.counts, community_posts: Math.max(0, (s.counts?.community_posts ?? 1) - 1) },
+      }));
+      setPostToDelete(null);
+    } catch {
+      setError("Couldn't delete that post. Please try again.");
+      setPostToDelete(null);
+    } finally {
+      setDeletingPost(false);
+    }
+  };
+
+  const handleToggleCollabStatus = async (postId, currentStatus) => {
+    const nextStatus = currentStatus === "closed" ? "open" : "closed";
+    const status = await updateCollabPostStatus(postId, nextStatus);
+    setMyCollabPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status } : p)));
+  };
 
   return (
     <div className="min-h-screen" style={{ background: `linear-gradient(180deg, ${D.bg1} 0%, ${D.bg2} 100%)` }}>
@@ -274,35 +377,133 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Recent activity: directly under badges & achievements */}
-            <div className="mt-6">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>Recent Activity</p>
-              <div className="rounded-xl overflow-hidden" style={{ background: D.bgCard, border: `1px solid ${D.border}`, boxShadow: "0 2px 20px rgba(15,50,80,0.06)" }}>
-                {loading ? (
-                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Loading…</p>
-                ) : activity.length === 0 ? (
-                  <p className="text-xs px-4 py-4" style={{ color: D.muted }}>Nothing yet. Get involved to see your activity here.</p>
-                ) : activity.map((a, i) => {
-                  const module = a.type === "course" ? "learning" : a.type === "borrow" ? "inventory" : "community";
-                  const to = a.link || MODULE_FALLBACK_LINK[module];
-                  return (
-                    <Link key={i} to={to}
-                      className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-black/[0.03]"
-                      style={{ borderBottom: i < activity.length - 1 ? "1px solid rgba(15,50,80,0.08)" : "none" }}>
-                      <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: MODULE_COLORS[module] }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs" style={{ color: D.text }}>{a.label}</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: D.muted }}>{formatActivityDate(a.date)}</p>
-                      </div>
-                      <ChevronRight size={13} className="shrink-0 mt-0.5" style={{ color: D.faint }} />
-                    </Link>
-                  );
-                })}
+            {/* Recent Activity: learning / inventory / workspace only; the
+                community items are already in My Content below. */}
+            <ContentSection
+              title="Recent Activity"
+              items={loading ? [] : (summary?.activity ?? [])}
+              emptyLabel={loading ? "Loading…" : "No course, borrow or workspace activity yet."}
+              emptyTo="/inventory/catalog"
+              limit={8}
+              renderRow={(a, isLast) => (
+                <ContentRow
+                  key={`${a.type}-${a.date}-${a.label}`}
+                  to={a.link ?? ACTIVITY_FALLBACK_LINK[a.type] ?? "/"}
+                  color={MODULE_COLORS[ACTIVITY_MODULE[a.type]]}
+                  title={a.label}
+                  subtitle={formatActivityDate(a.date)}
+                  isLast={isLast}
+                />
+              )}
+            />
+
+            {/* My Content: this user's own posts/registrations. */}
+            {loading ? (
+              <div className="mt-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4" style={{ color: D.muted }}>My Content</p>
+                <p className="text-xs px-1" style={{ color: D.muted }}>Loading…</p>
               </div>
-            </div>
+            ) : (
+              <>
+                <ContentSection
+                  title="My Find Team Posts"
+                  items={myCollabPosts}
+                  emptyLabel="You haven't posted anything in Find Team yet."
+                  emptyTo="/community/collabspace"
+                  renderRow={(post, isLast) => (
+                    <ContentRow
+                      key={post.id}
+                      to={`/community/collabspace/${post.id}`}
+                      color={MODULE_COLORS.community}
+                      title={post.projectTitle}
+                      subtitle={`${collabTypeLabel[post.type]} · ${post.status === "closed" ? "Closed" : "Open"}`}
+                      isLast={isLast}
+                      action={
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); handleToggleCollabStatus(post.id, post.status); }}
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold transition-colors hover:opacity-80"
+                          style={{ background: "rgba(15,50,80,0.06)", color: D.text }}
+                        >
+                          {post.status === "closed" ? <LockOpen size={11} /> : <Lock size={11} />}
+                          {post.status === "closed" ? "Reopen" : "Close"}
+                        </button>
+                      }
+                    />
+                  )}
+                />
+
+                <ContentSection
+                  title="My Registered Events"
+                  items={myEvents}
+                  emptyLabel="You haven't registered for any events yet."
+                  emptyTo="/community/eventspace"
+                  renderRow={(event, isLast) => (
+                    <ContentRow
+                      key={event.id}
+                      to={`/community/eventspace/${event.id}`}
+                      color={MODULE_COLORS.community}
+                      title={event.title}
+                      subtitle={
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar size={10} /> {formatEventDateShort(event.date)}
+                          <MapPin size={10} className="ml-1.5" /> {event.location}
+                        </span>
+                      }
+                      isLast={isLast}
+                    />
+                  )}
+                />
+
+                <ContentSection
+                  title="My Community Posts"
+                  items={myCommunityPosts}
+                  emptyLabel="You haven't posted in Community yet."
+                  emptyTo="/community/communityspace"
+                  renderRow={(post, isLast) => (
+                    <ContentRow
+                      key={post.id}
+                      to={`/community/communityspace/${post.id}`}
+                      color={MODULE_COLORS.community}
+                      title={post.title || post.body}
+                      subtitle={formatRelativeTime(post.postedAt)}
+                      isLast={isLast}
+                      action={
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setPostToDelete(post); }}
+                          aria-label="Delete post"
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold transition-colors hover:opacity-80"
+                          style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626" }}
+                        >
+                          <Trash2 size={11} /> Delete
+                        </button>
+                      }
+                    />
+                  )}
+                />
+              </>
+            )}
           </div>
         </div>
       </main>
+
+      <AlertDialog open={!!postToDelete} onOpenChange={(open) => !open && setPostToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{postToDelete?.title || postToDelete?.body?.slice(0, 60)}" will be removed along with its likes and comments. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingPost}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePost} disabled={deletingPost} className="bg-red-600 hover:bg-red-700">
+              {deletingPost ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

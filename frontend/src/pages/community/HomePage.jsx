@@ -402,11 +402,12 @@ export default function HomePage() {
               </Pinned>
             )}
 
-            {/* Next event note */}
-            {events.length > 1 && (
+            {/* Next event note: first truly-upcoming event, excluding the one
+                already surfaced above via OngoingNote */}
+            {featuredEvents.length > 0 && (
               <Pinned rotate={-1.5} pinColor="var(--events)">
                 <Link
-                  to={`/community/eventspace/${events[1].id}`}
+                  to={`/community/eventspace/${featuredEvents[0].id}`}
                   className="flex flex-col p-4"
                   style={{
                     minHeight: "140px",
@@ -419,10 +420,10 @@ export default function HomePage() {
                 >
                   <span className="text-xs font-extrabold uppercase tracking-widest text-community-gold">Next Up</span>
                   <p className="mt-2 text-sm font-bold text-foreground leading-snug flex-1 line-clamp-2">
-                    {events[1].title}
+                    {featuredEvents[0].title}
                   </p>
                   <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-2.5 w-2.5 shrink-0" /> {events[1].location}
+                    <MapPin className="h-2.5 w-2.5 shrink-0" /> {featuredEvents[0].location}
                   </p>
                 </Link>
               </Pinned>

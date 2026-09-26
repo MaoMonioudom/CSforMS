@@ -88,6 +88,11 @@ export function EventCard({ event, index = 0, registered = false }) {
             </span>
             Ongoing
           </div>
+        ) : status === "ended" ? (
+          <div className="badge absolute left-3 top-3 bg-muted text-muted-foreground shadow">
+            <Calendar className="size-3.5" />
+            {formatEventDate(event.date)} · Ended
+          </div>
         ) : (
           <div className="badge absolute left-3 top-3 bg-events text-events-foreground shadow">
             <Calendar className="size-3.5" />

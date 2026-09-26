@@ -30,6 +30,7 @@ function mapComment(row) {
 function mapPost(row) {
   return {
     id: row.post_id,
+    userId: row.user_id,
     category: row.category || "Social",
     author: mapAuthor(row.author),
     title: row.title || null,
@@ -53,6 +54,13 @@ export async function fetchCommunityPosts() {
 export async function fetchCommunityPostsPage({ page = 1, limit = 12 } = {}) {
   const { data, total } = await api.get(`/api/community/posts?page=${page}&limit=${limit}`);
   return { posts: data.map(mapPost), total };
+}
+
+// The Profile page's "My Content" section - every post the logged-in user
+// has made, not just what's visible in the public feed.
+export async function fetchMyCommunityPosts() {
+  const { data } = await api.get("/api/community/posts/mine");
+  return data.map(mapPost);
 }
 
 export async function fetchCommunityPostById(id) {

@@ -28,6 +28,8 @@ function mapCollab(row) {
     skills: row.skills || [],
     teamSize: { current: row.team_size_current ?? 1, target: row.team_size_target ?? 1 },
     author: mapAuthor(row.author),
+    ownerId: row.user_id,
+    status: row.status || "open",
     contact: {
       email: row.contact_email || "",
       discord: row.contact_discord || "",
@@ -49,6 +51,13 @@ export async function fetchCollabPostsPage({ page = 1, limit = 12 } = {}) {
   return { posts: data.map(mapCollab), total };
 }
 
+// The Profile page's "My Content" section - every post the logged-in user
+// owns, open and closed alike, not just what's visible in the public feed.
+export async function fetchMyCollabPosts() {
+  const { data } = await api.get("/api/community/collaborations/mine");
+  return data.map(mapCollab);
+}
+
 export async function fetchCollabPostById(id) {
   const { data } = await api.get(`/api/community/collaborations/${id}`);
   return mapCollab(data);
@@ -56,6 +65,16 @@ export async function fetchCollabPostById(id) {
 
 export async function deleteCollabPost(id) {
   await api.del(`/api/community/collaborations/${id}`);
+}
+
+// Goes through the generic single-table PUT (see backend crudRouter.js),
+// not the dedicated create/delete handlers above — collaboration_roles/
+// collaboration_skills are untouched by a status-only update, so that
+// generic route (which only ever writes columns actually present in the
+// body) is enough here without needing a bespoke endpoint.
+export async function updateCollabPostStatus(id, status) {
+  const { data } = await api.put(`/api/community/collaborations/${id}`, { status });
+  return data.status;
 }
 
 // post_type/project_title/etc. map straight to collaboration_posts columns;

@@ -20,6 +20,17 @@ export function isDomainAllowed(email) {
   return allowedDomains.some((d) => emailDomain === d || emailDomain.endsWith(`.${d}`));
 }
 
+// student_id is UNIQUE in the DB; checked up front so the person gets a
+// readable 409 instead of a raw constraint error. Shared by every place an
+// account can get a student ID (both signup flows and the profile edit).
+export async function isStudentIdTaken(studentId, exceptUserId) {
+  let query = supabaseAdmin.from("users").select("user_id").eq("student_id", studentId);
+  if (exceptUserId) query = query.neq("user_id", exceptUserId);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
+
 // Step 1 of "verify with Microsoft" sign-up: validates the form and hashes
 // the password, but does NOT create the account yet — that only happens
 // once the person actually proves they own this exact email by logging
@@ -33,8 +44,9 @@ export async function startVerifiedSignup(req, res, next) {
   try {
     const { full_name, email, password } = req.body;
     const normalizedEmail = normalizeEmail(email);
-    if (!full_name || !normalizedEmail || !password) {
-      return res.status(400).json({ error: "full_name, email, and password are required" });
+    const student_id = String(req.body.student_id || "").trim();
+    if (!full_name || !normalizedEmail || !password || !student_id) {
+      return res.status(400).json({ error: "full_name, email, password, and student_id are required" });
     }
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
@@ -50,10 +62,13 @@ export async function startVerifiedSignup(req, res, next) {
       .maybeSingle();
     if (lookupError) throw lookupError;
     if (existing) return res.status(409).json({ error: "An account with this email already exists" });
+    if (await isStudentIdTaken(student_id)) {
+      return res.status(409).json({ error: "An account with this Student ID already exists" });
+    }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const pendingToken = signPurposeToken(
-      { full_name, email: normalizedEmail, password_hash, purpose: "pending_signup" },
+      { full_name, email: normalizedEmail, student_id, password_hash, purpose: "pending_signup" },
       "15m"
     );
     res.json({ pendingToken });

@@ -4,9 +4,10 @@ import Badge from '../../../components/inventory/ui/Badge'
 import { T } from '../../../lib/inventory/theme'
 import { CATEGORIES, isLowStock, isOutOfStock } from '../../../lib/inventory/data'
 import { useInventory } from '../../../lib/inventory/InventoryContext'
-import { uploadItemImage, fetchOpenMaintenance } from '../../../lib/inventory/api'
+import { uploadItemImage, fetchOpenMaintenance, fetchMaintenanceQuantities } from '../../../lib/inventory/api'
 import { fmtDateTime } from '../../../lib/inventory/datetime'
 import ItemThumb from '../../../components/inventory/ui/ItemThumb'
+import LabServicesManager from './LabServicesManager'
 
 const BLANK = { name: '', category: 'electronic_equipment', type: 'Returnable', credits: 0, zone: '', room: 'Makerspace Room', status: 'available', description: '', stock: 1, minStock: 2, condition: 'Good', borrowCount: 0, image: null }
 const FIL_BLANK = { name: 'PLA', color: '', hex: 'var(--muted-foreground)', stockGrams: 0, rate: 4 }
@@ -38,6 +39,13 @@ export default function InventoryManager({ items, user, filaments = [] }) {
   const [openIssues, setOpenIssues] = useState({})
   useEffect(() => { fetchOpenMaintenance().then(setOpenIssues).catch(() => {}) }, [items])
 
+  // Total units currently in maintenance per item — summed across every
+  // open log (a return can add to this more than once), for the
+  // Maintenance column. Separate from openIssues above, which only keeps
+  // one (the latest) issue's notes/timestamp for the detail panel.
+  const [maintQty, setMaintQty] = useState({})
+  useEffect(() => { fetchMaintenanceQuantities().then(setMaintQty).catch(() => {}) }, [items])
+
   // ── Filament inventory (used for 3D print job pricing) ───────────────────────
   const [filModal,   setFilModal]   = useState(false)
   const [filEditing, setFilEditing] = useState(null)
@@ -56,11 +64,16 @@ export default function InventoryManager({ items, user, filaments = [] }) {
 
   // "Low Stock" and "Unavailable" are both derived from stock, not a stored
   // status. Unavailable means "out of stock" here, since that's what makes
-  // an item genuinely unavailable to borrow or purchase.
+  // an item genuinely unavailable to borrow or purchase. "Maintenance" is
+  // derived too — from whether the item has an open maintenance_logs entry
+  // (see openIssues above), not a stored status — a return that flags part
+  // of the quantity for maintenance no longer flips the item's own status,
+  // so the rest of its stock stays "Available" while it also shows up here.
   const matchesStatus = (i) => {
     if (statusTab === 'All') return true
     if (statusTab === 'Low Stock') return isLowStock(i.stock)
     if (statusTab === 'Unavailable') return isOutOfStock(i.stock)
+    if (statusTab === 'Maintenance') return !!openIssues[i.id]
     // "Available" is a lie if stock is actually zero — match the same
     // derived status the Status column itself shows (see Badge above).
     if (statusTab === 'Available') return i.status === 'available' && !isOutOfStock(i.stock)
@@ -133,9 +146,9 @@ export default function InventoryManager({ items, user, filaments = [] }) {
 
       <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'auto' }}>
         <div style={{ minWidth: 820 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.1fr 0.8fr 0.7fr 0.6fr 0.9fr 1.5fr', gap: 10, padding: '10px 16px', background: T.cream, borderBottom: `1px solid ${T.stone}` }}>
-          {['Item', 'Category', 'Type', 'Credits', 'Stock', 'Status', 'Actions'].map((h, i) => (
-            <span key={h} style={{ color: T.faint, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: i === 6 ? 'right' : 'left' }}>{h}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.1fr 0.8fr 0.7fr 0.6fr 0.7fr 0.9fr 1.5fr', gap: 10, padding: '10px 16px', background: T.cream, borderBottom: `1px solid ${T.stone}` }}>
+          {['Item', 'Category', 'Type', 'Credits', 'Stock', 'Maintenance', 'Status', 'Actions'].map((h, i) => (
+            <span key={h} style={{ color: T.faint, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: i === 7 ? 'right' : 'left' }}>{h}</span>
           ))}
         </div>
         {visibleItems.length === 0 && <p style={{ color: T.faint, textAlign: 'center', padding: '2rem', margin: 0 }}>No items match this filter.</p>}
@@ -145,7 +158,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
           const isOpen = expanded === item.id
           return (
             <div key={item.id} style={{ borderBottom: `1px solid ${T.stone}` }}>
-            <div className="trow" style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.1fr 0.8fr 0.7fr 0.6fr 0.9fr 1.5fr', gap: 10, padding: '12px 16px', alignItems: 'center', transition: 'background 0.1s', cursor: 'pointer' }}
+            <div className="trow" style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.1fr 0.8fr 0.7fr 0.6fr 0.7fr 0.9fr 1.5fr', gap: 10, padding: '12px 16px', alignItems: 'center', transition: 'background 0.1s', cursor: 'pointer' }}
               onClick={() => setExpanded(isOpen ? null : item.id)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <ItemThumb item={item} cat={c} size={30} iconSize={14} />
@@ -165,6 +178,9 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                 {isLow && <AlertTriangle size={12} color={T.amber} />}
                 <span style={{ fontWeight: 600, fontSize: 13, color: isLow ? T.amber : T.charcoal }}>{item.stock}</span>
               </div>
+              <span style={{ fontSize: 13, fontWeight: maintQty[item.id] ? 600 : 400, color: maintQty[item.id] ? T.red : T.faint }}>
+                {maintQty[item.id] || '—'}
+              </span>
               {/* "available" with zero stock is misleading: show Out of Stock */}
               <div><Badge status={isOutOfStock(item.stock) && item.status === 'available' ? 'out_of_stock' : item.status} small /></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
@@ -174,7 +190,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
                       style={{ padding: '5px 10px', background: T.cream, border: 'none', borderRadius: 7, color: T.muted, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
                       <Edit2 size={10} /> Edit
                     </button>
-                    {item.status === 'maintenance' ? (
+                    {openIssues[item.id] ? (
                       <button onClick={() => ctx.completeMaintenance(item.id).catch(err => ctx.showToast?.(err.message || 'Update failed.', 'error'))}
                         style={{ padding: '5px 10px', background: T.greenLight, border: 'none', borderRadius: 7, color: T.green, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', flexShrink: 0 }}>
                         <Wrench size={10} /> Mark Repaired
@@ -199,7 +215,7 @@ export default function InventoryManager({ items, user, filaments = [] }) {
               <div style={{ overflow: 'hidden' }}>
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4" style={{ padding: '0 16px 14px 56px' }}>
                   {[['Description', item.description], ['Zone', `${item.zone} · ${item.room}`], ['Condition', item.condition], ['Borrow Count', item.borrowCount ?? 0],
-                    ...(item.status === 'maintenance' && openIssues[item.id]
+                    ...(openIssues[item.id]
                       ? [['Reported Issue', `${openIssues[item.id].notes || 'No notes provided'}: ${fmtDateTime(openIssues[item.id].reportedAt)}`]]
                       : [])].map(([k, v]) => (
                     <div key={k} style={{ background: T.cream, borderRadius: 8, padding: '8px 10px' }}>
@@ -228,8 +244,12 @@ export default function InventoryManager({ items, user, filaments = [] }) {
         </div>
       </div>
 
+      <div style={{ marginTop: '1.5rem' }}>
+        <LabServicesManager items={items} />
+      </div>
+
       {/* Filament inventory: used to price & stock 3D print jobs */}
-      <div style={{ marginTop: '1.5rem', background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 14, overflow: 'hidden' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: `1px solid ${T.stone}`, background: T.cream, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Box size={15} color={T.purple} />
@@ -411,14 +431,14 @@ export default function InventoryManager({ items, user, filaments = [] }) {
         </div>
       )}
 
-      {/* Report Issue: flips the item to Maintenance and logs the problem
-          (the note staff see on this row until the item is marked repaired). */}
+      {/* Report Issue: logs the problem and holds back 1 unit of stock until
+          it's marked repaired (the rest of the item stays borrowable). */}
       {maintItem && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: T.white, borderRadius: 16, padding: '2rem', width: 380 }}>
             <AlertTriangle size={30} color={T.amber} style={{ marginBottom: 10 }} />
             <p style={{ color: T.charcoal, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Report an issue</p>
-            <p style={{ color: T.muted, fontSize: 13, marginBottom: 14 }}>{maintItem.name} will be marked Maintenance until resolved.</p>
+            <p style={{ color: T.muted, fontSize: 13, marginBottom: 14 }}>1 unit of {maintItem.name} will be held from stock until resolved.</p>
             <textarea rows={3} value={maintNotes} onChange={e => setMaintNotes(e.target.value)}
               placeholder="What's wrong with it?"
               style={{ width: '100%', boxSizing: 'border-box', background: T.cream, border: `1px solid ${T.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', resize: 'none', marginBottom: 16 }} />
