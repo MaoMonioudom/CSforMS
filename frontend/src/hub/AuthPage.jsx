@@ -42,7 +42,7 @@ function LoginForm({ form, setForm, error, loading, showPw, setShowPw, onSubmit,
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold" style={{ color: D.muted }}>Email</label>
-        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" autoComplete="email" />
+        <TextField icon={Mail} type="email" value={form.email} onChange={set("email")} placeholder="Your email" autoComplete="email" />
       </div>
 
       <div className="flex flex-col gap-1.5">
